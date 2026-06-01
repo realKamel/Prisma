@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Project Path="Prisma.API/Prisma.API.csproj" />
+  <Project Path="Prisma.Application/Prisma.Application.csproj" />
+  <Project Path="Prisma.Domain/Prisma.Domain.csproj" />
+  <Project Path="Prisma.Infrastructure/Prisma.Infrastructure.csproj" />
+</Solution>

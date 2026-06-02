@@ -1,5 +1,7 @@
 using Prisma.API.Extensions;
 using Serilog;
+using Serilog.Exceptions;
+using Serilog.Exceptions.Core;
 
 namespace Prisma.API;
 
@@ -8,8 +10,12 @@ public class Program
     public static void Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
-        .WriteTo.Console()
-        .CreateBootstrapLogger();
+            .WriteTo.Console()
+            .Enrich.WithExceptionDetails(
+                new DestructuringOptionsBuilder()
+                    .WithDefaultDestructurers()
+                    .WithRootName("Exception"))
+            .CreateBootstrapLogger();
 
         try
         {

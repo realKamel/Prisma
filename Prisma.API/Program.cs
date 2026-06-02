@@ -1,4 +1,5 @@
 using Prisma.API.Extensions;
+using Prisma.API.Middlewares;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
@@ -20,11 +21,14 @@ public class Program
         try
         {
             Log.Information("Starting API...");
+
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
 
             var app = builder.Build();
+
+            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
             app.UseSerilogRequestLogging();
 
@@ -39,8 +43,11 @@ public class Program
             }
 
             app.UseHttpsRedirection();
+
             app.UseAuthorization();
+
             app.MapControllers();
+
             app.Run();
         }
         catch (HostAbortedException)

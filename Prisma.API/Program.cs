@@ -1,3 +1,4 @@
+using Prisma.API.Extensions;
 using Serilog;
 
 namespace Prisma.API;
@@ -15,13 +16,7 @@ public class Program
             Log.Information("Starting API...");
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddSerilog((services, loggerConfiguration) => loggerConfiguration
-                            .ReadFrom.Configuration(builder.Configuration)
-                            .ReadFrom.Services(services)
-                            .Enrich.FromLogContext());
-
-            builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
+            builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
 
             var app = builder.Build();
 

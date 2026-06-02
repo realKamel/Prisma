@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Repositories;
@@ -9,7 +10,8 @@ namespace Prisma.Infrastructure;
 
 public static class DependenciesInjection
 {
-    public static void AddInfrastructureServices(IServiceCollection services, IConfiguration configuration)
+    public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration,
+        IHostEnvironment environment)
     {
         services.AddDbContext<AppDbContext>(options =>
         {

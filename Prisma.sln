@@ -1,0 +1,42 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prisma.Domain", "Prisma.Domain\Prisma.Domain.csproj", "{411BEB53-E566-15F2-E9A9-2703D0F3705C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prisma.API", "Prisma.API\Prisma.API.csproj", "{4CFED846-1839-88C8-BAED-F557077A0476}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prisma.Application", "Prisma.Application\Prisma.Application.csproj", "{E4D22F59-B7D0-49A5-B666-3AA8055D7F4A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Prisma.Infrastructure", "Prisma.Infrastructure\Prisma.Infrastructure.csproj", "{041F1871-1C98-73EB-E034-8196539434DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{411BEB53-E566-15F2-E9A9-2703D0F3705C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{411BEB53-E566-15F2-E9A9-2703D0F3705C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{411BEB53-E566-15F2-E9A9-2703D0F3705C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{411BEB53-E566-15F2-E9A9-2703D0F3705C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CFED846-1839-88C8-BAED-F557077A0476}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CFED846-1839-88C8-BAED-F557077A0476}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CFED846-1839-88C8-BAED-F557077A0476}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CFED846-1839-88C8-BAED-F557077A0476}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4D22F59-B7D0-49A5-B666-3AA8055D7F4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4D22F59-B7D0-49A5-B666-3AA8055D7F4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4D22F59-B7D0-49A5-B666-3AA8055D7F4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4D22F59-B7D0-49A5-B666-3AA8055D7F4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{041F1871-1C98-73EB-E034-8196539434DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{041F1871-1C98-73EB-E034-8196539434DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{041F1871-1C98-73EB-E034-8196539434DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{041F1871-1C98-73EB-E034-8196539434DA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FE7893A7-8173-42B0-ACEB-0E604FF9FF44}
+	EndGlobalSection
+EndGlobal

@@ -14,6 +14,6 @@ public class Student : BaseEntity
     public Teacher? Teacher { get; set; }
 
     public string? AcademicYearId { get; set; }
-    //public AcademicYear? AcademicYear { get; set; }
+    public AcademicYear? AcademicYear { get; set; }
 }
 

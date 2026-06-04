@@ -37,6 +37,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<Applicat
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // to apply all configuration for class that implements IEntityTypeConfiguration
+        base.OnModelCreating(modelBuilder);
+        
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

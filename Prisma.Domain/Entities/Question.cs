@@ -3,7 +3,7 @@ using Prisma.Domain.Entities;
 
 namespace Prisma.Domain.Entities;
 
-public class Question : BaseEntity
+public abstract class Question : BaseEntity
 {
     public string? Title { get; set; } 
 

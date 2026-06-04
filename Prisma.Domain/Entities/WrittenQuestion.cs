@@ -2,6 +2,5 @@ namespace Prisma.Domain.Entities;
 
 public class WrittenQuestion : Question
 {
-    public virtual ICollection<Written> WrittenOptions { get; set; } = new List<Written>();
-
+    public string? Answer { get; set; }
 }

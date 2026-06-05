@@ -22,5 +22,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .WithMany(x => x.Payments)
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

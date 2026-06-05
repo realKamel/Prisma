@@ -19,5 +19,7 @@ public class AssignmentSubmissionConfiguration : IEntityTypeConfiguration<Assign
             .WithMany(x => x.Submissions)
             .HasForeignKey(x => x.AssignmentId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

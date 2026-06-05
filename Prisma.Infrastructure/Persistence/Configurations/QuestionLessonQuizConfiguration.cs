@@ -20,5 +20,7 @@ public class QuestionLessonQuizConfiguration : IEntityTypeConfiguration<Question
         builder.HasOne(x => x.Question)
             .WithMany(x => x.QuestionLessons)
             .HasForeignKey(x => x.QuestionId);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -19,5 +19,7 @@ public class CodeConfiguration : IEntityTypeConfiguration<Code>
             .WithMany(x => x.Codes)
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

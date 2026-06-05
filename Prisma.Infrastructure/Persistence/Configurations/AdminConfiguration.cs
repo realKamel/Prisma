@@ -14,5 +14,7 @@ public class AdminConfiguration : IEntityTypeConfiguration<Admin>
             .WithMany(x => x.Admins)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

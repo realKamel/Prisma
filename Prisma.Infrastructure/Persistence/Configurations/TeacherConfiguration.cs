@@ -17,5 +17,7 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
             .WithMany(x => x.Teachers)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

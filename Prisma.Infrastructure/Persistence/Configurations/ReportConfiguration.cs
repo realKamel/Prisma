@@ -13,5 +13,7 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
         builder.HasOne(x => x.Student)
             .WithMany(x => x.Reports)
             .HasForeignKey(x => x.StudentId);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

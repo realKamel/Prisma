@@ -14,5 +14,7 @@ public class ChoiceConfiguration : IEntityTypeConfiguration<Choice>
             .WithMany()
             .HasForeignKey(x => x.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

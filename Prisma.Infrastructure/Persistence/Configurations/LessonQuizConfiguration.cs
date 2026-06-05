@@ -17,5 +17,7 @@ public class LessonQuizConfiguration : IEntityTypeConfiguration<LessonQuiz>
 
         builder.Property(x => x.TotalDegree)
             .HasPrecision(18, 2);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

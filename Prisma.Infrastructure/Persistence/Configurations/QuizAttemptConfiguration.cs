@@ -20,5 +20,7 @@ public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
         builder.HasOne(x => x.Quiz)
             .WithMany(x => x.Attempts)
             .HasForeignKey(x => x.QuizId);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

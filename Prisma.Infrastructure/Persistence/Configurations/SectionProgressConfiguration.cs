@@ -17,5 +17,7 @@ public class SectionProgressConfiguration : IEntityTypeConfiguration<SectionProg
         builder.HasOne(x => x.Section)
             .WithMany(x => x.Progresses)
             .HasForeignKey(x => x.SectionId);
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

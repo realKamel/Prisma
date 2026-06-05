@@ -1,3 +1,4 @@
+using System.Reflection.Emit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities;
@@ -24,5 +25,7 @@ public class AcademicYearConfiguration : IEntityTypeConfiguration<AcademicYear>
 
         builder.HasMany(x => x.Lessons)
             .WithMany(x => x.AcademicYears);
+        
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

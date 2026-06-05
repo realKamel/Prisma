@@ -13,5 +13,7 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.HasDiscriminator<string>("QuestionType")
             .HasValue<MCQQuestion>("MCQ")
             .HasValue<WrittenQuestion>("Written");
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

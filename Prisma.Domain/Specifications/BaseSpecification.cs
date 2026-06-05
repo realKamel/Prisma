@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Domain.Specifications;

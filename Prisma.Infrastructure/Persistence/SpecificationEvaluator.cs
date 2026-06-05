@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Infrastructure.Persistence;

@@ -1,17 +1,18 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 
 namespace Prisma.Domain.Interfaces;
 
 public interface IRepository<TEntity> where TEntity : BaseEntity
 {
-    Task<ICollection<TEntity>> ListAsync(ISpecification<TEntity> spec, CancellationToken ct = default);
-    Task<ICollection<TEntity>> ListAsync(CancellationToken ct = default);
-    Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> spec, CancellationToken ct = default);
-    Task<int> CountAsync(ISpecification<TEntity> spec, CancellationToken ct = default);
-    Task<int> CountAsync(CancellationToken ct = default);
-    Task<bool> AnyAsync(ISpecification<TEntity> spec, CancellationToken ct = default);
-    Task<bool> AnyAsync(CancellationToken ct = default);
-    Task AddAsync(TEntity entity, CancellationToken ct = default);
-    void Update(TEntity entity, CancellationToken ct = default);
-    void Delete(TEntity entity, CancellationToken ct = default);
+    Task<ICollection<TEntity>> ListAsync(ISpecification<TEntity> spec, CancellationToken ct);
+    Task<ICollection<TEntity>> ListAsync(CancellationToken ct);
+    Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> spec, CancellationToken ct, bool tracking = false);
+    Task<int> CountAsync(ISpecification<TEntity> spec, CancellationToken ct);
+    Task<int> CountAsync(CancellationToken ct);
+    Task<bool> AnyAsync(ISpecification<TEntity> spec, CancellationToken ct);
+    Task<bool> AnyAsync(CancellationToken ct);
+    Task AddAsync(TEntity entity, CancellationToken ct);
+    void Update(TEntity entity);
+    void Delete(TEntity entity);
 }

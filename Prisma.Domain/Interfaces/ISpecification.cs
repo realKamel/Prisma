@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 
 namespace Prisma.Domain.Interfaces;
 
@@ -15,9 +16,6 @@ public interface ISpecification<TEntity> where TEntity : BaseEntity
     // Ordering
     Expression<Func<TEntity, object>>? OrderBy { get; }
     Expression<Func<TEntity, object>>? OrderByDescending { get; }
-
-    // Grouping
-    Expression<Func<TEntity, object>>? GroupBy { get; }
 
     // Paging
     int Take { get; }

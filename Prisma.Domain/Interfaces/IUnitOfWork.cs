@@ -1,4 +1,5 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 
 namespace Prisma.Domain.Interfaces;
 

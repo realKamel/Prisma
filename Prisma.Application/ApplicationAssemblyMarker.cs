@@ -1,6 +1,6 @@
 namespace Prisma.Application;
 
-public class ApplicationRef
+public class ApplicationAssemblyMarker
 {
     
 }

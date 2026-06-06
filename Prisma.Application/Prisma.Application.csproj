@@ -7,10 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Abstractions\" />
-    <Folder Include="DTOs\" />
-    <Folder Include="Features\" />
-    <Folder Include="Repsitories\" />
+    <Folder Include="Features\Authentication\Commands\" />
+    <Folder Include="Features\Authentication\Queries\" />
   </ItemGroup>
 
   <ItemGroup>

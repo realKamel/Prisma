@@ -39,9 +39,31 @@ public static class DependenciesInjection
                 options.EnableDetailedErrors();
             }
         });
-        services.AddIdentity<User, IdentityRole<Guid>>()
+        services.AddIdentityCore<User>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                if (environment.IsDevelopment())
+                {
+                    options.Password.RequiredLength = 4;
+                    options.Password.RequireDigit = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequireNonAlphanumeric = false;
+                }
+                else
+                {
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                }
+            })
+            .AddRoles<IdentityRole<Guid>>()
             .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
-            .AddSignInManager<SignInManager<User>>()
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -50,5 +72,8 @@ public static class DependenciesInjection
         services.AddSingleton<SpecificationEvaluator>();
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Prisma.Domain.Entities;
+﻿using Prisma.Domain.Common;
+
+namespace Prisma.Domain.Entities;
 
 public class AcademicYear : BaseEntity
 {

@@ -1,13 +1,20 @@
-﻿namespace Prisma.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
+using Prisma.Domain.Common;
 
-public class BaseEntity
+namespace Prisma.Domain.Entities;
+
+public class User : IdentityUser<Guid>, IAuditable
 {
-    public int Id { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public bool IsBlocked { get; set; }
+
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public Guid? CreatedBy { get; set; }
     public Guid? ModifiedBy { get; set; }
+    public Guid? UpdatedBy { get; set; }
     public Guid? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
 }

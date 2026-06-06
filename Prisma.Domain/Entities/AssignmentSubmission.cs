@@ -1,3 +1,5 @@
+using Prisma.Domain.Common;
+
 namespace Prisma.Domain.Entities;
 
 public class AssignmentSubmission : BaseEntity

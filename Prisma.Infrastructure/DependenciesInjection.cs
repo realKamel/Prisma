@@ -5,13 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Infrastructure.Services.Identity;
+using Prisma.Infrastructure.Services.Auth;
 using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
-using Prisma.Infrastructure.Services.Auth;
+using Prisma.Infrastructure.Services.EmailService;
 
 namespace Prisma.Infrastructure;
 
@@ -65,6 +65,7 @@ public static class DependenciesInjection
             })
             .AddRoles<IdentityRole<Guid>>()
             .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
+            .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -73,6 +74,9 @@ public static class DependenciesInjection
         services.AddSingleton<SpecificationEvaluator>();
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.AddScoped<IEmailService, EmailService>();
 
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();

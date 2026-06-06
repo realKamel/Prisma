@@ -17,9 +17,6 @@ public interface ISpecification<TEntity> where TEntity : BaseEntity
     Expression<Func<TEntity, object>>? OrderBy { get; }
     Expression<Func<TEntity, object>>? OrderByDescending { get; }
 
-    // Grouping
-    Expression<Func<TEntity, object>>? GroupBy { get; }
-
     // Paging
     int Take { get; }
     int Skip { get; }

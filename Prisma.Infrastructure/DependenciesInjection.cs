@@ -46,7 +46,7 @@ public static class DependenciesInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-        //TODO:Implement Current User Services
+        services.AddSingleton<SpecificationEvaluator>();
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
     }

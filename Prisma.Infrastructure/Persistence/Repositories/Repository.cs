@@ -1,21 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using Prisma.Domain.Common;
-using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
-public class Repository<TEntity>(AppDbContext dbContext) :
+public class Repository<TEntity>(AppDbContext dbContext, SpecificationEvaluator specificationEvaluator) :
     IRepository<TEntity> where TEntity : BaseEntity
 {
     public async Task<ICollection<TEntity>> ListAsync(ISpecification<TEntity> spec,
         CancellationToken ct)
     {
-        var query = SpecificationEvaluator
-            .GetInstance
-            .GetQuery(dbContext.Set<TEntity>(), spec);
+        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
 
-        return await query.AsNoTracking().ToListAsync(ct);
+        return await query.AsNoTrackingWithIdentityResolution().ToListAsync(ct);
     }
 
     public async Task<ICollection<TEntity>> ListAsync(CancellationToken ct)
@@ -26,11 +23,9 @@ public class Repository<TEntity>(AppDbContext dbContext) :
     public async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> spec, CancellationToken ct,
         bool tracking = false)
     {
-        var query = SpecificationEvaluator
-            .GetInstance
-            .GetQuery(dbContext.Set<TEntity>(), spec);
+        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
 
-        if (tracking)
+        if (!tracking)
         {
             query = query.AsNoTracking();
         }
@@ -40,9 +35,7 @@ public class Repository<TEntity>(AppDbContext dbContext) :
 
     public async Task<int> CountAsync(ISpecification<TEntity> spec, CancellationToken ct)
     {
-        var query = SpecificationEvaluator
-            .GetInstance
-            .GetQuery(dbContext.Set<TEntity>(), spec);
+        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
 
         return await query.AsNoTracking().CountAsync(ct);
     }
@@ -54,9 +47,7 @@ public class Repository<TEntity>(AppDbContext dbContext) :
 
     public async Task<bool> AnyAsync(ISpecification<TEntity> spec, CancellationToken ct)
     {
-        var query = SpecificationEvaluator
-            .GetInstance
-            .GetQuery(dbContext.Set<TEntity>(), spec);
+        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
         return await query.AsNoTracking().AnyAsync(ct);
     }
 

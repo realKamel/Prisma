@@ -5,7 +5,7 @@ using Prisma.Infrastructure.Persistence.Repositories;
 
 namespace Prisma.Infrastructure.Persistence;
 
-public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
+public class UnitOfWork(AppDbContext dbContext, SpecificationEvaluator evaluator) : IUnitOfWork
 {
     private readonly Dictionary<Type, object> _repositories = [];
 
@@ -16,7 +16,7 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
             return (IRepository<TEntity>)repository;
         }
 
-        repository = new Repository<TEntity>(dbContext);
+        repository = new Repository<TEntity>(dbContext, evaluator);
 
         _repositories.Add(typeof(TEntity), repository);
 

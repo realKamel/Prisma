@@ -7,10 +7,6 @@ namespace Prisma.Infrastructure.Persistence;
 
 public class SpecificationEvaluator
 {
-    private SpecificationEvaluator() { }
-
-    public static SpecificationEvaluator GetInstance => new SpecificationEvaluator();
-
     public IQueryable<TEntity> GetQuery<TEntity>(
         IQueryable<TEntity> inputQuery,
         ISpecification<TEntity> specification) where TEntity : BaseEntity
@@ -23,7 +19,7 @@ public class SpecificationEvaluator
             query = query.Where(specification.Criteria);
         }
 
-        // 2. Apply includes (eager loading)
+        // 2. Apply includes
         query = specification.Includes.Aggregate(
             query,
             (current, include) => current.Include(include));
@@ -31,6 +27,7 @@ public class SpecificationEvaluator
         query = specification.IncludeStrings.Aggregate(
             query,
             (current, include) => current.Include(include));
+
 
         // 3. Apply ordering
         if (specification.OrderBy is not null)
@@ -42,15 +39,17 @@ public class SpecificationEvaluator
             query = query.OrderByDescending(specification.OrderByDescending);
         }
 
-        // 4. Apply grouping
-        if (specification.GroupBy is not null)
-        {
-            query = query.GroupBy(specification.GroupBy).SelectMany(x => x);
-        }
+        var isOrdered = specification.OrderBy is not null
+                        || specification.OrderByDescending is not null;
 
-        // 5. Apply paging (MUST be last)
+        // 4. Apply paging (MUST be last)
         if (specification.IsPagingEnabled)
         {
+            if (!isOrdered)
+            {
+                query = query.OrderBy(e => e.Id);
+            }
+
             query = query.Skip(specification.Skip).Take(specification.Take);
         }
 

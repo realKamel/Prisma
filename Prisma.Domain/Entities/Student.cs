@@ -9,10 +9,10 @@ public class Student : User
 
     public string? ParentPhoneNumber { get; set; }
 
-    public Guid? TeacherId { get; set; }
+    public Guid TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
 
-    public int? AcademicYearId { get; set; }
+    public int AcademicYearId { get; set; }
     public AcademicYear? AcademicYear { get; set; }
 
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();

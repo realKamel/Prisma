@@ -5,11 +5,11 @@ namespace Prisma.Domain.Entities;
 
 public class Payment : BaseEntity
 {
-    public string? StudentId { get; set; }
-    public virtual Student? Student { get; set; }
+    public Guid StudentId { get; set; }
+    public Student? Student { get; set; }
 
-    public string? LessonId { get; set; }
-    public virtual Lesson? Lesson { get; set; }
+    public int LessonId { get; set; }
+    public Lesson? Lesson { get; set; }
 
     public string? TransactionID { get; set; }
     public decimal Amount { get; set; }

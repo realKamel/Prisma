@@ -8,6 +8,6 @@ public class Report : BaseEntity
     public string? Content { get; set; } 
     public DateTime Date { get; set; }
     
-    public string? StudentId { get; set; } 
-    public virtual Student? Student { get; set; } 
+    public Guid StudentId { get; set; } 
+    public Student? Student { get; set; } 
 }

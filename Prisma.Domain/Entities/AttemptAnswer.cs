@@ -4,17 +4,17 @@ namespace Prisma.Domain.Entities;
 
 public class AttemptAnswer : BaseEntity
 {
-    public string? QuizAttemptId { get; set; } 
-    public virtual QuizAttempt? QuizAttempt { get; set; }
+    public int QuizAttemptId { get; set; } 
+    public QuizAttempt? QuizAttempt { get; set; }
 
-    public string? StudentId { get; set; } 
-    public virtual Student? Student { get; set; }
+    public Guid StudentId { get; set; } 
+    public  Student? Student { get; set; }
 
-    public string? QuestionId { get; set; } 
-    public virtual Question? Question { get; set; }
+    public int QuestionId { get; set; } 
+    public Question? Question { get; set; }
 
-    public string? ChoiceId { get; set; } 
-    public virtual Choice? Choice { get; set; }
+    public int ChoiceId { get; set; } 
+    public Choice? Choice { get; set; }
 
     public decimal Score { get; set; }
     public bool IsCorrect { get; set; }

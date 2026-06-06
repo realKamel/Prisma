@@ -6,8 +6,8 @@ namespace Prisma.Domain.Entities;
 
 public class Assignment : BaseEntity
 {
-    public string? LessonId { get; set; }
-    public virtual Lesson? Lesson { get; set; }
+    public int LessonId { get; set; }
+    public Lesson? Lesson { get; set; }
     
     public string? ContentURL { get; set; }
     public DateTime DueDate { get; set; }

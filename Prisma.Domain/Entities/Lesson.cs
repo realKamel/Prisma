@@ -12,7 +12,7 @@ public class Lesson : BaseEntity
     public DateTime? EndDate { get; set; }
     public bool IsEligible { get; set; }
     
-    public Guid? TeacherId { get; set; }
+    public Guid TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
     
     public ICollection<AcademicYear> AcademicYears { get; set; } = new List<AcademicYear>();

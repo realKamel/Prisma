@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Common;
 
 namespace Prisma.Infrastructure.Persistence.Interceptors;

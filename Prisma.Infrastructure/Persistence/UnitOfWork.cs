@@ -1,3 +1,4 @@
+using Prisma.Domain.Common;
 using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence.Repositories;

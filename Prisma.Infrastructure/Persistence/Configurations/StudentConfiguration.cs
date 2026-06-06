@@ -18,6 +18,5 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .HasForeignKey(x => x.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -10,7 +10,5 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
     {
         builder.Property(x => x.Subject)
             .HasMaxLength(200);
-
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -8,6 +8,5 @@ public class AdminConfiguration : IEntityTypeConfiguration<Admin>
 {
     public void Configure(EntityTypeBuilder<Admin> builder)
     {
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

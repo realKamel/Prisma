@@ -12,7 +12,5 @@ public class AssistantConfiguration : IEntityTypeConfiguration<Assistant>
             .WithMany(x => x.Assistants)
             .HasForeignKey(x => x.TeacherId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

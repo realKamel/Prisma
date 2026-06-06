@@ -1,6 +1,3 @@
-using System;
-using Prisma.Domain.Entities;
-
 namespace Prisma.Domain.Entities;
 
 public class AssignmentSubmission : BaseEntity
@@ -11,6 +8,6 @@ public class AssignmentSubmission : BaseEntity
     public int AssignmentId { get; set; }
     public Assignment? Assignment { get; set; }
 
-    public string? FileURL { get; set; }
-    public DateTime SubmittedAt { get; set; }
+    public string? FileUrl { get; set; }
+    public DateTimeOffset SubmittedAt { get; set; }
 }

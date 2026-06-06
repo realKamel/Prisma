@@ -1,27 +1,29 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity;
-
 namespace Prisma.Domain.Entities;
-public class Student : BaseEntity
+
+public class Student : User
 {
-    public string? UserId { get; set; }
-    public ApplicationUser? User { get; set; }
+    public string SecondName { get; set; }
+    public string ThirdName { get; set; }
+
+    public int StreakDays { get; set; }
 
     public string? ParentPhoneNumber { get; set; }
 
-    public string? TeacherId { get; set; }
+    public Guid? TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
 
-    public string? AcademicYearId { get; set; }
+    public int? AcademicYearId { get; set; }
     public AcademicYear? AcademicYear { get; set; }
-    public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
-    public virtual ICollection<SectionProgress> SectionProgresses { get; set; } = new List<SectionProgress>();
-    public virtual ICollection<AssignmentSubmission> AssignmentSubmissions { get; set; } = new List<AssignmentSubmission>();
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
-    public virtual ICollection<Code> Codes { get; set; } = new List<Code>();
-    public virtual ICollection<AttemptAnswer> AttemptAnswers { get; set; } = new List<AttemptAnswer>();
-    public virtual ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-}
 
+    public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
+    public ICollection<SectionProgress> SectionProgresses { get; set; } = new List<SectionProgress>();
+
+    public ICollection<AssignmentSubmission> AssignmentSubmissions { get; set; } =
+        new List<AssignmentSubmission>();
+
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public ICollection<Code> Codes { get; set; } = new List<Code>();
+    public ICollection<AttemptAnswer> AttemptAnswers { get; set; } = new List<AttemptAnswer>();
+    public ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
+    public ICollection<Report> Reports { get; set; } = new List<Report>();
+}

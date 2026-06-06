@@ -1,13 +1,7 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity;
-
 namespace Prisma.Domain.Entities;
-public class Assistant : BaseEntity
+
+public class Assistant : User
 {
-    public string? UserId { get; set; }
-    public ApplicationUser? User { get; set; }
-    
-    public string? TeacherId { get; set; }
+    public Guid? TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
 }

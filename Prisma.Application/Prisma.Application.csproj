@@ -7,8 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Authentication\Commands\ForgotPassword\" />
-    <Folder Include="Features\Authentication\Commands\RefreshToken\" />
     <Folder Include="Features\Authentication\Queries\" />
   </ItemGroup>
 

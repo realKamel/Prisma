@@ -27,6 +27,7 @@ public class AuthController(IMediator mediator) : ApiController
         SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
         return Ok();
     }
+
     private void SetAuthCookies(string accessToken, string refreshToken)
     {
         var accessTokenOptions = new CookieOptions
@@ -48,7 +49,6 @@ public class AuthController(IMediator mediator) : ApiController
         Response.Cookies.Append("access_token", accessToken, accessTokenOptions);
         Response.Cookies.Append("refresh_token", refreshToken, refreshTokenOptions);
     }
-
     [HttpPost("forgot-password")]
     public async Task<ActionResult> ForgotPassword(ForgotPasswordCommand command)
     {
@@ -67,5 +67,4 @@ public class AuthController(IMediator mediator) : ApiController
         var result = await mediator.Send(command);
         return Ok(result);
     }
-
 }

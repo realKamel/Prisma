@@ -1,30 +1,29 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Constants;
+using Prisma.Infrastructure.Services.Identity;
 
-namespace Prisma.Infrastructure.Services.Identity;
+namespace Prisma.Infrastructure.Services.Auth;
 
-public class JwtTokenGenerator : IJwtTokenGenerator
+public class JwtTokenService : IJwtTokenService
 {
     private readonly SigningCredentials _signingCredentials;
     private readonly JwtSettings _jwtSettings;
 
-    public JwtTokenGenerator(IOptions<JwtSettings> jwtSettings)
+    public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Secret));
         _jwtSettings = jwtSettings.Value;
         _signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
     }
 
-    public string GenerateToken(Guid userId, string email, IList<string> permissions)
+    public string GenerateAccessToken(Guid userId, string email, IList<string> permissions)
     {
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_jwtSettings.Secret));
-
         var userClaims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
@@ -40,9 +39,16 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             audience: _jwtSettings.Audience,
             claims: userClaims,
             expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryInMinutes),
-            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
-
+            signingCredentials: _signingCredentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = new byte[64];
+        using var range = RandomNumberGenerator.Create();
+        range.GetBytes(randomBytes);
+        return Convert.ToBase64String(randomBytes);
     }
 }

@@ -11,6 +11,7 @@ using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
+using Prisma.Infrastructure.Services.Auth;
 
 namespace Prisma.Infrastructure;
 
@@ -74,6 +75,6 @@ public static class DependenciesInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
     }
 }

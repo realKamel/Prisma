@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Prisma.Application.Abstractions.Services;
 
-namespace Prisma.Infrastructure.Services.Identity;
+namespace Prisma.Infrastructure.Services.Auth;
 
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {

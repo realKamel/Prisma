@@ -1,6 +1,7 @@
 namespace Prisma.Application.Abstractions.Auth;
 
-public interface IJwtTokenGenerator
+public interface IJwtTokenService
 {
-    string GenerateToken(Guid userId, string email, IList<string> permissions);
+    string GenerateAccessToken(Guid userId, string email, IList<string> permissions);
+    string GenerateRefreshToken();
 }

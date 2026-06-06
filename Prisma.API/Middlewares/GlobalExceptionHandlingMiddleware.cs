@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Prisma.Application.Common.Responses;
 using Prisma.Domain.Exceptions;
 using Serilog;
 
@@ -50,16 +51,18 @@ public class GlobalExceptionHandlingMiddleware(ILogger<GlobalExceptionHandlingMi
                 g => g.Select(e => e.ErrorMessage).ToArray()
             );
 
-        var problemDetails = new ProblemDetails
-        {
-            Title = "Validation Failed",
-            Status = StatusCodes.Status400BadRequest,
-            Detail = "One or more validation errors occurred.",
-            Instance = context.Request.Path,
-            Extensions = { ["errors"] = errors }
-        };
+        // var problemDetails = new ProblemDetails
+        // {
+        //     Title = "Validation Failed",
+        //     Status = StatusCodes.Status400BadRequest,
+        //     Detail = "One or more validation errors occurred.",
+        //     Instance = context.Request.Path,
+        //     Extensions = { ["errors"] = errors }
+        // };
 
-        await context.Response.WriteAsJsonAsync(problemDetails);
+        var Response = Result.Failure("Validation Failed", errors);
+
+        await context.Response.WriteAsJsonAsync(Response);
     }
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception e)
@@ -70,14 +73,16 @@ public class GlobalExceptionHandlingMiddleware(ILogger<GlobalExceptionHandlingMi
 
         context.Response.StatusCode = mappedException.code;
 
-        var problemDetails = new ProblemDetails
-        {
-            Title = mappedException.title,
-            Status = mappedException.code,
-            Detail = mappedException.details,
-            Instance = context.Request.Path
-        };
-        await context.Response.WriteAsJsonAsync(problemDetails);
+        // var problemDetails = new ProblemDetails
+        // {
+        //     Title = mappedException.title,
+        //     Status = mappedException.code,
+        //     Detail = mappedException.details,
+        //     Instance = context.Request.Path
+        // };
+        var response = Result.Failure(mappedException.title);
+
+        await context.Response.WriteAsJsonAsync(response);
     }
 
     private static (string title, string details, int code ) MapExceptionToMessage(Exception ex)

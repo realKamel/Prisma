@@ -5,13 +5,12 @@ namespace Prisma.Domain.Entities;
 
 public class AssignmentSubmission : BaseEntity
 {
-    public string? StudentId { get; set; }
-    public virtual Student? Student { get; set; }
+    public Guid? StudentId { get; set; }
+    public Student? Student { get; set; }
 
-    public string? AssignmentId { get; set; } 
-    public virtual Assignment? Assignment { get; set; }
+    public int? AssignmentId { get; set; }
+    public Assignment? Assignment { get; set; }
 
     public string? FileURL { get; set; }
     public DateTime SubmittedAt { get; set; }
-
 }

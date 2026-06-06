@@ -6,9 +6,9 @@ public class SectionProgress : BaseEntity
 {
     public bool IsCompleted { get; set; }
 
-    public string? StudentId { get; set; }
-    public virtual Student? Student { get; set; }
+    public Guid? StudentId { get; set; }
+    public Student? Student { get; set; }
 
-    public string? SectionId { get; set; }
-    public virtual Section? Section { get; set; }
+    public int? SectionId { get; set; }
+    public Section? Section { get; set; }
 }

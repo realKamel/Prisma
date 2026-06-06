@@ -1,4 +1,4 @@
-namespace Prisma.Infrastructure.Services.Auth;
+namespace Prisma.Infrastructure.Services.Identity;
 
 public class JwtSettings
 {

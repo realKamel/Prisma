@@ -11,7 +11,7 @@ public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Degree)
-            .HasPrecision(18, 2);
+            .HasPrecision(8, 2);
 
         builder.HasOne(x => x.Student)
             .WithMany(x => x.QuizAttempts)

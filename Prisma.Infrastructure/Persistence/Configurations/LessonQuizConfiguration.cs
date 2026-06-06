@@ -16,7 +16,7 @@ public class LessonQuizConfiguration : IEntityTypeConfiguration<LessonQuiz>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property(x => x.TotalDegree)
-            .HasPrecision(18, 2);
+            .HasPrecision(8, 2);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

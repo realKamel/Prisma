@@ -15,8 +15,6 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(x => x.ContentURL)
-            .HasMaxLength(500);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

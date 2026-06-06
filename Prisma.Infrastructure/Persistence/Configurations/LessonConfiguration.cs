@@ -11,7 +11,7 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Price)
-            .HasPrecision(18, 2);
+            .HasPrecision(12, 2);
 
         builder.HasOne(x => x.Teacher)
             .WithMany(x => x.Lessons)

@@ -11,10 +11,6 @@ public class AcademicYearConfiguration : IEntityTypeConfiguration<AcademicYear>
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Title)
-            .IsRequired()
-            .HasMaxLength(100);
-
         builder.HasMany(x => x.Students)
             .WithOne(x => x.AcademicYear)
             .HasForeignKey(x => x.AcademicYearId)
@@ -25,7 +21,7 @@ public class AcademicYearConfiguration : IEntityTypeConfiguration<AcademicYear>
 
         builder.HasMany(x => x.Lessons)
             .WithMany(x => x.AcademicYears);
-        
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

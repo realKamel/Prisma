@@ -11,7 +11,7 @@ public class QuestionLessonQuizConfiguration : IEntityTypeConfiguration<Question
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Degree)
-            .HasPrecision(18, 2);
+            .HasPrecision(8, 2);
 
         builder.HasOne(x => x.LessonQuiz)
             .WithMany(x => x.Questions)

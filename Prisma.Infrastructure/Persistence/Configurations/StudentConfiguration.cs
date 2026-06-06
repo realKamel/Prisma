@@ -17,6 +17,5 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .WithMany(x => x.Students)
             .HasForeignKey(x => x.AcademicYearId)
             .OnDelete(DeleteBehavior.Restrict);
-
     }
 }

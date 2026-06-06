@@ -1,0 +1,51 @@
+using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using Prisma.API.Common;
+using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Features.Authentication.Commands.Login;
+using Prisma.Application.Features.Authentication.Commands.Register;
+
+namespace Prisma.API.Features.Auth;
+
+public class AuthController(IMediator mediator) : ApiController
+{
+    [HttpPost("login")]
+    public async Task<ActionResult> Login([FromBody] LoginRequest dto, CancellationToken cancelToken)
+    {
+        var result = await mediator.Send(new LoginCommand(dto.Email, dto.Password), cancelToken);
+        SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
+        return Ok();
+    }
+
+    [HttpPost("register")]
+    public async Task<ActionResult> Register([FromBody] RegisterRequest dto, CancellationToken cancelToken)
+    {
+        var result = await mediator
+            .Send(new RegisterCommand(dto.Email, dto.Password, dto.FirstName, dto.LastName),
+                cancellationToken: cancelToken);
+        SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
+        return Ok();
+    }
+
+    private void SetAuthCookies(string accessToken, string refreshToken)
+    {
+        var accessTokenOptions = new CookieOptions
+        {
+            HttpOnly = true, // JS cannot read it
+            Secure = true, // HTTPS only
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddMinutes(15)
+        };
+
+        var refreshTokenOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(7),
+            Path = "https://localhost:7109/api/v1/Auth/refresh" // TODO: goes to the refresh endpoint, nothing else
+        };
+        Response.Cookies.Append("access_token", accessToken, accessTokenOptions);
+        Response.Cookies.Append("refresh_token", refreshToken, refreshTokenOptions);
+    }
+}

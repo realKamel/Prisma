@@ -8,13 +8,6 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 {
     public void Configure(EntityTypeBuilder<Student> builder)
     {
-        builder.HasKey(x => x.Id);
-
-        builder.HasOne(x => x.User)
-            .WithMany(x => x.Students)
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(x => x.Teacher)
             .WithMany(x => x.Students)
             .HasForeignKey(x => x.TeacherId)

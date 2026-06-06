@@ -8,13 +8,6 @@ public class AdminConfiguration : IEntityTypeConfiguration<Admin>
 {
     public void Configure(EntityTypeBuilder<Admin> builder)
     {
-        builder.HasKey(x => x.Id);
-
-        builder.HasOne(x => x.User)
-            .WithMany(x => x.Admins)
-            .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

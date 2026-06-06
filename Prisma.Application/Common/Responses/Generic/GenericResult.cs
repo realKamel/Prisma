@@ -10,6 +10,6 @@ public class Result<T> : Result
     public static Result<T> Success(T data, string message = "Success", object? meta = null) =>
         new() { Succeeded = true, Data = data, Message = message, Meta = meta };
 
-    public static new Result<T> Failure(string message, List<string>? errors = null) =>
+    public static new Result<T> Failure(string message, Dictionary<string, string[]>? errors = null) =>
         new() { Succeeded = false, Message = message, Errors = errors ?? [] };
 }

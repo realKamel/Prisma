@@ -1,4 +1,4 @@
-using Prisma.Domain.Common;
+using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence.Repositories;
 
@@ -22,7 +22,7 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
         return (IRepository<TEntity>)repository;
     }
 
-    public async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    public async Task<int> SaveChangesAsync(CancellationToken ct)
     {
         return await dbContext.SaveChangesAsync(ct);
     }

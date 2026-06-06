@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Prisma.Application.Abstractions.Features.Authentication;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Infrastructure.Services.Identity;
 using Prisma.Domain.Entities;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
@@ -17,6 +18,7 @@ public static class DependenciesInjection
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration,
         IHostEnvironment environment)
     {
+        services.AddHttpContextAccessor();
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgsqlOptions =>
@@ -46,7 +48,6 @@ public static class DependenciesInjection
 
         //TODO:Implement Current User Services
         services.AddScoped<AuditInterceptor>();
-        services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUserService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
     }
 }

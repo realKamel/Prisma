@@ -80,5 +80,16 @@ public static class DependenciesInjection
 
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy("Dev", policy =>
+            {
+                policy.WithOrigins("http://localhost:4200")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            });
+        });
     }
 }

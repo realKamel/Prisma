@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities;
 
@@ -27,8 +26,11 @@ public class RegisterCommandHandler(
         {
             Email = request.Email,
             UserName = request.Email,
-            FirstName = request.FristName,
-            LastName = request.LastName
+            FirstName = request.FirstName,
+            SecondName = request.SecondName,
+            ThirdName = request.ThirdName,
+            LastName = request.LastName,
+            PhoneNumber = request.PhoneNumber,
         };
 
         var result = await userManager.CreateAsync(user, request.Password);

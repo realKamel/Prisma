@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Constants;
-using Prisma.Infrastructure.Services.Identity;
 
 namespace Prisma.Infrastructure.Services.Auth;
 

@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Security.Cryptography;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Responses;
 using Prisma.Application.Common.Responses.Generic;
@@ -16,12 +17,12 @@ public class ForgotPasswordCommandHandler(
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
-            return Result.Failure("user not found");
+            return Result.Success();
 
-        var code = Random.Shared.Next(100000, 999999).ToString();
+        var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
         user.PasswordResetCode = code;
-        user.PasswordResetCodeExpiry = DateTime.UtcNow.AddMinutes(10);
+        user.PasswordResetCodeExpiry = DateTimeOffset.Now.AddMinutes(10);
         await _userManager.UpdateAsync(user);
 
         await _emailService.SendAsync(user.Email!, "Reset Password", $"Your code is: {code}");
@@ -35,11 +36,12 @@ public class ConfirmCodeCommandHandler(
     public async Task<Result<string>> Handle(ConfirmCodeCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if(user is null) return Result<string>.Failure("user not found");
+        if (user is null) return Result<string>.Failure("Code Invalid");
         if (DateTimeOffset.Now >= user.PasswordResetCodeExpiry) return Result<string>.Failure("Code expired!");
-        if (request.Code != user.PasswordResetCode) return Result<string>.Failure("Code not matching");
+        if (request.Code != user.PasswordResetCode) return Result<string>.Failure("Code Invalid");
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-
+        user.PasswordResetCode = null;
+        user.PasswordResetCodeExpiry = null;
         return Result<string>.Success(token);
     }
 }
@@ -50,14 +52,12 @@ public class ResetPasswordCommandHandler(
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return Result.Failure("user not found");
+        if (user is null) return Result<string>.Failure("something went wrong");
 
         var result = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
         if (!result.Succeeded)
-            return Result.Failure("Operation Incomplete");
+            return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
 
-        user.PasswordResetCode = null;
-        user.PasswordResetCodeExpiry = null;
         await _userManager.UpdateAsync(user);
         return Result.Success();
     }

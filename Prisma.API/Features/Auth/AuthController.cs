@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Login;
+using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
 using Prisma.Application.Features.Authentication.Commands.Register;
 
@@ -43,8 +44,11 @@ public class AuthController(IMediator mediator) : ApiController
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(CancellationToken cancelToken)
     {
+        var result = await mediator.Send(new LogoutCommand(), cancelToken);
+
         Response.Cookies.Delete("access_token");
         Response.Cookies.Delete("refresh_token");
+
         return Ok();
     }
 

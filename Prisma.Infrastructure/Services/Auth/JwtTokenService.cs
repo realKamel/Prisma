@@ -13,12 +13,13 @@ public class JwtTokenService : IJwtTokenService
 {
     private readonly SigningCredentials _signingCredentials;
     private readonly JwtSettings _jwtSettings;
+    private readonly SymmetricSecurityKey _securityKey;
 
     public JwtTokenService(IOptions<JwtSettings> jwtSettings)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Secret));
+        _securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Secret));
         _jwtSettings = jwtSettings.Value;
-        _signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        _signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
     }
 
     public string GenerateAccessToken(Guid userId, string email, IList<string> permissions)
@@ -49,5 +50,26 @@ public class JwtTokenService : IJwtTokenService
         using var range = RandomNumberGenerator.Create();
         range.GetBytes(randomBytes);
         return Convert.ToBase64String(randomBytes);
+    }
+
+    public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+    {
+        var validationParams = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = false,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = _jwtSettings.Issuer,
+            ValidAudience = _jwtSettings.Audience,
+            IssuerSigningKey = _securityKey
+        };
+        try
+
+        {
+            return new JwtSecurityTokenHandler()
+                .ValidateToken(token, validationParams, out _);
+        }
+        catch { return null; }
     }
 }

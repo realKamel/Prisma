@@ -28,10 +28,15 @@ public class AuthController(IMediator mediator) : ApiController
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenCommand command, CancellationToken cancelToken)
+    public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
     {
+        var command = new RefreshTokenCommand(Request.Cookies["accessToken"],
+            Request.Cookies["refreshToken"]);
+
         var result = await mediator.Send(command, cancelToken);
-        SetAuthCookies(result.Data.AcessToken, result.Data.RefershToken);
+
+        SetAuthCookies(result.Data?.AccessToken, result.Data?.RefreshToken);
+
         return Ok();
     }
 

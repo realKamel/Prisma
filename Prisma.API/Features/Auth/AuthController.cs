@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Login;
+using Prisma.Application.Features.Authentication.Commands.RefreshToken;
 using Prisma.Application.Features.Authentication.Commands.Register;
 
 namespace Prisma.API.Features.Auth;
@@ -23,6 +24,22 @@ public class AuthController(IMediator mediator) : ApiController
         var result = await mediator.Send(command,
             cancellationToken: cancelToken);
         SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
+        return Ok();
+    }
+
+    [HttpPost("refresh")]
+    public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenCommand command, CancellationToken cancelToken)
+    {
+        var result = await mediator.Send(command, cancelToken);
+        SetAuthCookies(result.Data.AcessToken, result.Data.RefershToken);
+        return Ok();
+    }
+
+    [HttpPost("logout")]
+    public async Task<ActionResult> Logout(CancellationToken cancelToken)
+    {
+        Response.Cookies.Delete("access_token");
+        Response.Cookies.Delete("refresh_token");
         return Ok();
     }
 
@@ -54,12 +71,14 @@ public class AuthController(IMediator mediator) : ApiController
         var result = await mediator.Send(command);
         return Ok(result);
     }
+
     [HttpPost("confirm-code")]
     public async Task<ActionResult> ConfirmCode(ConfirmCodeCommand command)
     {
         var result = await mediator.Send(command);
         return Ok(result);
     }
+
     [HttpPost("reset-password")]
     public async Task<ActionResult> ResetPassword(ResetPasswordCommand command)
     {

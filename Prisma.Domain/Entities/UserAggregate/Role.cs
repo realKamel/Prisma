@@ -3,8 +3,11 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
-public class Role(string roleName) : IdentityRole<Guid>(roleName), IAuditable
+public class Role : IdentityRole<Guid>, IAuditable
 {
+    public Role() : base() { }
+    public Role(string roleName) : base(roleName) { }
+
     public string? Description { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

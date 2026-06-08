@@ -33,26 +33,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AspNetRoles",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetRoles", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Question",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: true),
+                    Title = table.Column<string>(type: "text", nullable: false),
                     QuestionType = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     Answer = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -69,18 +55,44 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "AspNetUsers",
+                name: "Roles",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
+                    Name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     FirstName = table.Column<string>(type: "text", nullable: false),
                     LastName = table.Column<string>(type: "text", nullable: false),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
+                    RefreshToken = table.Column<string>(type: "text", nullable: true),
+                    RefreshTokenExpiry = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    PasswordResetCode = table.Column<string>(type: "text", nullable: true),
+                    PasswordResetCodeExpiry = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ResetPasswordCodeAttemptCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
@@ -106,50 +118,30 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     TwoFactorEnabled = table.Column<bool>(type: "boolean", nullable: false),
                     LockoutEnd = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LockoutEnabled = table.Column<bool>(type: "boolean", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false)
+                    AccessFailedCount = table.Column<int>(type: "integer", nullable: false),
+                    TeacherLandingSettings = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.PrimaryKey("PK_Users", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AspNetUsers_AcademicYear_AcademicYearId",
+                        name: "FK_Users_AcademicYear_AcademicYearId",
                         column: x => x.AcademicYearId,
                         principalTable: "AcademicYear",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_AspNetUsers_AspNetUsers_Assistant_TeacherId",
+                        name: "FK_Users_Users_Assistant_TeacherId",
                         column: x => x.Assistant_TeacherId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_AspNetUsers_AspNetUsers_TeacherId",
+                        name: "FK_Users_Users_TeacherId",
                         column: x => x.TeacherId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AspNetRoleClaims",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ClaimType = table.Column<string>(type: "text", nullable: true),
-                    ClaimValue = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
-                        column: x => x.RoleId,
-                        principalTable: "AspNetRoles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -187,6 +179,27 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AspNetRoleClaims",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ClaimType = table.Column<string>(type: "text", nullable: true),
+                    ClaimValue = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetRoleClaims_Roles_RoleId",
+                        column: x => x.RoleId,
+                        principalTable: "Roles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AcademicYearTeacher",
                 columns: table => new
                 {
@@ -203,9 +216,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AcademicYearTeacher_AspNetUsers_TeachersId",
+                        name: "FK_AcademicYearTeacher_Users_TeachersId",
                         column: x => x.TeachersId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -224,9 +237,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                        name: "FK_AspNetUserClaims_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -244,9 +257,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
                     table.ForeignKey(
-                        name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                        name: "FK_AspNetUserLogins_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -262,15 +275,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
                     table.ForeignKey(
-                        name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                        name: "FK_AspNetUserRoles_Roles_RoleId",
                         column: x => x.RoleId,
-                        principalTable: "AspNetRoles",
+                        principalTable: "Roles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                        name: "FK_AspNetUserRoles_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -288,9 +301,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
                     table.ForeignKey(
-                        name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                        name: "FK_AspNetUserTokens_Users_UserId",
                         column: x => x.UserId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -319,9 +332,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Lesson", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Lesson_AspNetUsers_TeacherId",
+                        name: "FK_Lesson_Users_TeacherId",
                         column: x => x.TeacherId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -347,9 +360,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Report", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Report_AspNetUsers_StudentId",
+                        name: "FK_Report_Users_StudentId",
                         column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -407,48 +420,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Code",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    CodeValue = table.Column<string>(type: "text", nullable: true),
-                    IsUsed = table.Column<bool>(type: "boolean", nullable: false),
-                    UsedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Code", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Code_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Code_Lesson_LessonId",
-                        column: x => x.LessonId,
-                        principalTable: "Lesson",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Enrollment",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EnrollmentMethod = table.Column<string>(type: "text", nullable: true),
+                    EnrollmentMethod = table.Column<int>(type: "integer", nullable: true),
                     ExDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: false),
                     LessonId = table.Column<int>(type: "integer", nullable: false),
@@ -464,17 +441,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Enrollment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Enrollment_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_Enrollment_Lesson_LessonId",
                         column: x => x.LessonId,
                         principalTable: "Lesson",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Enrollment_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -485,7 +462,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Title = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
-                    TimeByMinutes = table.Column<int>(type: "integer", nullable: false),
+                    TimeInMinutes = table.Column<TimeSpan>(type: "interval", nullable: false),
                     TotalDegree = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false),
                     LessonId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -513,12 +490,16 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Amount = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
-                    Method = table.Column<string>(type: "text", nullable: true),
-                    PaidAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<int>(type: "integer", nullable: false),
-                    TransactionID = table.Column<string>(type: "text", nullable: true),
+                    LessonId = table.Column<int>(type: "integer", nullable: true),
+                    Discriminator = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
+                    CodeValue = table.Column<string>(type: "text", nullable: true),
+                    UsedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UsedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsUsed = table.Column<bool>(type: "boolean", nullable: true),
+                    PaidAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    TransactionId = table.Column<string>(type: "text", nullable: true),
+                    Amount = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -531,17 +512,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_Payment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Payment_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_Payment_Lesson_LessonId",
                         column: x => x.LessonId,
                         principalTable: "Lesson",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Payment_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -594,17 +575,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AssignmentSubmission", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AssignmentSubmission_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_AssignmentSubmission_Assignment_AssignmentId",
                         column: x => x.AssignmentId,
                         principalTable: "Assignment",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AssignmentSubmission_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -665,15 +646,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_QuizAttempt", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_QuizAttempt_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_QuizAttempt_LessonQuiz_QuizId",
                         column: x => x.QuizId,
                         principalTable: "LessonQuiz",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuizAttempt_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -699,14 +680,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_SectionProgress", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SectionProgress_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
                         name: "FK_SectionProgress_Section_SectionId",
                         column: x => x.SectionId,
                         principalTable: "Section",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_SectionProgress_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
                         principalColumn: "Id");
                 });
 
@@ -735,12 +716,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_AttemptAnswer", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_AttemptAnswer_AspNetUsers_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
                         name: "FK_AttemptAnswer_Choice_ChoiceId",
                         column: x => x.ChoiceId,
                         principalTable: "Choice",
@@ -758,6 +733,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         principalTable: "QuizAttempt",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AttemptAnswer_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -776,12 +757,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "RoleId");
 
             migrationBuilder.CreateIndex(
-                name: "RoleNameIndex",
-                table: "AspNetRoles",
-                column: "NormalizedName",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
                 table: "AspNetUserClaims",
                 column: "UserId");
@@ -795,32 +770,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "IX_AspNetUserRoles_RoleId",
                 table: "AspNetUserRoles",
                 column: "RoleId");
-
-            migrationBuilder.CreateIndex(
-                name: "EmailIndex",
-                table: "AspNetUsers",
-                column: "NormalizedEmail");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_AcademicYearId",
-                table: "AspNetUsers",
-                column: "AcademicYearId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_Assistant_TeacherId",
-                table: "AspNetUsers",
-                column: "Assistant_TeacherId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_AspNetUsers_TeacherId",
-                table: "AspNetUsers",
-                column: "TeacherId");
-
-            migrationBuilder.CreateIndex(
-                name: "UserNameIndex",
-                table: "AspNetUsers",
-                column: "NormalizedUserName",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Assignment_LessonId",
@@ -866,16 +815,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "IX_Choice_QuestionId",
                 table: "Choice",
                 column: "QuestionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Code_LessonId",
-                table: "Code",
-                column: "LessonId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Code_StudentId",
-                table: "Code",
-                column: "StudentId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Enrollment_LessonId",
@@ -933,6 +872,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
+                name: "RoleNameIndex",
+                table: "Roles",
+                column: "NormalizedName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Section_LessonId",
                 table: "Section",
                 column: "LessonId");
@@ -946,6 +891,32 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "IX_SectionProgress_StudentId",
                 table: "SectionProgress",
                 column: "StudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "EmailIndex",
+                table: "Users",
+                column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_AcademicYearId",
+                table: "Users",
+                column: "AcademicYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Assistant_TeacherId",
+                table: "Users",
+                column: "Assistant_TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_TeacherId",
+                table: "Users",
+                column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "UserNameIndex",
+                table: "Users",
+                column: "NormalizedUserName",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -979,9 +950,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "AttemptAnswer");
 
             migrationBuilder.DropTable(
-                name: "Code");
-
-            migrationBuilder.DropTable(
                 name: "Enrollment");
 
             migrationBuilder.DropTable(
@@ -997,7 +965,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "SectionProgress");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "Roles");
 
             migrationBuilder.DropTable(
                 name: "Assignment");
@@ -1021,7 +989,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "Lesson");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "AcademicYear");

@@ -7,6 +7,7 @@ using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
@@ -63,8 +64,7 @@ public static class DependenciesInjection
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 }
             })
-            .AddRoles<IdentityRole<Guid>>()
-            .AddRoleManager<RoleManager<IdentityRole<Guid>>>()
+            .AddRoles<Role>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 
@@ -86,9 +86,9 @@ public static class DependenciesInjection
             options.AddPolicy("Dev", policy =>
             {
                 policy.WithOrigins("http://localhost:4200")
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials();
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
     }

@@ -20,4 +20,11 @@ public static class AppClaims
         public const string CanManageUsers = "CanManageUsers";
         public const string CanSubmitAssignment = "CanSubmitAssignment";
     }
+    
+    public static class Roles {
+        public const string Student = "Student";
+        public const string Admin = "Admin";
+        public const string Teacher = "Teacher";
+        public const string Assistant = "Assistant";
+    }
 }

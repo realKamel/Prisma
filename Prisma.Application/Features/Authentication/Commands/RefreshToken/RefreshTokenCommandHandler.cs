@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Entities;
 
 namespace Prisma.Application.Features.Authentication.Commands.RefreshToken;
 

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.EnrollmentAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 

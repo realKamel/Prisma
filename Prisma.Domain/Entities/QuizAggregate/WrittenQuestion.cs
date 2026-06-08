@@ -1,4 +1,4 @@
-namespace Prisma.Domain.Entities;
+namespace Prisma.Domain.Entities.QuizAggregate;
 
 public class WrittenQuestion : Question
 {

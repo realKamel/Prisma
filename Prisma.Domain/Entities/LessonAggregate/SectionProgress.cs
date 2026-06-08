@@ -1,7 +1,7 @@
 using Prisma.Domain.Common;
-using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Domain.Entities;
+namespace Prisma.Domain.Entities.LessonAggregate;
 
 public class SectionProgress : BaseEntity
 {

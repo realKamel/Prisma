@@ -1,14 +1,15 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Domain.Entities;
+namespace Prisma.Domain.Entities.QuizAggregate;
 
 public class QuizAttempt : BaseEntity
 {
     public int QuizId { get; set; }
-    public LessonQuiz? Quiz { get; set; }
+    public LessonQuiz Quiz { get; set; }
 
     public Guid StudentId { get; set; }
-    public Student? Student { get; set; }
+    public Student Student { get; set; }
 
     public decimal Degree { get; set; }
 

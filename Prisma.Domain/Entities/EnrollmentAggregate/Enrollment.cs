@@ -1,10 +1,13 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 
-namespace Prisma.Domain.Entities;
+namespace Prisma.Domain.Entities.EnrollmentAggregate;
 
 public class Enrollment : BaseEntity
 {
-    public string? EnrollmentMethod { get; set; }
+    public EnrollmentMethod? EnrollmentMethod { get; set; }
     public DateTimeOffset? ExDate { get; set; }
 
     public Guid StudentId { get; set; }

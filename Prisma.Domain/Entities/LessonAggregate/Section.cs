@@ -1,8 +1,6 @@
-using System.Collections.Generic;
 using Prisma.Domain.Common;
-using Prisma.Domain.Entities;
 
-namespace Prisma.Domain.Entities;
+namespace Prisma.Domain.Entities.LessonAggregate;
 
 public class Section : BaseEntity
 {
@@ -10,7 +8,7 @@ public class Section : BaseEntity
     public string? ContentURL { get; set; }
 
     public int LessonId { get; set; }
-    public Lesson? Lesson { get; set; }
+    public Lesson Lesson { get; set; }
 
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();
 }

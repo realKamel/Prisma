@@ -6,6 +6,7 @@ using Prisma.Application;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure;
 using Prisma.Infrastructure.Services.Auth;
+using Prisma.Infrastructure.Services.Identity;
 using Serilog;
 
 namespace Prisma.API.Extensions;
@@ -94,5 +95,17 @@ public static class WebAppHelper
             .AddPolicy(AppClaims.Policies.CanManageCourses, policy =>
                 policy.RequireClaim(AppClaims.PermissionsClaim,
                     AppClaims.Permissions.ManageCourses));
+    }
+
+    public static async Task UseDataSeedingAsync(this WebApplication app)
+    {
+        if (app.Environment.IsDevelopment())
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider.GetRequiredService<IIdentitySeeder>();
+                await services.SeedIdentityAsync();
+            }
+        }
     }
 }

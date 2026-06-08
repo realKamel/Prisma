@@ -20,11 +20,12 @@ public class AuthController(IMediator mediator) : ApiController
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult> Register([FromBody] RegisterCommand command, CancellationToken cancelToken)
+    public async Task<ActionResult> Register([FromBody] RegisterDto dto, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(command,
+        var result = await mediator.Send(
+            new RegisterCommand(dto.firstName,dto.secondName,dto.thirdName,dto.lastName,dto.mobile,
+            dto.email,dto.password,dto.confirmPassword,dto.grade,dto.parentMobile),
             cancellationToken: cancelToken);
-        SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
         return Ok();
     }
 

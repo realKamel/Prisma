@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 

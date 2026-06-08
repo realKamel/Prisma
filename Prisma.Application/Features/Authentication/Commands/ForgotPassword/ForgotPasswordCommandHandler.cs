@@ -2,8 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Responses;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Authentication.Commands.ForgotPassword;

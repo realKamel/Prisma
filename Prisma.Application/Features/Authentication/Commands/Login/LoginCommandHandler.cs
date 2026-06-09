@@ -42,6 +42,6 @@ public class LoginCommandHandler(
 
         await userManager.UpdateAsync(user);
 
-        return Result<LoginResponse>.Success(new LoginResponse(accessToken, refreshToken, roles));
+        return Result<LoginResponse>.Success(new LoginResponse(accessToken, refreshToken, user));
     }
 }

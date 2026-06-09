@@ -17,7 +17,7 @@ public class AuthController(IMediator mediator) : ApiController
         if (!result.Succeeded)
             return BadRequest(result);
         Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.AccessToken);
-        return Ok();
+        return Ok(result.Data.user);
     }
 
     [HttpPost("register")]

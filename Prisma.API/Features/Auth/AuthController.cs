@@ -56,6 +56,8 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> ForgotPassword(ForgotPasswordCommand command)
     {
         var result = await mediator.Send(command);
+        if (!result.Succeeded)
+            return BadRequest(result);
         return Ok(result);
     }
 
@@ -63,6 +65,8 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> ConfirmCode(ConfirmCodeCommand command)
     {
         var result = await mediator.Send(command);
+        if (!result.Succeeded)
+            return BadRequest(result);
         return Ok(result);
     }
 
@@ -70,6 +74,8 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> ResetPassword(ResetPasswordCommand command)
     {
         var result = await mediator.Send(command);
+        if (!result.Succeeded)
+            return BadRequest(result);
         return Ok(result);
     }
 }

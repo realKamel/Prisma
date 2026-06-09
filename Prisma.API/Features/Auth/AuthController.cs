@@ -14,7 +14,9 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(), cancelToken);
-        Response.Cookies.SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
+        if (!result.Succeeded)
+            return BadRequest(result);
+        Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.AccessToken);
         return Ok();
     }
 

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Hosting;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Infrastructure.Services.Auth;
-using Prisma.Domain.Entities;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;

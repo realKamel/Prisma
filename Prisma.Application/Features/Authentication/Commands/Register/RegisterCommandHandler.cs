@@ -1,28 +1,27 @@
-using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Prisma.Application.Abstractions.Auth;
+using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Application.Common.Responses;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
-public class RegisterCommandHandler(
-    UserManager<User> userManager,
-    IJwtTokenService jwtTokenService)
-    : IRequestHandler<RegisterCommand, Result<RegisterResponse>>
+public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHandler<RegisterCommand, Result>
 {
-    public async Task<Result<RegisterResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await userManager.FindByEmailAsync(request.Email);
+        var existingUser = await userManager.Users
+            .FirstOrDefaultAsync(u =>
+                    u.Email == request.Email || u.PhoneNumber == request.PhoneNumber,
+                cancellationToken);
 
         if (existingUser is not null)
         {
-            return Result<RegisterResponse>.Failure(existingUser.Email);
+            return Result.Failure("Registration Failed");
         }
 
-        var user = new Student
+        var user = new Student()
         {
             Email = request.Email,
             UserName = request.Email,
@@ -31,30 +30,27 @@ public class RegisterCommandHandler(
             ThirdName = request.ThirdName,
             LastName = request.LastName,
             PhoneNumber = request.PhoneNumber,
+            ParentPhoneNumber = request.ParentPhoneNumber
         };
 
         var result = await userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
-            return Result<RegisterResponse>.Failure(result.Errors.First().Description);
-
-        await userManager.AddClaimsAsync(user, new Claim[]
         {
-            new Claim(AppClaims.PermissionsClaim,
-                AppClaims.Permissions.SubmitAssignment)
-        });
+            var errors = result.Errors
+                .GroupBy(e => e.Code)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g
+                        .Select(e => e.Description)
+                        .ToArray()
+                );
 
-        var accessToken =
-            jwtTokenService.GenerateAccessToken(user.Id, user.Email, [AppClaims.Permissions.ManageStudents]);
+            return Result.Failure("Error happen", errors);
+        }
 
-        var refreshToken = jwtTokenService.GenerateRefreshToken();
+        await userManager.AddToRoleAsync(user, AppClaims.Roles.Student);
 
-        user.RefreshToken = refreshToken;
-
-        user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
-
-        await userManager.UpdateAsync(user);
-
-        return Result<RegisterResponse>.Success(new RegisterResponse(accessToken, refreshToken));
+        return Result.Success();
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Prisma.Application.Features.Authentication.Commands.Register;
 
-namespace Prisma.API.Features.Auth;
+namespace Prisma.API.Features.Auth.Requests;
 
 public record RegisterRequest(
     string FirstName,

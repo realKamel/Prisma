@@ -48,12 +48,14 @@ public class ConfirmCodeCommandHandler(
             await _userManager.UpdateAsync(user);
             return Result.Failure("Code Invalid");
         }
-        if (user.PasswordResetCodeExpiry is null || DateTimeOffset.Now >= user.PasswordResetCodeExpiry) return Result.Failure("Code Invalid");
+        if (user.PasswordResetCodeExpiry is null || DateTimeOffset.UtcNow >= user.PasswordResetCodeExpiry) return Result.Failure("Code Invalid");
         if (user.PasswordResetCode is null|| user.PasswordResetCode != request.Code) return Result.Failure("Code Invalid");
         
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiry = null;
+        //user.PasswordResetConfirmed = true;
         await _userManager.UpdateAsync(user);
+
         return Result.Success();
     }
 }

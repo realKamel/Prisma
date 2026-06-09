@@ -5,7 +5,7 @@ public class TeacherLandingSettings
     public NavLogo navLogo { get; set; }
     public Hero hero { get; set; }
     public MiniQuiz miniQuiz { get; set; }
-    public Reviews reviews { get; set; }
+    public List<Review> reviews { get; set; }
 }
 
 public class Badge
@@ -17,7 +17,7 @@ public class Badge
 public class Hero
 {
     public string tag { get; set; }
-    public string titleLine { get; set; }
+    public string title { get; set; }
     public string subtitle { get; set; }
     public string ctaPrimary { get; set; }
     public string ctaSecondary { get; set; }
@@ -55,7 +55,3 @@ public class Review
     public string role { get; set; }
 }
 
-public class Reviews
-{
-    public List<Review> review { get; set; }
-}

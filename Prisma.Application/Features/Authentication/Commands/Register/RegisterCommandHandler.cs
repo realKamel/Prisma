@@ -11,9 +11,10 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
+        var normailzedEmail = request.Email.ToUpper();
         var existingUser = await userManager.Users
             .FirstOrDefaultAsync(u =>
-                    u.Email == request.Email || u.PhoneNumber == request.PhoneNumber,
+                    u.NormalizedEmail == normailzedEmail|| u.PhoneNumber == request.PhoneNumber,
                 cancellationToken);
 
         if (existingUser is not null)

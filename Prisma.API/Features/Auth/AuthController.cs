@@ -1,44 +1,40 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
+using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
-using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
-using Prisma.Application.Features.Authentication.Commands.Register;
 
 namespace Prisma.API.Features.Auth;
 
 public class AuthController(IMediator mediator) : ApiController
 {
     [HttpPost("login")]
-    public async Task<ActionResult> Login([FromBody] LoginCommand command, CancellationToken cancelToken)
+    public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(command, cancelToken);
-        SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
+        var result = await mediator.Send(request.ToCommand(), cancelToken);
+        Response.Cookies.SetAuthCookies(result.Data?.accessToken, result.Data?.refreshToken);
         return Ok();
     }
 
     [HttpPost("register")]
-    public async Task<ActionResult> Register([FromBody] RegisterDto dto, CancellationToken cancelToken)
+    public async Task<ActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(
-            new RegisterCommand(dto.firstName,dto.secondName,dto.thirdName,dto.lastName,dto.mobile,
-            dto.email,dto.password,dto.confirmPassword,dto.grade,dto.parentMobile),
-            cancellationToken: cancelToken);
+        var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
+        if (!result.Succeeded)
+            return BadRequest(result.Errors);
         return Ok();
     }
 
     [HttpPost("refresh")]
     public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
     {
-        var command = new RefreshTokenCommand(Request.Cookies["accessToken"],
-            Request.Cookies["refreshToken"]);
-
+        var command = new
+            RefreshTokenCommand(Request.Cookies["accessToken"],
+                Request.Cookies["refreshToken"]);
         var result = await mediator.Send(command, cancelToken);
-
-        SetAuthCookies(result.Data?.AccessToken, result.Data?.RefreshToken);
-
+        Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.RefreshToken);
         return Ok();
     }
 
@@ -53,27 +49,6 @@ public class AuthController(IMediator mediator) : ApiController
         return Ok();
     }
 
-    private void SetAuthCookies(string accessToken, string refreshToken)
-    {
-        var accessTokenOptions = new CookieOptions
-        {
-            HttpOnly = true, // JS cannot read it
-            Secure = true, // HTTPS only
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddMinutes(15)
-        };
-
-        var refreshTokenOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(7),
-            Path = "https://localhost:7109/api/v1/Auth/refresh" // TODO: goes to the refresh endpoint, nothing else
-        };
-        Response.Cookies.Append("access_token", accessToken, accessTokenOptions);
-        Response.Cookies.Append("refresh_token", refreshToken, refreshTokenOptions);
-    }
 
     [HttpPost("forgot-password")]
     public async Task<ActionResult> ForgotPassword(ForgotPasswordCommand command)

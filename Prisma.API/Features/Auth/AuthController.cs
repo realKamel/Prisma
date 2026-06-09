@@ -25,8 +25,8 @@ public class AuthController(IMediator mediator) : ApiController
     {
         var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
         if (!result.Succeeded)
-            return BadRequest(result.Errors);
-        return Ok();
+            return BadRequest(result);
+        return Ok(result);
     }
 
     [HttpPost("refresh")]

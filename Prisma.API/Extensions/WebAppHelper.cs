@@ -104,7 +104,8 @@ public static class WebAppHelper
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider.GetRequiredService<IIdentitySeeder>();
-                await services.SeedIdentityAsync();
+                await services.SeedRolesAsync();
+                await services.SeedUsersAsync();
             }
         }
     }

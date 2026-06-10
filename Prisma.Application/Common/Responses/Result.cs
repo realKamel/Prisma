@@ -11,6 +11,9 @@ public class Result
     public static Result Success(string message = "Success") =>
         new() { Succeeded = true, Message = message };
 
-    public static Result Failure(string message, Dictionary<string, string[]>? errors = null) =>
-        new() { Succeeded = false, Message = message, Errors = errors ?? [] };
+    public static Result Failure(string message) =>
+        new Result { Succeeded = false, Message = message };
+
+    public static Result ValidationFailure(Dictionary<string, string[]> error) =>
+        new Result() { Succeeded = false, Message = "Validation Failed", Errors = error };
 }

@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
-using Prisma.API.Features.Auth.Responses;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
@@ -15,15 +14,15 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(), cancelToken);
-        Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.AccessToken);
-        return Ok(result.ToResponse());
+        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken);
+        return Ok(result);
     }
 
     [HttpPost("register")]
     public async Task<ActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
     {
-        await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
-        return Created();
+        var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
+        return Ok(result);
     }
 
     [HttpPost("refresh")]

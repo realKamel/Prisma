@@ -16,9 +16,9 @@ public sealed class Result<T> : Result
             Data = data,
             Message = message,
             Meta = meta,
-            ValidationErrors = null,
+            Errors = null,
         };
 
     public static new Result<T> Failure(string message) =>
-        new() { Succeeded = false, Message = message, ValidationErrors = null, Data = default! };
+        new() { Succeeded = false, Message = message, Errors = null, Data = default! };
 }

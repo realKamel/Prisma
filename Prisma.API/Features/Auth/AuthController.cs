@@ -2,23 +2,32 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
+using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
+using Prisma.Application.Features.Authentication.Commands.Register;
 
 namespace Prisma.API.Features.Auth;
 
 public class AuthController(IMediator mediator) : ApiController
 {
     [HttpPost("login")]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(), cancelToken);
         Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken);
-        return Ok(result);
+        return Ok(result.ToResponse());
     }
 
     [HttpPost("register")]
+    [ProducesResponseType<Result<RegisterCommand>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<RegisterCommand>>(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
@@ -34,7 +43,7 @@ public class AuthController(IMediator mediator) : ApiController
 
         var result = await mediator.Send(command, cancelToken);
 
-        Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.RefreshToken);
+        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken);
 
         return Ok();
     }

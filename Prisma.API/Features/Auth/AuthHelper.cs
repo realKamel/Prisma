@@ -1,3 +1,8 @@
+using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Authentication.Commands.Login;
+using Prisma.Application.Features.Authentication.Commands.Register;
+
 namespace Prisma.API.Features.Auth;
 
 public static class AuthHelper
@@ -22,5 +27,34 @@ public static class AuthHelper
         };
         responseCookies.Append("access_token", accessToken, accessTokenOptions);
         responseCookies.Append("refresh_token", refreshToken, refreshTokenOptions);
+    }
+
+    public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)
+    {
+        var cred = loginResponse.Data.Credentials;
+        return Result<LoginCredentials>.Success(cred);
+    }
+
+    public static LoginCommand ToCommand(this LoginRequest loginRequest)
+    {
+        return new LoginCommand(
+            loginRequest.Email,
+            loginRequest.Mobile,
+            loginRequest.Password);
+    }
+
+    public static RegisterCommand ToCommand(this RegisterRequest request)
+    {
+        return new RegisterCommand(
+            request.FirstName,
+            request.SecondName,
+            request.ThirdName,
+            request.LastName,
+            request.Mobile,
+            request.Email,
+            request.Password,
+            request.ConfirmPassword,
+            request.Grade,
+            request.ParentMobile);
     }
 }

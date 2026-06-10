@@ -13,21 +13,3 @@ public record RegisterRequest(
     string ConfirmPassword,
     int Grade,
     string ParentMobile);
-
-public static class RegisterRequestMapping
-{
-    public static RegisterCommand ToCommand(this RegisterRequest request)
-    {
-        return new RegisterCommand(
-            request.FirstName,
-            request.SecondName,
-            request.ThirdName,
-            request.LastName,
-            request.Mobile,
-            request.Email,
-            request.Password,
-            request.ConfirmPassword,
-            request.Grade,
-            request.ParentMobile);
-    }
-}

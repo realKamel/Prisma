@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace Prisma.Application.Common.Validators;
 
-public class EgyptianPhoneNumberValidator : AbstractValidator<string>
+public class EgyptianPhoneNumberValidator : AbstractValidator<string?>
 {
     public EgyptianPhoneNumberValidator()
     {

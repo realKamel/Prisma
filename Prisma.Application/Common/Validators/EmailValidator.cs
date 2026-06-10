@@ -2,7 +2,7 @@ using FluentValidation;
 
 namespace Prisma.Application.Common.Validators;
 
-public class EmailValidator : AbstractValidator<string>
+public class EmailValidator : AbstractValidator<string?>
 {
     public EmailValidator()
     {

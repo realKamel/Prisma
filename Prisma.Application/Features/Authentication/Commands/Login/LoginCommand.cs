@@ -5,6 +5,6 @@ namespace Prisma.Application.Features.Authentication.Commands.Login;
 
 public record LoginCommand(string? Email, string? Phone, string Password) : IRequest<Result<LoginResponse>>;
 
-public record LoginResponse(string AccessToken, string RefreshToken, LoginCredientials Credientials);
+public record LoginResponse(string AccessToken, string RefreshToken, LoginCredentials Credentials);
 
-public record LoginCredientials(Guid? Id, string? Email, string? FullName, string? Role);
+public record LoginCredentials(Guid? Id, string? Email, string? FirstName, string? SecondName, string? Role);

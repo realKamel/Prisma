@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
@@ -27,23 +28,27 @@ public class LoginCommandHandler(
             user = await userManager.FindByEmailAsync(request.Email);
         }
 
-        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
-            return Result<LoginResponse>.Failure("Invalid credentials.");
+        if (user is not Student student || !await userManager.CheckPasswordAsync(user, request.Password))
+            throw new BadRequestException("Invalid credentials");
 
-        var roles = (await userManager.GetRolesAsync(user)).ToList();
+        var roles = (await userManager.GetRolesAsync(student)).ToList();
 
-        var accessToken = jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles);
+        var accessToken = jwtTokenService.GenerateAccessToken(student.Id, student.Email, roles);
 
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
-        user.RefreshToken = refreshToken;
+        student.RefreshToken = refreshToken;
 
-        user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
+        student.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
 
-        await userManager.UpdateAsync(user);
+        await userManager.UpdateAsync(student);
 
         return Result<LoginResponse>.Success(
             new LoginResponse(accessToken, refreshToken,
-            new LoginCredientials(user.Id, user.Email, user.FirstName + ' ' + user.LastName, string.Join(' ', roles))));
+                new(student.Id,
+                    student.Email,
+                    student.FirstName,
+                    student.SecondName,
+                    roles[0])));
     }
 }

@@ -9,8 +9,19 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         RuleFor(x => x)
             .Must(HaveEmailOrPhone)
-            .WithName(nameof(LoginCommand.Phone))
             .WithMessage("Either Email or Phone must be provided.");
+
+        When(x => !string.IsNullOrWhiteSpace(x.Email), () =>
+        {
+            RuleFor(x => x.Email)
+                .SetValidator(new EmailValidator());
+        });
+
+        When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
+        {
+            RuleFor(x => x.Phone)
+                .SetValidator(new EgyptianPhoneNumberValidator());
+        });
 
         RuleFor(x => x.Password)
             .SetValidator(new PasswordValidator());

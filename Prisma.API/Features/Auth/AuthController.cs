@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
+using Prisma.API.Features.Auth.Responses;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
@@ -14,19 +15,15 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(), cancelToken);
-        if (!result.Succeeded)
-            return BadRequest(result);
         Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.AccessToken);
-        return Ok(result);
+        return Ok(result.ToResponse());
     }
 
     [HttpPost("register")]
     public async Task<ActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
-        if (!result.Succeeded)
-            return BadRequest(result);
-        return Ok(result);
+        await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
+        return Created();
     }
 
     [HttpPost("refresh")]
@@ -35,15 +32,18 @@ public class AuthController(IMediator mediator) : ApiController
         var command = new
             RefreshTokenCommand(Request.Cookies["accessToken"],
                 Request.Cookies["refreshToken"]);
+
         var result = await mediator.Send(command, cancelToken);
+
         Response.Cookies.SetAuthCookies(result.Data?.AccessToken, result.Data?.RefreshToken);
+
         return Ok();
     }
 
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(CancellationToken cancelToken)
     {
-        var result = await mediator.Send(new LogoutCommand(), cancelToken);
+        await mediator.Send(new LogoutCommand(), cancelToken);
 
         Response.Cookies.Delete("access_token");
         Response.Cookies.Delete("refresh_token");

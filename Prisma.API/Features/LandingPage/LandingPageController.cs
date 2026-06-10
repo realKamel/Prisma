@@ -19,10 +19,10 @@ using Microsoft.AspNetCore.Mvc;
             _mediator = mediator;
         }
 
-        [HttpGet("export/{teacherId}")]
-        public async Task<IActionResult> ExportLandingPage( Guid teacherId , CancellationToken cancellationToken )
+        [HttpGet("export/{email}")]
+        public async Task<IActionResult> ExportLandingPage( string email , CancellationToken cancellationToken )
         {
-            var query = new ExportLandingPageQuery(teacherId);
+            var query = new ExportLandingPageQuery(email);
 
             var result = await _mediator.Send(query, cancellationToken);
             if (!result.Succeeded)

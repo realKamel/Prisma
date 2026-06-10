@@ -19,7 +19,7 @@ public class ExportLandingPageQueryHandler(UserManager<User> _userManager)
         var teacher = await _userManager.Users
             .OfType<Teacher>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == request.TeacherId, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email == request.email, cancellationToken);
 
         if (teacher == null)
         {

@@ -7,9 +7,6 @@ namespace Prisma.Domain.Entities.UserAggregate;
 
 public class Student : User
 {
-    public string SecondName { get; set; }
-    public string ThirdName { get; set; }
-
     public int StreakDays { get; set; }
 
     public string? ParentPhoneNumber { get; set; }

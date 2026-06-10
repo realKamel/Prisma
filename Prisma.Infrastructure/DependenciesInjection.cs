@@ -12,7 +12,7 @@ using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
 using Prisma.Infrastructure.Services.EmailService;
-using Prisma.Infrastructure.Services.Identity;
+using Prisma.Infrastructure.Services.IdentitySeeding;
 
 namespace Prisma.Infrastructure;
 

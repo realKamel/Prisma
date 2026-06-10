@@ -61,29 +61,26 @@ public class AuthController(IMediator mediator) : ApiController
 
 
     [HttpPost("forgot-password")]
-    public async Task<ActionResult> ForgotPassword(ForgotPasswordCommand command)
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command)
     {
         var result = await mediator.Send(command);
-        if (!result.Succeeded)
-            return BadRequest(result);
+  
         return Ok(result);
     }
 
     [HttpPost("confirm-code")]
-    public async Task<ActionResult> ConfirmCode(ConfirmCodeCommand command)
+    public async Task<ActionResult> ConfirmCode([FromBody] ConfirmCodeCommand command)
     {
         var result = await mediator.Send(command);
-        if (!result.Succeeded)
-            return BadRequest(result);
+
         return Ok(result);
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult> ResetPassword(ResetPasswordCommand command)
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
     {
         var result = await mediator.Send(command);
-        if (!result.Succeeded)
-            return BadRequest(result);
+
         return Ok(result);
     }
 }

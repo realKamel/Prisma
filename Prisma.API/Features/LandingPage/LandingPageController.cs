@@ -20,13 +20,12 @@ using Microsoft.AspNetCore.Mvc;
         }
 
         [HttpGet("export/{email}")]
-        public async Task<IActionResult> ExportLandingPage( string email , CancellationToken cancellationToken )
+        public async Task<IActionResult> ExportLandingPage(string email , CancellationToken cancellationToken )
         {
             var query = new ExportLandingPageQuery(email);
 
             var result = await _mediator.Send(query, cancellationToken);
-            if (!result.Succeeded)
-                return BadRequest(result);
+
             return Ok(result);
         }
     }

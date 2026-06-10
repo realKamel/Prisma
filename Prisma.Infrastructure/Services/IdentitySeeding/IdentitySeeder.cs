@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -78,6 +79,37 @@ public class IdentitySeeder(
             Email = "ahmed@prisma.com"
         };
 
+        try
+        {
+            teacher.TeacherLandingSettings = await ReadJsonFileAsync();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "An error occured while seeding from json file");
+            throw;
+        }
+
         await userManager.CreateAsync(teacher, "AhmedP@ssword");
+    }
+
+    private async Task<TeacherLandingSettings?> ReadJsonFileAsync(CancellationToken ct = default)
+    {
+        var seedPath = Path.Combine(
+            AppContext.BaseDirectory, "SeedData", "TeacherSettingDataSeed.json");
+
+        Console.WriteLine(seedPath);
+
+        if (!File.Exists(seedPath))
+        {
+            logger.LogWarning("Seed file not found: {Path}", seedPath);
+            return null;
+        }
+
+        var json = await File.ReadAllTextAsync(seedPath, ct);
+
+        var entities = JsonSerializer.Deserialize<TeacherLandingSettings>(json,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+        return entities;
     }
 }

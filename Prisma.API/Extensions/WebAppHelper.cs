@@ -6,7 +6,7 @@ using Prisma.Application;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure;
 using Prisma.Infrastructure.Services.Auth;
-using Prisma.Infrastructure.Services.Identity;
+using Prisma.Infrastructure.Services.IdentitySeeding;
 using Serilog;
 
 namespace Prisma.API.Extensions;

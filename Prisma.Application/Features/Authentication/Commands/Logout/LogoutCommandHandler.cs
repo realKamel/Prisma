@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Exceptions;
+
 
 namespace Prisma.Application.Features.Authentication.Commands.Logout;
 
@@ -15,14 +17,14 @@ public class LogoutCommandHandler(ICurrentUserService currentUserService, UserMa
 
         if (email is null)
         {
-            return Result.Failure("Something went wrong");
+            throw new BadRequestException("Something went wrong");
         }
 
         var user = await userManager.FindByEmailAsync(email);
 
         if (user is null)
         {
-            return Result.Failure("Something went wrong");
+            throw new BadRequestException("Something went wrong");
         }
 
         user.RefreshToken = null;

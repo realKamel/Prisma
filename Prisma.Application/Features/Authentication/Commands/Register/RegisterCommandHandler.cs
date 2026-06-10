@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Application.Common.Responses;
+using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
@@ -14,12 +15,12 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
         var normailzedEmail = request.Email.ToUpper();
         var existingUser = await userManager.Users
             .FirstOrDefaultAsync(u =>
-                    u.NormalizedEmail == normailzedEmail|| u.PhoneNumber == request.PhoneNumber,
+                    u.NormalizedEmail == normailzedEmail || u.PhoneNumber == request.PhoneNumber,
                 cancellationToken);
 
         if (existingUser is not null)
         {
-            return Result.Failure("Registration Failed");
+            throw new BadRequestException("Registration Failed");
         }
 
         var user = new Student()
@@ -47,11 +48,11 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
                         .ToArray()
                 );
 
-            return Result.Failure("Error happen", errors);
+            throw new BadRequestException("Error happen. Try again later.");
         }
 
         await userManager.AddToRoleAsync(user, AppClaims.Roles.Student);
 
-        return Result.Success();
+        return Result.Success("Registered successfully");
     }
 }

@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Responses;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Authentication.Commands.ForgotPassword;
@@ -37,7 +38,7 @@ public class ConfirmCodeCommandHandler(
     public async Task<Result> Handle(ConfirmCodeCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return Result.Failure("Code Invalid");
+        if (user is null) throw new BadRequestException("Code Invalid");
         user.ResetPasswordCodeAttemptCount++;
         await _userManager.UpdateAsync(user);
 
@@ -46,13 +47,13 @@ public class ConfirmCodeCommandHandler(
             user.PasswordResetCode = null;
             user.PasswordResetCodeExpiry = null;
             await _userManager.UpdateAsync(user);
-            return Result.Failure("Code Invalid");
+            throw new BadRequestException("Code Invalid");
         }
 
         if (user.PasswordResetCodeExpiry is null || DateTimeOffset.UtcNow >= user.PasswordResetCodeExpiry)
-            return Result.Failure("Code Invalid");
+            throw new BadRequestException("Code Invalid");
         if (user.PasswordResetCode is null || user.PasswordResetCode != request.Code)
-            return Result.Failure("Code Invalid");
+            throw new BadRequestException("Code Invalid");
 
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiry = null;
@@ -70,19 +71,19 @@ public class ResetPasswordCommandHandler(
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return Result.Failure("something went wrong");
+        if (user is null) throw new BadRequestException("something went wrong");
 
-        if (!user.PasswordResetConfirmed) return Result.Failure("something went wrong");
+        if (!user.PasswordResetConfirmed) throw new BadRequestException("something went wrong");
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
         if (!result.Succeeded)
-            return Result.Failure(string.Join(", ", result.Errors.Select(e => e.Description)));
+            throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
 
         user.PasswordResetConfirmed = false;
-        
+
         await _userManager.UpdateAsync(user);
-        
+
         return Result.Success();
     }
 }

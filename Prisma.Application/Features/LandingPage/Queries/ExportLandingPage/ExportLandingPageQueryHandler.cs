@@ -8,13 +8,15 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.LandingPage.Queries.ExportLandingPage;
 
 public class ExportLandingPageQueryHandler(UserManager<User> _userManager)
     : IRequestHandler<ExportLandingPageQuery, Result<TeacherLandingSettings>>
 {
-    public async Task<Result<TeacherLandingSettings>> Handle(ExportLandingPageQuery request, CancellationToken cancellationToken)
+    public async Task<Result<TeacherLandingSettings>> Handle(ExportLandingPageQuery request,
+        CancellationToken cancellationToken)
     {
         var teacher = await _userManager.Users
             .OfType<Teacher>()
@@ -23,7 +25,7 @@ public class ExportLandingPageQueryHandler(UserManager<User> _userManager)
 
         if (teacher == null)
         {
-            return Result<TeacherLandingSettings>.Failure("Teacher not found");
+            throw new NotFoundException("Teacher", request.email);
         }
 
         return Result<TeacherLandingSettings>.Success(teacher.TeacherLandingSettings);

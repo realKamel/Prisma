@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.RefreshToken;
 
@@ -18,7 +19,7 @@ public class RefreshTokenCommandHandler(
         var principal = jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
 
         if (principal is null)
-            return Result<AuthResponse>.Failure("Invalid access token.");
+            throw new BadRequestException("Invalid access token.");
 
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
                      principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -28,7 +29,7 @@ public class RefreshTokenCommandHandler(
         if (user is null
             || user.RefreshToken != request.RefreshToken
             || user.RefreshTokenExpiry < DateTimeOffset.UtcNow)
-            return Result<AuthResponse>.Failure("Invalid or expired refresh token.");
+            throw new BadRequestException("Invalid or expired refresh token.");
 
         var claims = await userManager.GetClaimsAsync(user);
         var userClaims = claims.Select(claim => claim.Value).ToList();

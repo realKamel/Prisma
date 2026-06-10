@@ -1,6 +1,7 @@
-namespace Prisma.Infrastructure.Services.Identity;
+namespace Prisma.Infrastructure.Services.IdentitySeeding;
 
 public interface IIdentitySeeder
 {
-    Task SeedIdentityAsync();
+    Task SeedRolesAsync();
+    Task SeedUsersAsync();
 }

@@ -1,5 +1,5 @@
 namespace Prisma.Domain.Exceptions;
 
-public abstract class AppBaseException(string message) : Exception(message)
+public abstract class AppBaseException(string message, string ErrorCode) : Exception(message)
 {
 }

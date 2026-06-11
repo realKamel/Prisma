@@ -28,27 +28,27 @@ public class LoginCommandHandler(
             user = await userManager.FindByEmailAsync(request.Email);
         }
 
-        if (user is not Student student || !await userManager.CheckPasswordAsync(user, request.Password))
+        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
             throw new BadRequestException("Invalid credentials");
 
-        var roles = (await userManager.GetRolesAsync(student)).ToList();
+        var roles = (await userManager.GetRolesAsync(user)).ToList();
 
-        var accessToken = jwtTokenService.GenerateAccessToken(student.Id, student.Email, roles);
+        var accessToken = jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles);
 
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
-        student.RefreshToken = refreshToken;
+        user.RefreshToken = refreshToken;
 
-        student.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
+        user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
 
-        await userManager.UpdateAsync(student);
+        await userManager.UpdateAsync(user);
 
         return Result<LoginResponse>.Success(
             new LoginResponse(accessToken, refreshToken,
-                new(student.Id,
-                    student.Email,
-                    student.FirstName,
-                    student.SecondName,
+                new(user.Id,
+                    user.Email,
+                    user.FirstName,
+                    user.SecondName,
                     roles[0])));
     }
 }

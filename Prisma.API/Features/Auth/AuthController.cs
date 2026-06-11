@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Logout;
@@ -82,5 +83,18 @@ public class AuthController(IMediator mediator) : ApiController
         var result = await mediator.Send(command);
 
         return Ok(result);
+    }
+    [HttpPost("email-verify")]
+    public async Task<ActionResult> EmailVerify([FromBody] EmailVerificationRequestCommand command)
+    {
+        var result = await mediator.Send(command);
+
+        return Ok(result);
+    }
+    [HttpGet("confirm-email")]
+    public async Task<ActionResult> ConfirmEmail([FromQuery] ConfirmEmailCommand command)
+    {
+        var result = await mediator.Send(command);
+        return Redirect("http://localhost:4200/email-confirmed");
     }
 }

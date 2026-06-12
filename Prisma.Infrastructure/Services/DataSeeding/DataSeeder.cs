@@ -146,12 +146,13 @@ public class DataSeeder(
             await SeedData<AssignmentSubmission>(root, options);
             await SeedData<RedeemCode>(root, options);
             await SeedData<Enrollment>(root, options);
+            await SeedData<Payment>(root, options);
 
             await dbContext.SaveChangesAsync();
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            logger.LogError("An error occured while seeding from json file {e}", e.Message);
             throw;
         }
     }
@@ -179,7 +180,7 @@ public class DataSeeder(
 
     private async Task SeedData<TEntity>(JsonElement root, JsonSerializerOptions options) where TEntity : class
     {
-        Console.WriteLine(typeof(TEntity).Name);
+        logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
         if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
             !await dbContext.Set<TEntity>().AnyAsync())
         {
@@ -193,7 +194,7 @@ public class DataSeeder(
     {
         var settings = new JsonSerializerSettings();
         settings.Converters.Add(new QuestionConverter());
-        Console.WriteLine(nameof(Question));
+        logger.LogInformation("Seeding Check: {name}", nameof(Question));
         if (root.TryGetProperty(nameof(Question), out JsonElement output) &&
             !await dbContext.Set<Question>().AnyAsync())
         {
@@ -207,7 +208,7 @@ public class DataSeeder(
     {
         var settings = new JsonSerializerSettings();
         settings.Converters.Add(new UserHierarchyConverter());
-        Console.WriteLine(nameof(User));
+        logger.LogInformation("Seeding Check: {name}", nameof(User));
         if (root.TryGetProperty(nameof(User), out JsonElement output) &&
             !await dbContext.Set<User>().AnyAsync())
         {

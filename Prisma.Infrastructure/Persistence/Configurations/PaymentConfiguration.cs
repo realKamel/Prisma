@@ -20,6 +20,9 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(p => p.Amount)
+            .HasPrecision(12, 2);
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

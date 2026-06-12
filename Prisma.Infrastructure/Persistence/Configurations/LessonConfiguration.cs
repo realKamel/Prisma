@@ -13,10 +13,9 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         builder.Property(x => x.Price)
             .HasPrecision(12, 2);
 
-        builder.HasOne(x => x.Teacher)
-            .WithMany(x => x.Lessons)
-            .HasForeignKey(x => x.TeacherId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(l => l.RedeemCodes)
+            .WithOne(r => r.Lesson)
+            .HasForeignKey(r => r.LessonId);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

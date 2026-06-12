@@ -13,8 +13,8 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260610000042_AddingNameColumnForUser")]
-    partial class AddingNameColumnForUser
+    [Migration("20260612203526_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -179,16 +179,34 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("EnrollmentMethod")
+                    b.Property<DateTimeOffset>("EnrolledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("EnrollmentMethod")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset?>("ExDate")
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("RedeemCodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("RedeemCodeId1")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("StudentId")
@@ -204,6 +222,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("RedeemCodeId1");
+
                     b.HasIndex("StudentId");
 
                     b.ToTable("Enrollment");
@@ -218,6 +240,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -423,7 +446,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
 
-                    b.Property<Guid>("TeacherId")
+                    b.Property<Guid?>("TeacherId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Title")
@@ -514,10 +537,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("SectionId")
+                    b.Property<int>("SectionId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("StudentId")
+                    b.Property<Guid>("StudentId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -543,11 +566,19 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -555,15 +586,24 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("character varying(13)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int?>("LessonId")
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProviderRef")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("StudentId")
@@ -582,10 +622,64 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("Payment");
+                });
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("Payment");
+            modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
 
-                    b.UseTphMappingStrategy();
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxUses")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("RedeemedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("RedeemedByStudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("RedeemCode");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -881,8 +975,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<Guid>("StudentId")
                         .HasColumnType("uuid");
@@ -1089,42 +1183,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.CodePayment", b =>
-                {
-                    b.HasBaseType("Prisma.Domain.Entities.PaymentAggregate.Payment");
-
-                    b.Property<string>("CodeValue")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UsedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasDiscriminator().HasValue("CodePayment");
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.OnlinePayment", b =>
-                {
-                    b.HasBaseType("Prisma.Domain.Entities.PaymentAggregate.Payment");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<DateTimeOffset?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TransactionId")
-                        .HasColumnType("text");
-
-                    b.HasDiscriminator().HasValue("OnlinePayment");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.MCQQuestion", b =>
                 {
                     b.HasBaseType("Prisma.Domain.Entities.QuizAggregate.Question");
@@ -1153,7 +1211,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     b.HasBaseType("Prisma.Domain.Entities.UserAggregate.User");
 
-                    b.Property<Guid>("TeacherId")
+                    b.Property<Guid?>("TeacherId")
                         .HasColumnType("uuid");
 
                     b.HasIndex("TeacherId");
@@ -1200,97 +1258,95 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "TeacherLandingSettings", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings", b1 =>
                         {
-                            b1.IsRequired();
-
-                            b1.ComplexProperty(typeof(Dictionary<string, object>), "hero", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.hero#Hero", b2 =>
+                            b1.ComplexProperty(typeof(Dictionary<string, object>), "Hero", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.Hero#Hero", b2 =>
                                 {
                                     b2.IsRequired();
 
-                                    b2.Property<string>("ctaPrimary")
+                                    b2.Property<string>("CtaPrimary")
                                         .IsRequired();
 
-                                    b2.Property<string>("ctaSecondary")
+                                    b2.Property<string>("CtaSecondary")
                                         .IsRequired();
 
-                                    b2.Property<string>("subtitle")
+                                    b2.Property<string>("Subtitle")
                                         .IsRequired();
 
-                                    b2.Property<string>("tag")
+                                    b2.Property<string>("Tag")
                                         .IsRequired();
 
-                                    b2.Property<string>("teacherImage")
+                                    b2.Property<string>("TeacherImage")
                                         .IsRequired();
 
-                                    b2.Property<string>("title")
+                                    b2.Property<string>("Title")
                                         .IsRequired();
 
-                                    b2.ComplexCollection(typeof(List<Dictionary<string, object>>), "badges", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.hero#Hero.badges#Badge", b3 =>
+                                    b2.ComplexCollection(typeof(List<Dictionary<string, object>>), "Badges", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.Hero#Hero.Badges#Badge", b3 =>
                                         {
                                             b3.IsRequired();
 
-                                            b3.Property<string>("icon")
+                                            b3.Property<string>("Icon")
                                                 .IsRequired();
 
-                                            b3.Property<string>("text")
+                                            b3.Property<string>("Text")
                                                 .IsRequired();
                                         });
                                 });
 
-                            b1.ComplexProperty(typeof(Dictionary<string, object>), "miniQuiz", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.miniQuiz#MiniQuiz", b2 =>
+                            b1.ComplexProperty(typeof(Dictionary<string, object>), "MiniQuiz", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.MiniQuiz#MiniQuiz", b2 =>
                                 {
                                     b2.IsRequired();
 
-                                    b2.Property<string>("correct")
+                                    b2.Property<string>("Correct")
                                         .IsRequired();
 
-                                    b2.Property<int>("id");
+                                    b2.Property<int>("Id");
 
-                                    b2.Property<string>("question")
+                                    b2.Property<string>("Question")
                                         .IsRequired();
 
-                                    b2.ComplexCollection(typeof(List<Dictionary<string, object>>), "options", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.miniQuiz#MiniQuiz.options#Option", b3 =>
+                                    b2.ComplexCollection(typeof(List<Dictionary<string, object>>), "Options", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.MiniQuiz#MiniQuiz.Options#Option", b3 =>
                                         {
                                             b3.IsRequired();
 
-                                            b3.Property<string>("id")
+                                            b3.Property<string>("Id")
                                                 .IsRequired();
 
-                                            b3.Property<string>("label")
+                                            b3.Property<string>("Label")
                                                 .IsRequired();
                                         });
                                 });
 
-                            b1.ComplexProperty(typeof(Dictionary<string, object>), "navLogo", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.navLogo#NavLogo", b2 =>
+                            b1.ComplexProperty(typeof(Dictionary<string, object>), "NavLogo", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.NavLogo#NavLogo", b2 =>
                                 {
                                     b2.IsRequired();
 
-                                    b2.Property<string>("logoLetter")
+                                    b2.Property<string>("LogoLetter")
                                         .IsRequired();
 
-                                    b2.Property<string>("platformName")
+                                    b2.Property<string>("PlatformName")
                                         .IsRequired();
 
-                                    b2.Property<string>("teacherName")
+                                    b2.Property<string>("TeacherName")
                                         .IsRequired();
                                 });
 
-                            b1.ComplexCollection(typeof(List<Dictionary<string, object>>), "reviews", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.reviews#Review", b2 =>
+                            b1.ComplexCollection(typeof(List<Dictionary<string, object>>), "Reviews", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings.Reviews#Review", b2 =>
                                 {
                                     b2.IsRequired();
 
-                                    b2.Property<string>("avatar")
+                                    b2.Property<string>("Avatar")
                                         .IsRequired();
 
-                                    b2.Property<string>("body")
+                                    b2.Property<string>("Body")
                                         .IsRequired();
 
-                                    b2.Property<string>("name")
+                                    b2.Property<string>("Name")
                                         .IsRequired();
 
-                                    b2.Property<string>("role")
+                                    b2.Property<string>("Role")
                                         .IsRequired();
 
-                                    b2.Property<string>("stars")
+                                    b2.Property<string>("Stars")
                                         .IsRequired();
                                 });
 
@@ -1391,6 +1447,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Prisma.Domain.Entities.PaymentAggregate.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId");
+
+                    b.HasOne("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", "RedeemCode")
+                        .WithMany()
+                        .HasForeignKey("RedeemCodeId1");
+
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("Enrollments")
                         .HasForeignKey("StudentId")
@@ -1398,6 +1462,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Lesson");
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("RedeemCode");
 
                     b.Navigation("Student");
                 });
@@ -1445,13 +1513,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
                         .WithMany("Lessons")
-                        .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Teacher");
+                        .HasForeignKey("TeacherId");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -1469,11 +1533,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Section", "Section")
                         .WithMany("Progresses")
-                        .HasForeignKey("SectionId");
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("SectionProgresses")
-                        .HasForeignKey("StudentId");
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Section");
 
@@ -1485,7 +1553,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
                         .WithMany("Payments")
                         .HasForeignKey("LessonId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("Payments")
@@ -1496,6 +1565,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Lesson");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
+                        .WithMany("RedeemCodes")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -1599,13 +1679,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Assistant", b =>
                 {
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
                         .WithMany("Assistants")
-                        .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Teacher");
+                        .HasForeignKey("TeacherId");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Student", b =>
@@ -1644,6 +1720,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Payments");
 
                     b.Navigation("Quizzes");
+
+                    b.Navigation("RedeemCodes");
 
                     b.Navigation("Sections");
                 });

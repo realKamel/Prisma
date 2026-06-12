@@ -82,11 +82,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     FirstName = table.Column<string>(type: "text", nullable: false),
+                    SecondName = table.Column<string>(type: "text", nullable: true),
+                    ThirdName = table.Column<string>(type: "text", nullable: true),
                     LastName = table.Column<string>(type: "text", nullable: false),
                     IsBlocked = table.Column<bool>(type: "boolean", nullable: false),
                     RefreshToken = table.Column<string>(type: "text", nullable: true),
                     RefreshTokenExpiry = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     PasswordResetCode = table.Column<string>(type: "text", nullable: true),
+                    PasswordResetConfirmed = table.Column<bool>(type: "boolean", nullable: false),
                     PasswordResetCodeExpiry = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     ResetPasswordCodeAttemptCount = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -98,8 +101,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
                     Discriminator = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
                     Assistant_TeacherId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SecondName = table.Column<string>(type: "text", nullable: true),
-                    ThirdName = table.Column<string>(type: "text", nullable: true),
                     StreakDays = table.Column<int>(type: "integer", nullable: true),
                     ParentPhoneNumber = table.Column<string>(type: "text", nullable: true),
                     TeacherId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -134,8 +135,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         name: "FK_Users_Users_Assistant_TeacherId",
                         column: x => x.Assistant_TeacherId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Users_Users_TeacherId",
                         column: x => x.TeacherId,
@@ -319,7 +319,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsEligible = table.Column<bool>(type: "boolean", nullable: false),
-                    TeacherId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TeacherId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -335,8 +335,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         name: "FK_Lesson_Users_TeacherId",
                         column: x => x.TeacherId,
                         principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -345,7 +344,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Content = table.Column<string>(type: "text", nullable: true),
+                    Content = table.Column<string>(type: "text", nullable: false),
                     Date = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -420,41 +419,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Enrollment",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EnrollmentMethod = table.Column<int>(type: "integer", nullable: true),
-                    ExDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Enrollment", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Enrollment_Lesson_LessonId",
-                        column: x => x.LessonId,
-                        principalTable: "Lesson",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Enrollment_Users_StudentId",
-                        column: x => x.StudentId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "LessonQuiz",
                 columns: table => new
                 {
@@ -490,16 +454,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
-                    LessonId = table.Column<int>(type: "integer", nullable: true),
-                    Discriminator = table.Column<string>(type: "character varying(13)", maxLength: 13, nullable: false),
-                    CodeValue = table.Column<string>(type: "text", nullable: true),
-                    UsedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    UsedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    IsUsed = table.Column<bool>(type: "boolean", nullable: true),
+                    Provider = table.Column<string>(type: "text", nullable: false),
+                    ProviderRef = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Currency = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     PaidAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    TransactionId = table.Column<string>(type: "text", nullable: true),
-                    Amount = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: true),
+                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LessonId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -523,6 +485,38 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RedeemCode",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    LessonId = table.Column<int>(type: "integer", nullable: false),
+                    Code = table.Column<string>(type: "text", nullable: false),
+                    MaxUses = table.Column<int>(type: "integer", nullable: false),
+                    UsedCount = table.Column<int>(type: "integer", nullable: false),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    RedeemedByStudentId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RedeemedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RedeemCode", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RedeemCode_Lesson_LessonId",
+                        column: x => x.LessonId,
+                        principalTable: "Lesson",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -633,7 +627,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Degree = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false),
                     StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     SubmittedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -660,14 +654,65 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Enrollment",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ExpiryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    EnrollmentMethod = table.Column<int>(type: "integer", nullable: false),
+                    EnrolledAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LessonId = table.Column<int>(type: "integer", nullable: false),
+                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PaymentId = table.Column<int>(type: "integer", nullable: true),
+                    RedeemCodeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    RedeemCodeId1 = table.Column<int>(type: "integer", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Enrollment", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Enrollment_Lesson_LessonId",
+                        column: x => x.LessonId,
+                        principalTable: "Lesson",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Enrollment_Payment_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payment",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Enrollment_RedeemCode_RedeemCodeId1",
+                        column: x => x.RedeemCodeId1,
+                        principalTable: "RedeemCode",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Enrollment_Users_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SectionProgress",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
-                    StudentId = table.Column<Guid>(type: "uuid", nullable: true),
-                    SectionId = table.Column<int>(type: "integer", nullable: true),
+                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SectionId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -683,12 +728,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         name: "FK_SectionProgress_Section_SectionId",
                         column: x => x.SectionId,
                         principalTable: "Section",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_SectionProgress_Users_StudentId",
                         column: x => x.StudentId,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -822,6 +869,16 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "LessonId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Enrollment_PaymentId",
+                table: "Enrollment",
+                column: "PaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Enrollment_RedeemCodeId1",
+                table: "Enrollment",
+                column: "RedeemCodeId1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Enrollment_StudentId",
                 table: "Enrollment",
                 column: "StudentId");
@@ -867,6 +924,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_RedeemCode_LessonId",
+                table: "RedeemCode",
+                column: "LessonId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Report_StudentId",
                 table: "Report",
                 column: "StudentId");
@@ -906,6 +968,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "IX_Users_Assistant_TeacherId",
                 table: "Users",
                 column: "Assistant_TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_PhoneNumber",
+                table: "Users",
+                column: "PhoneNumber",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_TeacherId",
@@ -953,9 +1021,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "Enrollment");
 
             migrationBuilder.DropTable(
-                name: "Payment");
-
-            migrationBuilder.DropTable(
                 name: "QuestionLessonQuiz");
 
             migrationBuilder.DropTable(
@@ -975,6 +1040,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "QuizAttempt");
+
+            migrationBuilder.DropTable(
+                name: "Payment");
+
+            migrationBuilder.DropTable(
+                name: "RedeemCode");
 
             migrationBuilder.DropTable(
                 name: "Section");

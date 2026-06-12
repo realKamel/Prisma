@@ -2,56 +2,55 @@ namespace Prisma.Domain.Entities.UserAggregate;
 
 public class TeacherLandingSettings
 {
-    public NavLogo navLogo { get; set; }
-    public Hero hero { get; set; }
-    public MiniQuiz miniQuiz { get; set; }
-    public List<Review> reviews { get; set; }
+    public NavLogo NavLogo { get; set; }
+    public Hero Hero { get; set; }
+    public MiniQuiz MiniQuiz { get; set; }
+    public List<Review> Reviews { get; set; }
 }
 
-public class Badge
+public record Badge
 {
-    public string icon { get; set; }
-    public string text { get; set; }
+    public string Icon { get; set; }
+    public string Text { get; set; }
 }
 
-public class Hero
+public record Hero
 {
-    public string tag { get; set; }
-    public string title { get; set; }
-    public string subtitle { get; set; }
-    public string ctaPrimary { get; set; }
-    public string ctaSecondary { get; set; }
-    public string teacherImage { get; set; }
-    public List<Badge> badges { get; set; }
+    public string Tag { get; set; }
+    public string Title { get; set; }
+    public string Subtitle { get; set; }
+    public string CtaPrimary { get; set; }
+    public string CtaSecondary { get; set; }
+    public string TeacherImage { get; set; }
+    public List<Badge> Badges { get; set; }
 }
 
-public class MiniQuiz
+public record MiniQuiz
 {
-    public int id { get; set; }
-    public string question { get; set; }
-    public List<Option> options { get; set; }
-    public string correct { get; set; }
+    public int Id { get; set; }
+    public string Question { get; set; }
+    public List<Option> Options { get; set; }
+    public string Correct { get; set; }
 }
 
-public class NavLogo
+public record NavLogo
 {
-    public string teacherName { get; set; }
-    public string platformName { get; set; }
-    public string logoLetter { get; set; }
+    public string TeacherName { get; set; }
+    public string PlatformName { get; set; }
+    public string LogoLetter { get; set; }
 }
 
-public class Option
+public record Option
 {
-    public string id { get; set; }
-    public string label { get; set; }
+    public string Id { get; set; }
+    public string Label { get; set; }
 }
 
-public class Review
+public record Review
 {
-    public string stars { get; set; }
-    public string body { get; set; }
-    public string avatar { get; set; }
-    public string name { get; set; }
-    public string role { get; set; }
+    public string Stars { get; set; }
+    public string Body { get; set; }
+    public string Avatar { get; set; }
+    public string Name { get; set; }
+    public string Role { get; set; }
 }
-

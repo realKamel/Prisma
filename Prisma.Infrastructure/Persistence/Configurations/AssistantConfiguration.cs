@@ -8,9 +8,9 @@ public class AssistantConfiguration : IEntityTypeConfiguration<Assistant>
 {
     public void Configure(EntityTypeBuilder<Assistant> builder)
     {
-        builder.HasOne(x => x.Teacher)
-            .WithMany(x => x.Assistants)
-            .HasForeignKey(x => x.TeacherId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // builder.HasOne(x => x.Teacher)
+        //     .WithMany(x => x.Assistants)
+        //     .HasForeignKey(x => x.TeacherId)
+        //     .OnDelete(DeleteBehavior.Restrict);
     }
 }

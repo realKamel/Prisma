@@ -4,7 +4,7 @@ namespace Prisma.Domain.Entities.LessonAggregate;
 
 public class Section : BaseEntity
 {
-    public string Title { get; set; }
+    public string Title { get; set; } = string.Empty;
     public string? ContentURL { get; set; }
 
     public int LessonId { get; set; }

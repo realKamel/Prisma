@@ -1,5 +1,6 @@
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.QuizAggregate;
 
@@ -17,7 +18,7 @@ public class QuizAttempt : BaseEntity
 
     public DateTimeOffset? SubmittedAt { get; set; }
 
-    public string? Status { get; set; }
+    public QuizAttemptStatus Status { get; set; }
 
     public ICollection<AttemptAnswer> Answers { get; set; } = new List<AttemptAnswer>();
 }

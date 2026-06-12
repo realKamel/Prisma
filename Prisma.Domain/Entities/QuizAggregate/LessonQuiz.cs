@@ -14,6 +14,6 @@ public class LessonQuiz : BaseEntity
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
 
-    public virtual ICollection<QuestionLessonQuiz> Questions { get; set; } = new List<QuestionLessonQuiz>();
-    public virtual ICollection<QuizAttempt> Attempts { get; set; } = new List<QuizAttempt>();
+    public ICollection<QuestionLessonQuiz> Questions { get; set; } = new List<QuestionLessonQuiz>();
+    public ICollection<QuizAttempt> Attempts { get; set; } = new List<QuizAttempt>();
 }

@@ -16,10 +16,10 @@ public class Enrollment : BaseEntity
     public DateTimeOffset EnrolledAt { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
 
-    public int LessonId { get; set; }
-    public Lesson Lesson { get; set; }
+    public int? LessonId { get; set; }
+    public Lesson? Lesson { get; set; }
 
-    public Guid StudentId { get; set; }
+    public Guid? StudentId { get; set; }
     public Student? Student { get; set; }
 
     public Payment? Payment { get; set; }

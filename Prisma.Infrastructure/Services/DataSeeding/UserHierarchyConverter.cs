@@ -1,59 +1,42 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Services.DataSeeding;
 
-public class UserHierarchyConverter : JsonConverter<User>
+public class UserHierarchyConverter : JsonConverter
 {
-    public override bool CanConvert(Type typeToConvert) =>
-        typeof(User).IsAssignableFrom(typeToConvert);
+    public override bool CanConvert(Type objectType) => objectType == typeof(User);
 
-    public override User Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-        // Copy the reader to look ahead into the JSON object
-        Utf8JsonReader readerClone = reader;
+        // Load the JSON object into memory
+        var jsonObject = JObject.Load(reader);
 
-        if (readerClone.TokenType != JsonTokenType.StartObject)
+        // Look up the "userType" property from your JSON
+        var userType = jsonObject["Discriminator"]?.ToString();
+
+        // Instatitate the correct concrete class based on the value
+        User user = userType switch
         {
-            throw new JsonException("Expected StartObject token.");
-        }
-
-        string discriminator = string.Empty;
-
-        // Search for the "Discriminator" property key
-        while (readerClone.Read())
-        {
-            if (readerClone.TokenType == JsonTokenType.PropertyName)
-            {
-                string propertyName = readerClone.GetString();
-                readerClone.Read();
-
-                if (string.Equals(propertyName, "Discriminator", StringComparison.OrdinalIgnoreCase))
-                {
-                    discriminator = readerClone.GetString();
-                    break;
-                }
-            }
-            else if (readerClone.TokenType == JsonTokenType.EndObject)
-            {
-                break;
-            }
-        }
-
-        // Deserialize based on the detected discriminator string
-        return discriminator switch
-        {
-            "Teacher" => JsonSerializer.Deserialize<Teacher>(ref reader, options),
-            "Assistant" => JsonSerializer.Deserialize<Assistant>(ref reader, options),
-            "Student" => JsonSerializer.Deserialize<Student>(ref reader, options),
-            _ => JsonSerializer.Deserialize<User>(ref reader, options) // Fallback to base
+            "Teacher" => new Teacher(), // Replace with your actual concrete class name
+            "Assistant" => new Assistant(), // Example for other types
+            "Student" => new Student(),
+            "Admin" => new Admin(),
+            _ => throw new NotSupportedException($"The user type '{userType}' is not supported.")
         };
+
+        // Populate all the base and child properties (Id, Title, etc.) onto our new object
+        using (var subReader = jsonObject.CreateReader())
+        {
+            serializer.Populate(subReader, user);
+        }
+
+        return user;
     }
 
-    public override void Write(Utf8JsonWriter writer, User value, JsonSerializerOptions options)
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
-        // Serialize the runtime type directly (Teacher, Student, etc.) instead of the base abstract type
-        JsonSerializer.Serialize(writer, value, value.GetType(), options);
+        throw new NotImplementedException("Only needed if you are serializing/saving back to JSON.");
     }
 }

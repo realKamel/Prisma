@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
+using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Infrastructure.Persistence;
@@ -120,6 +122,7 @@ public class DataSeeder(
             }
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
             await using FileStream stream = File.OpenRead(seedPath);
             using JsonDocument document = await JsonDocument.ParseAsync(stream,
                 new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
@@ -130,8 +133,19 @@ public class DataSeeder(
             await SeedData<Lesson>(root, options);
             await SeedData<Section>(root, options);
             await SeedQuestionData(root);
+            await SeedUsersData(root);
+            await SeedData<Role>(root, options);
             await SeedData<Choice>(root, options);
             await SeedData<LessonQuiz>(root, options);
+            await SeedData<QuestionLessonQuiz>(root, options);
+            await SeedData<QuizAttempt>(root, options);
+            await SeedData<AttemptAnswer>(root, options);
+            await SeedData<Report>(root, options);
+            await SeedData<SectionProgress>(root, options);
+            await SeedData<Assignment>(root, options);
+            await SeedData<AssignmentSubmission>(root, options);
+            await SeedData<RedeemCode>(root, options);
+            await SeedData<Enrollment>(root, options);
 
             await dbContext.SaveChangesAsync();
         }
@@ -186,6 +200,21 @@ public class DataSeeder(
             var academicYears =
                 JsonConvert.DeserializeObject<List<Question>>(output.GetRawText(), settings);
             dbContext.Set<Question>().AddRange(academicYears ?? []);
+        }
+    }
+
+    private async Task SeedUsersData(JsonElement root)
+    {
+        var settings = new JsonSerializerSettings();
+        settings.Converters.Add(new UserHierarchyConverter());
+        Console.WriteLine(nameof(User));
+        if (root.TryGetProperty(nameof(User), out JsonElement output) &&
+            !await dbContext.Set<User>().AnyAsync())
+        {
+            var academicYears =
+                JsonConvert.DeserializeObject<List<User>>(output.GetRawText(), settings);
+            dbContext.Set<User>().AddRange(academicYears ?? []);
+            // await dbContext.SaveChangesAsync();
         }
     }
 }

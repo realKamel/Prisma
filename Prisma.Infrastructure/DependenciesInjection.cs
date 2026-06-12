@@ -11,8 +11,8 @@ using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
+using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
-using Prisma.Infrastructure.Services.IdentitySeeding;
 
 namespace Prisma.Infrastructure;
 
@@ -80,7 +80,7 @@ public static class DependenciesInjection
 
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IIdentitySeeder, IdentitySeeder>();
+        services.AddScoped<IDataSeeder, DataSeeder>();
 
         services.AddCors(options =>
         {

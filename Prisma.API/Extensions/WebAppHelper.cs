@@ -6,7 +6,7 @@ using Prisma.Application;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure;
 using Prisma.Infrastructure.Services.Auth;
-using Prisma.Infrastructure.Services.IdentitySeeding;
+using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
 
 namespace Prisma.API.Extensions;
@@ -103,7 +103,8 @@ public static class WebAppHelper
         {
             using (var scope = app.Services.CreateScope())
             {
-                var services = scope.ServiceProvider.GetRequiredService<IIdentitySeeder>();
+                var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+                await services.SeedAppDataAsync();
                 await services.SeedRolesAsync();
                 await services.SeedUsersAsync();
             }

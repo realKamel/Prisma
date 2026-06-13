@@ -8,12 +8,12 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
-namespace Prisma.Application.Features.Lessons.Commands.GetLessonDetails;
+namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
-public class GetLessonDetailsCommandHandler(IRepository<Lesson> _lessonRepository)
-    : IRequestHandler<GetLessonDetailsCommand, Result<LessonDetailsDto>>
+public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
+    : IRequestHandler<GetLessonDetailsQuery, Result<LessonDetailsDto>>
 {
-    public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery   request, CancellationToken cancellationToken)
     {
         var spec = new LessonWithDetailsSpecification(request.LessonId);
         var lesson = await _lessonRepository.GetBySpecAsync(spec, cancellationToken, tracking: false);
@@ -28,7 +28,7 @@ public class GetLessonDetailsCommandHandler(IRepository<Lesson> _lessonRepositor
 
         bool isPrerequisiteCompleted = false;
 
-        if (lesson.Prerequisite != null && request.StudentId.HasValue)
+        if (lesson.Prerequisite != null)
         {
             var prereqSpec = new LessonWithDetailsSpecification(lesson.PrerequisiteId.Value);
             var prereqLesson = await _lessonRepository.GetBySpecAsync(prereqSpec, cancellationToken);
@@ -40,13 +40,21 @@ public class GetLessonDetailsCommandHandler(IRepository<Lesson> _lessonRepositor
 
                 if (isEnrolled)
                 {
-                    int totalPrereqSections = prereqLesson.Sections?.Count ?? 0;
+                    int totalPrereqQuizzes = prereqLesson.Quizzes?.Count ?? 0;
 
-                    int completedPrereqSections = prereqLesson.Sections?
-                        .Count(s => s.Progresses != null &&
-                                    s.Progresses.Any(p => p.StudentId == request.StudentId && p.IsCompleted)) ?? 0;
+                    if (totalPrereqQuizzes > 0)
+                    {
+                        int submittedQuizzesCount = prereqLesson.Quizzes?
+                            .Count(q => q.Attempts != null &&
+                                        q.Attempts.Any(a => a.StudentId == request.StudentId &&
+                                                            a.Status == QuizAttemptStatus.Submitted)) ?? 0;
 
-                    if (totalPrereqSections > 0 && completedPrereqSections == totalPrereqSections)
+                        if (submittedQuizzesCount == totalPrereqQuizzes)
+                        {
+                            isPrerequisiteCompleted = true;
+                        }
+                    }
+                    else
                     {
                         isPrerequisiteCompleted = true;
                     }

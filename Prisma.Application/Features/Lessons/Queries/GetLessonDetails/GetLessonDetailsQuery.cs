@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MediatR;
+using Prisma.Application.Common.Responses.Generic;
+using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Application.Features.Lessons;
+namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
-
+public record GetLessonDetailsQuery(int LessonId, Guid StudentId) : IRequest<Result<LessonDetailsDto>>;
 public class LessonDetailsDto
 {
 

@@ -12,8 +12,7 @@ public class Section : BaseEntity
 
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();
 
-    public int? DurationInMinutes { get; set; }  
-    
-    public bool IsPreview { get; set; } = false; // معاينه مجانيه
+    public TimeSpan Duration { get; set; }
 
+    public bool IsPreview { get; set; } = false; // معاينه مجانيه
 }

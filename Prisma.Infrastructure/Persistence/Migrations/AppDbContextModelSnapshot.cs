@@ -35,7 +35,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonsId");
 
-                    b.ToTable("AcademicYearLesson");
+                    b.ToTable("AcademicYearLesson", (string)null);
                 });
 
             modelBuilder.Entity("AcademicYearTeacher", b =>
@@ -50,7 +50,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeachersId");
 
-                    b.ToTable("AcademicYearTeacher");
+                    b.ToTable("AcademicYearTeacher", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -176,16 +176,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("EnrolledAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("EnrollmentMethod")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("ExpiryDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsDeleted")
@@ -225,7 +219,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollment");
+                    b.ToTable("Enrollment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.EnrollmentAggregate.Report", b =>
@@ -271,7 +265,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Report");
+                    b.ToTable("Report", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYear", b =>
@@ -309,7 +303,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AcademicYear");
+                    b.ToTable("AcademicYear", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -354,7 +348,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Assignment");
+                    b.ToTable("Assignment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AssignmentSubmission", b =>
@@ -404,7 +398,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AssignmentSubmission");
+                    b.ToTable("AssignmentSubmission", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
@@ -430,14 +424,27 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("interval");
+
                     b.Property<DateTimeOffset?>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageThumbnailUrl")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsEligible")
                         .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<string[]>("Outcomes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int?>("PrerequisiteId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(12, 2)
@@ -455,11 +462,16 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PrerequisiteId");
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Lesson");
+                    b.ToTable("Lesson", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -485,7 +497,13 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("interval");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPreview")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LessonId")
@@ -505,7 +523,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Section");
+                    b.ToTable("Section", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.SectionProgress", b =>
@@ -534,6 +552,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("Percentage")
+                        .HasColumnType("integer");
+
                     b.Property<int>("SectionId")
                         .HasColumnType("integer");
 
@@ -552,7 +573,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("SectionProgress");
+                    b.ToTable("SectionProgress", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.Payment", b =>
@@ -618,7 +639,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Payment");
+                    b.ToTable("Payment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
@@ -676,7 +697,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("RedeemCode");
+                    b.ToTable("RedeemCode", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -739,7 +760,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AttemptAnswer");
+                    b.ToTable("AttemptAnswer", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Choice", b =>
@@ -789,7 +810,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choice");
+                    b.ToTable("Choice", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.LessonQuiz", b =>
@@ -841,7 +862,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonQuiz");
+                    b.ToTable("LessonQuiz", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Question", b =>
@@ -884,7 +905,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Question");
+                    b.ToTable("Question", (string)null);
 
                     b.HasDiscriminator<string>("QuestionType").HasValue("Question");
 
@@ -936,7 +957,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("QuestionLessonQuiz");
+                    b.ToTable("QuestionLessonQuiz", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizAttempt", b =>
@@ -993,7 +1014,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("QuizAttempt");
+                    b.ToTable("QuizAttempt", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
@@ -1213,7 +1234,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Users", t =>
+                    b.ToTable("Users", null, t =>
                         {
                             t.Property("TeacherId")
                                 .HasColumnName("Assistant_TeacherId");
@@ -1508,9 +1529,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Prerequisite")
+                        .WithMany()
+                        .HasForeignKey("PrerequisiteId");
+
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
                         .WithMany("Lessons")
                         .HasForeignKey("TeacherId");
+
+                    b.Navigation("Prerequisite");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>

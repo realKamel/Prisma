@@ -317,8 +317,13 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Title = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     Price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
+                    Duration = table.Column<TimeSpan>(type: "interval", nullable: false),
+                    ImageThumbnailUrl = table.Column<string>(type: "text", nullable: true),
+                    VideoUrl = table.Column<string>(type: "text", nullable: true),
                     EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsEligible = table.Column<bool>(type: "boolean", nullable: false),
+                    Outcomes = table.Column<string[]>(type: "text[]", nullable: false),
+                    PrerequisiteId = table.Column<int>(type: "integer", nullable: true),
                     TeacherId = table.Column<Guid>(type: "uuid", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -331,6 +336,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Lesson", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Lesson_Lesson_PrerequisiteId",
+                        column: x => x.PrerequisiteId,
+                        principalTable: "Lesson",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Lesson_Users_TeacherId",
                         column: x => x.TeacherId,
@@ -528,6 +538,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Title = table.Column<string>(type: "text", nullable: false),
                     ContentURL = table.Column<string>(type: "text", nullable: true),
                     LessonId = table.Column<int>(type: "integer", nullable: false),
+                    Duration = table.Column<TimeSpan>(type: "interval", nullable: false),
+                    IsPreview = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -659,13 +671,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ExpiryDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     EnrollmentMethod = table.Column<int>(type: "integer", nullable: false),
-                    EnrolledAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LessonId = table.Column<int>(type: "integer", nullable: false),
-                    StudentId = table.Column<Guid>(type: "uuid", nullable: false),
+                    LessonId = table.Column<int>(type: "integer", nullable: true),
+                    StudentId = table.Column<Guid>(type: "uuid", nullable: true),
                     PaymentId = table.Column<int>(type: "integer", nullable: true),
                     RedeemCodeId = table.Column<Guid>(type: "uuid", nullable: true),
                     RedeemCodeId1 = table.Column<int>(type: "integer", nullable: true),
@@ -711,6 +721,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
+                    Percentage = table.Column<int>(type: "integer", nullable: false),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: false),
                     SectionId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -882,6 +893,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "IX_Enrollment_StudentId",
                 table: "Enrollment",
                 column: "StudentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Lesson_PrerequisiteId",
+                table: "Lesson",
+                column: "PrerequisiteId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Lesson_TeacherId",

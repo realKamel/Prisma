@@ -13,7 +13,7 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260612203526_Initial")]
+    [Migration("20260613174112_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -179,22 +179,16 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("EnrolledAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int>("EnrollmentMethod")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("LessonId")
+                    b.Property<int?>("LessonId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("PaymentId")
@@ -209,7 +203,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("StudentId")
+                    b.Property<Guid?>("StudentId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -433,14 +427,27 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("interval");
+
                     b.Property<DateTimeOffset?>("EndDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ImageThumbnailUrl")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsEligible")
                         .HasColumnType("boolean");
+
+                    b.PrimitiveCollection<string[]>("Outcomes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int?>("PrerequisiteId")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(12, 2)
@@ -458,7 +465,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("VideoUrl")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PrerequisiteId");
 
                     b.HasIndex("TeacherId");
 
@@ -488,7 +500,13 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("interval");
+
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsPreview")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LessonId")
@@ -536,6 +554,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Percentage")
+                        .HasColumnType("integer");
 
                     b.Property<int>("SectionId")
                         .HasColumnType("integer");
@@ -1444,8 +1465,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
                         .WithMany("Enrollments")
                         .HasForeignKey("LessonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Prisma.Domain.Entities.PaymentAggregate.Payment", "Payment")
                         .WithMany()
@@ -1458,8 +1478,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("Enrollments")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Lesson");
 
@@ -1513,9 +1532,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Prerequisite")
+                        .WithMany()
+                        .HasForeignKey("PrerequisiteId");
+
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
                         .WithMany("Lessons")
                         .HasForeignKey("TeacherId");
+
+                    b.Navigation("Prerequisite");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>

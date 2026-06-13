@@ -63,9 +63,9 @@ public class GetLessonsCatalogQueryHandler
         };
 
         string? expiredDateLabel = null;
-        if (status == LessonCatalogStatus.Expired && enrollment?.ExpiryDate is not null)
+        if (status == LessonCatalogStatus.Expired && enrollment?.ExpiresAt is not null)
         {
-            var d = enrollment.ExpiryDate.Value;
+            var d = enrollment.ExpiresAt.Value;
             expiredDateLabel =
                 $"انتهت صلاحيتك · انتهت في {ToArabicNumerals(d.Day.ToString())} {GetArabicMonth(d.Month)}";
         }
@@ -99,8 +99,8 @@ public class GetLessonsCatalogQueryHandler
         if (enrollment is null)
             return LessonCatalogStatus.Available;
 
-        if (enrollment.ExpiryDate is not null &&
-            enrollment.ExpiryDate.Value < DateTimeOffset.UtcNow)
+        if (enrollment.ExpiresAt is not null &&
+            enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
             return LessonCatalogStatus.Expired;
 
         // 3. Prerequisite check — uncomment when PrerequisiteLessonId is wired up

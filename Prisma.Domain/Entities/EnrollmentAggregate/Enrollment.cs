@@ -8,12 +8,9 @@ namespace Prisma.Domain.Entities.EnrollmentAggregate;
 
 public class Enrollment : BaseEntity
 {
-    public DateTimeOffset? ExpiryDate { get; set; }
-
     public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
     public EnrollmentMethod EnrollmentMethod { get; set; } // 
 
-    public DateTimeOffset EnrolledAt { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
 
     public int? LessonId { get; set; }

@@ -13,7 +13,8 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
     : IRequestHandler<GetLessonDetailsQuery, Result<LessonDetailsDto>>
 {
-    public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery   request, CancellationToken cancellationToken)
+    public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery request,
+        CancellationToken cancellationToken)
     {
         var spec = new LessonWithDetailsSpecification(request.LessonId);
         var lesson = await _lessonRepository.GetBySpecAsync(spec, cancellationToken, tracking: false);
@@ -23,7 +24,7 @@ public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
             throw new NotFoundException("Lesson", request.LessonId.ToString());
         }
 
-        int totalMinutes = lesson.Sections?.Sum(s => s.DurationInMinutes ?? 0) ?? 0;
+        int totalMinutes = lesson.Sections.Sum(s => s.Duration.Minutes);
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
         bool isPrerequisiteCompleted = false;
@@ -70,24 +71,19 @@ public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
             AboutText = lesson.Description ?? "",
             StudentsCount = lesson.Enrollments?.Count ?? 0,
             ChaptersCount = lesson.Sections?.Count ?? 0,
-
             Subject = "فيزياء",
-            Teacher = "أ.أحمد مصطفى", 
+            Teacher = "أ.أحمد مصطفى",
             Duration = formattedTotalDuration,
-
             ValidityDays = lesson.EndDate.HasValue
-                            ? (int)(lesson.EndDate.Value - DateTimeOffset.UtcNow).TotalDays
-                            : 30,
-
+                ? (int)(lesson.EndDate.Value - DateTimeOffset.UtcNow).TotalDays
+                : 30,
             Chapters = lesson.Sections?.Select(s => new ChapterDto(
                 s.Id,
                 s.Title ?? "",
-                s.DurationInMinutes.HasValue ? $"{s.DurationInMinutes} د" : "٠ د",
+                $"{s.Duration.Minutes} د",
                 s.IsPreview
             )).ToList() ?? [],
-
-            Outcomes = lesson.Outcomes?.Select(o => o.Text).ToList() ?? [],
-
+            Outcomes = lesson.Outcomes.ToList() ?? [],
             Prerequisites = lesson.Prerequisite != null
                 ? [new PrerequisiteDto(lesson.Prerequisite.Title ?? "", isPrerequisiteCompleted)]
                 : []

@@ -10,6 +10,11 @@ public class Lesson : BaseEntity
     public string? Title { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
+    public TimeSpan Duration { get; set; }
+
+    public string? ImageThumbnailUrl { get; set; }
+    public string? VideoUrl { get; set; }
+
     public DateTimeOffset? EndDate { get; set; }
     public bool IsEligible { get; set; }
 
@@ -24,10 +29,9 @@ public class Lesson : BaseEntity
     public ICollection<RedeemCode> RedeemCodes { get; set; } = new List<RedeemCode>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
-    public ICollection<LessonOutcome> Outcomes { get; set; } = new List<LessonOutcome>();
+    public ICollection<string> Outcomes { get; set; } = new List<string>();
 
     //self-relation
     public int? PrerequisiteId { get; set; }
     public Lesson? Prerequisite { get; set; }
-
 }

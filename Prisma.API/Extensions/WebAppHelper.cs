@@ -101,13 +101,12 @@ public static class WebAppHelper
     {
         if (app.Environment.IsDevelopment())
         {
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-                await services.SeedAppDataAsync();
-                // await services.SeedRolesAsync();
-                // await services.SeedUsersAsync();
-            }
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+            // await services.SeedIdentityAsync();
+            await services.SeedAppDataAsync();
+            // await services.SeedRolesAsync();
+            // await services.SeedUsersAsync();
         }
     }
 }

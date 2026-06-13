@@ -26,10 +26,10 @@ public static class DependenciesInjection
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgsqlOptions =>
             {
-                npgsqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: 5,
-                    maxRetryDelay: TimeSpan.FromSeconds(10),
-                    errorCodesToAdd: null);
+                // npgsqlOptions.EnableRetryOnFailure(
+                //     maxRetryCount: 5,
+                //     maxRetryDelay: TimeSpan.FromSeconds(10),
+                //     errorCodesToAdd: null);
             });
 
             options.AddInterceptors(serviceProvider

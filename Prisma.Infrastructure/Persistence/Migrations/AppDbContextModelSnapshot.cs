@@ -35,7 +35,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonsId");
 
-                    b.ToTable("AcademicYearLesson", (string)null);
+                    b.ToTable("AcademicYearLesson");
                 });
 
             modelBuilder.Entity("AcademicYearTeacher", b =>
@@ -50,7 +50,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeachersId");
 
-                    b.ToTable("AcademicYearTeacher", (string)null);
+                    b.ToTable("AcademicYearTeacher");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -191,10 +191,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("PaymentId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("RedeemCodeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("RedeemCodeId1")
+                    b.Property<int?>("RedeemCodeId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -215,11 +212,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.HasIndex("RedeemCodeId1");
+                    b.HasIndex("RedeemCodeId");
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollment", (string)null);
+                    b.ToTable("Enrollment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.EnrollmentAggregate.Report", b =>
@@ -265,7 +262,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Report", (string)null);
+                    b.ToTable("Report");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYear", b =>
@@ -303,7 +300,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AcademicYear", (string)null);
+                    b.ToTable("AcademicYear");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -348,7 +345,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Assignment", (string)null);
+                    b.ToTable("Assignment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AssignmentSubmission", b =>
@@ -398,7 +395,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AssignmentSubmission", (string)null);
+                    b.ToTable("AssignmentSubmission");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
@@ -471,7 +468,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Lesson", (string)null);
+                    b.ToTable("Lesson");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -523,7 +520,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("Section", (string)null);
+                    b.ToTable("Section");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.SectionProgress", b =>
@@ -573,7 +570,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("SectionProgress", (string)null);
+                    b.ToTable("SectionProgress");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.Payment", b =>
@@ -639,7 +636,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Payment", (string)null);
+                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
@@ -697,7 +694,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("RedeemCode", (string)null);
+                    b.ToTable("RedeemCode");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -760,7 +757,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AttemptAnswer", (string)null);
+                    b.ToTable("AttemptAnswer");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Choice", b =>
@@ -810,7 +807,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choice", (string)null);
+                    b.ToTable("Choice");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.LessonQuiz", b =>
@@ -862,7 +859,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonQuiz", (string)null);
+                    b.ToTable("LessonQuiz");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Question", b =>
@@ -905,7 +902,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Question", (string)null);
+                    b.ToTable("Question");
 
                     b.HasDiscriminator<string>("QuestionType").HasValue("Question");
 
@@ -957,7 +954,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("QuestionLessonQuiz", (string)null);
+                    b.ToTable("QuestionLessonQuiz");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizAttempt", b =>
@@ -1014,7 +1011,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("QuizAttempt", (string)null);
+                    b.ToTable("QuizAttempt");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
@@ -1234,7 +1231,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Users", null, t =>
+                    b.ToTable("Users", t =>
                         {
                             t.Property("TeacherId")
                                 .HasColumnName("Assistant_TeacherId");
@@ -1470,7 +1467,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasOne("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", "RedeemCode")
                         .WithMany()
-                        .HasForeignKey("RedeemCodeId1");
+                        .HasForeignKey("RedeemCodeId");
 
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("Enrollments")

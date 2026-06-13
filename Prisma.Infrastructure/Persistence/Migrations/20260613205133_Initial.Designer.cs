@@ -13,7 +13,7 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260613174112_Initial")]
+    [Migration("20260613205133_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -194,10 +194,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("PaymentId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("RedeemCodeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int?>("RedeemCodeId1")
+                    b.Property<int?>("RedeemCodeId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -218,7 +215,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PaymentId");
 
-                    b.HasIndex("RedeemCodeId1");
+                    b.HasIndex("RedeemCodeId");
 
                     b.HasIndex("StudentId");
 
@@ -1473,7 +1470,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasOne("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", "RedeemCode")
                         .WithMany()
-                        .HasForeignKey("RedeemCodeId1");
+                        .HasForeignKey("RedeemCodeId");
 
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
                         .WithMany("Enrollments")

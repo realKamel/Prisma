@@ -22,6 +22,6 @@ public class Enrollment : BaseEntity
     public Payment? Payment { get; set; }
     public int? PaymentId { get; set; }
 
-    public Guid? RedeemCodeId { get; set; } // set when GrantType == RedeemCode
+    public int? RedeemCodeId { get; set; } // set when GrantType == RedeemCode
     public RedeemCode? RedeemCode { get; set; }
 }

@@ -677,8 +677,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     LessonId = table.Column<int>(type: "integer", nullable: true),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: true),
                     PaymentId = table.Column<int>(type: "integer", nullable: true),
-                    RedeemCodeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    RedeemCodeId1 = table.Column<int>(type: "integer", nullable: true),
+                    RedeemCodeId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -702,8 +701,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         principalTable: "Payment",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Enrollment_RedeemCode_RedeemCodeId1",
-                        column: x => x.RedeemCodeId1,
+                        name: "FK_Enrollment_RedeemCode_RedeemCodeId",
+                        column: x => x.RedeemCodeId,
                         principalTable: "RedeemCode",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -885,9 +884,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "PaymentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Enrollment_RedeemCodeId1",
+                name: "IX_Enrollment_RedeemCodeId",
                 table: "Enrollment",
-                column: "RedeemCodeId1");
+                column: "RedeemCodeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Enrollment_StudentId",

@@ -60,7 +60,7 @@ public class DataSeeder(
         }
     }
 
-    public async Task SeedUsersAsync()
+    public async Task SeedTeacherSettingAsync()
     {
         var migrations = await dbContext.Database.GetPendingMigrationsAsync();
 
@@ -87,7 +87,7 @@ public class DataSeeder(
 
         try
         {
-            teacher.TeacherLandingSettings = await ReadJsonFileAsync();
+            // teacher.TeacherLandingSettings = await ReadJsonFileAsync();
         }
         catch (Exception e)
         {
@@ -147,7 +147,9 @@ public class DataSeeder(
             await SeedData<RedeemCode>(root, options);
             await SeedData<Enrollment>(root, options);
             await SeedData<Payment>(root, options);
-
+            // await SeedData<AspNetUserRole>()
+            dbContext.Users.OfType<Teacher>().FirstOrDefault()?.TeacherLandingSettings =
+                await ReadTeacherSettingJsonFileAsync();
             await dbContext.SaveChangesAsync();
         }
         catch (Exception e)
@@ -157,7 +159,7 @@ public class DataSeeder(
         }
     }
 
-    private async Task<TeacherLandingSettings?> ReadJsonFileAsync(CancellationToken ct = default)
+    private async Task<TeacherLandingSettings?> ReadTeacherSettingJsonFileAsync(CancellationToken ct = default)
     {
         var seedPath = Path.Combine(
             AppContext.BaseDirectory, "SeedData", "TeacherSettingDataSeed.json");

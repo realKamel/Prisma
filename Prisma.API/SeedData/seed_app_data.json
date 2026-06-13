@@ -67,7 +67,7 @@
       "IsDeleted": true
     }
   ],
-  "Roles": [
+  "Role": [
     {
       "Id": "2318f160-af4a-4421-8475-e8f3b2e855ca",
       "Description": "مدير النظام - صلاحيات كاملة",
@@ -209,7 +209,81 @@
       "LockoutEnd": null,
       "LockoutEnabled": true,
       "AccessFailedCount": 0,
-      "TeacherLandingSettings": null,
+      "TeacherLandingSettings": {
+        "hero": {
+          "tag": " مفتوح الآن للتسجيل · العام الدراسي ٢٠٢٥-٢٠٢٦",
+          "title": "الفهم الحقيقي يبدأ من هنا",
+          "badges": [
+            {
+              "icon": "bi-patch-check-fill",
+              "text": "درجة كاملة"
+            },
+            {
+              "icon": "bi-calendar-check",
+              "text": "درسك الجاي جاهز"
+            },
+            {
+              "icon": "bi-lightning-charge",
+              "text": "٢٤٨ طالب نشط"
+            },
+            {
+              "icon": "bi-star-fill",
+              "text": "تقييم ٥ من ٥"
+            }
+          ],
+          "subtitle": "منصة تعليمية ممتعة مع معلم واحد متخصص — دروس واضحة، كويزات تفاعلية، ومتابعة أولياء الأمور لحظة بلحظة.",
+          "ctaPrimary": "سجّل مجاناً — ابدأ دلوقتي",
+          "ctaSecondary": "شوف الدروس المتاحة",
+          "teacherImage": "https://cdn-icons-png.flaticon.com/512/9721/9721084.png"
+        },
+        "navLogo": {
+          "logoLetter": "م",
+          "teacherName": "محمد أحمد",
+          "platformName": "منصة أ"
+        },
+        "reviews": [
+          {
+            "body": "ابني كان بيكره المذاكرة، دلوقتي بيطالب بالدرس الجديد بنفسه! التقارير الأسبوعية حاجة تانية خالص.",
+            "name": "أم أحمد",
+            "role": "ولي أمر · الصف الثالث الإعدادي",
+            "stars": "★★★★★",
+            "avatar": "أ"
+          },
+          {
+            "body": "الدروس واضحة جداً والكويزات بتساعدني أعرف فين ضعفي بالظبط. ربحت في الامتحانات!",
+            "name": "محمد الطالب",
+            "role": "طالب · الصف الأول الثانوي",
+            "stars": "★★★★★",
+            "avatar": "م"
+          },
+          {
+            "body": "أنا بسافر كتير وكنت مش قادرة أتابع. دلوقتي التقارير بتيجي على واتساب وعارفة كل حاجة!",
+            "name": "أم فاطمة",
+            "role": "ولي أمر · الصف الثاني الثانوي",
+            "stars": "★★★★★",
+            "avatar": "ف"
+          }
+        ],
+        "miniQuiz": {
+          "id": 4,
+          "correct": "b",
+          "options": [
+            {
+              "id": "a",
+              "label": "نيوتن"
+            },
+            {
+              "id": "b",
+              "label": "باسكال"
+            },
+            {
+              "id": "c",
+              "label": "جول"
+            }
+          ],
+          "question": "ما هي وحدة قياس الضغط؟"
+        }
+      },
       "PasswordResetConfirmed": false
     },
     {
@@ -521,10 +595,6 @@
     },
     {
       "UserId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
-      "RoleId": "fbc51c24-b6ac-4713-87ba-57c47c8d1cd1"
-    },
-    {
-      "UserId": "a239ce96-1fdf-4e05-86d3-e25e4022f8de",
       "RoleId": "fbc51c24-b6ac-4713-87ba-57c47c8d1cd1"
     },
     {

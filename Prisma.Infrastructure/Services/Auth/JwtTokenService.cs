@@ -22,7 +22,7 @@ public class JwtTokenService : IJwtTokenService
         _signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
     }
 
-    public string GenerateAccessToken(Guid userId, string email, IList<string> roles, IList<string>? permissions = null)
+    public string GenerateAccessToken(Guid userId, string email, IList<string> roles, IList<Claim>? permissions = null)
     {
         var userClaims = new List<Claim>
         {
@@ -33,10 +33,7 @@ public class JwtTokenService : IJwtTokenService
 
         if (permissions is not null && permissions.Count > 0)
         {
-            userClaims
-                .AddRange(permissions
-                    .Select(p =>
-                        new Claim(AppClaims.PermissionsClaim, p)));
+            userClaims.AddRange(permissions);
         }
 
         userClaims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));

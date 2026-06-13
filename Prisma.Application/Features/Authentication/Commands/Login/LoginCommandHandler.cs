@@ -33,7 +33,10 @@ public class LoginCommandHandler(
 
         var roles = (await userManager.GetRolesAsync(user)).ToList();
 
-        var accessToken = jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles);
+        var permissions = await userManager.GetClaimsAsync(user);
+
+        var accessToken = jwtTokenService
+            .GenerateAccessToken(user.Id, user.Email, roles, permissions);
 
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
@@ -49,6 +52,6 @@ public class LoginCommandHandler(
                     user.Email,
                     user.FirstName,
                     user.SecondName,
-                    roles[0])));
+                    roles.Count == 0 ? null : roles[0])));
     }
 }

@@ -10,20 +10,20 @@ namespace Prisma.Application.Features.LessonCatalog.Queries;
 public class GetLessonsCatalogQueryHandler
     : IRequestHandler<GetLessonsCatalogQuery, Result<ICollection<LessonCatalogDto>>>
 {
-    private readonly IUnitOfWork          _unitOfWork;
-    private readonly ICurrentUserService  _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUser;
 
     public GetLessonsCatalogQueryHandler(
-        IUnitOfWork         unitOfWork,
+        IUnitOfWork unitOfWork,
         ICurrentUserService currentUser)
     {
-        _unitOfWork  = unitOfWork;
+        _unitOfWork = unitOfWork;
         _currentUser = currentUser;
     }
 
     public async Task<Result<ICollection<LessonCatalogDto>>> Handle(
         GetLessonsCatalogQuery request,
-        CancellationToken      cancellationToken)
+        CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
             return Result<ICollection<LessonCatalogDto>>
@@ -44,8 +44,8 @@ public class GetLessonsCatalogQueryHandler
     }
 
     private LessonCatalogDto MapLesson(
-        Lesson             lesson,
-        Guid               studentId,
+        Lesson lesson,
+        Guid studentId,
         ICollection<Lesson> allLessons)
     {
         var status = DetermineStatus(lesson, studentId, allLessons);
@@ -57,9 +57,9 @@ public class GetLessonsCatalogQueryHandler
         {
             LessonCatalogStatus.Available => "avail",
             LessonCatalogStatus.Purchased => "purchased",
-            LessonCatalogStatus.Locked    => "locked",
-            LessonCatalogStatus.Expired   => "expired",
-            _                             => "avail"
+            LessonCatalogStatus.Locked => "locked",
+            LessonCatalogStatus.Expired => "expired",
+            _ => "avail"
         };
 
         string? expiredDateLabel = null;
@@ -72,30 +72,30 @@ public class GetLessonsCatalogQueryHandler
 
         return new LessonCatalogDto
         {
-            Id            = lesson.Id,
-            Title         = lesson.Title,
-            Price         = status == LessonCatalogStatus.Available ? lesson.Price : 0,
-            Status        = statusString,
+            Id = lesson.Id,
+            Title = lesson.Title,
+            Price = status == LessonCatalogStatus.Available ? lesson.Price : 0,
+            Status = statusString,
             PrerequisiteLabel = status == LessonCatalogStatus.Locked
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
-            ExpiredDate   = expiredDateLabel,
-            TeacherName    = "أ. أحمد مصطفى",
+            ExpiredDate = expiredDateLabel,
+            TeacherName = "أ. أحمد مصطفى",
             TeacherInitial = "أ",
-            Subject        = "فيزياء",
-            DurationHours  = lesson.Sections?.Count ?? 0,
-            Currency       = "جنيه",
+            Subject = "اللغة الإنجليزية",
+            DurationHours = (int)lesson.Duration.TotalHours,
+            ImageUrl = lesson.ImageThumbnailUrl,
+            Currency = "جنيه",
         };
     }
 
     private LessonCatalogStatus DetermineStatus(
-        Lesson              lesson,
-        Guid                studentId,
+        Lesson lesson,
+        Guid studentId,
         ICollection<Lesson> allLessons)
     {
         var enrollment = lesson.Enrollments
             .FirstOrDefault(x => x.StudentId == studentId);
-
         if (enrollment is null)
             return LessonCatalogStatus.Available;
 
@@ -103,17 +103,14 @@ public class GetLessonsCatalogQueryHandler
             enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
             return LessonCatalogStatus.Expired;
 
-        // 3. Prerequisite check — uncomment when PrerequisiteLessonId is wired up
-        // if (lesson.PrerequisiteLessonId is not null)
-        // {
-        //     var pre = allLessons.FirstOrDefault(x => x.Id == lesson.PrerequisiteLessonId);
-        //     if (pre is not null)
-        //     {
-        //         var prePurchased = pre.Enrollments.Any(x => x.StudentId == studentId);
-        //         if (prePurchased && !IsLessonCompleted(pre, studentId))
-        //             return LessonCatalogStatus.Locked;
-        //     }
-        // }
+        if (lesson.PrerequisiteId is not null)
+        {
+            var prereq = allLessons
+                .FirstOrDefault(x => x.Id == lesson.PrerequisiteId);
+
+            if (prereq is not null && !IsLessonCompleted(prereq, studentId))
+                return LessonCatalogStatus.Locked;
+        }
 
         return LessonCatalogStatus.Purchased;
     }
@@ -121,7 +118,6 @@ public class GetLessonsCatalogQueryHandler
     private static bool IsLessonCompleted(Lesson lesson, Guid studentId)
     {
         if (!lesson.Sections.Any()) return false;
-
         return lesson.Sections.All(section =>
             section.Progresses.Any(p =>
                 p.StudentId == studentId && p.IsCompleted));
@@ -129,21 +125,24 @@ public class GetLessonsCatalogQueryHandler
 
     private static string GetArabicMonth(int month) => month switch
     {
-        1  => "يناير",
-        2  => "فبراير",
-        3  => "مارس",
-        4  => "أبريل",
-        5  => "مايو",
-        6  => "يونيو",
-        7  => "يوليو",
-        8  => "أغسطس",
-        9  => "سبتمبر",
+        1 => "يناير",
+        2 => "فبراير",
+        3 => "مارس",
+        4 => "أبريل",
+        5 => "مايو",
+        6 => "يونيو",
+        7 => "يوليو",
+        8 => "أغسطس",
+        9 => "سبتمبر",
         10 => "أكتوبر",
         11 => "نوفمبر",
         12 => "ديسمبر",
-        _  => ""
+        _ => ""
     };
 
     private static string ToArabicNumerals(string str) =>
-        str.Replace("0", "٠").Replace("1", "١").Replace("2", "٢") .Replace("3", "٣").Replace("4", "٤").Replace("5", "٥") .Replace("6", "٦").Replace("7", "٧").Replace("8", "٨") .Replace("9", "٩");
+        str.Replace("0", "٠").Replace("1", "١").Replace("2", "٢")
+           .Replace("3", "٣").Replace("4", "٤").Replace("5", "٥")
+           .Replace("6", "٦").Replace("7", "٧").Replace("8", "٨")
+           .Replace("9", "٩");
 }

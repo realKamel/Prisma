@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+using Prisma.Application.Common.Responses;
 using Prisma.Domain.Exceptions;
 using Serilog;
 
@@ -29,7 +29,7 @@ public class GlobalExceptionHandlingMiddleware(ILogger<GlobalExceptionHandlingMi
 
             logger.LogWarning(ex, "Operation cancelled on {Path}", context.Request.Path);
 
-            await HandleExceptionAsync(context, ex);
+            await HandleCancelledOperationExceptionAsync(context, ex);
         }
         catch (Exception ex)
         {
@@ -50,16 +50,9 @@ public class GlobalExceptionHandlingMiddleware(ILogger<GlobalExceptionHandlingMi
                 g => g.Select(e => e.ErrorMessage).ToArray()
             );
 
-        var problemDetails = new ProblemDetails
-        {
-            Title = "Validation Failed",
-            Status = StatusCodes.Status400BadRequest,
-            Detail = "One or more validation errors occurred.",
-            Instance = context.Request.Path,
-            Extensions = { ["errors"] = errors }
-        };
+        var response = Result.ValidationFailure(errors);
 
-        await context.Response.WriteAsJsonAsync(problemDetails);
+        await context.Response.WriteAsJsonAsync(response);
     }
 
     private static async Task HandleExceptionAsync(HttpContext context, Exception e)
@@ -70,46 +63,66 @@ public class GlobalExceptionHandlingMiddleware(ILogger<GlobalExceptionHandlingMi
 
         context.Response.StatusCode = mappedException.code;
 
-        var problemDetails = new ProblemDetails
-        {
-            Title = mappedException.title,
-            Status = mappedException.code,
-            Detail = mappedException.details,
-            Instance = context.Request.Path
-        };
-        await context.Response.WriteAsJsonAsync(problemDetails);
+        var response = Result.Failure(mappedException.details);
+
+        await context.Response.WriteAsJsonAsync(response);
     }
 
     private static (string title, string details, int code ) MapExceptionToMessage(Exception ex)
     {
         (string title, string details, int code ) result;
-        switch (ex)
+        if (ex is not AppBaseException exception)
         {
-            case OperationCanceledException:
-                Log.Warning("Operation timed out");
-                result = (title: "Request Timeout", details: "Operation timed out",
-                    code: StatusCodes.Status502BadGateway);
-                break;
+            Log.Error(ex, "Unhandled exception occurred");
+            return (title: "Internal Server Error",
+                details: "An unexpected error occurred. Please try again later.",
+                code: StatusCodes.Status500InternalServerError);
+        }
+        else
+        {
+            switch (exception)
+            {
+                case BadRequestException:
+                    Log.Warning(exception, exception.Message);
+                    result = (exception.ErrorCode, details: exception.Message,
+                        code: StatusCodes.Status400BadRequest);
+                    break;
 
-            case UnauthorizedAccessException:
-                Log.Warning(ex, "Unauthorized access attempt");
-                result = (title: "Unauthorized",
-                    details: ex.Message, code: StatusCodes.Status401Unauthorized);
-                break;
+                case UnauthorizedException:
+                    Log.Warning(exception, "Unauthorized access attempt");
+                    result = (title: exception.ErrorCode,
+                        details: exception.Message, code: StatusCodes.Status401Unauthorized);
+                    break;
 
-            case AppBaseException:
-                Log.Warning(ex, "Application error: {Message}", ex.Message);
-                result = (title: "Bad Request", details: ex.Message, StatusCodes.Status400BadRequest);
-                break;
+                case not null:
+                    Log.Warning(exception, "Application error: {Message}", exception.Message);
+                    result = (title: exception.ErrorCode, details: exception.Message, StatusCodes.Status400BadRequest);
+                    break;
 
-            default:
-                Log.Error(ex, "Unhandled exception occurred");
-                result = (title: "Internal Server Error",
-                    details: "An unexpected error occurred. Please try again later.",
-                    code: StatusCodes.Status500InternalServerError);
-                break;
+                default:
+                    Log.Error(exception, "Unhandled exception occurred");
+                    result = (title: "Internal Server Error",
+                        details: "An unexpected error occurred. Please try again later.",
+                        code: StatusCodes.Status500InternalServerError);
+                    break;
+            }
         }
 
         return result;
+    }
+
+    private static async Task HandleCancelledOperationExceptionAsync(HttpContext context, Exception e)
+    {
+        Log.Warning("Operation timed out");
+        var mappedException = (title: "Request Timeout", details: "Operation timed out",
+            code: StatusCodes.Status502BadGateway);
+
+        context.Response.ContentType = "application/problem+json";
+
+        context.Response.StatusCode = mappedException.code;
+
+        var response = Result.Failure(mappedException.title);
+
+        await context.Response.WriteAsJsonAsync(response);
     }
 }

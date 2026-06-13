@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Prisma.Domain.Entities;
+using Prisma.Domain.Entities.PaymentAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -10,9 +10,6 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Amount)
-            .HasPrecision(12, 2);
-
         builder.HasOne(x => x.Student)
             .WithMany(x => x.Payments)
             .HasForeignKey(x => x.StudentId)
@@ -21,7 +18,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasOne(x => x.Lesson)
             .WithMany(x => x.Payments)
             .HasForeignKey(x => x.LessonId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(p => p.Amount)
+            .HasPrecision(12, 2);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

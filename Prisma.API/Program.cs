@@ -8,7 +8,7 @@ namespace Prisma.API;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -28,6 +28,8 @@ public class Program
 
             var app = builder.Build();
 
+            await app.UseDataSeedingAsync();
+
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
             app.UseSerilogRequestLogging();
@@ -44,11 +46,15 @@ public class Program
 
             app.UseHttpsRedirection();
 
+            app.UseCors("Dev");
+
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.MapControllers();
 
-            app.Run();
+            await app.RunAsync();
         }
         catch (HostAbortedException)
         {
@@ -60,7 +66,7 @@ public class Program
         }
         finally
         {
-            Log.CloseAndFlush();
+            await Log.CloseAndFlushAsync();
         }
     }
 }

@@ -7,7 +7,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
-public record GetLessonDetailsQuery(int LessonId, Guid StudentId) : IRequest<Result<LessonDetailsDto>>;
+public record GetLessonDetailsQuery(int LessonId) : IRequest<Result<LessonDetailsDto>>;
 public class LessonDetailsDto
 {
 

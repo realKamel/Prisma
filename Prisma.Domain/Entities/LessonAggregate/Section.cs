@@ -11,4 +11,9 @@ public class Section : BaseEntity
     public Lesson Lesson { get; set; }
 
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();
+
+    public int? DurationInMinutes { get; set; }  
+    
+    public bool IsPreview { get; set; } = false; // معاينه مجانيه
+
 }

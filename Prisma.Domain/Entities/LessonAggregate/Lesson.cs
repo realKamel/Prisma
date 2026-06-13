@@ -23,4 +23,11 @@ public class Lesson : BaseEntity
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<RedeemCode> RedeemCodes { get; set; } = new List<RedeemCode>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+
+    public ICollection<LessonOutcome> Outcomes { get; set; } = new List<LessonOutcome>();
+
+    //self-relation
+    public int? PrerequisiteId { get; set; }
+    public Lesson? Prerequisite { get; set; }
+
 }

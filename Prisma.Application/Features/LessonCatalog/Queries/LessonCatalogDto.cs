@@ -12,6 +12,6 @@ public class LessonCatalogDto
     public string   TeacherInitial    { get; init; } = string.Empty;
     public string   Subject           { get; init; } = string.Empty;
     public int      DurationHours     { get; init; }
-    public string?  ImageUrl          { get; init; }
+    public string?  ImageThumbnailUrl          { get; init; }
     public string   Currency          { get; init; } = "جنيه";
 }

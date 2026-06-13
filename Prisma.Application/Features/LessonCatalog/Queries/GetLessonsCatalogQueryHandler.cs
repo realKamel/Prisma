@@ -84,7 +84,7 @@ public class GetLessonsCatalogQueryHandler
             TeacherInitial = "أ",
             Subject = "اللغة الإنجليزية",
             DurationHours = (int)lesson.Duration.TotalHours,
-            ImageUrl = lesson.ImageThumbnailUrl,
+            ImageThumbnailUrl = lesson.ImageThumbnailUrl,
             Currency = "جنيه",
         };
     }

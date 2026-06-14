@@ -17,7 +17,7 @@ public class GetLessonsCatalogQueryHandler(
     public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request,
         CancellationToken cancellationToken)
     {
-        if (_currentUser.UserId is null)
+        if (currentUser.UserId is null)
             throw new UnauthorizedException();
 
         var studentId = currentUser.UserId.Value;
@@ -107,10 +107,10 @@ public class GetLessonsCatalogQueryHandler(
                 // student buy the prerequisite Lesson 
                 if (prerequisiteEnrollment is not null)
                 {
-                    // if (!prerequisiteEnrollment.IsCompleted)
-                    // {
-                    //     return LessonCatalogStatus.Locked;
-                    // }
+                    if (!prerequisiteEnrollment.IsCompleted)
+                    {
+                        return LessonCatalogStatus.Locked;
+                    }
                 }
             }
         }

@@ -1335,6 +1335,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": true,
+      "CompletedAt": "2026-06-14T23:20:33.147Z",
       "ExpiresAt": "2026-06-25T23:20:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1352,6 +1354,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": true,
+      "CompletedAt": "2026-06-10T23:20:33.147Z",
       "ExpiresAt": "2026-10-23T05:19:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1369,6 +1373,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-10-07T20:14:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1386,6 +1392,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-10-31T06:41:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1403,6 +1411,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": true,
+      "CompletedAt": "2026-5-14T19:16:33.147Z",
       "ExpiresAt": "2026-11-29T19:16:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1420,6 +1430,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": true,
+      "CompletedAt": "2026-6-8T19:16:33.147Z",
       "ExpiresAt": "2026-10-08T06:03:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1437,6 +1449,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": true,
+      "CompletedAt": "2026-6-8T19:16:33.147Z",
       "ExpiresAt": "2026-10-12T14:34:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1454,6 +1468,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-07-30T20:59:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1471,6 +1487,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-08-17T23:27:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1488,6 +1506,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-09-16T17:15:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1505,6 +1525,8 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null,
       "ExpiresAt": "2026-08-23T23:57:33.147Z",
       "Status": 0,
       "PaymentId": null,
@@ -1525,7 +1547,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 13,
@@ -1542,7 +1566,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 14,
@@ -1559,7 +1585,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 15,
@@ -1576,7 +1604,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 16,
@@ -1593,7 +1623,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 17,
@@ -1610,7 +1642,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 18,
@@ -1627,7 +1661,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 19,
@@ -1644,7 +1680,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 20,
@@ -1661,7 +1699,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 21,
@@ -1678,7 +1718,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 22,
@@ -1695,7 +1737,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 23,
@@ -1712,7 +1756,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 24,
@@ -1729,7 +1775,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 25,
@@ -1746,7 +1794,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 26,
@@ -1763,7 +1813,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 27,
@@ -1780,7 +1832,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 28,
@@ -1797,7 +1851,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 29,
@@ -1814,7 +1870,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 30,
@@ -1831,7 +1889,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 31,
@@ -1848,7 +1908,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 32,
@@ -1865,7 +1927,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 33,
@@ -1882,7 +1946,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     },
     {
       "Id": 34,
@@ -1899,7 +1965,9 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": false
+      "IsDeleted": false,
+      "IsCompleted": false,
+      "CompletedAt": null
     }
   ],
   "Question": [

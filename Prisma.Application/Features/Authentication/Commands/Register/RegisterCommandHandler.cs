@@ -32,8 +32,11 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
             ThirdName = request.ThirdName,
             LastName = request.LastName,
             PhoneNumber = request.PhoneNumber,
+            AcademicYearId = request.AcademicYear,
             ParentPhoneNumber = request.ParentPhoneNumber
         };
+
+
 
         var result = await userManager.CreateAsync(user, request.Password);
 

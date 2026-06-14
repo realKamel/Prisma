@@ -1,10 +1,10 @@
 ﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
@@ -12,15 +12,16 @@ public class GetLessonPlayerQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
 {
-    public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request, CancellationToken cancellationToken)
+    public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request,
+        CancellationToken cancellationToken)
     {
         var studentId = currentUserService.UserId;
         if (studentId == null)
             throw new UnauthorizedException("User must be authenticated to access lesson player");
 
-        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson>();
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonPlayerWithDetailsSpecification(request.id);
-        var lesson = await lessonRepo.GetBySpecAsync(spec, cancellationToken);
+        var lesson = await lessonRepo.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
             throw new NotFoundException("Lesson", request.id);
@@ -66,37 +67,34 @@ public class GetLessonPlayerQueryHandler(
             ExpiryLabel = $"صلاحية الدرس: {expiryDays} يوم",
             VideoUrl = lesson.VideoUrl ?? string.Empty,
             VideoPoster = lesson.ImageThumbnailUrl ?? string.Empty,
-
-            AboutTab = new AboutTab
-            {
-                Description = lesson.Description ?? string.Empty,
-                Objectives = lesson.Outcomes.ToList()
-            },
-
+            AboutTab =
+                new AboutTab
+                {
+                    Description = lesson.Description ?? string.Empty, Objectives = lesson.Outcomes.ToList()
+                },
             Materials = new List<Material>(),
-
-            Quiz = quiz is null ? null : new Quiz
-            {
-                Id = quiz.Id.ToString(),
-                QuestionsCount = quiz.Questions.Count,
-                DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
-                PassingScore = 0
-            },
-
-            Assignment = assignment is null ? null : new Assignment
-            {
-                Id = assignment.Id.ToString(),
-                Title = "واجب الدرس",
-                DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
-            },
-
+            Quiz =
+                quiz is null
+                    ? null
+                    : new Quiz
+                    {
+                        Id = quiz.Id.ToString(),
+                        QuestionsCount = quiz.Questions.Count,
+                        DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
+                        PassingScore = 0
+                    },
+            Assignment =
+                assignment is null
+                    ? null
+                    : new Assignment
+                    {
+                        Id = assignment.Id.ToString(),
+                        Title = "واجب الدرس",
+                        DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
+                    },
             Sections = new List<SectionPlayer>
             {
-                new SectionPlayer
-                {
-                    Title = currentSection?.Title ?? string.Empty,
-                    Items = sections
-                }
+                new SectionPlayer { Title = currentSection?.Title ?? string.Empty, Items = sections }
             }
         };
 

@@ -69,9 +69,8 @@ public static class DependenciesInjection
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
 
-        services.AddSingleton<SpecificationEvaluator>();
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 

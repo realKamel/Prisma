@@ -5,8 +5,8 @@ namespace Prisma.Domain.Entities.PaymentAggregate;
 
 public class RedeemCode : BaseEntity
 {
-    public int LessonId { get; set; }
-    public Lesson Lesson { get; set; }
+    public int? LessonId { get; set; }
+    public Lesson? Lesson { get; set; }
 
     public string Code { get; set; } = default!;
     public int MaxUses { get; set; } = 1;

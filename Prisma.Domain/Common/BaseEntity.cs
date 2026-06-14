@@ -1,6 +1,6 @@
 ﻿namespace Prisma.Domain.Common;
 
-public class BaseEntity : IAuditable
+public class BaseEntity : IEntity<int>, IAuditable
 {
     public int Id { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }

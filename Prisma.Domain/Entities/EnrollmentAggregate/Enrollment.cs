@@ -13,6 +13,9 @@ public class Enrollment : BaseEntity
 
     public DateTimeOffset? ExpiresAt { get; set; }
 
+    public bool IsCompleted { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
+
     public int? LessonId { get; set; }
     public Lesson? Lesson { get; set; }
 

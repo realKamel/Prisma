@@ -21,9 +21,7 @@ public class GetLessonsCatalogQueryHandler
         _currentUser = currentUser;
     }
 
-    public async Task<Result<ICollection<LessonCatalogDto>>> Handle(
-        GetLessonsCatalogQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request, CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
             return Result<ICollection<LessonCatalogDto>>
@@ -43,10 +41,7 @@ public class GetLessonsCatalogQueryHandler
         return Result<ICollection<LessonCatalogDto>>.Success(result);
     }
 
-    private LessonCatalogDto MapLesson(
-        Lesson lesson,
-        Guid studentId,
-        ICollection<Lesson> allLessons)
+    private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
     {
         var status = DetermineStatus(lesson, studentId, allLessons);
 
@@ -96,32 +91,40 @@ public class GetLessonsCatalogQueryHandler
     {
         var enrollment = lesson.Enrollments
             .FirstOrDefault(x => x.StudentId == studentId);
+
         if (enrollment is null)
             return LessonCatalogStatus.Available;
 
-        if (enrollment.ExpiresAt is not null &&
+        if (enrollment.ExpiresAt.HasValue &&
             enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
             return LessonCatalogStatus.Expired;
 
         if (lesson.PrerequisiteId is not null)
         {
-            var prereq = allLessons
+            var prerequisiteLesson = allLessons
                 .FirstOrDefault(x => x.Id == lesson.PrerequisiteId);
 
-            if (prereq is not null && !IsLessonCompleted(prereq, studentId))
-                return LessonCatalogStatus.Locked;
+            if (prerequisiteLesson is not null)
+            {
+                var prerequisiteEnrollment =
+                    prerequisiteLesson.Enrollments
+                        .FirstOrDefault(x =>
+                            x.StudentId == studentId);
+
+                // student buy the prerequisite Lesson 
+                if (prerequisiteEnrollment is not null)
+                {
+                    if (!prerequisiteEnrollment.IsCompleted)
+                    {
+                        return LessonCatalogStatus.Locked;
+                    }
+                }
+            }
         }
 
         return LessonCatalogStatus.Purchased;
     }
 
-    private static bool IsLessonCompleted(Lesson lesson, Guid studentId)
-    {
-        if (!lesson.Sections.Any()) return false;
-        return lesson.Sections.All(section =>
-            section.Progresses.Any(p =>
-                p.StudentId == studentId && p.IsCompleted));
-    }
 
     private static string GetArabicMonth(int month) => month switch
     {

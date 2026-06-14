@@ -33,6 +33,20 @@ public static class WebAppHelper
         services.AddInfrastructureServices(configuration, hostEnvironment);
 
         services.AddJwtAuthentication(configuration, hostEnvironment);
+
+        services.AddOutputCache(options =>
+        {
+            //  Default policy for ALL endpoints
+            options.AddBasePolicy(builder =>
+                builder.Expire(TimeSpan.FromSeconds(10)));
+
+            // Named policies
+            options.AddPolicy(CachePolicyNames.Short.Name, builder =>
+                builder.Expire(CachePolicyNames.Short.Duration));
+
+            options.AddPolicy(CachePolicyNames.Long.Name, builder =>
+                builder.Expire(CachePolicyNames.Long.Duration));
+        });
     }
 
     public static void AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration,

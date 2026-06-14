@@ -48,7 +48,11 @@ public class Program
 
             app.UseCors("Dev");
 
+            app.UseRouting();
+
             app.UseAuthentication();
+
+            app.UseOutputCache();
 
             app.UseAuthorization();
 

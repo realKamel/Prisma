@@ -3,7 +3,7 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
-public class User : IdentityUser<Guid>, IAuditable
+public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
 {
     public string FirstName { get; set; }
     public string? SecondName { get; set; }

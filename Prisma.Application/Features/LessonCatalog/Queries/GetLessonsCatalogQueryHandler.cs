@@ -3,6 +3,7 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
+using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.LessonCatalog.Queries;
@@ -24,8 +25,7 @@ public class GetLessonsCatalogQueryHandler
     public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request, CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
-            return Result<ICollection<LessonCatalogDto>>
-                .Failure("User not authenticated");
+            throw new UnauthorizedException();
 
         var studentId = _currentUser.UserId.Value;
 
@@ -48,14 +48,14 @@ public class GetLessonsCatalogQueryHandler
         var enrollment = lesson.Enrollments
             .FirstOrDefault(x => x.StudentId == studentId);
 
-        var statusString = status switch
-        {
-            LessonCatalogStatus.Available => "avail",
-            LessonCatalogStatus.Purchased => "purchased",
-            LessonCatalogStatus.Locked => "locked",
-            LessonCatalogStatus.Expired => "expired",
-            _ => "avail"
-        };
+        //var statusString = status switch
+        //{
+        //    LessonCatalogStatus.Available => "avail",
+        //    LessonCatalogStatus.Purchased => "purchased",
+        //    LessonCatalogStatus.Locked => "locked",
+        //    LessonCatalogStatus.Expired => "expired",
+        //    _ => "avail"
+        //};
 
         string? expiredDateLabel = null;
         if (status == LessonCatalogStatus.Expired && enrollment?.ExpiresAt is not null)
@@ -70,7 +70,7 @@ public class GetLessonsCatalogQueryHandler
             Id = lesson.Id,
             Title = lesson.Title,
             Price = status == LessonCatalogStatus.Available ? lesson.Price : 0,
-            Status = statusString,
+            Status = status,
             PrerequisiteLabel = status == LessonCatalogStatus.Locked
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,

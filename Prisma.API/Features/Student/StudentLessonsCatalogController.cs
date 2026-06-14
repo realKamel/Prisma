@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.LessonCatalog.Queries;
 
 namespace Prisma.API.Features.Student;
@@ -15,7 +16,7 @@ public class StudentLessonsCatalogController : ApiController
         _mediator = mediator;
     }
 
-    [Authorize]
+    [Authorize (Roles = AppClaims.Roles.Student) ]
     [HttpGet("catalog")]
     public async Task<IActionResult> GetLessonsCatalog(CancellationToken c)
     {

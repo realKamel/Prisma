@@ -2,42 +2,49 @@
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
-public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
+public class GetLessonDetailsQueryHandler(
+    IUnitOfWork _unitOfWork,
+    ICurrentUserService _currentUserService)
     : IRequestHandler<GetLessonDetailsQuery, Result<LessonDetailsDto>>
 {
     public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery request,
         CancellationToken cancellationToken)
     {
+        Guid? currentStudentId = _currentUserService.UserId;
+
+        var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonWithDetailsSpecification(request.LessonId);
-        var lesson = await _lessonRepository.GetBySpecAsync(spec, cancellationToken, tracking: false);
+        var lesson = await lessonrepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson == null)
         {
             throw new NotFoundException("Lesson", request.LessonId.ToString());
         }
 
-        int totalMinutes = lesson.Sections.Sum(s => s.Duration.Minutes);
+        int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
         bool isPrerequisiteCompleted = false;
 
-        if (lesson.Prerequisite != null)
+        if (lesson.Prerequisite != null && currentStudentId.HasValue)
         {
             var prereqSpec = new LessonWithDetailsSpecification(lesson.PrerequisiteId.Value);
-            var prereqLesson = await _lessonRepository.GetBySpecAsync(prereqSpec, cancellationToken);
+            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(prereqSpec, cancellationToken);
 
             if (prereqLesson != null)
             {
                 bool isEnrolled = prereqLesson.Enrollments?
-                    .Any(e => e.StudentId == request.StudentId && e.Status == EnrollmentStatus.Active) ?? false;
+                    .Any(e => e.StudentId == currentStudentId.Value && e.Status == EnrollmentStatus.Active) ?? false;
 
                 if (isEnrolled)
                 {
@@ -47,7 +54,7 @@ public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
                     {
                         int submittedQuizzesCount = prereqLesson.Quizzes?
                             .Count(q => q.Attempts != null &&
-                                        q.Attempts.Any(a => a.StudentId == request.StudentId &&
+                                        q.Attempts.Any(a => a.StudentId == currentStudentId.Value &&
                                                             a.Status == QuizAttemptStatus.Submitted)) ?? 0;
 
                         if (submittedQuizzesCount == totalPrereqQuizzes)
@@ -71,19 +78,17 @@ public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
             AboutText = lesson.Description ?? "",
             StudentsCount = lesson.Enrollments?.Count ?? 0,
             ChaptersCount = lesson.Sections?.Count ?? 0,
-            Subject = "فيزياء",
-            Teacher = "أ.أحمد مصطفى",
+            Subject = "لغه انجليزيه",
+            Teacher = "أ. أحمد مصطفى",
             Duration = formattedTotalDuration,
-            ValidityDays = lesson.EndDate.HasValue
-                ? (int)(lesson.EndDate.Value - DateTimeOffset.UtcNow).TotalDays
-                : 30,
+            ValidityDays = 7,
             Chapters = lesson.Sections?.Select(s => new ChapterDto(
                 s.Id,
                 s.Title ?? "",
-                $"{s.Duration.Minutes} د",
+                $"{(int)s.Duration.TotalMinutes} د",
                 s.IsPreview
             )).ToList() ?? [],
-            Outcomes = lesson.Outcomes.ToList() ?? [],
+            Outcomes = lesson.Outcomes?.ToList() ?? [],
             Prerequisites = lesson.Prerequisite != null
                 ? [new PrerequisiteDto(lesson.Prerequisite.Title ?? "", isPrerequisiteCompleted)]
                 : []
@@ -94,15 +99,17 @@ public class GetLessonDetailsQueryHandler(IRepository<Lesson> _lessonRepository)
 
     private string FormatMinutesToHours(int totalMinutes)
     {
-        if (totalMinutes == 0) return "٠ دقيقة";
+        if (totalMinutes <= 0) return "٠ دقيقة";
+
         int hours = totalMinutes / 60;
         int remainingMinutes = totalMinutes % 60;
 
         if (hours > 0 && remainingMinutes > 0)
-            return $"{hours} ساعات";
-        if (hours > 0)
-            return $"{hours} ساعات";
+            return $"{hours} ساعة و {remainingMinutes} دقيقة";
 
-        return $"{remainingMinutes} د";
+        if (hours > 0)
+            return $"{hours} ساعة";
+
+        return $"{remainingMinutes} دقيقة";
     }
 }

@@ -5,31 +5,24 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.LessonCatalog.Queries;
 
-public class GetLessonsCatalogQueryHandler
+public class GetLessonsCatalogQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser)
     : IRequestHandler<GetLessonsCatalogQuery, Result<ICollection<LessonCatalogDto>>>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ICurrentUserService _currentUser;
-
-    public GetLessonsCatalogQueryHandler(
-        IUnitOfWork unitOfWork,
-        ICurrentUserService currentUser)
-    {
-        _unitOfWork = unitOfWork;
-        _currentUser = currentUser;
-    }
-
-    public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request,
+        CancellationToken cancellationToken)
     {
         if (_currentUser.UserId is null)
             throw new UnauthorizedException();
 
-        var studentId = _currentUser.UserId.Value;
+        var studentId = currentUser.UserId.Value;
 
-        var lessonRepo = _unitOfWork.GetOrCreateRepository<Lesson>();
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lessons = await lessonRepo.ListAsync(
             new LessonsCatalogSpecification(), cancellationToken);
@@ -114,10 +107,10 @@ public class GetLessonsCatalogQueryHandler
                 // student buy the prerequisite Lesson 
                 if (prerequisiteEnrollment is not null)
                 {
-                    if (!prerequisiteEnrollment.IsCompleted)
-                    {
-                        return LessonCatalogStatus.Locked;
-                    }
+                    // if (!prerequisiteEnrollment.IsCompleted)
+                    // {
+                    //     return LessonCatalogStatus.Locked;
+                    // }
                 }
             }
         }
@@ -145,7 +138,7 @@ public class GetLessonsCatalogQueryHandler
 
     private static string ToArabicNumerals(string str) =>
         str.Replace("0", "٠").Replace("1", "١").Replace("2", "٢")
-           .Replace("3", "٣").Replace("4", "٤").Replace("5", "٥")
-           .Replace("6", "٦").Replace("7", "٧").Replace("8", "٨")
-           .Replace("9", "٩");
+            .Replace("3", "٣").Replace("4", "٤").Replace("5", "٥")
+            .Replace("6", "٦").Replace("7", "٧").Replace("8", "٨")
+            .Replace("9", "٩");
 }

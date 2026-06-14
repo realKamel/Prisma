@@ -8,6 +8,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
@@ -19,12 +20,11 @@ public class GetLessonDetailsQueryHandler(
     public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery request,
         CancellationToken cancellationToken)
     {
-      
         Guid? currentStudentId = _currentUserService.UserId;
 
-        var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson>();
+        var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonWithDetailsSpecification(request.LessonId);
-        var lesson = await lessonrepository.GetBySpecAsync(spec, cancellationToken, tracking: false);
+        var lesson = await lessonrepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson == null)
         {
@@ -39,7 +39,7 @@ public class GetLessonDetailsQueryHandler(
         if (lesson.Prerequisite != null && currentStudentId.HasValue)
         {
             var prereqSpec = new LessonWithDetailsSpecification(lesson.PrerequisiteId.Value);
-            var prereqLesson = await lessonrepository.GetBySpecAsync(prereqSpec, cancellationToken);
+            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(prereqSpec, cancellationToken);
 
             if (prereqLesson != null)
             {

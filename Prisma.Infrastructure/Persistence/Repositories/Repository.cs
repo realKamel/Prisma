@@ -1,64 +1,24 @@
-using Microsoft.EntityFrameworkCore;
+using Ardalis.Specification.EntityFrameworkCore;
 using Prisma.Domain.Common;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
-public class Repository<TEntity>(AppDbContext dbContext, SpecificationEvaluator specificationEvaluator) :
-    IRepository<TEntity> where TEntity : BaseEntity
+public class Repository<TEntity, TKey>(AppDbContext dbContext)
+    : RepositoryBase<TEntity>(dbContext), IRepository<TEntity, TKey>
+    where TEntity : class, IEntity<TKey>
 {
-    public async Task<ICollection<TEntity>> ListAsync(ISpecification<TEntity> spec,
-        CancellationToken ct)
+    public TEntity Add(TEntity entity)
     {
-        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
-
-        return await query.AsNoTrackingWithIdentityResolution().ToListAsync(ct);
+        dbContext.Set<TEntity>().Add(entity);
+        return entity;
     }
 
-    public async Task<ICollection<TEntity>> ListAsync(CancellationToken ct)
+    public IEnumerable<TEntity> AddRange(IEnumerable<TEntity> entities)
     {
-        return await dbContext.Set<TEntity>().AsNoTracking().ToListAsync(ct);
-    }
-
-    public async Task<TEntity?> GetBySpecAsync(ISpecification<TEntity> spec, CancellationToken ct,
-        bool tracking = false)
-    {
-        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
-
-        if (!tracking)
-        {
-            query = query.AsNoTracking();
-        }
-
-        return await query.FirstOrDefaultAsync(ct);
-    }
-
-    public async Task<int> CountAsync(ISpecification<TEntity> spec, CancellationToken ct)
-    {
-        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
-
-        return await query.AsNoTracking().CountAsync(ct);
-    }
-
-    public async Task<int> CountAsync(CancellationToken ct)
-    {
-        return await dbContext.Set<TEntity>().AsNoTracking().CountAsync(ct);
-    }
-
-    public async Task<bool> AnyAsync(ISpecification<TEntity> spec, CancellationToken ct)
-    {
-        var query = specificationEvaluator.GetQuery(dbContext.Set<TEntity>(), spec);
-        return await query.AsNoTracking().AnyAsync(ct);
-    }
-
-    public async Task<bool> AnyAsync(CancellationToken ct)
-    {
-        return await dbContext.Set<TEntity>().AsNoTracking().AnyAsync(ct);
-    }
-
-    public async Task AddAsync(TEntity entity, CancellationToken ct)
-    {
-        await dbContext.Set<TEntity>().AddAsync(entity, ct);
+        var range = entities.ToList();
+        dbContext.Set<TEntity>().AddRange(range);
+        return range;
     }
 
     public void Update(TEntity entity)
@@ -66,8 +26,26 @@ public class Repository<TEntity>(AppDbContext dbContext, SpecificationEvaluator 
         dbContext.Set<TEntity>().Update(entity);
     }
 
+    public void UpdateRange(IEnumerable<TEntity> entities)
+    {
+        var range = entities.ToList();
+        dbContext.Set<TEntity>().UpdateRange(range);
+    }
+
     public void Delete(TEntity entity)
     {
         dbContext.Set<TEntity>().Remove(entity);
+    }
+
+    public void DeleteRange(IEnumerable<TEntity> entities)
+    {
+        var range = entities.ToList();
+        dbContext.Set<TEntity>().RemoveRange(range);
+    }
+
+    // just to enforce UoW
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
     }
 }

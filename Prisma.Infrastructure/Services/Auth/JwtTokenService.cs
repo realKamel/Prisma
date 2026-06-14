@@ -5,7 +5,6 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.Application.Abstractions.Auth;
-using Prisma.Application.Common.Constants;
 
 namespace Prisma.Infrastructure.Services.Auth;
 
@@ -56,8 +55,13 @@ public class JwtTokenService : IJwtTokenService
         return Convert.ToBase64String(randomBytes);
     }
 
-    public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+    public ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token)
     {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
         var validationParams = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -68,12 +72,14 @@ public class JwtTokenService : IJwtTokenService
             ValidAudience = _jwtSettings.Audience,
             IssuerSigningKey = _securityKey
         };
-        try
 
+        try
         {
-            return new JwtSecurityTokenHandler()
-                .ValidateToken(token, validationParams, out _);
+            return new JwtSecurityTokenHandler().ValidateToken(token, validationParams, out _);
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
 }

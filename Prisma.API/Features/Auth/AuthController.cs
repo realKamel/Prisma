@@ -39,8 +39,8 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
     {
         var command = new
-            RefreshTokenCommand(Request.Cookies["accessToken"],
-                Request.Cookies["refreshToken"]);
+            RefreshTokenCommand(Request.Cookies[AuthHelper.AccessToken],
+                Request.Cookies[AuthHelper.RefreshToken]);
 
         var result = await mediator.Send(command, cancelToken);
 
@@ -52,10 +52,10 @@ public class AuthController(IMediator mediator) : ApiController
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(CancellationToken cancelToken)
     {
-        await mediator.Send(new LogoutCommand(), cancelToken);
+        await mediator.Send(new LogoutCommand(Request.Cookies[AuthHelper.AccessToken]), cancelToken);
 
-        Response.Cookies.Delete("access_token");
-        Response.Cookies.Delete("refresh_token");
+        Response.Cookies.Delete(AuthHelper.AccessToken);
+        Response.Cookies.Delete(AuthHelper.RefreshToken);
 
         return Ok();
     }
@@ -65,7 +65,6 @@ public class AuthController(IMediator mediator) : ApiController
     public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command)
     {
         var result = await mediator.Send(command);
-  
         return Ok(result);
     }
 
@@ -84,6 +83,7 @@ public class AuthController(IMediator mediator) : ApiController
 
         return Ok(result);
     }
+
     [HttpPost("email-verify")]
     public async Task<ActionResult> EmailVerify([FromBody] EmailVerificationRequestCommand command)
     {
@@ -91,6 +91,7 @@ public class AuthController(IMediator mediator) : ApiController
 
         return Ok(result);
     }
+
     [HttpGet("confirm-email")]
     public async Task<ActionResult> ConfirmEmail([FromQuery] ConfirmEmailCommand command)
     {

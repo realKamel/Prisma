@@ -7,6 +7,9 @@ namespace Prisma.API.Features.Auth;
 
 public static class AuthHelper
 {
+    public const string AccessToken = "access_Token";
+    public const string RefreshToken = "refresh_token";
+
     public static void SetAuthCookies(this IResponseCookies responseCookies, string accessToken, string refreshToken)
     {
         var accessTokenOptions = new CookieOptions
@@ -14,7 +17,7 @@ public static class AuthHelper
             HttpOnly = true, // JS cannot read it
             Secure = true, // HTTPS only
             SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddMinutes(15)
+            Expires = DateTimeOffset.UtcNow.AddMinutes(20)
         };
 
         var refreshTokenOptions = new CookieOptions
@@ -22,11 +25,11 @@ public static class AuthHelper
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.None,
-            Expires = DateTime.UtcNow.AddDays(7),
-            Path = "https://localhost:7109/api/v1/Auth/refresh" // TODO: goes to the refresh endpoint, nothing else
+            Expires = DateTimeOffset.UtcNow.AddDays(7),
+            Path = "/v1/Auth/refresh" // TODO: goes to the refresh endpoint, nothing else
         };
-        responseCookies.Append("access_token", accessToken, accessTokenOptions);
-        responseCookies.Append("refresh_token", refreshToken, refreshTokenOptions);
+        responseCookies.Append(AccessToken, accessToken, accessTokenOptions);
+        responseCookies.Append(RefreshToken, refreshToken, refreshTokenOptions);
     }
 
     public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)

@@ -69,7 +69,7 @@ public static class WebAppHelper
                         // ValidIssuer = jwtSettings.Issuer,
                         // ValidAudience = jwtSettings.Audience,
                         IssuerSigningKey = new SymmetricSecurityKey(key),
-                        // ClockSkew = TimeSpan.Zero
+                        ClockSkew = TimeSpan.Zero
                     };
                 }
                 else

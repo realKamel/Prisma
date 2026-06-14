@@ -1,37 +1,48 @@
+using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Microsoft.IdentityModel.JsonWebTokens;
+using Prisma.Application.Abstractions.Auth;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 
 namespace Prisma.Application.Features.Authentication.Commands.Logout;
 
-public class LogoutCommandHandler(ICurrentUserService currentUserService, UserManager<User> userManager)
-    : IRequestHandler<LogoutCommand, Result>
+public class LogoutCommandHandler(IJwtTokenService jwtTokenService, UserManager<User> userManager)
+    : IRequestHandler<LogoutCommand>
 {
-    public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    public async Task Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
-        var email = currentUserService.Email;
-
-        if (email is null)
+        if (string.IsNullOrEmpty(request.AccessToken))
         {
-            throw new BadRequestException("Something went wrong");
+            return;
         }
 
-        var user = await userManager.FindByEmailAsync(email);
+        var principal = jwtTokenService.GetPrincipalFromExpiredToken(request.AccessToken);
+
+        if (principal is null)
+        {
+            return;
+        }
+
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                     principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+                     principal.FindFirstValue(JwtRegisteredClaimNames.Email);
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        var user = await userManager.FindByEmailAsync(userId);
 
         if (user is null)
         {
-            throw new BadRequestException("Something went wrong");
+            return;
         }
 
         user.RefreshToken = null;
         user.RefreshTokenExpiry = null;
-
         await userManager.UpdateAsync(user);
-
-        return Result.Success();
     }
 }

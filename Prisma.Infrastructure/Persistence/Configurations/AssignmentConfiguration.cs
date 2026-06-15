@@ -10,10 +10,10 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
     {
         builder.HasKey(x => x.Id);
 
-        builder.HasOne(x => x.Lesson)
-            .WithMany(x => x.Assignments)
-            .HasForeignKey(x => x.LessonId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // builder.HasOne(x => x.Lesson)
+        //     .WithMany(x => x.Assignments)
+        //     .HasForeignKey(x => x.LessonId)
+        //     .OnDelete(DeleteBehavior.Cascade);
 
 
         builder.HasQueryFilter(x => !x.IsDeleted);

@@ -11,9 +11,10 @@ namespace Prisma.API.Features.Student;
 
 public class StudentsController(ISender mediator) : ApiController
 {
-    [Authorize]
+    [Authorize(Roles = AppClaims.Roles.Student)]
+    [ProducesResponseType<Result<ICollection<LessonCatalogDto>>>(StatusCodes.Status200OK)]
     [HttpGet("catalog")]
-    public async Task<IActionResult> GetLessonsCatalog(CancellationToken c)
+    public async Task<ActionResult> GetLessonsCatalog(CancellationToken c)
     {
         var result = await mediator.Send(new GetLessonsCatalogQuery(), c);
         return Ok(result);

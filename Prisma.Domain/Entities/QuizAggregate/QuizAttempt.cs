@@ -7,7 +7,7 @@ namespace Prisma.Domain.Entities.QuizAggregate;
 public class QuizAttempt : BaseEntity
 {
     public int QuizId { get; set; }
-    public LessonQuiz Quiz { get; set; }
+    public Quiz Quiz { get; set; }
 
     public Guid StudentId { get; set; }
     public Student Student { get; set; }

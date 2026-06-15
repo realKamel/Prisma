@@ -39,6 +39,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Title = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
                     QuestionType = table.Column<string>(type: "character varying(8)", maxLength: 8, nullable: false),
                     Answer = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -153,7 +154,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     QuestionId = table.Column<int>(type: "integer", nullable: false),
                     Text = table.Column<string>(type: "text", nullable: true),
                     IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
-                    MCQQuestionId = table.Column<int>(type: "integer", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -165,11 +165,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Choice", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Choice_Question_MCQQuestionId",
-                        column: x => x.MCQQuestionId,
-                        principalTable: "Question",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Choice_Question_QuestionId",
                         column: x => x.QuestionId,
@@ -319,9 +314,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Price = table.Column<decimal>(type: "numeric(12,2)", precision: 12, scale: 2, nullable: false),
                     Duration = table.Column<TimeSpan>(type: "interval", nullable: false),
                     ImageThumbnailUrl = table.Column<string>(type: "text", nullable: true),
-                    VideoUrl = table.Column<string>(type: "text", nullable: true),
                     EndDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsEligible = table.Column<bool>(type: "boolean", nullable: false),
+                    AssignmentId = table.Column<int>(type: "integer", nullable: true),
+                    QuizId = table.Column<int>(type: "integer", nullable: true),
                     Outcomes = table.Column<string[]>(type: "text[]", nullable: false),
                     PrerequisiteId = table.Column<int>(type: "integer", nullable: true),
                     TeacherId = table.Column<Guid>(type: "uuid", nullable: true),
@@ -429,15 +425,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LessonQuiz",
+                name: "LessonMaterial",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Title = table.Column<string>(type: "text", nullable: true),
-                    Description = table.Column<string>(type: "text", nullable: true),
-                    TimeInMinutes = table.Column<TimeSpan>(type: "interval", nullable: false),
-                    TotalDegree = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Size = table.Column<string>(type: "text", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    DownloadUrl = table.Column<string>(type: "text", nullable: false),
                     LessonId = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -449,9 +445,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LessonQuiz", x => x.Id);
+                    table.PrimaryKey("PK_LessonMaterial", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LessonQuiz_Lesson_LessonId",
+                        name: "FK_LessonMaterial_Lesson_LessonId",
                         column: x => x.LessonId,
                         principalTable: "Lesson",
                         principalColumn: "Id",
@@ -488,7 +484,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         column: x => x.LessonId,
                         principalTable: "Lesson",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Payment_Users_StudentId",
                         column: x => x.StudentId,
@@ -498,12 +494,51 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Quiz",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Title = table.Column<string>(type: "text", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    TimeInMinutes = table.Column<TimeSpan>(type: "interval", nullable: false),
+                    TotalDegree = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false),
+                    Scope = table.Column<int>(type: "integer", nullable: false),
+                    LessonId = table.Column<int>(type: "integer", nullable: true),
+                    AcademicYearId = table.Column<int>(type: "integer", nullable: true),
+                    AvailableFrom = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DueDate = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    DeletedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Quiz", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Quiz_AcademicYear_AcademicYearId",
+                        column: x => x.AcademicYearId,
+                        principalTable: "AcademicYear",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Quiz_Lesson_LessonId",
+                        column: x => x.LessonId,
+                        principalTable: "Lesson",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "RedeemCode",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LessonId = table.Column<int>(type: "integer", nullable: false),
+                    LessonId = table.Column<int>(type: "integer", nullable: true),
                     Code = table.Column<string>(type: "text", nullable: false),
                     MaxUses = table.Column<int>(type: "integer", nullable: false),
                     UsedCount = table.Column<int>(type: "integer", nullable: false),
@@ -525,8 +560,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         name: "FK_RedeemCode_Lesson_LessonId",
                         column: x => x.LessonId,
                         principalTable: "Lesson",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -538,6 +572,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Title = table.Column<string>(type: "text", nullable: false),
                     ContentURL = table.Column<string>(type: "text", nullable: true),
                     LessonId = table.Column<int>(type: "integer", nullable: false),
+                    SortOrder = table.Column<int>(type: "integer", nullable: false),
                     Duration = table.Column<TimeSpan>(type: "interval", nullable: false),
                     IsPreview = table.Column<bool>(type: "boolean", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -615,15 +650,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_QuestionLessonQuiz", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_QuestionLessonQuiz_LessonQuiz_LessonQuizId",
-                        column: x => x.LessonQuizId,
-                        principalTable: "LessonQuiz",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
                         name: "FK_QuestionLessonQuiz_Question_QuestionId",
                         column: x => x.QuestionId,
                         principalTable: "Question",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_QuestionLessonQuiz_Quiz_LessonQuizId",
+                        column: x => x.LessonQuizId,
+                        principalTable: "Quiz",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -652,9 +687,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_QuizAttempt", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_QuizAttempt_LessonQuiz_QuizId",
+                        name: "FK_QuizAttempt_Quiz_QuizId",
                         column: x => x.QuizId,
-                        principalTable: "LessonQuiz",
+                        principalTable: "Quiz",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -674,6 +709,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     EnrollmentMethod = table.Column<int>(type: "integer", nullable: false),
                     ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    IsCompleted = table.Column<bool>(type: "boolean", nullable: false),
+                    CompletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     LessonId = table.Column<int>(type: "integer", nullable: true),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: true),
                     PaymentId = table.Column<int>(type: "integer", nullable: true),
@@ -757,9 +794,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     QuizAttemptId = table.Column<int>(type: "integer", nullable: false),
                     StudentId = table.Column<Guid>(type: "uuid", nullable: false),
                     QuestionId = table.Column<int>(type: "integer", nullable: false),
-                    ChoiceId = table.Column<int>(type: "integer", nullable: false),
-                    Score = table.Column<decimal>(type: "numeric", nullable: false),
-                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    ChoiceId = table.Column<int>(type: "integer", nullable: true),
+                    Score = table.Column<decimal>(type: "numeric(5,2)", precision: 5, scale: 2, nullable: true),
+                    IsCorrect = table.Column<bool>(type: "boolean", nullable: true),
                     TextAnswer = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -831,7 +868,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Assignment_LessonId",
                 table: "Assignment",
-                column: "LessonId");
+                column: "LessonId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AssignmentSubmission_AssignmentId",
@@ -854,19 +892,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "QuestionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AttemptAnswer_QuizAttemptId",
+                name: "IX_AttemptAnswer_QuizAttemptId_QuestionId",
                 table: "AttemptAnswer",
-                column: "QuizAttemptId");
+                columns: new[] { "QuizAttemptId", "QuestionId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AttemptAnswer_StudentId",
                 table: "AttemptAnswer",
                 column: "StudentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Choice_MCQQuestionId",
-                table: "Choice",
-                column: "MCQQuestionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Choice_QuestionId",
@@ -904,8 +938,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "TeacherId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LessonQuiz_LessonId",
-                table: "LessonQuiz",
+                name: "IX_LessonMaterial_LessonId",
+                table: "LessonMaterial",
                 column: "LessonId");
 
             migrationBuilder.CreateIndex(
@@ -919,9 +953,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "StudentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_QuestionLessonQuiz_LessonQuizId",
+                name: "IX_QuestionLessonQuiz_LessonQuizId_QuestionId",
                 table: "QuestionLessonQuiz",
-                column: "LessonQuizId");
+                columns: new[] { "LessonQuizId", "QuestionId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuestionLessonQuiz_QuestionId",
@@ -929,9 +964,20 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 column: "QuestionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_QuizAttempt_QuizId",
+                name: "IX_Quiz_AcademicYearId",
+                table: "Quiz",
+                column: "AcademicYearId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Quiz_LessonId",
+                table: "Quiz",
+                column: "LessonId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_QuizAttempt_QuizId_StudentId",
                 table: "QuizAttempt",
-                column: "QuizId");
+                columns: new[] { "QuizId", "StudentId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_QuizAttempt_StudentId",
@@ -1036,6 +1082,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "Enrollment");
 
             migrationBuilder.DropTable(
+                name: "LessonMaterial");
+
+            migrationBuilder.DropTable(
                 name: "QuestionLessonQuiz");
 
             migrationBuilder.DropTable(
@@ -1069,7 +1118,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 name: "Question");
 
             migrationBuilder.DropTable(
-                name: "LessonQuiz");
+                name: "Quiz");
 
             migrationBuilder.DropTable(
                 name: "Lesson");

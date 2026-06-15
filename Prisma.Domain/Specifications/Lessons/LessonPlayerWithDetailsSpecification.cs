@@ -11,9 +11,9 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson>
         Query.Where(lesson => lesson.Id == lessonId)
             .Include(l => l.Sections)
             .ThenInclude(s => s.Progresses)
-            .Include(l => l.Quizzes)
+            .Include(l => l.Quiz)
             .ThenInclude(q => q.Questions)
-            .Include(l => l.Assignments)
+            .Include(l => l.Assignment)
             .Include(l => l.Enrollments);
 
         // AddInclude(l => l.Sections);

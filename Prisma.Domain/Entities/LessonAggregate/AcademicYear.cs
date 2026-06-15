@@ -1,4 +1,5 @@
 ﻿using Prisma.Domain.Common;
+using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
@@ -9,4 +10,5 @@ public class AcademicYear : BaseEntity
     public ICollection<Student> Students { get; set; } = new List<Student>();
     public ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
     public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+    public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 }

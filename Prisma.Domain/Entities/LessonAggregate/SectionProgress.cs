@@ -7,6 +7,7 @@ public class SectionProgress : BaseEntity
 {
     public bool IsCompleted { get; set; }
     public int Percentage { get; set; }
+
     public Guid StudentId { get; set; }
     public Student Student { get; set; }
 

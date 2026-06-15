@@ -41,14 +41,14 @@ public class GetLessonsCatalogQueryHandler(
         var enrollment = lesson.Enrollments
             .FirstOrDefault(x => x.StudentId == studentId);
 
-        //var statusString = status switch
-        //{
-        //    LessonCatalogStatus.Available => "avail",
-        //    LessonCatalogStatus.Purchased => "purchased",
-        //    LessonCatalogStatus.Locked => "locked",
-        //    LessonCatalogStatus.Expired => "expired",
-        //    _ => "avail"
-        //};
+        var statusString = status switch
+        {
+            LessonCatalogStatus.Available => "avail",
+            LessonCatalogStatus.Purchased => "purchased",
+            LessonCatalogStatus.Locked => "locked",
+            LessonCatalogStatus.Expired => "expired",
+            _ => "avail"
+        };
 
         string? expiredDateLabel = null;
         if (status == LessonCatalogStatus.Expired && enrollment?.ExpiresAt is not null)
@@ -63,7 +63,7 @@ public class GetLessonsCatalogQueryHandler(
             Id = lesson.Id,
             Title = lesson.Title,
             Price = status == LessonCatalogStatus.Available ? lesson.Price : 0,
-            Status = status,
+            Status = statusString,
             PrerequisiteLabel = status == LessonCatalogStatus.Locked
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,

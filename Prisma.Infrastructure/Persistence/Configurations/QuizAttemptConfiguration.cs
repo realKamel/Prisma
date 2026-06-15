@@ -21,6 +21,9 @@ public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
             .WithMany(x => x.Attempts)
             .HasForeignKey(x => x.QuizId);
 
+        // each student has one try to attemp the quiz
+        builder.HasIndex(a => new { a.QuizId, a.StudentId });
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

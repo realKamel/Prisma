@@ -44,7 +44,7 @@ public class Repository<TEntity, TKey>(AppDbContext dbContext)
     }
 
     // just to enforce UoW
-    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    public sealed override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

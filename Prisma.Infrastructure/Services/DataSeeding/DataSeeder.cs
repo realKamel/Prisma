@@ -162,31 +162,8 @@ public class DataSeeder(
 
     public async Task SeedAppDataAsync(JsonElement root)
     {
-        // var migrations = await dbContext.Database.GetPendingMigrationsAsync();
-        //
-        // if (migrations.Any())
-        // {
-        //     throw new Exception("There is Pending Migrations");
-        // }
-
         try
         {
-            // var seedPath = Path.Combine(
-            //     AppContext.BaseDirectory, "SeedData", "seed_app_data.json");
-            //
-            // Console.WriteLine(seedPath);
-            //
-            // if (!File.Exists(seedPath))
-            // {
-            //     logger.LogWarning("Seed file not found: {Path}", seedPath);
-            //     return;
-            // }
-
-            //
-            // await using FileStream stream = File.OpenRead(seedPath);
-            // using JsonDocument document = await JsonDocument.ParseAsync(stream,
-            //     new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
-
             var questionSettings = new JsonSerializerSettings();
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -200,7 +177,7 @@ public class DataSeeder(
             await SeedDataAsync<Assignment>(root, options);
             await SeedDataAsync<Enrollment>(root, options);
             await SeedDataAsync<Question>(root, options, questionSettings);
-            await SeedDataAsync<LessonQuiz>(root, options);
+            await SeedDataAsync<Quiz>(root, options);
             await SeedDataAsync<Choice>(root, options);
             await SeedDataAsync<QuestionLessonQuiz>(root, options);
             await SeedDataAsync<QuizAttempt>(root, options);
@@ -245,24 +222,17 @@ public class DataSeeder(
     {
         logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
 
-        if (serializerSettings is null)
+        if (!root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
         {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
-            {
-                return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
-                // dbContext.Set<TEntity>().AddRange(entities ?? []);
-            }
-        }
-        else
-        {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
-            {
-                return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
-                // dbContext.Set<TEntity>().AddRange(entities ?? []);
-            }
+            return [];
         }
 
-        return [];
+        if (serializerSettings is null)
+        {
+            return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
+        }
+
+        return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
     }
 
     private async Task SeedDataAsync<TEntity>(JsonElement root, JsonSerializerOptions options,
@@ -271,27 +241,22 @@ public class DataSeeder(
     {
         logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
 
-        if (serializerSettings is null)
+        if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
+            !await dbContext.Set<TEntity>().AnyAsync())
         {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
-                !await dbContext.Set<TEntity>().AnyAsync())
+            List<TEntity> entities;
+            if (serializerSettings is null)
             {
-                var entities = JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
-                dbContext.Set<TEntity>().AddRange(entities);
+                entities = JsonConvert
+                    .DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
             }
+            else
+            {
+                entities = JsonConvert
+                    .DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
+            }
+
+            dbContext.Set<TEntity>().AddRange(entities);
         }
     }
-
-    // private List<Question> SeedQuestionData(JsonElement root)
-    // {
-    //     var settings = new JsonSerializerSettings();
-    //     settings.Converters.Add(new QuestionConverter());
-    //     logger.LogInformation("Seeding Check: {name}", nameof(Question));
-    //     if (root.TryGetProperty(nameof(Question), out JsonElement output))
-    //     {
-    //         return JsonConvert.DeserializeObject<List<Question>>(output.GetRawText(), settings) ?? [];
-    //     }
-    //
-    //     return [];
-    // }
 }

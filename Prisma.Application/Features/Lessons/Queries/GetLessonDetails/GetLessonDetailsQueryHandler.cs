@@ -36,27 +36,16 @@ public class GetLessonDetailsQueryHandler(
         int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
-        bool isPrerequisiteCompleted = false;
+        bool isPrerequisiteCompleted = true; 
 
         if (lesson.Prerequisite != null)
         {
-            var prereqSpec = lesson.Prerequisite;
-            var prereqLesson = await lessonrepository.GetByIdAsync(prereqSpec.Id, cancellationToken);
+            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(new LessonWithDetailsSpecification(lesson.Prerequisite.Id), cancellationToken);
 
-            if (prereqLesson != null)
-            {
-                var enrollment = prereqLesson.Enrollments?
-                    .FirstOrDefault(e => e.StudentId == currentStudentId && e.Status == EnrollmentStatus.Active);
+            var enrollment = prereqLesson?.Enrollments?
+                .FirstOrDefault(e => e.StudentId == currentStudentId && e.Status == EnrollmentStatus.Active);
 
-                if (enrollment is not null && enrollment.IsCompleted)
-                {
-                    isPrerequisiteCompleted = true;
-                }
-                else
-                {
-                    isPrerequisiteCompleted = false;
-                }
-            }
+            isPrerequisiteCompleted = enrollment?.IsCompleted == true;
         }
 
         var lessonDto = new LessonDetailsDto

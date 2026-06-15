@@ -10,6 +10,8 @@ public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer
     {
         builder.HasKey(x => x.Id);
 
+        builder.Property(a => a.Score).HasPrecision(5,2);
+
         builder.HasOne(x => x.QuizAttempt)
             .WithMany(x => x.Answers)
             .HasForeignKey(x => x.QuizAttemptId)
@@ -29,6 +31,8 @@ public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer
             .WithMany()
             .HasForeignKey(x => x.ChoiceId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(a => new { a.QuizAttemptId, a.QuestionId }).IsUnique();
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

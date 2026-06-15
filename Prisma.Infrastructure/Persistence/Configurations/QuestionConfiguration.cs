@@ -14,6 +14,16 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasValue<MCQQuestion>("MCQ")
             .HasValue<WrittenQuestion>("Written");
 
+        builder.HasMany(q => q.AttemptAnswers)
+            .WithOne(a => a.Question)
+            .HasForeignKey(a => a.QuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(q => q.QuestionLessons)
+            .WithOne(ql => ql.Question)
+            .HasForeignKey(ql => ql.QuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

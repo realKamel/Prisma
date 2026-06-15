@@ -19,7 +19,11 @@ public class QuestionLessonQuizConfiguration : IEntityTypeConfiguration<Question
 
         builder.HasOne(x => x.Question)
             .WithMany(x => x.QuestionLessons)
-            .HasForeignKey(x => x.QuestionId);
+            .HasForeignKey(x => x.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // to not repeat the same question in the same quiz
+        builder.HasIndex(x => new { x.LessonQuizId, x.QuestionId }).IsUnique();
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

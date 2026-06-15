@@ -15,6 +15,12 @@ public class LessonQuizConfiguration : IEntityTypeConfiguration<LessonQuiz>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(q => q.AcademicYear)
+           .WithMany()
+           .HasForeignKey(q => q.AcademicYearId)
+           .OnDelete(DeleteBehavior.Restrict);
+
+
         builder.Property(x => x.TotalDegree)
             .HasPrecision(8, 2);
 

@@ -10,6 +10,5 @@ public class AcademicYear : BaseEntity
     public ICollection<Student> Students { get; set; } = new List<Student>();
     public ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
     public ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
-    public ICollection<LessonQuiz> LessonQuizzes { get; set; } = new List<LessonQuiz>();
-
+    public ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 }

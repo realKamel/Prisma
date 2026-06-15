@@ -4,7 +4,7 @@ using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.QuizAggregate;
 
-public class LessonQuiz : BaseEntity
+public class Quiz : BaseEntity
 {
     public string? Title { get; set; }
     public string? Description { get; set; }
@@ -13,6 +13,7 @@ public class LessonQuiz : BaseEntity
 
     public decimal TotalDegree { get; set; }
     public QuizScope Scope { get; set; }
+
     public int? LessonId { get; set; }
     public Lesson? Lesson { get; set; }
 

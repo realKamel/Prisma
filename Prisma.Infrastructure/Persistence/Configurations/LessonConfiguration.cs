@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -16,6 +17,14 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         builder.HasMany(l => l.RedeemCodes)
             .WithOne(r => r.Lesson)
             .HasForeignKey(r => r.LessonId);
+
+        builder.HasOne(l => l.Quiz)
+            .WithOne(l => l.Lesson)
+            .HasForeignKey<Quiz>(q => q.LessonId);
+
+        builder.HasOne(l => l.Assignment)
+            .WithOne(l => l.Lesson)
+            .HasForeignKey<Assignment>(l => l.LessonId);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

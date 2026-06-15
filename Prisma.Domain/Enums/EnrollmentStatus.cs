@@ -4,5 +4,6 @@ public enum EnrollmentStatus
 {
     Active = 0,
     Expired = 1,
-    Suspended = 2
+    Suspended = 2,
+    Done = 3
 }

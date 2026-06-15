@@ -51,6 +51,7 @@ public class GetLessonDetailsQueryHandler(
         var lessonDto = new LessonDetailsDto
         {
             Id = lesson.Id,
+            Url=lesson.ImageThumbnailUrl ?? "",
             Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",

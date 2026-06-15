@@ -9,4 +9,6 @@ public class LessonMaterial: BaseEntity
     public string Size { get; set; } = string.Empty;
     public LessonMaterialType Type { get; set; } 
     public string DownloadUrl { get; set; } = string.Empty;
+    public int LessonId { get; set; }
+    public Lesson Lesson { get; set; }
 }

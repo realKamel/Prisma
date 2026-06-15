@@ -13,7 +13,6 @@ public class Lesson : BaseEntity
     public TimeSpan Duration { get; set; }
 
     public string? ImageThumbnailUrl { get; set; }
-    public string? VideoUrl { get; set; }
 
     public DateTimeOffset? EndDate { get; set; }
     public bool IsEligible { get; set; }
@@ -28,6 +27,7 @@ public class Lesson : BaseEntity
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     public ICollection<RedeemCode> RedeemCodes { get; set; } = new List<RedeemCode>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public ICollection<LessonMaterial> LessonMaterials { get; set; } = new List<LessonMaterial>();
 
     public ICollection<string> Outcomes { get; set; } = new List<string>();
 

@@ -27,8 +27,8 @@ public class GetLessonPlayerQueryHandler(
             throw new NotFoundException("Lesson", request.id);
 
         var enrollment = lesson.Enrollments.FirstOrDefault();
-        var quiz = lesson.Quizzes.FirstOrDefault();
-        var assignment = lesson.Assignments.FirstOrDefault();
+        var quiz = lesson.Quiz;
+        var assignment = lesson.Assignment;
 
         const string teacher = "أ. فاطمة علي";
         const string subject = "فيزياء";
@@ -46,7 +46,8 @@ public class GetLessonPlayerQueryHandler(
                 Title = s.Title,
                 Type = "video",
                 Duration = s.Duration.ToString(@"mm\:ss"),
-                IsCompleted = progress?.IsCompleted ?? false
+                IsCompleted = progress?.IsCompleted ?? false,
+                ContentUrl = s.ContentURL
             };
         }).ToList();
 
@@ -65,7 +66,6 @@ public class GetLessonPlayerQueryHandler(
             Teacher = teacher,
             TeacherInitial = teacher[0].ToString(),
             ExpiryLabel = $"صلاحية الدرس: {expiryDays} يوم",
-            VideoUrl = lesson.VideoUrl ?? string.Empty,
             VideoPoster = lesson.ImageThumbnailUrl ?? string.Empty,
             AboutTab =
                 new AboutTab

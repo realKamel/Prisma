@@ -18,7 +18,6 @@ public class LessonPlayerResult
     public string Teacher { get; set; } = string.Empty;
     public string TeacherInitial { get; set; } = string.Empty;
     public string ExpiryLabel { get; set; } = string.Empty;
-    public string VideoUrl { get; set; } = string.Empty;
     public string VideoPoster { get; set; } = string.Empty;
     public AboutTab AboutTab { get; set; } = new();
     public List<Material> Materials { get; set; } = new();
@@ -68,4 +67,5 @@ public class SectionItem
     public string Type { get; set; } = string.Empty;
     public string Duration { get; set; } = string.Empty;
     public bool IsCompleted { get; set; }
+    public string? ContentUrl { get; set; }
 }

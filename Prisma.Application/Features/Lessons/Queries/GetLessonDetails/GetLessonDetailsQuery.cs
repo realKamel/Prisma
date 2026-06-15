@@ -12,6 +12,7 @@ public class LessonDetailsDto
 {
 
     public int Id { get; set; }
+    public string Url { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Subject { get; set; } = string.Empty;
     public string Teacher { get; set; } = string.Empty;

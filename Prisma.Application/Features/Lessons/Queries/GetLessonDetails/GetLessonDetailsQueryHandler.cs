@@ -21,6 +21,8 @@ public class GetLessonDetailsQueryHandler(
         CancellationToken cancellationToken)
     {
         Guid? currentStudentId = _currentUserService.UserId;
+        if(currentStudentId is null)
+            throw new UnauthorizedException("User is not authenticated");
 
         var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonWithDetailsSpecification(request.LessonId);
@@ -34,45 +36,22 @@ public class GetLessonDetailsQueryHandler(
         int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
-        bool isPrerequisiteCompleted = false;
+        bool isPrerequisiteCompleted = true; 
 
-        if (lesson.Prerequisite != null && currentStudentId.HasValue)
+        if (lesson.Prerequisite != null)
         {
-            var prereqSpec = new LessonWithDetailsSpecification(lesson.PrerequisiteId.Value);
-            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(prereqSpec, cancellationToken);
+            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(new LessonWithDetailsSpecification(lesson.Prerequisite.Id), cancellationToken);
 
-            if (prereqLesson != null)
-            {
-                bool isEnrolled = prereqLesson.Enrollments?
-                    .Any(e => e.StudentId == currentStudentId.Value && e.Status == EnrollmentStatus.Active) ?? false;
+            var enrollment = prereqLesson?.Enrollments?
+                .FirstOrDefault(e => e.StudentId == currentStudentId && e.Status == EnrollmentStatus.Active);
 
-                if (isEnrolled)
-                {
-                    int totalPrereqQuizzes = prereqLesson.Quizzes?.Count ?? 0;
-
-                    if (totalPrereqQuizzes > 0)
-                    {
-                        int submittedQuizzesCount = prereqLesson.Quizzes?
-                            .Count(q => q.Attempts != null &&
-                                        q.Attempts.Any(a => a.StudentId == currentStudentId.Value &&
-                                                            a.Status == QuizAttemptStatus.Submitted)) ?? 0;
-
-                        if (submittedQuizzesCount == totalPrereqQuizzes)
-                        {
-                            isPrerequisiteCompleted = true;
-                        }
-                    }
-                    else
-                    {
-                        isPrerequisiteCompleted = true;
-                    }
-                }
-            }
+            isPrerequisiteCompleted = enrollment?.IsCompleted == true;
         }
 
         var lessonDto = new LessonDetailsDto
         {
             Id = lesson.Id,
+            Url=lesson.ImageThumbnailUrl ?? "",
             Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",

@@ -30,33 +30,20 @@ public class GetLessonStatusQueryHandler(
 
         var enrollment = lesson.Enrollments.FirstOrDefault(e => e.StudentId == userId);
 
-        LessonCatalogStatus status;
-
         if (enrollment is null)
-        {
-            if (lesson.Prerequisite is not null)
-            {
-                var prereqEnrollment = lesson.Prerequisite.Enrollments
-                    .FirstOrDefault(e => e.StudentId == userId);
+            return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Available });
 
-                status = prereqEnrollment is { IsCompleted: false }
-                    ? LessonCatalogStatus.Locked
-                    : LessonCatalogStatus.Available;
-            }
-            else
-            {
-                status = LessonCatalogStatus.Available;
-            }
-        }
-        else if (enrollment.ExpiresAt.HasValue && enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
+        if (enrollment.ExpiresAt.HasValue && enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
+            return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Expired });
+
+        if (lesson.Prerequisite is not null)
         {
-            status = LessonCatalogStatus.Expired;
-        }
-        else
-        {
-            status = LessonCatalogStatus.Purchased;
+            var prereqEnrollment = lesson.Prerequisite.Enrollments.FirstOrDefault(e => e.StudentId == userId);
+
+            if (prereqEnrollment is { IsCompleted: false })
+                return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Locked });
         }
 
-        return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = status });
+        return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Purchased });
     }
 }

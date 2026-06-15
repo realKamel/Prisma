@@ -11,11 +11,8 @@ public class LessonWithDetailsSpecification : Specification<Lesson>
         Query.Where(lesson => lesson.Id == lessonId)
             .Include(l => l.Sections)
             .Include(l => l.Enrollments)
-            .Include(l => l.Quiz)
-            .ThenInclude(q => q.Attempts)
             .Include(l => l.Prerequisite)
-            .ThenInclude(p => p.Quiz)
-            .ThenInclude(q => q.Attempts);
+            .AsNoTracking();
 
         // AddCriteria(l => l.Id == lessonId);
         // AddInclude(l => l.Sections);

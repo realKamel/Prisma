@@ -9,8 +9,8 @@ public class LessonStatusSpecification : Specification<Lesson>
         : base()
     {
         Query.Where(lesson => lesson.Id == lessonId)
-        .Include(l => l.Enrollments)
-        .Include(l => l.Prerequisite)
+            .Include(l => l.Enrollments)
+            .Include(l => l.Prerequisite)
             .ThenInclude(p => p.Enrollments);
     }
 }

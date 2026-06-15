@@ -13,7 +13,7 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260615210224_Initial")]
+    [Migration("20260615214950_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -482,6 +482,60 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("TeacherId");
 
                     b.ToTable("Lesson");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Size")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.ToTable("LessonMaterial");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -1569,6 +1623,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Prerequisite");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
+                        .WithMany("LessonMaterials")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lesson");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
@@ -1602,7 +1667,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.Payment", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
-                        .WithMany()
+                        .WithMany("Payments")
                         .HasForeignKey("LessonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1767,6 +1832,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Assignment");
 
                     b.Navigation("Enrollments");
+
+                    b.Navigation("LessonMaterials");
+
+                    b.Navigation("Payments");
 
                     b.Navigation("Quiz");
 

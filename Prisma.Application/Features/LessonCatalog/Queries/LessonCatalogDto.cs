@@ -8,6 +8,7 @@ public class LessonCatalogDto
     public string?  Title             { get; init; }
     public decimal  Price             { get; init; }
     public string Status { get; init; } 
+
     public string?  PrerequisiteLabel { get; init; }
     public string?  ExpiredDate       { get; init; }
     public string   TeacherName       { get; init; } = string.Empty;

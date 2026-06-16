@@ -21,4 +21,6 @@ public sealed class Result<T> : Result
 
     public static new Result<T> Failure(string message) =>
         new() { Succeeded = false, Message = message, Errors = null, Data = default! };
+
+    public static implicit operator Result<T>(T value) => Success(value);
 }

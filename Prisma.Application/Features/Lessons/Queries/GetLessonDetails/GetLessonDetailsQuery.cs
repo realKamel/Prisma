@@ -20,6 +20,10 @@ public class LessonDetailsDto
     public int ChaptersCount { get; set; }
     public int StudentsCount { get; set; }
     public decimal Price { get; set; }
+
+    public List<lessonmaterialDto> Materials { get; set; } 
+
+    public DateTimeOffset? EndDate { get; set; }
     public int ValidityDays { get; set; }
     public string AboutText { get; set; } = string.Empty;
     public List<string> Outcomes { get; set; } = [];
@@ -30,3 +34,4 @@ public class LessonDetailsDto
 // الـ Records الخفيفة ومجهزة بالـ Types الصح للـ JSON
 public record PrerequisiteDto(string Title, bool IsDone);
 public record ChapterDto(int Id, string Title, string Duration, bool IsPreview);
+public record lessonmaterialDto(int Id, string type, string fileurl);

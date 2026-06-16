@@ -29,8 +29,26 @@ public static class AuthHelper
             Expires = DateTimeOffset.UtcNow.AddDays(7),
             Path = "/v1/auth/refresh" // TODO: goes to the refresh endpoint, nothing else
         };
+
         responseCookies.Append(AccessToken, accessToken, accessTokenOptions);
         responseCookies.Append(RefreshToken, refreshToken, refreshTokenOptions);
+    }
+
+    public static void RemoveCookies(this IResponseCookies responseCookies)
+    {
+        var accessTokenOptions = new CookieOptions
+        {
+            HttpOnly = true, // JS cannot read it
+            Secure = true, // HTTPS only
+            SameSite = SameSiteMode.None,
+        };
+
+        var refreshTokenOptions = new CookieOptions
+        {
+            HttpOnly = true, Secure = true, SameSite = SameSiteMode.None, Path = "/v1/auth/refresh"
+        };
+        responseCookies.Delete(AccessToken, accessTokenOptions);
+        responseCookies.Delete(RefreshToken, refreshTokenOptions);
     }
 
     public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)

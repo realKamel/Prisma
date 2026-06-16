@@ -57,8 +57,7 @@ public class AuthController(IMediator mediator) : ApiController
     {
         await mediator.Send(new LogoutCommand(Request.Cookies[AuthHelper.AccessToken]), cancelToken);
 
-        Response.Cookies.Delete(AuthHelper.AccessToken);
-        Response.Cookies.Delete(AuthHelper.RefreshToken);
+        Response.Cookies.RemoveCookies();
 
         return Ok();
     }

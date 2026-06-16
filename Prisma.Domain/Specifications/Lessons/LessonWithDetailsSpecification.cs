@@ -12,6 +12,8 @@ public class LessonWithDetailsSpecification : Specification<Lesson>
             .Include(l => l.Sections)
             .Include(l => l.Enrollments)
             .Include(l => l.Prerequisite)
+            .Include(l => l.Quiz)
+            .Include(l => l.LessonMaterials)
             .AsNoTracking();
 
         // AddCriteria(l => l.Id == lessonId);

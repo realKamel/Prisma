@@ -60,12 +60,18 @@ public class GetLessonDetailsQueryHandler(
             Subject = "لغه انجليزيه",
             Teacher = "أ. أحمد مصطفى",
             Duration = formattedTotalDuration,
+            EndDate = lesson.EndDate,
             ValidityDays = 7,
             Chapters = lesson.Sections?.Select(s => new ChapterDto(
                 s.Id,
                 s.Title ?? "",
                 $"{(int)s.Duration.TotalMinutes} د",
                 s.IsPreview
+            )).ToList() ?? [],
+            Materials = lesson.LessonMaterials?.Select(m => new lessonmaterialDto(
+                m.Id,
+                m.Type.ToString(),
+                m.DownloadUrl ?? ""
             )).ToList() ?? [],
             Outcomes = lesson.Outcomes?.ToList() ?? [],
             Prerequisites = lesson.Prerequisite != null

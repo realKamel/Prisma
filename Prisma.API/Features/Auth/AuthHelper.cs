@@ -1,4 +1,5 @@
 using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Register;
@@ -26,7 +27,7 @@ public static class AuthHelper
             Secure = true,
             SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(7),
-            Path = "/v1/Auth/refresh" // TODO: goes to the refresh endpoint, nothing else
+            Path = "/v1/auth/refresh" // TODO: goes to the refresh endpoint, nothing else
         };
         responseCookies.Append(AccessToken, accessToken, accessTokenOptions);
         responseCookies.Append(RefreshToken, refreshToken, refreshTokenOptions);

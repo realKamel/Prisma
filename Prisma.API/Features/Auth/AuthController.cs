@@ -1,7 +1,9 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
@@ -9,6 +11,7 @@ using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
 using Prisma.Application.Features.Authentication.Commands.Register;
+using Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
 namespace Prisma.API.Features.Auth;
 
@@ -97,5 +100,15 @@ public class AuthController(IMediator mediator) : ApiController
     {
         var result = await mediator.Send(command);
         return Redirect("http://localhost:4200/email-confirmed");
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> GetUserInfo(CancellationToken cancelToken)
+    {
+        var result = await mediator.Send(new GetUserInfoQuery(), cancelToken);
+        return Ok(result);
     }
 }

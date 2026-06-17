@@ -14,13 +14,10 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson>
             .Include(l => l.Quiz)
             .ThenInclude(q => q.Questions)
             .Include(l => l.Assignment)
-            .Include(l => l.Enrollments);
+            .Include(l => l.LessonMaterials)
+            .Include(l => l.Enrollments)
+            .AsNoTracking();
 
-        // AddInclude(l => l.Sections);
-        // AddInclude($"{nameof(Lesson.Sections)}.{nameof(Section.Progresses)}");
-        // AddInclude(l => l.Quizzes);
-        // AddInclude($"{nameof(Lesson.Quizzes)}.{nameof(LessonQuiz.Questions)}");
-        // AddInclude(l => l.Assignments);
-        // AddInclude(l => l.Enrollments);
+
     }
 }

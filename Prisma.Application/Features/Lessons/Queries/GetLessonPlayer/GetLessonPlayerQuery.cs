@@ -7,40 +7,37 @@ public record GetLessonPlayerQuery(int id) : IRequest<Result<LessonPlayerResult>
 
 public class LessonPlayerResult
 {
-    public int Id { get; set; }
-    public string Title { get; set; } = string.Empty;
+    public int Id { get; set; } //
+    public string Title { get; set; } = string.Empty; //
     public string Category { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string ParentId { get; set; } = string.Empty;
-    public string ParentTitle { get; set; } = string.Empty;
-    public bool IsPurchased { get; set; }
-    public string PurchaseLabel { get; set; } = string.Empty;
-    public string Teacher { get; set; } = string.Empty;
-    public string TeacherInitial { get; set; } = string.Empty;
-    public string ExpiryLabel { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty; //
+
+    public string Description { get; set; } = string.Empty; //
+    public string Teacher { get; set; } = string.Empty; //
+
+    public int ValidityDays { get; set; } //
+
     public string VideoPoster { get; set; } = string.Empty;
-    public AboutTab AboutTab { get; set; } = new();
-    public List<Material> Materials { get; set; } = new();
-    public Quiz? Quiz { get; set; }
-    public Assignment? Assignment { get; set; }
-    public List<SectionPlayer> Sections { get; set; } = new();
+    public List<MaterialDto> Materials { get; set; } = new(); //
+    public QuizDto? Quiz { get; set; } //
+    public AssignmentDto? Assignment { get; set; } //
+    public List<SectionDto> Sections { get; set; } = new(); //
+
+    public List<string> Outcomes { get; set; } = new(); //
+
+
 }
 
-public class AboutTab
-{
-    public string Description { get; set; } = string.Empty;
-    public List<string> Objectives { get; set; }
-}
 
-public class Material
+
+public class MaterialDto
 {
     public string Title { get; set; } = string.Empty;
-    public string Size { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string DownloadUrl { get; set; } = string.Empty;
 }
 
-public class Quiz
+public class QuizDto
 {
     public string Id { get; set; } = string.Empty;
     public int QuestionsCount { get; set; }
@@ -48,24 +45,20 @@ public class Quiz
     public int PassingScore { get; set; }
 }
 
-public class Assignment
+public class AssignmentDto
 {
     public string Id { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
+    public string ContentURL { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
 }
-public class SectionPlayer
-{
-    public string Title { get; set; } = string.Empty;
-    public List<SectionItem> Items { get; set; } = new();
-}
 
-public class SectionItem
+
+public class SectionDto
 {
     public string Id { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
+    public string Duration { get; set; } = string.Empty; 
     public bool IsCompleted { get; set; }
     public string? ContentUrl { get; set; }
+    public int Progress { get; set; }
 }

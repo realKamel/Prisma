@@ -39,7 +39,7 @@ public class MaterialDto
 
 public class QuizDto
 {
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; } 
     public int QuestionsCount { get; set; }
     public int DurationMinutes { get; set; }
     public int PassingScore { get; set; }
@@ -47,7 +47,7 @@ public class QuizDto
 
 public class AssignmentDto
 {
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; } 
     public string ContentURL { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
 }
@@ -55,7 +55,7 @@ public class AssignmentDto
 
 public class SectionDto
 {
-    public string Id { get; set; } = string.Empty;
+    public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Duration { get; set; } = string.Empty; 
     public bool IsCompleted { get; set; }

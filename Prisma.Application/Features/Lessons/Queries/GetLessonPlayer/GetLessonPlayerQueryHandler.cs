@@ -61,7 +61,6 @@ public class GetLessonPlayerQueryHandler(
                 Title = m.Title ?? string.Empty,
                 DownloadUrl = m.DownloadUrl ?? string.Empty,
 
-                // بنحول الـ Enum لـ int وبناءً عليه بنحدد الـ string للفرونت إند 🚀
                 Type = ((int)m.Type) switch
                 {
                     0 => "pdf",
@@ -76,7 +75,7 @@ public class GetLessonPlayerQueryHandler(
                 ? null
                 : new QuizDto
                 {
-                    Id = quiz.Id.ToString(),
+                    Id = quiz.Id,
                     QuestionsCount = quiz.Questions?.Count ?? 0,
                     DurationMinutes = (int)(quiz.TimeInMinutes.TotalMinutes),
                     PassingScore = 0
@@ -86,7 +85,7 @@ public class GetLessonPlayerQueryHandler(
                 ? null
                 : new AssignmentDto
                 {
-                    Id = assignment.Id.ToString(),
+                    Id = assignment.Id,
                     ContentURL = assignment.ContentURL ?? string.Empty,
                     DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
                 },
@@ -96,7 +95,7 @@ public class GetLessonPlayerQueryHandler(
                 var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
                 return new SectionDto
                 {
-                    Id = s.Id.ToString(),
+                    Id = s.SortOrder,
                     Title = s.Title ?? string.Empty,
                     Duration = s.Duration.ToString(@"hh\:mm\:ss"),
                     IsCompleted = progress?.IsCompleted ?? false,

@@ -36,6 +36,11 @@ public class GetStudentByIdQueryHandler(ICurrentUserService currentUserService, 
 
         var userId = result.Id;
 
+        if (result.Enrollments.Count == 0)
+        {
+            return new GetStudentHistoryResponse(new Status(0, 0, 0, 0), []);
+        }
+
         var totalPurchasedCount = result.Enrollments.Count;
 
         var totalHours = result.Enrollments.Aggregate(TimeSpan.Zero,
@@ -79,7 +84,6 @@ public class GetStudentByIdQueryHandler(ICurrentUserService currentUserService, 
             history.Add(entry);
         }
 
-        var response = new GetStudentHistoryResponse(status, history);
-        return Result<GetStudentHistoryResponse>.Success(response);
+        return new GetStudentHistoryResponse(status, history);
     }
 }

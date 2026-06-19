@@ -14,6 +14,11 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasValue<MCQQuestion>("MCQ")
             .HasValue<WrittenQuestion>("Written");
 
+        //builder.Property(q => q.Type)
+        //  .HasConversion<string>()
+        //  .HasMaxLength(20)
+        //  .IsRequired();
+
         builder.HasMany(q => q.AttemptAnswers)
             .WithOne(a => a.Question)
             .HasForeignKey(a => a.QuestionId)

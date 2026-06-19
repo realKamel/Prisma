@@ -15,6 +15,11 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         //     .HasForeignKey(x => x.LessonId)
         //     .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Property(q => q.Scope)
+            .HasConversion<string>()
+            .HasMaxLength(25)
+            .IsRequired();
+
         builder.HasOne(q => q.AcademicYear)
             .WithMany(s => s.Quizzes)
             .HasForeignKey(q => q.AcademicYearId)

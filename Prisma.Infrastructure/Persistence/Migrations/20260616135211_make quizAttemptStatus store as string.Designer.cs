@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Prisma.Infrastructure.Persistence;
@@ -12,9 +13,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260616135211_make quizAttemptStatus store as string")]
+    partial class makequizAttemptStatusstoreasstring
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1011,10 +1014,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("LessonId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Scope")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)");
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer");
 
                     b.Property<TimeSpan>("TimeInMinutes")
                         .HasColumnType("interval");

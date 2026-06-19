@@ -13,6 +13,11 @@ public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
         builder.Property(x => x.Degree)
             .HasPrecision(8, 2);
 
+        builder.Property(a => a.Status)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+
         builder.HasOne(x => x.Student)
             .WithMany(x => x.QuizAttempts)
             .HasForeignKey(x => x.StudentId);

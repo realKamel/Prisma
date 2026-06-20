@@ -8,7 +8,7 @@ using Prisma.Domain.Specifications.Students;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 
-public class GetStudentByIdQueryHandler(ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
+public class GetStudentHistoryQueryHandler(ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
     : IRequestHandler<GetStudentHistoryQuery, Result<GetStudentHistoryResponse>>
 {
     public async Task<Result<GetStudentHistoryResponse>> Handle(GetStudentHistoryQuery request,

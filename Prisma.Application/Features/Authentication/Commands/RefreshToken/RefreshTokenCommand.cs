@@ -8,5 +8,4 @@ public record RefreshTokenCommand(
     string? RefreshToken) :
     IRequest<Result<AuthResponse>>;
 
-public record AuthResponse(string AccessToken, string RefreshToken, DateTime RefreshTokenExpiry)
-    : IRequest<Result<AuthResponse>>;
+public record AuthResponse(string AccessToken, string RefreshToken) : IRequest<Result<AuthResponse>>;

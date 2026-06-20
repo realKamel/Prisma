@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
@@ -15,7 +16,7 @@ using Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
 namespace Prisma.API.Features.Auth;
 
-public class AuthController(IMediator mediator) : ApiController
+public class AuthController(IMediator mediator, IWebHostEnvironment environment) : ApiController
 {
     [HttpPost("login")]
     [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status200OK)]
@@ -23,8 +24,10 @@ public class AuthController(IMediator mediator) : ApiController
     [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(request.ToCommand(), cancelToken);
-        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken);
+        var result = await mediator.Send(request.ToCommand(),
+            cancelToken);
+        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken,
+            environment.IsDevelopment());
         return Ok(result.ToResponse());
     }
 
@@ -41,9 +44,11 @@ public class AuthController(IMediator mediator) : ApiController
     [HttpPost("refresh")]
     public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
     {
+        var accessToken = Request.Cookies[AppClaims.Cookies.AccessToken];
+        var refreshToken = Request.Cookies[AppClaims.Cookies.RefreshToken];
+
         var command = new
-            RefreshTokenCommand(Request.Cookies[AuthHelper.AccessToken],
-                Request.Cookies[AuthHelper.RefreshToken]);
+            RefreshTokenCommand(accessToken, refreshToken);
 
         var result = await mediator.Send(command, cancelToken);
 
@@ -55,9 +60,9 @@ public class AuthController(IMediator mediator) : ApiController
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(CancellationToken cancelToken)
     {
-        await mediator.Send(new LogoutCommand(Request.Cookies[AuthHelper.AccessToken]), cancelToken);
+        await mediator.Send(new LogoutCommand(Request.Cookies[AppClaims.Cookies.AccessToken]), cancelToken);
 
-        Response.Cookies.RemoveCookies();
+        Response.Cookies.RemoveCookies(environment.IsDevelopment());
 
         return Ok();
     }

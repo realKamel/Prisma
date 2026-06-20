@@ -13,102 +13,104 @@ namespace Prisma.API.Extensions;
 
 public static class WebAppHelper
 {
-    public static void AddWebAppServices(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
+    extension(IServiceCollection services)
     {
-        // web api services
-        services.AddSerilog((sp, loggerConfiguration) => loggerConfiguration
-            .ReadFrom.Configuration(configuration)
-            .ReadFrom.Services(sp)
-            .Enrich.FromLogContext());
-        services.AddControllers();
-        services.AddOpenApi();
-
-        services.AddScoped<GlobalExceptionHandlingMiddleware>();
-
-        //Application Services
-        services.AddApplicationServices();
-
-        //Infrastructure Services
-        services.AddInfrastructureServices(configuration, hostEnvironment);
-
-        services.AddJwtAuthentication(configuration, hostEnvironment);
-
-        services.AddOutputCache(options =>
+        public void AddWebAppServices(IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
-            //  Default policy for ALL endpoints
-            options.AddBasePolicy(builder =>
-                builder.Expire(TimeSpan.FromSeconds(10)));
+            // web api services
+            services.AddSerilog((sp, loggerConfiguration) => loggerConfiguration
+                .ReadFrom.Configuration(configuration)
+                .ReadFrom.Services(sp)
+                .Enrich.FromLogContext());
+            services.AddControllers();
+            services.AddOpenApi();
 
-            // Named policies
-            options.AddPolicy(CachePolicyNames.Short.Name, builder =>
-                builder.Expire(CachePolicyNames.Short.Duration));
+            services.AddScoped<GlobalExceptionHandlingMiddleware>();
 
-            options.AddPolicy(CachePolicyNames.Long.Name, builder =>
-                builder.Expire(CachePolicyNames.Long.Duration));
-        });
-    }
+            //Application Services
+            services.AddApplicationServices();
 
-    public static void AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
-    {
-        var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
-        var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+            //Infrastructure Services
+            services.AddInfrastructureServices(configuration, hostEnvironment);
 
-        services
-            .AddAuthentication(options =>
+            services.AddJwtAuthentication(configuration, hostEnvironment);
+
+            services.AddOutputCache(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        context.Token = context.Request.Cookies["access_token"];
-                        return Task.CompletedTask;
-                    }
-                };
+                //  Default policy for ALL endpoints
+                options.AddBasePolicy(builder =>
+                    builder.Expire(TimeSpan.FromSeconds(10)));
 
-                if (hostEnvironment.IsDevelopment())
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        // ValidIssuer = jwtSettings.Issuer,
-                        // ValidAudience = jwtSettings.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ClockSkew = TimeSpan.Zero
-                    };
-                }
-                else
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwtSettings.Issuer,
-                        ValidAudience = jwtSettings.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ClockSkew = TimeSpan.Zero
-                    };
-                }
+                // Named policies
+                options.AddPolicy(CachePolicyNames.Short.Name, builder =>
+                    builder.Expire(CachePolicyNames.Short.Duration));
 
-                options.RequireHttpsMetadata = !hostEnvironment.IsDevelopment();
+                options.AddPolicy(CachePolicyNames.Long.Name, builder =>
+                    builder.Expire(CachePolicyNames.Long.Duration));
             });
+        }
 
-        //introduce more policies when needed
-        services.AddAuthorizationBuilder()
-            .AddPolicy(AppClaims.Policies.CanManageCourses, policy =>
-                policy.RequireClaim(AppClaims.PermissionsClaim,
-                    AppClaims.Permissions.ManageCourses));
+        private void AddJwtAuthentication(IConfiguration configuration,
+            IHostEnvironment hostEnvironment)
+        {
+            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
+            var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            context.Token = context.Request.Cookies[AppClaims.Cookies.AccessToken];
+                            return Task.CompletedTask;
+                        }
+                    };
+
+                    if (hostEnvironment.IsDevelopment())
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = false,
+                            ValidateAudience = false,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            // ValidIssuer = jwtSettings.Issuer,
+                            // ValidAudience = jwtSettings.Audience,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ClockSkew = TimeSpan.Zero
+                        };
+                    }
+                    else
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = jwtSettings.Issuer,
+                            ValidAudience = jwtSettings.Audience,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ClockSkew = TimeSpan.Zero
+                        };
+                    }
+
+                    options.RequireHttpsMetadata = !hostEnvironment.IsDevelopment();
+                });
+
+            //introduce more policies when needed
+            services.AddAuthorizationBuilder()
+                .AddPolicy(AppClaims.Policies.CanManageCourses, policy =>
+                    policy.RequireClaim(AppClaims.PermissionsClaim,
+                        AppClaims.Permissions.ManageCourses));
+        }
     }
 
     public static async Task UseDataSeedingAsync(this WebApplication app)
@@ -117,10 +119,7 @@ public static class WebAppHelper
         {
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-            // await services.SeedIdentityAsync();
             await services.SeedAppDataAsync();
-            // await services.SeedRolesAsync();
-            // await services.SeedUsersAsync();
         }
     }
 }

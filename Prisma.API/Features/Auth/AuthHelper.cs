@@ -1,4 +1,5 @@
 using Prisma.API.Features.Auth.Requests;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.Login;
@@ -8,47 +9,53 @@ namespace Prisma.API.Features.Auth;
 
 public static class AuthHelper
 {
-    public const string AccessToken = "access_Token";
-    public const string RefreshToken = "refresh_token";
-
-    public static void SetAuthCookies(this IResponseCookies responseCookies, string accessToken, string refreshToken)
+    public static void SetAuthCookies(this IResponseCookies responseCookies,
+        string accessToken,
+        string refreshToken,
+        bool isDevelopment = false)
     {
         var accessTokenOptions = new CookieOptions
         {
+            Path = "/api",
             HttpOnly = true, // JS cannot read it
-            Secure = true, // HTTPS only
+            Secure = true, //  this for dev
             SameSite = SameSiteMode.None,
+            // 5 minutes window to be used after it's expiry for refresh mechanism
             Expires = DateTimeOffset.UtcNow.AddMinutes(20)
         };
 
         var refreshTokenOptions = new CookieOptions
         {
+            Path = "/api", // TODO: goes to the refresh endpoint, nothing else
             HttpOnly = true,
-            Secure = true,
+            Secure = true, // this for dev
             SameSite = SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(7),
-            Path = "/v1/auth/refresh" // TODO: goes to the refresh endpoint, nothing else
         };
 
-        responseCookies.Append(AccessToken, accessToken, accessTokenOptions);
-        responseCookies.Append(RefreshToken, refreshToken, refreshTokenOptions);
+        responseCookies.Append(AppClaims.Cookies.AccessToken, accessToken, accessTokenOptions);
+        responseCookies.Append(AppClaims.Cookies.RefreshToken, refreshToken, refreshTokenOptions);
     }
 
-    public static void RemoveCookies(this IResponseCookies responseCookies)
+    public static void RemoveCookies(this IResponseCookies responseCookies, bool isDevelopment)
     {
         var accessTokenOptions = new CookieOptions
         {
+            Path = "/api",
             HttpOnly = true, // JS cannot read it
-            Secure = true, // HTTPS only
+            Secure = true, //  this for dev
             SameSite = SameSiteMode.None,
         };
 
         var refreshTokenOptions = new CookieOptions
         {
-            HttpOnly = true, Secure = true, SameSite = SameSiteMode.None, Path = "/v1/auth/refresh"
+            Path = "/api", // TODO: goes to the refresh endpoint, nothing else
+            HttpOnly = true,
+            Secure = true, // this for dev
+            SameSite = SameSiteMode.None,
         };
-        responseCookies.Delete(AccessToken, accessTokenOptions);
-        responseCookies.Delete(RefreshToken, refreshTokenOptions);
+        responseCookies.Delete(AppClaims.Cookies.AccessToken, accessTokenOptions);
+        responseCookies.Delete(AppClaims.Cookies.RefreshToken, refreshTokenOptions);
     }
 
     public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)

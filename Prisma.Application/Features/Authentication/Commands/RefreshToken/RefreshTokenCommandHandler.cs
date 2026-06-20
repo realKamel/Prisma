@@ -28,16 +28,15 @@ public class RefreshTokenCommandHandler(
             throw new BadRequestException("Please Login");
         }
 
-        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                     principal.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
-                     principal.FindFirstValue(JwtRegisteredClaimNames.Email);
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
+                     ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
             throw new UnauthorizedException("Please Login");
         }
 
-        var user = await userManager.FindByEmailAsync(userId);
+        var user = await userManager.FindByIdAsync(userId);
 
         if (user is null || user.RefreshToken != request.RefreshToken ||
             user.RefreshTokenExpiry < DateTimeOffset.UtcNow)
@@ -58,9 +57,6 @@ public class RefreshTokenCommandHandler(
 
         await userManager.UpdateAsync(user);
 
-        return Result<AuthResponse>.Success(new AuthResponse(
-            newAccessToken,
-            newRefreshToken,
-            DateTime.UtcNow.AddMinutes(15)));
+        return new AuthResponse(newAccessToken, newRefreshToken);
     }
 }

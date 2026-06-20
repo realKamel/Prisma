@@ -62,20 +62,10 @@ public class JwtTokenService : IJwtTokenService
             return null;
         }
 
-        var validationParams = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = false,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = _jwtSettings.Issuer,
-            ValidAudience = _jwtSettings.Audience,
-            IssuerSigningKey = _securityKey
-        };
-
         try
         {
-            return new JwtSecurityTokenHandler().ValidateToken(token, validationParams, out _);
+            var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+            return new ClaimsPrincipal(new ClaimsIdentity(jwt.Claims));
         }
         catch
         {

@@ -11,6 +11,7 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public string LastName { get; set; }
 
     public bool IsBlocked { get; set; }
+    public bool IsOnline { get; set; }
 
     public string? RefreshToken { get; set; }
     public DateTimeOffset? RefreshTokenExpiry { get; set; }

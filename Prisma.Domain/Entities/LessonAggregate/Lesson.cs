@@ -2,6 +2,7 @@ using Prisma.Domain.Common;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
@@ -13,9 +14,13 @@ public class Lesson : BaseEntity
     public TimeSpan Duration { get; set; }
 
     public string? ImageThumbnailUrl { get; set; }
-    // public string? VideoUrl { get; set; }
+
+    public string? VideoUrl { get; set; }
+
+    public LessonStatus Status { get; set; }
 
     public DateTimeOffset? EndDate { get; set; }
+
     public bool IsEligible { get; set; }
 
     // public Guid TeacherId { get; set; }

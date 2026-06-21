@@ -1,4 +1,9 @@
-﻿using MediatR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
@@ -18,6 +23,7 @@ public class GetStudentDashboardQueryHandler(
         GetStudentDashboardQuery request,
         CancellationToken cancellationToken)
     {
+        // 1. جلب معرف الطالب الحالي من الـ Token المركزي لحماية البيانات
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Login First");
 
@@ -27,111 +33,132 @@ public class GetStudentDashboardQueryHandler(
             new StudentDashboardSpecification(userId), cancellationToken)
             ?? throw new BadRequestException("Something went wrong");
 
-        // ── Student ──────────────────────────────────────────────
+        const string teacher = "أ. أحمد مصطفى";
+        const string subject = "لغه انجليزيه";
+
+        // ── Student & Streak ──────────────────────────────────
         var studentDto = new StudentDto
         {
-            FirstName  = student.FirstName,
+            FirstName = student.FirstName ?? string.Empty,
             GradeLabel = student.AcademicYear?.Title ?? string.Empty,
         };
 
-        // ── Streak ───────────────────────────────────────────────
         var streakDto = new StreakDto { Count = student.StreakDays };
 
-        // ── Stats ────────────────────────────────────────────────
-        var allSections = student.Enrollments
-            .SelectMany(e => e.Lesson.Sections)
-            .ToList();
+        // ── 2. حساب الـ Stats بدقة (معالجة كسر الساعات لتجنب الـ 0 الصريحة) ──
+        int completedLessonsCount = student.Enrollments.Count(e => e.IsCompleted);
+
+        int totalStudyMinutes = 0;
+        foreach (var enrollment in student.Enrollments)
+        {
+            totalStudyMinutes += enrollment.Lesson?.Sections
+                .Where(s => s.Progresses.Any(p => p.StudentId == student.Id && p.IsCompleted))
+                .Sum(s => (int)s.Duration.TotalMinutes) ?? 0;
+        }
 
         var statsDto = new StatsDto
         {
-            PurchasedLessons  = student.Enrollments.Count,
-            CompletedLessons  = student.Enrollments.Count(e => e.IsCompleted),
-            StudyHours        = (int)allSections
-                                    .Where(s => s.Progresses.Any(p => p.IsCompleted))
-                                    .Sum(s => s.Duration.TotalMinutes / 60),
-            TopQuizScore      = student.QuizAttempts.Count > 0
-                                    ? (int)student.QuizAttempts.Max(a => a.Degree)
-                                    : 0,
+            PurchasedLessons = student.Enrollments.Count,
+            CompletedLessons = completedLessonsCount,
+
+            // استخدام Math.Ceiling مع 60.0 لحساب الكسور بدقة (مثلاً 45 دقيقة تظهر 1 ساعة بدلاً من 0) 🌟
+            StudyHours = (int)Math.Ceiling(totalStudyMinutes / 60.0),
+
+            TopQuizScore = student.QuizAttempts.Any()
+                ? (int)student.QuizAttempts.Max(a => a.Degree)
+                : 0,
         };
 
-        // ── Next Lesson ───────────────────────────────────────────
-        // Find the enrollment whose lesson has the most recent completed section.
-        // Falls back to the last incomplete enrollment ordered by creation if none started.
+        // ── 3. Next Lesson (البحث عن الدرس الحالي أو آخر درس منتهي كـ Fallback) ──
         var lastActiveEnrollment = student.Enrollments
             .Where(e => !e.IsCompleted)
-            .OrderByDescending(e => e.Lesson.Sections
+            .OrderByDescending(e => e.Lesson!.Sections
                 .SelectMany(s => s.Progresses)
-                .Where(p => p.IsCompleted)
-                .Any())
+                .Any(p => p.StudentId == student.Id && p.IsCompleted))
             .ThenByDescending(e => e.CreatedAt)
             .FirstOrDefault();
 
+        // التعديل الجديد: لو مفيش درس جاري، اعرض آخر درس مكتمل عشان الـ Hero Card متطلعش null وفاضية 🌟
+        if (lastActiveEnrollment is null && student.Enrollments.Any())
+        {
+            lastActiveEnrollment = student.Enrollments
+                .OrderByDescending(e => e.CompletedAt ?? e.CreatedAt)
+                .FirstOrDefault();
+        }
+
         NextLessonDto? nextLessonDto = null;
 
-        if (lastActiveEnrollment is not null)
+        if (lastActiveEnrollment?.Lesson is not null)
         {
             var lesson = lastActiveEnrollment.Lesson;
 
-            var completedSections = lesson.Sections
-                .Where(s => s.Progresses.Any(p => p.IsCompleted))
+            var studentCompletedSections = lesson.Sections
+                .Where(s => s.Progresses.Any(p => p.StudentId == student.Id && p.IsCompleted))
                 .ToList();
 
-            // current chapter = last completed section's SortOrder (1-based display)
-            // if nothing completed yet, show 0 completed out of total
-            var currentChapter = completedSections.Count > 0
-                ? completedSections.Max(s => s.SortOrder)
+            var progressPercent = lesson.Sections.Count > 0
+                ? (int)Math.Round(studentCompletedSections.Count * 100.0 / lesson.Sections.Count)
                 : 0;
 
-            var progressPercent = lesson.Sections.Count > 0
-                ? (int)Math.Round(completedSections.Count * 100.0 / lesson.Sections.Count)
-                : 0;
+            var currentChapter = studentCompletedSections.Count < lesson.Sections.Count
+                ? studentCompletedSections.Count + 1
+                : lesson.Sections.Count;
 
             nextLessonDto = new NextLessonDto
             {
-                Id              = lesson.Id.ToString(),
-                Title           = lesson.Title,
-                PosterUrl       = lesson.ImageThumbnailUrl,
-                CurrentChapter  = currentChapter,
-                TotalChapters   = lesson.Sections.Count,
+                Id = lesson.Id.ToString(),
+                Title = lesson.Title ?? string.Empty,
+                Subject = subject,
+                TeacherName = teacher,
+                TeacherInitial = teacher[0].ToString(),
+                ProgressPercent = progressPercent,
+                CurrentChapter = currentChapter,
+                TotalChapters = lesson.Sections.Count,
+                PlayerUrl = $"/lessons/{lesson.Id}/player",
+                DetailUrl = $"/lessons/{lesson.Id}/details",
+                PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty
             };
         }
 
-        // ── Lesson Cards ──────────────────────────────────────────
+        // ── 4. Lesson Cards ──────────────────────────────────────
         var lessons = student.Enrollments.Select(enrollment =>
         {
-            var lesson = enrollment.Lesson;
-            var now    = DateTimeOffset.UtcNow;
+            var lesson = enrollment.Lesson!;
+            var now = DateTimeOffset.UtcNow;
 
-            var status = ResolveStatus(enrollment, now);
+            var status = ResolveStatus(enrollment, student.Id, now);
 
             return new LessonCardDto
             {
-                Id             = lesson.Id.ToString(),
-                Title          = lesson.Title,
-                DurationLabel  = FormatDuration(lesson.Duration),
-                PosterUrl      = lesson.ImageThumbnailUrl,
-                Status         = status,
-                ExpiresInDays  = status == LessonStatus.Warn
-                                     ? (int)(enrollment.ExpiresAt!.Value - now).TotalDays
+                Id = lesson.Id.ToString(),
+                Title = lesson.Title ?? string.Empty,
+                Subject = subject,
+                TeacherName = teacher,
+                TeacherInitial = teacher[0].ToString(),
+
+                // إرسال الـ TimeSpan مباشرة للـ DTO بدون فورمات يدوي
+                Duration = lesson.Duration,
+
+                PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty,
+                Status = status,
+                ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
+                                     ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
                                      : null,
+                PlayerUrl = $"/lessons/{lesson.Id}/player"
             };
         }).ToList();
 
         return Result<GetStudentDashboardResponse>.Success(new GetStudentDashboardResponse
         {
-            Student    = studentDto,
-            Streak     = streakDto,
+            Student = studentDto,
+            Streak = streakDto,
             NextLesson = nextLessonDto,
-            Lessons    = lessons,
-            Stats      = statsDto,
+            Lessons = lessons,
+            Stats = statsDto,
         });
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────
-
-    private static LessonStatus ResolveStatus(Enrollment enrollment, DateTimeOffset now)
+    private static LessonStatus ResolveStatus(Enrollment enrollment, Guid studentId, DateTimeOffset now)
     {
         if (enrollment.IsCompleted)
             return LessonStatus.Done;
@@ -142,33 +169,13 @@ public class GetStudentDashboardQueryHandler(
         if (enrollment.ExpiresAt.HasValue && (enrollment.ExpiresAt.Value - now).TotalDays < 3)
             return LessonStatus.Warn;
 
-        if (enrollment.Lesson.Sections.SelectMany(s => s.Progresses).Any(p => p.IsCompleted))
+        var hasAnyProgress = enrollment.Lesson?.Sections
+            .SelectMany(s => s.Progresses)
+            .Any(p => p.StudentId == studentId && p.IsCompleted) ?? false;
+
+        if (hasAnyProgress)
             return LessonStatus.Progress;
 
         return LessonStatus.New;
     }
-
-    /// <summary>
-    /// Formats a TimeSpan duration into Arabic e.g. "٤ ساعات", "٣٠ دقيقة".
-    /// </summary>
-    private static string FormatDuration(TimeSpan duration)
-    {
-        if (duration.TotalHours >= 1)
-        {
-            var hours = (int)Math.Round(duration.TotalHours);
-            return $"{hours.ToArabicNumerals()} {(hours == 1 ? "ساعة" : "ساعات")}";
-        }
-
-        var minutes = (int)Math.Round(duration.TotalMinutes);
-        return $"{minutes.ToArabicNumerals()} دقيقة";
-    }
-}
-
-// ── Small extension to convert digits to Eastern Arabic numerals ──
-file static class ArabicNumeralsExtensions
-{
-    private static readonly char[] ArabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-
-    public static string ToArabicNumerals(this int n)
-        => string.Concat(n.ToString().Select(c => char.IsDigit(c) ? ArabicDigits[c - '0'] : c));
 }

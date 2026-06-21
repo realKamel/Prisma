@@ -49,7 +49,7 @@ public class LessonCardDto
 
     public TimeSpan Duration { get; set; }
 
-    public LessonStatus Status { get; set; }
+    public string Status { get; set; }
     public string PosterUrl { get; set; } = string.Empty;
     public int? ExpiresInDays { get; set; }
 }

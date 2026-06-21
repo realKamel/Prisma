@@ -125,7 +125,7 @@ public class GetStudentDashboardQueryHandler(
                 Duration = lesson.Duration,
 
                 PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty,
-                Status = status,
+                Status = status.ToString().ToLower(),
                 ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
                                      ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
                                      : null,

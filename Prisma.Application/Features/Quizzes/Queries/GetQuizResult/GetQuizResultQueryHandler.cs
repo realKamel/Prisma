@@ -33,9 +33,24 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
         if (attempt is null || attempt.Status == QuizAttemptStatus.InProgress)
             return Result<QuizResultDto>.Failure("لم يتم تسليم هذا الاختبار بعد");
 
-        var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId);
+        var now = DateTimeOffset.UtcNow;
 
-        if (attempt.Status == QuizAttemptStatus.Submitted)
+        var dueDatePassed = !quiz.DueDate.HasValue || now >= quiz.DueDate.Value;
+
+        if (!dueDatePassed)
+        {
+            return Result<QuizResultDto>.Success(new QuizResultDto
+            {
+                QuizId = quiz.Id,
+                Title = quiz.Title ?? string.Empty,
+                Status = "locked",
+                TotalDegree = quiz.TotalDegree,
+                AvailableAt = quiz.DueDate
+            });
+        }
+
+
+        if (attempt.Status != QuizAttemptStatus.Graded)
         {
             return Result<QuizResultDto>.Success(new QuizResultDto
             {
@@ -49,6 +64,9 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
                 Review = null
             });
         }
+
+
+        var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId);
 
         var review = quiz.Questions.Select(ql =>
         {

@@ -26,6 +26,9 @@ public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
             .WithMany(x => x.Attempts)
             .HasForeignKey(x => x.QuizId);
 
+        builder.Property(a => a.TabSwitchCount).HasDefaultValue(0);
+        builder.Property(a => a.CopyPasteAttemptCount).HasDefaultValue(0);
+
         // each student has one try to attemp the quiz
         builder.HasIndex(a => new { a.QuizId, a.StudentId });
 

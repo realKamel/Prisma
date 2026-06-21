@@ -11,8 +11,9 @@ public class SaveQuizAnswerCommandValidator:AbstractValidator<SaveQuizAnswerComm
     {
         RuleFor(x => x.AttemptId).GreaterThan(0);
         RuleFor(x => x.QuestionId).GreaterThan(0);
+
         RuleFor(x => x)
-            .Must(x => x.ChoiceId.HasValue ^ !string.IsNullOrWhiteSpace(x.TextAnswer) || (x.ChoiceId is null && x.TextAnswer is null))
+            .Must(x => !(x.ChoiceId.HasValue && !string.IsNullOrWhiteSpace(x.TextAnswer)))
             .WithMessage("يجب تحديد إجابة واحدة فقط (اختيار أو نص)");
     }
 }

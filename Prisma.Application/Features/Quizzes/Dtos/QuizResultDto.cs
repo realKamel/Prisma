@@ -13,6 +13,11 @@ public class QuizResultDto
     public int WrongCount { get; set; }
     public int PendingCount { get; set; }
     public DateTimeOffset? GradedAt { get; set; }
+    public DateTimeOffset? AvailableAt { get; set; }
+
+    public int TabSwitchCount { get; set; }
+    public int CopyPasteAttemptCount { get; set; }
+
 
     // null لو Status == "pending"
     public List<QuizReviewQuestionDto>? Review { get; set; }

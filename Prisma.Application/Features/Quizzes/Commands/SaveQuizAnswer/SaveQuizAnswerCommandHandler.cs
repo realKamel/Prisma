@@ -25,6 +25,13 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         if (attempt.Status != QuizAttemptStatus.InProgress)
             return Result.Failure("لا يمكن تعديل الإجابات بعد التسليم");
 
+        var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>()
+        .FirstOrDefaultAsync(new QuizByIdSpecification(attempt.QuizId), ct);
+
+        var deadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(5);
+        if (DateTimeOffset.UtcNow > deadline)
+            return Result.Failure("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
+
         var existing = attempt.Answers.FirstOrDefault(a => a.QuestionId == request.QuestionId);
 
         if (existing is null)

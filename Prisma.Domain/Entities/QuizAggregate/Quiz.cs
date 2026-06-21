@@ -9,6 +9,7 @@ public class Quiz : BaseEntity
     public string? Title { get; set; }
     public string? Description { get; set; }
 
+
     public TimeSpan TimeInMinutes { get; set; }
 
     public decimal TotalDegree { get; set; }

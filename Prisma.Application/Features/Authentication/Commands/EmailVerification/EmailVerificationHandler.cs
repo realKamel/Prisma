@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Domain.Entities.UserAggregate;

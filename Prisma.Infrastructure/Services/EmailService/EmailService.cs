@@ -2,6 +2,7 @@
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Infrastructure.Services.EmailService;

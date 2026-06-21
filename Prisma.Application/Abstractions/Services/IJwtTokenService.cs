@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Prisma.Application.Abstractions.Auth;
+namespace Prisma.Application.Abstractions.Services;
 
 public interface IJwtTokenService
 {

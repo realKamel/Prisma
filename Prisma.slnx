@@ -2,8 +2,14 @@
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="Prisma.API/Prisma.API.csproj" />
-  <Project Path="Prisma.Application/Prisma.Application.csproj" />
-  <Project Path="Prisma.Domain/Prisma.Domain.csproj" />
-  <Project Path="Prisma.Infrastructure/Prisma.Infrastructure.csproj" />
+  <Folder Name="/Src/">
+    <Project Path="Prisma.API/Prisma.API.csproj" />
+    <Project Path="Prisma.Application/Prisma.Application.csproj" />
+    <Project Path="Prisma.Domain/Prisma.Domain.csproj" />
+    <Project Path="Prisma.Infrastructure/Prisma.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Prisma.Application.Tests/Prisma.Application.Tests.csproj" />
+    <Project Path="Prisma.Integration.Tests/Prisma.Integration.Tests.csproj" />
+  </Folder>
 </Solution>

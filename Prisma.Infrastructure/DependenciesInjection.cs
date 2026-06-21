@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Prisma.Application.Abstractions.Auth;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Infrastructure.Identity;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
@@ -80,7 +80,7 @@ public static class DependenciesInjection
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
-
+        services.AddScoped<IIdentityService, IdentityService>();
         services.AddCors(options =>
         {
             options.AddPolicy("Dev", policy =>

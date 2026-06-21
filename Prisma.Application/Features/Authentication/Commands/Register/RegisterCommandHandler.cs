@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Application.Common.Responses;
@@ -8,15 +9,18 @@ using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
-public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHandler<RegisterCommand, Result>
+public class RegisterCommandHandler(IIdentityService identityService) : IRequestHandler<RegisterCommand, Result>
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         var normailzedEmail = request.Email.ToUpper();
-        var existingUser = await userManager.Users
-            .FirstOrDefaultAsync(u =>
-                    u.NormalizedEmail == normailzedEmail || u.PhoneNumber == request.PhoneNumber,
-                cancellationToken);
+
+        // var existingUser = await userManager.Users
+        //     .FirstOrDefaultAsync(u =>
+        //             u.NormalizedEmail == normailzedEmail || u.PhoneNumber == request.PhoneNumber,
+        //         cancellationToken);
+
+        var existingUser = await identityService.FindByEmailAsync(request.Email);
 
         if (existingUser is not null)
         {
@@ -37,8 +41,7 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
         };
 
 
-
-        var result = await userManager.CreateAsync(user, request.Password);
+        var result = await identityService.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
         {
@@ -54,7 +57,7 @@ public class RegisterCommandHandler(UserManager<User> userManager) : IRequestHan
             throw new BadRequestException("Error happen. Try again later.");
         }
 
-        await userManager.AddToRoleAsync(user, AppClaims.Roles.Student);
+        await identityService.AddToRoleAsync(user, AppClaims.Roles.Student);
 
         return Result.Success("Registered successfully");
     }

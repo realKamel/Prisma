@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;

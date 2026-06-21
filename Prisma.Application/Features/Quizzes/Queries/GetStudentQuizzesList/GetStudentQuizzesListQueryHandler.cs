@@ -45,6 +45,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
                 Attempt = q.Attempts
                     .Select(a => new { a.Id, a.Status, a.SubmittedAt, a.Degree })
                     .FirstOrDefault()
+                
             });
 
         var items = raw.Select(q =>
@@ -52,12 +53,19 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
             string status;
             decimal? score = null;
             DateTimeOffset? submittedAt = null;
+            var dueDatePassed = !q.DueDate.HasValue || now >= q.DueDate.Value;
+
 
             if (q.Attempt is null)
             {
-                status = (q.DueDate.HasValue && q.DueDate.Value < now) ? "missed" : "new";
+                if (q.AvailableFrom.HasValue && q.AvailableFrom.Value > now)
+                    status = "upcoming";
+                else if (q.DueDate.HasValue && q.DueDate.Value < now)
+                    status = "missed";
+                else
+                    status = "new";
             }
-            else if (q.Attempt.Status == QuizAttemptStatus.Graded)
+            else if (q.Attempt.Status == QuizAttemptStatus.Graded && dueDatePassed)
             {
                 status = "done";
                 score = q.Attempt.Degree;
@@ -74,7 +82,8 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
                 QuizId = q.Id,
                 Title = q.Title ?? string.Empty,
                 Status = status,
-                ScheduledDate = q.DueDate ?? q.AvailableFrom,
+                AvailableFrom =  q.AvailableFrom ,
+                DueDate = q.DueDate,
                 SubmittedAt = submittedAt,
                 Score = score,
                 TotalDegree = q.TotalDegree,
@@ -95,6 +104,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
             PendingCount = items.Count(i => i.Status == "pending"),
             DoneCount = items.Count(i => i.Status == "done"),
             MissedCount = items.Count(i => i.Status == "missed"),
+            UpcomingCount = items.Count(i => i.Status == "upcoming"),
             AverageScorePercent = doneScores.Count > 0 ? Math.Round(doneScores.Average(), 1) : 0,
             BestScorePercent = doneScores.Count > 0 ? Math.Round(doneScores.Max(), 1) : 0
         };

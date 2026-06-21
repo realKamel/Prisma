@@ -29,7 +29,17 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
 
         var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>().
             FirstOrDefaultAsync(new QuizWithQuestionsSpecification(attempt.QuizId), ct);
-        
+
+
+
+        // سماحية 10 ثواني لتأخير الشبكة — مش رفض صارم لو الطالب ضغط submit في آخر لحظة
+        var hardDeadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(10);
+        if (DateTimeOffset.UtcNow > hardDeadline)
+        {
+            // اتأخر كتير — يتعامل معه كـ auto-submit بالإجابات المتاحة، مش رفض
+            // (ده نفس سلوك QuizFinalizer أصلاً، فمفيش داعي نرفض هنا)
+        }
+
 
         await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
 

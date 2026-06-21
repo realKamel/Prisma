@@ -21,4 +21,7 @@ public class QuizAttempt : BaseEntity
     public QuizAttemptStatus Status { get; set; }
 
     public ICollection<AttemptAnswer> Answers { get; set; } = new List<AttemptAnswer>();
+
+    public int TabSwitchCount { get; set; }
+    public int CopyPasteAttemptCount { get; set; }
 }

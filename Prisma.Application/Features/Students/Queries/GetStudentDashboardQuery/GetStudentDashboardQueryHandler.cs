@@ -23,7 +23,6 @@ public class GetStudentDashboardQueryHandler(
         GetStudentDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        // 1. جلب معرف الطالب الحالي من الـ Token المركزي لحماية البيانات
         var userId = currentUserService.UserId
             ?? throw new UnauthorizedException("Login First");
 
@@ -36,7 +35,6 @@ public class GetStudentDashboardQueryHandler(
         const string teacher = "أ. أحمد مصطفى";
         const string subject = "لغه انجليزيه";
 
-        // ── Student & Streak ──────────────────────────────────
         var studentDto = new StudentDto
         {
             FirstName = student.FirstName ?? string.Empty,
@@ -45,7 +43,6 @@ public class GetStudentDashboardQueryHandler(
 
         var streakDto = new StreakDto { Count = student.StreakDays };
 
-        // ── 2. حساب الـ Stats بدقة (معالجة كسر الساعات لتجنب الـ 0 الصريحة) ──
         int completedLessonsCount = student.Enrollments.Count(e => e.IsCompleted);
 
         int totalStudyMinutes = 0;
@@ -61,7 +58,6 @@ public class GetStudentDashboardQueryHandler(
             PurchasedLessons = student.Enrollments.Count,
             CompletedLessons = completedLessonsCount,
 
-            // استخدام Math.Ceiling مع 60.0 لحساب الكسور بدقة (مثلاً 45 دقيقة تظهر 1 ساعة بدلاً من 0) 🌟
             StudyHours = (int)Math.Ceiling(totalStudyMinutes / 60.0),
 
             TopQuizScore = student.QuizAttempts.Any()
@@ -69,7 +65,6 @@ public class GetStudentDashboardQueryHandler(
                 : 0,
         };
 
-        // ── 3. Next Lesson (البحث عن الدرس الحالي أو آخر درس منتهي كـ Fallback) ──
         var lastActiveEnrollment = student.Enrollments
             .Where(e => !e.IsCompleted)
             .OrderByDescending(e => e.Lesson!.Sections
@@ -78,7 +73,6 @@ public class GetStudentDashboardQueryHandler(
             .ThenByDescending(e => e.CreatedAt)
             .FirstOrDefault();
 
-        // التعديل الجديد: لو مفيش درس جاري، اعرض آخر درس مكتمل عشان الـ Hero Card متطلعش null وفاضية 🌟
         if (lastActiveEnrollment is null && student.Enrollments.Any())
         {
             lastActiveEnrollment = student.Enrollments
@@ -96,10 +90,6 @@ public class GetStudentDashboardQueryHandler(
                 .Where(s => s.Progresses.Any(p => p.StudentId == student.Id && p.IsCompleted))
                 .ToList();
 
-            var progressPercent = lesson.Sections.Count > 0
-                ? (int)Math.Round(studentCompletedSections.Count * 100.0 / lesson.Sections.Count)
-                : 0;
-
             var currentChapter = studentCompletedSections.Count < lesson.Sections.Count
                 ? studentCompletedSections.Count + 1
                 : lesson.Sections.Count;
@@ -111,16 +101,12 @@ public class GetStudentDashboardQueryHandler(
                 Subject = subject,
                 TeacherName = teacher,
                 TeacherInitial = teacher[0].ToString(),
-                ProgressPercent = progressPercent,
                 CurrentChapter = currentChapter,
                 TotalChapters = lesson.Sections.Count,
-                PlayerUrl = $"/lessons/{lesson.Id}/player",
-                DetailUrl = $"/lessons/{lesson.Id}/details",
                 PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty
             };
         }
 
-        // ── 4. Lesson Cards ──────────────────────────────────────
         var lessons = student.Enrollments.Select(enrollment =>
         {
             var lesson = enrollment.Lesson!;
@@ -136,7 +122,6 @@ public class GetStudentDashboardQueryHandler(
                 TeacherName = teacher,
                 TeacherInitial = teacher[0].ToString(),
 
-                // إرسال الـ TimeSpan مباشرة للـ DTO بدون فورمات يدوي
                 Duration = lesson.Duration,
 
                 PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty,
@@ -144,7 +129,6 @@ public class GetStudentDashboardQueryHandler(
                 ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
                                      ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
                                      : null,
-                PlayerUrl = $"/lessons/{lesson.Id}/player"
             };
         }).ToList();
 

@@ -34,11 +34,8 @@ public class NextLessonDto
     public string Subject { get; set; } = string.Empty;
     public string TeacherName { get; set; } = string.Empty;
     public string TeacherInitial { get; set; } = string.Empty;
-    public int ProgressPercent { get; set; }
     public int CurrentChapter { get; set; }
     public int TotalChapters { get; set; }
-    public string PlayerUrl { get; set; } = string.Empty;
-    public string DetailUrl { get; set; } = string.Empty;
     public string PosterUrl { get; set; } = string.Empty;
 }
 
@@ -50,13 +47,11 @@ public class LessonCardDto
     public string TeacherName { get; set; } = string.Empty;
     public string TeacherInitial { get; set; } = string.Empty;
 
-    // تم التعديل إلى TimeSpan بناءً على طلبك 🌟
     public TimeSpan Duration { get; set; }
 
     public LessonStatus Status { get; set; }
     public string PosterUrl { get; set; } = string.Empty;
     public int? ExpiresInDays { get; set; }
-    public string PlayerUrl { get; set; } = string.Empty;
 }
 
 public class StatsDto

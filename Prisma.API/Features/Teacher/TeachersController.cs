@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Lessons.Commands.DeleteLesson;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons; 
 
@@ -26,6 +27,16 @@ public class TeachersController(ISender mediator) : ApiController
     public async Task<ActionResult> GetTeacherLessons(CancellationToken token)
     {
         var result = await mediator.Send(new GetTeacherLessonsQuery(), token);
+        return Ok(result);
+    }
+    [HttpDelete("{LessonId}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> DeleteLesson([FromRoute] string LessonId, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new DeleteLessonCommand(int.Parse(LessonId)), cancellationToken);
+
         return Ok(result);
     }
 }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +14,7 @@ using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
+using StackExchange.Redis;
 
 namespace Prisma.Infrastructure;
 
@@ -64,7 +66,7 @@ public static class DependenciesInjection
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 }
             })
-            .AddRoles<Role>()
+            .AddRoles<Domain.Entities.UserAggregate.Role>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 
@@ -81,15 +83,15 @@ public static class DependenciesInjection
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
-        services.AddCors(options =>
+
+        services.AddStackExchangeRedisCache(option =>
         {
-            options.AddPolicy("Dev", policy =>
-            {
-                policy.WithOrigins("http://localhost:4200")
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .AllowCredentials();
-            });
+            option.Configuration = configuration.GetConnectionString("Redis");
         });
+
+        services.AddDataProtection()
+            .PersistKeysToStackExchangeRedis(
+                ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
+                "DataProtection-Keys");
     }
 }

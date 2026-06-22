@@ -48,6 +48,16 @@ public static class WebAppHelper
                 options.AddPolicy(CachePolicyNames.Long.Name, builder =>
                     builder.Expire(CachePolicyNames.Long.Duration));
             });
+
+            // Add forwarded headers BEFORE anything else that reads the request scheme
+            //services.Configure<ForwardedHeadersOptions>(options =>
+            //{
+            //    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+            //    // Trust Caddy (Docker internal network) — safe since Caddy is only entry point
+            //    options.KnownIPNetworks.Clear();
+            //    options.KnownProxies.Clear();
+            //});
         }
 
         private void AddJwtAuthentication(IConfiguration configuration,
@@ -105,11 +115,26 @@ public static class WebAppHelper
                     options.RequireHttpsMetadata = !hostEnvironment.IsDevelopment();
                 });
 
-            //introduce more policies when needed
-            services.AddAuthorizationBuilder()
-                .AddPolicy(AppClaims.Policies.CanManageCourses, policy =>
-                    policy.RequireClaim(AppClaims.PermissionsClaim,
-                        AppClaims.Permissions.ManageCourses));
+            services.AddCors(options =>
+            {
+                options.AddPolicy("Dev", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.WithOrigins(
+                            "http://localhost:4200", // Dev Angular
+                            "https://localhost:4200") // If Angular also behind proxy
+                                                      //"https://PrismaEdu.com"           // Prod
+                        .AllowCredentials()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
         }
     }
 

@@ -32,6 +32,8 @@ public class Program
 
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
+            //app.UseForwardedHeaders();
+            //app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
 
             if (app.Environment.IsDevelopment())
@@ -44,9 +46,7 @@ public class Program
                 });
             }
 
-            app.UseHttpsRedirection();
-
-            app.UseCors("Dev");
+            app.UseCors("CorsPolicy");
 
             app.UseRouting();
 

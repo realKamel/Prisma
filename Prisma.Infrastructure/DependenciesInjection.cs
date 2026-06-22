@@ -84,14 +84,14 @@ public static class DependenciesInjection
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
 
-        services.AddStackExchangeRedisCache(option =>
-        {
-            option.Configuration = configuration.GetConnectionString("Redis");
-        });
+        //services.AddStackExchangeRedisCache(option =>
+        //{
+        //    option.Configuration = configuration.GetConnectionString("Redis");
+        //});
 
-        services.AddDataProtection()
-            .PersistKeysToStackExchangeRedis(
-                ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
-                "DataProtection-Keys");
+        //services.AddDataProtection()
+        //    .PersistKeysToStackExchangeRedis(
+        //        ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
+        //        "DataProtection-Keys");
     }
 }

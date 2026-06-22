@@ -25,7 +25,9 @@ public class DataSeeder(
     {
         if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
         {
-            throw new Exception("There is Pending Migrations");
+            //throw new Exception("There is Pending Migrations");
+            logger.LogInformation("Applying New Migration to Database");
+            await dbContext.Database.MigrateAsync();
         }
 
         if (!await dbContext.Users.AnyAsync())

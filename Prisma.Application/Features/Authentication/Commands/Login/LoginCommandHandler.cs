@@ -43,7 +43,9 @@ public class LoginCommandHandler(
         user.RefreshToken = refreshToken;
 
         user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
-
+        
+        user.IsOnline = true;
+        
         await userManager.UpdateAsync(user);
 
         return Result<LoginResponse>.Success(

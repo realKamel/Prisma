@@ -18,8 +18,9 @@ public static class AuthHelper
         {
             Path = "/api",
             HttpOnly = true, // JS cannot read it
-            Secure = true, //  this for dev
-            SameSite = SameSiteMode.None,
+            Secure = !isDevelopment, //  this for dev
+            // Lax for localhost, None for cross - domain prod
+            SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
             // 5 minutes window to be used after it's expiry for refresh mechanism
             Expires = DateTimeOffset.UtcNow.AddMinutes(20)
         };
@@ -28,8 +29,8 @@ public static class AuthHelper
         {
             Path = "/api", // TODO: goes to the refresh endpoint, nothing else
             HttpOnly = true,
-            Secure = true, // this for dev
-            SameSite = SameSiteMode.None,
+            Secure = !isDevelopment,
+            SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
             Expires = DateTimeOffset.UtcNow.AddDays(7),
         };
 
@@ -43,16 +44,18 @@ public static class AuthHelper
         {
             Path = "/api",
             HttpOnly = true, // JS cannot read it
-            Secure = true, //  this for dev
-            SameSite = SameSiteMode.None,
+            Secure = !isDevelopment, //  this for dev
+            // Lax for localhost, None for cross - domain prod
+            SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
         };
 
         var refreshTokenOptions = new CookieOptions
         {
             Path = "/api", // TODO: goes to the refresh endpoint, nothing else
             HttpOnly = true,
-            Secure = true, // this for dev
-            SameSite = SameSiteMode.None,
+            Secure = !isDevelopment, //  this for dev
+            // Lax for localhost, None for cross - domain prod
+            SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
         };
         responseCookies.Delete(AppClaims.Cookies.AccessToken, accessTokenOptions);
         responseCookies.Delete(AppClaims.Cookies.RefreshToken, refreshTokenOptions);

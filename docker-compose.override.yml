@@ -10,7 +10,7 @@ services:
     depends_on:
       - postgres
       - redis
-      - seq
+#      - seq
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/home/app/.microsoft/usersecrets:ro
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
@@ -22,16 +22,16 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-  seq:
-    image: datalust/seq:latest
-    environment:
-      ACCEPT_EULA: Y
-      SEQ_FIRSTRUN_ADMINPASSWORD: password
-    ports:
-      - "5341:5341"   # ingestion (API posts logs here)
-      - "8088:80"     # Seq UI → http://localhost:8088
-    volumes:
-      - seq_data:/data
+#  seq:
+#    image: datalust/seq:latest        
+#    environment:
+#      ACCEPT_EULA: Y
+#      SEQ_FIRSTRUN_ADMINPASSWORD: password
+#    ports:
+#      - "5341:5341"   # ingestion (API posts logs here)
+#      - "8088:80"     # Seq UI → http://localhost:8088
+#    volumes:
+#      - seq_data:/data
   postgres:
     image: postgres:16
     environment:
@@ -45,4 +45,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
-  seq_data:
+#  seq_data:

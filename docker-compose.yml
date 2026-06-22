@@ -1,0 +1,6 @@
+services:
+  prisma.api:
+    image: ${DOCKER_REGISTRY-}prismaapi
+    build:
+      context: .
+      dockerfile: Prisma.API/Dockerfile

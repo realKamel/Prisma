@@ -12,4 +12,7 @@
     <Project Path="Prisma.Application.Tests/Prisma.Application.Tests.csproj" />
     <Project Path="Prisma.Integration.Tests/Prisma.Integration.Tests.csproj" />
   </Folder>
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
 </Solution>

@@ -1,10 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Middlewares;
 using Prisma.Application;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure;
+using Prisma.Infrastructure.Authorization;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
@@ -135,6 +137,7 @@ public static class WebAppHelper
                         .AllowAnyMethod();
                 });
             });
+            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         }
     }
 

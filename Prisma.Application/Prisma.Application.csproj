@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Features\LessonCatalog\Commands\" />
-    <Folder Include="Features\Teachers\Commands\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -10,11 +10,6 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
     {
         builder.HasKey(x => x.Id);
 
-        // builder.HasOne(x => x.Lesson)
-        //     .WithMany(x => x.Quizzes)
-        //     .HasForeignKey(x => x.LessonId)
-        //     .OnDelete(DeleteBehavior.Cascade);
-
         builder.Property(q => q.Scope)
             .HasConversion<string>()
             .HasMaxLength(25)

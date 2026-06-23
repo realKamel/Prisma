@@ -15,7 +15,8 @@ public class QuestionLessonQuizConfiguration : IEntityTypeConfiguration<Question
 
         builder.HasOne(x => x.Quiz)
             .WithMany(x => x.Questions)
-            .HasForeignKey(x => x.LessonQuizId);
+            .HasForeignKey(x => x.LessonQuizId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(x => x.Question)
             .WithMany(x => x.QuestionLessons)

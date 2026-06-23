@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
+using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails; // 🌟 الـ Namespace الخاص بـ الـ Editor الجديد
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
@@ -72,6 +73,18 @@ public class LessonsController(IMediator _mediator) : ApiController
         var finalCommand = command with { Id = int.Parse(LessonId) };
 
         var result = await _mediator.Send(finalCommand, cancellationToken);
+
+        return Ok(result);
+    }
+    [HttpPatch("toggle-status/{LessonId}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ToggleLessonStatus([FromRoute] string LessonId, CancellationToken cancellationToken)
+    {
+        // إرسال الـ Command مع الـ Id القادم من الـ Route
+        var result = await _mediator.Send(new ToggleLessonStatusCommand(int.Parse(LessonId)), cancellationToken);
 
         return Ok(result);
     }

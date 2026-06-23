@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -32,7 +33,7 @@ public class CreateLessonDetailsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(Roles.Teacher))
+        if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can create lessons.");
 
         // 2. إنشاء كائن الـ Lesson مع إعطاء قيم افتراضية للحقول الـ Required في قاعدة البيانات 🌟

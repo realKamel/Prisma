@@ -34,8 +34,8 @@ public static class AuthHelper
             Expires = DateTimeOffset.UtcNow.AddDays(7),
         };
 
-        responseCookies.Append(AppClaims.Cookies.AccessToken, accessToken, accessTokenOptions);
-        responseCookies.Append(AppClaims.Cookies.RefreshToken, refreshToken, refreshTokenOptions);
+        responseCookies.Append(AppCookies.AccessToken, accessToken, accessTokenOptions);
+        responseCookies.Append(AppCookies.RefreshToken, refreshToken, refreshTokenOptions);
     }
 
     public static void RemoveCookies(this IResponseCookies responseCookies, bool isDevelopment)
@@ -57,8 +57,8 @@ public static class AuthHelper
             // Lax for localhost, None for cross - domain prod
             SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
         };
-        responseCookies.Delete(AppClaims.Cookies.AccessToken, accessTokenOptions);
-        responseCookies.Delete(AppClaims.Cookies.RefreshToken, refreshTokenOptions);
+        responseCookies.Delete(AppCookies.AccessToken, accessTokenOptions);
+        responseCookies.Delete(AppCookies.RefreshToken, refreshTokenOptions);
     }
 
     public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)

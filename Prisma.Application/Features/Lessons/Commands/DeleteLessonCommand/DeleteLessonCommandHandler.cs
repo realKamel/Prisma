@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -26,12 +27,11 @@ public class DeleteLessonCommandHandler(
             throw new UnauthorizedException("User must be authenticated to delete a lesson.");
 
         var user = await _userManager.FindByIdAsync(userId.ToString());
-   
+
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(Roles.Teacher) )
+        if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can delete lessons");
-
 
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

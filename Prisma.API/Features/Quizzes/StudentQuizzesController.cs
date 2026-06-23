@@ -13,8 +13,7 @@ using Prisma.Domain.Enums;
 
 namespace Prisma.API.Features.Quizzes;
 
-
-[Authorize(Roles = AppClaims.Roles.Student)]
+[Authorize(Roles = AppRoles.Student)]
 [Route("api/v1/student/quizzes")]
 public class StudentQuizzesController(ISender sender) : ApiController
 {
@@ -42,7 +41,9 @@ public class StudentQuizzesController(ISender sender) : ApiController
     [HttpPatch("attempts/{attemptId:int}/answer")]
     public async Task<IActionResult> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
     {
-        var result = await sender.Send(new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer), ct);
+        var result =
+            await sender.Send(new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
+                ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
@@ -56,14 +57,13 @@ public class StudentQuizzesController(ISender sender) : ApiController
 
     [HttpPost("attempts/{attemptId:int}/security-event")]
     public async Task<IActionResult> ReportSecurityEvent(
-    int attemptId, [FromBody] ReportSecurityEventRequest body, CancellationToken ct)
+        int attemptId, [FromBody] ReportSecurityEventRequest body, CancellationToken ct)
     {
         var result = await sender.Send(new ReportSecurityEventCommand(attemptId, body.EventType), ct);
-        return Ok(result); 
+        return Ok(result);
     }
-
 }
 
 public record SaveAnswerRequest(int QuestionId, int? ChoiceId, string? TextAnswer);
-public record ReportSecurityEventRequest(SecurityEventType EventType);
 
+public record ReportSecurityEventRequest(SecurityEventType EventType);

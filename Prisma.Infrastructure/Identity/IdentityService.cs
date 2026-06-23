@@ -1,30 +1,42 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Identity;
 
-public class IdentityService : IIdentityService
+public class IdentityService(UserManager<User> userManager) : IIdentityService
 {
-    private readonly UserManager<User> _userManager;
-
-    public IdentityService(UserManager<User> userManager)
-    {
-        _userManager = userManager;
-    }
-
     public Task<IdentityResult> CreateAsync(User user, string password)
-        => _userManager.CreateAsync(user, password);
+        => userManager.CreateAsync(user, password);
 
     public Task<IdentityResult> AddToRoleAsync(User user, string role)
-        => _userManager.AddToRoleAsync(user, role);
+        => userManager.AddToRoleAsync(user, role);
 
     public Task<User?> FindByEmailAsync(string email)
-        => _userManager.FindByEmailAsync(email);
+        => userManager.FindByEmailAsync(email);
+
+    public Task<User?> FindByIdAsync(string userId) => userManager.FindByIdAsync(userId);
+
+    public Task<User?> FindByPhoneNumberAsync(string number)
+        => userManager.Users.SingleOrDefaultAsync(u => u.PhoneNumber == number);
+
+    public Task<User?> FindByNameOrEmailAsync(string email, string phone)
+    {
+        var normalizedEmail = email.ToUpper();
+        return userManager.Users
+            .FirstOrDefaultAsync(u =>
+                u.NormalizedEmail == normalizedEmail || u.PhoneNumber == phone);
+    }
+
+    public Task<IdentityResult> DeleteAsync(User user)
+    {
+        return userManager.DeleteAsync(user);
+    }
 
     public Task<bool> CheckPasswordAsync(User user, string password)
-        => _userManager.CheckPasswordAsync(user, password);
+        => userManager.CheckPasswordAsync(user, password);
 
     public Task<string> GenerateEmailConfirmationTokenAsync(User user)
-        => _userManager.GenerateEmailConfirmationTokenAsync(user);
+        => userManager.GenerateEmailConfirmationTokenAsync(user);
 }

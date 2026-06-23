@@ -84,7 +84,7 @@ public class DataSeeder(
 
                         if (user is Teacher)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Teacher);
+                            await userManager.AddToRoleAsync(user, AppRoles.Teacher);
                             if (user is Teacher teacher)
                             {
                                 teacher.TeacherLandingSettings = await ReadTeacherSettingJsonFileAsync();
@@ -92,15 +92,15 @@ public class DataSeeder(
                         }
                         else if (user is Assistant)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Assistant);
+                            await userManager.AddToRoleAsync(user, AppRoles.Assistant);
                         }
                         else if (user is Admin)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Admin);
+                            await userManager.AddToRoleAsync(user, AppRoles.Admin);
                         }
                         else
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Student);
+                            await userManager.AddToRoleAsync(user, AppRoles.Student);
                         }
                     }
                 }
@@ -159,7 +159,7 @@ public class DataSeeder(
         }
 
         await userManager.CreateAsync(teacher, "AhmedP@ssword");
-        await userManager.AddToRoleAsync(teacher, AppClaims.Roles.Teacher);
+        await userManager.AddToRoleAsync(teacher, AppRoles.Teacher);
     }
 
     public async Task SeedAppDataAsync(JsonElement root)

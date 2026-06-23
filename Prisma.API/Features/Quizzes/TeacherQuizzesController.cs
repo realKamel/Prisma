@@ -16,7 +16,7 @@ using Prisma.Domain.Enums;
 namespace Prisma.API.Features.Quizzes;
 
 [Route("api/v1/teacher/quizzes")]
-[Authorize(Roles = $"{AppClaims.Roles.Teacher},{AppClaims.Roles.Assistant}")]
+[Authorize(Roles = $"{AppRoles.Teacher},{AppRoles.Assistant}")]
 public class TeacherQuizzesController(ISender sender) : ApiController
 {
     [HttpPost]
@@ -42,10 +42,10 @@ public class TeacherQuizzesController(ISender sender) : ApiController
 
     [HttpGet]
     public async Task<IActionResult> GetList(
-    [FromQuery] QuizScope scope,
-    [FromQuery] string? search,
-    [FromQuery] string? status,
-    CancellationToken ct)
+        [FromQuery] QuizScope scope,
+        [FromQuery] string? search,
+        [FromQuery] string? status,
+        CancellationToken ct)
     {
         var result = await sender.Send(new GetTeacherQuizzesListQuery(scope, search, status), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
@@ -53,12 +53,12 @@ public class TeacherQuizzesController(ISender sender) : ApiController
 
     [HttpGet("{id:int}/students")]
     public async Task<IActionResult> GetStudents(
-    int id,
-    [FromQuery] string? search,
-    [FromQuery] string? status,
-    [FromQuery] int page = 1,
-    [FromQuery] int pageSize = 20,
-    CancellationToken ct = default)
+        int id,
+        [FromQuery] string? search,
+        [FromQuery] string? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
     {
         var result = await sender.Send(
             new GetQuizStudentsQuery(id, search, status, page, pageSize), ct);

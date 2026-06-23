@@ -1,6 +1,4 @@
 using MediatR;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
@@ -13,14 +11,7 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var normailzedEmail = request.Email.ToUpper();
-
-        // var existingUser = await userManager.Users
-        //     .FirstOrDefaultAsync(u =>
-        //             u.NormalizedEmail == normailzedEmail || u.PhoneNumber == request.PhoneNumber,
-        //         cancellationToken);
-
-        var existingUser = await identityService.FindByEmailAsync(request.Email);
+        var existingUser = await identityService.FindByNameOrEmailAsync(request.Email, request.PhoneNumber);
 
         if (existingUser is not null)
         {
@@ -57,7 +48,7 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
             throw new BadRequestException("Error happen. Try again later.");
         }
 
-        await identityService.AddToRoleAsync(user, AppClaims.Roles.Student);
+        await identityService.AddToRoleAsync(user, AppRoles.Student);
 
         return Result.Success("Registered successfully");
     }

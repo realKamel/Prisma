@@ -43,6 +43,9 @@ public class LogoutCommandHandler(IJwtTokenService jwtTokenService, UserManager<
 
         user.RefreshToken = null;
         user.RefreshTokenExpiry = null;
+
+        user.IsOnline = false;
+
         await userManager.UpdateAsync(user);
     }
 }

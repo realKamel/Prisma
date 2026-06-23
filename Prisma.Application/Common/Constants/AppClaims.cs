@@ -6,19 +6,48 @@ public static class AppClaims
 
     public static class Permissions
     {
-        public const string ManageCourses = "manage_courses";
-        public const string ViewAnalytics = "view_analytics";
-        public const string ManageUsers = "manage_users";
-        public const string ManageStudents = "manage_Students";
-        public const string SubmitAssignment = "submit_assignment";
-    }
+        //Lesson & Content Management
+        public const string CreateLesson = "lesson:create";
+        public const string UpdateLesson = "lesson:update";
+        public const string DeleteLesson = "lesson:delete";
 
+        public const string ManageResources = "resource:manage"; // Uploading PDFs, links, files
+
+        //Question Bank & Assessments 
+        public const string ManageQuestionBank = "questions:manage"; // Reusing questions across exams
+        public const string CreateAssessment = "assessment:create";
+        public const string UpdateAssessment = "assessment:update";
+        public const string DeleteAssessment = "assessment:delete";
+
+        // Grading & Evaluation 
+        public const string GradeAssessment = "grading:assessment";
+        public const string GradeExam = "grading:exam";
+        public const string OverrideGrade = "grading:override"; // Overwrite existing grades
+        public const string PublishGrades = "grading:publish";  // Make grades visible to students
+        public const string ViewGradebook = "gradebook:view";   // See the entire class grade matrix
+
+        //Enrollment Management 
+        public const string EnrollStudent = "student:enroll";
+        public const string UnenrollStudent = "student:unenroll";
+        public const string ViewStudentProfile = "student:view_profile";
+
+        //  Analytics & Reporting 
+        public const string ViewSystemAnalytics = "analytics:system"; // System-wide metrics
+        public const string ViewLessonAnalytics = "analytics:lesson";
+
+    }
     public static class Policies
     {
-        public const string CanManageCourses = "CanManageCourses";
-        public const string CanViewAnalytics = "CanViewAnalytics";
-        public const string CanManageUsers = "CanManageUsers";
-        public const string CanSubmitAssignment = "CanSubmitAssignment";
+        // Content Creators / Teacher
+        public const string CanManageContent = "CanManageContent";
+        public const string CanManageAssessments = "CanManageAssessments";
+
+        // Evaluators (Teacher, TAs)
+        public const string CanEvaluateStudents = "CanEvaluateStudents";
+
+        // Administration / Registrars
+        public const string CanManageEnrollments = "CanManageEnrollments";
+        public const string CanViewReports = "CanViewReports";
     }
 
     public static class Roles

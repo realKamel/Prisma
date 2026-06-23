@@ -12,11 +12,9 @@ public record UpdateLessonDetailsCommand(
     decimal Price,
     int? ValidityDays,
     int? PrerequisiteLessonId,
-    string VideoMode,
-    string? LessonVideoFileName,
     List<ChapterCommandDto> Chapters,
     bool AssignmentEnabled,
-    string? AssignmentDescription,
+  //  string? AssignmentDescription,
     DateTimeOffset? AssignmentDueDate,
     string? AssignmentFileTypes
 ) : IRequest<Result<string>>;

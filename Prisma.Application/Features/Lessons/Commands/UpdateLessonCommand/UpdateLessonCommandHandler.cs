@@ -47,12 +47,9 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Price = request.Price;
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
 
-        // ربط الفيديو الأساسي لو كان مدرس مختار نمط فيديو واحد للدرس كله 'single'
-        lesson.VideoUrl = request.VideoMode == "single" ? request.LessonVideoFileName : null;
 
-        // 4. تحديث الـ Chapters (الـ Sections) - مسح وإعادة بناء بالـ SortOrder
         lesson.Sections.Clear();
-        if (request.Chapters != null && request.VideoMode == "per-chapter")
+        if (request.Chapters != null )
         {
             int order = 1;
             foreach (var ch in request.Chapters)
@@ -60,20 +57,20 @@ public class UpdateLessonDetailsCommandHandler(
                 lesson.Sections.Add(new Section
                 {
                     Title = ch.Name,
-                    ContentURL = ch.VideoFileName, // تخزين اسم ملف الفيديو في الـ ContentURL الخاص بالـ Section
+                    ContentURL = ch.VideoFileName,
                     SortOrder = order++
                 });
             }
         }
 
-        // 5. تحديث أو مسح الـ Assignment بناءً على الـ Toggle الفعلي
         if (request.AssignmentEnabled)
         {
             if (lesson.Assignment == null)
             {
                 lesson.Assignment = new Assignment
                 {
-                    ContentURL = request.AssignmentFileTypes, // ربط الملف المرفق
+                  //  AssignmentDescription = request.AssignmentDescription,
+                    ContentURL = request.AssignmentFileTypes,
                     DueDate = request.AssignmentDueDate ?? DateTimeOffset.UtcNow.AddDays(7)
                 };
             }
@@ -90,7 +87,7 @@ public class UpdateLessonDetailsCommandHandler(
             lesson.AssignmentId = null;
         }
 
-        // 6. الحفظ المركزي الآمن بدون ميثود UpdateAsync المكسورة
+        lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<string>.Success("Lesson structure updated successfully");

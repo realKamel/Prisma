@@ -66,7 +66,7 @@ public class UpdateLessonDetailsCommandHandler(
                 {
                     //  AssignmentDescription = request.AssignmentDescription,
                     ContentURL = request.AssignmentFileTypes,
-                    DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7);
+                    DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
                 };
             }
             else

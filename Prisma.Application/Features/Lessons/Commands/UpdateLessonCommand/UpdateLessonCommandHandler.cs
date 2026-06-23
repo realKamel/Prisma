@@ -66,13 +66,13 @@ public class UpdateLessonDetailsCommandHandler(
                 {
                     //  AssignmentDescription = request.AssignmentDescription,
                     ContentURL = request.AssignmentFileTypes,
-                    DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
+                    DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
                 };
             }
             else
             {
                 lesson.Assignment.ContentURL = request.AssignmentFileTypes;
-                lesson.Assignment.DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
+                lesson.Assignment.DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7);
             }
         }
         else

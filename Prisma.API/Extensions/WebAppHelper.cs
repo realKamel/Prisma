@@ -80,7 +80,7 @@ public static class WebAppHelper
                     {
                         OnMessageReceived = context =>
                         {
-                            context.Token = context.Request.Cookies[AppClaims.Cookies.AccessToken];
+                            context.Token = context.Request.Cookies[AppCookies.AccessToken];
                             return Task.CompletedTask;
                         }
                     };
@@ -131,13 +131,24 @@ public static class WebAppHelper
                     policy.WithOrigins(
                             "http://localhost:4200", // Dev Angular
                             "https://localhost:4200") // If Angular also behind proxy
-                                                      //"https://PrismaEdu.com"           // Prod
+                        //"https://PrismaEdu.com"     // Prod
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
             });
             services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+            services.AddAuthorization(options =>
+            {
+                foreach (var (policy, permissions) in AppClaims.Policies.PermissionMap)
+                {
+                    options.AddPolicy(policy, builder =>
+                        builder.RequireAssertion(ctx =>
+                            permissions.All(p =>
+                                ctx.User.Claims.Any(c => c.Type == AppClaims.PermissionsClaim && c.Value == p))));
+                }
+            });
         }
     }
 

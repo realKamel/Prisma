@@ -1,26 +1,25 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿// التأكد من وجود الـ Enum هنا
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Enums; // التأكد من وجود الـ Enum هنا
+using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using static Prisma.Application.Common.Constants.AppClaims;
 
-namespace Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
+namespace Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 
 public class ToggleLessonStatusCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager)
-    : IRequestHandler<ToggleLessonStatusCommand, Result<string>>
+    : IRequestHandler<ToggleLessonStatus.ToggleLessonStatusCommand, Result<string>>
 {
-    public async Task<Result<string>> Handle(ToggleLessonStatusCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(ToggleLessonStatus.ToggleLessonStatusCommand request,
+        CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
@@ -31,7 +30,7 @@ public class ToggleLessonStatusCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(Roles.Teacher))
+        if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can toggle lesson status.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

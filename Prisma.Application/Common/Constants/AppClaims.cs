@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace Prisma.Application.Common.Constants;
 
 public static class AppClaims
@@ -23,8 +25,8 @@ public static class AppClaims
         public const string GradeAssessment = "grading:assessment";
         public const string GradeExam = "grading:exam";
         public const string OverrideGrade = "grading:override"; // Overwrite existing grades
-        public const string PublishGrades = "grading:publish";  // Make grades visible to students
-        public const string ViewGradebook = "gradebook:view";   // See the entire class grade matrix
+        public const string PublishGrades = "grading:publish"; // Make grades visible to students
+        public const string ViewGradeBook = "gradebook:view"; // See the entire class grade matrix
 
         //Enrollment Management 
         public const string EnrollStudent = "student:enroll";
@@ -35,32 +37,65 @@ public static class AppClaims
         public const string ViewSystemAnalytics = "analytics:system"; // System-wide metrics
         public const string ViewLessonAnalytics = "analytics:lesson";
 
+        public static IReadOnlySet<string> All { get; } = typeof(Permissions)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => (string)f.GetRawConstantValue()!)
+            .ToHashSet();
+
+        public static bool IsValid(string permission) => All.Contains(permission);
+        public static bool AreValid(IEnumerable<string> permissions) => permissions.All(IsValid);
     }
+
     public static class Policies
     {
         // Content Creators / Teacher
-        public const string CanManageContent = "CanManageContent";
-        public const string CanManageAssessments = "CanManageAssessments";
+        public const string CanManageContent = nameof(CanManageContent);
+        public const string CanManageAssessments = nameof(CanManageAssessments);
 
         // Evaluators (Teacher, TAs)
-        public const string CanEvaluateStudents = "CanEvaluateStudents";
+        public const string CanEvaluateStudents = nameof(CanEvaluateStudents);
 
-        // Administration / Registrars
-        public const string CanManageEnrollments = "CanManageEnrollments";
-        public const string CanViewReports = "CanViewReports";
-    }
+        // Administration / Teacher
+        public const string CanManageEnrollments = nameof(CanManageEnrollments);
+        public const string CanViewReports = nameof(CanViewReports);
 
-    public static class Roles
-    {
-        public const string Student = "Student";
-        public const string Admin = "Admin";
-        public const string Teacher = "Teacher";
-        public const string Assistant = "Assistant";
-    }
-
-    public static class Cookies
-    {
-        public const string AccessToken = "access_token";
-        public const string RefreshToken = "refresh_token";
+        public static IReadOnlyDictionary<string, IReadOnlyList<string>> PermissionMap { get; } =
+            new Dictionary<string, IReadOnlyList<string>>
+            {
+                [CanManageContent] =
+                [
+                    Permissions.CreateLesson,
+                    Permissions.UpdateLesson,
+                    Permissions.DeleteLesson,
+                    Permissions.ManageResources,
+                ],
+                [CanManageAssessments] =
+                [
+                    Permissions.ManageQuestionBank,
+                    Permissions.CreateAssessment,
+                    Permissions.UpdateAssessment,
+                    Permissions.DeleteAssessment,
+                ],
+                [CanEvaluateStudents] =
+                [
+                    Permissions.GradeAssessment,
+                    Permissions.GradeExam,
+                    Permissions.OverrideGrade,
+                    Permissions.PublishGrades,
+                    Permissions.ViewGradeBook,
+                ],
+                [CanManageEnrollments] =
+                [
+                    Permissions.EnrollStudent,
+                    Permissions.UnenrollStudent,
+                    Permissions.ViewStudentProfile,
+                ],
+                [CanViewReports] =
+                [
+                    Permissions.ViewSystemAnalytics,
+                    Permissions.ViewLessonAnalytics,
+                ],
+            };
     }
 }

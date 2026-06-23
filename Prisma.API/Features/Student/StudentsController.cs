@@ -12,7 +12,7 @@ namespace Prisma.API.Features.Student;
 
 public class StudentsController(ISender mediator) : ApiController
 {
-    [Authorize(Roles = AppClaims.Roles.Student)]
+    [Authorize(Roles = AppRoles.Student)]
     [ProducesResponseType<Result<ICollection<LessonCatalogDto>>>(StatusCodes.Status200OK)]
     [HttpGet("catalog")]
     public async Task<ActionResult> GetLessonsCatalog(CancellationToken c)
@@ -21,7 +21,7 @@ public class StudentsController(ISender mediator) : ApiController
         return Ok(result);
     }
 
-    // [Authorize(Roles = AppClaims.Roles.Student)]
+    // [Authorize(Roles = AppRoles.Student)]
     [HttpGet("history")]
     [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status404NotFound)]
@@ -31,6 +31,7 @@ public class StudentsController(ISender mediator) : ApiController
         var result = await mediator.Send(new GetStudentHistoryQuery(), cancellationToken);
         return Ok(result);
     }
+
     [HttpGet("dashboard")]
     [ProducesResponseType<Result<GetStudentDashboardResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<GetStudentDashboardResponse>>(StatusCodes.Status500InternalServerError)]

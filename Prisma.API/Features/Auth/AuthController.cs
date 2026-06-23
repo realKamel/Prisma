@@ -8,7 +8,6 @@ using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
-using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
 using Prisma.Application.Features.Authentication.Commands.Register;
@@ -44,8 +43,8 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     [HttpPost("refresh")]
     public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
     {
-        var accessToken = Request.Cookies[AppClaims.Cookies.AccessToken];
-        var refreshToken = Request.Cookies[AppClaims.Cookies.RefreshToken];
+        var accessToken = Request.Cookies[AppCookies.AccessToken];
+        var refreshToken = Request.Cookies[AppCookies.RefreshToken];
 
         var command = new
             RefreshTokenCommand(accessToken, refreshToken);
@@ -60,7 +59,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     [HttpPost("logout")]
     public async Task<ActionResult> Logout(CancellationToken cancelToken)
     {
-        await mediator.Send(new LogoutCommand(Request.Cookies[AppClaims.Cookies.AccessToken]), cancelToken);
+        await mediator.Send(new LogoutCommand(Request.Cookies[AppCookies.AccessToken]), cancelToken);
 
         Response.Cookies.RemoveCookies(environment.IsDevelopment());
 

@@ -1,19 +1,16 @@
-﻿using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
-using static Prisma.Application.Common.Constants.AppClaims;
 
-namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
+namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
 public class UpdateLessonDetailsCommandHandler(
     IUnitOfWork _unitOfWork,
@@ -32,7 +29,7 @@ public class UpdateLessonDetailsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(Roles.Teacher))
+        if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can modify lesson structures.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
@@ -49,16 +46,14 @@ public class UpdateLessonDetailsCommandHandler(
 
 
         lesson.Sections.Clear();
-        if (request.Chapters != null )
+        if (request.Chapters != null)
         {
             int order = 1;
             foreach (var ch in request.Chapters)
             {
                 lesson.Sections.Add(new Section
                 {
-                    Title = ch.Name,
-                    ContentURL = ch.VideoFileName,
-                    SortOrder = order++
+                    Title = ch.Name, ContentURL = ch.VideoFileName, SortOrder = order++
                 });
             }
         }
@@ -69,15 +64,15 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 lesson.Assignment = new Assignment
                 {
-                  //  AssignmentDescription = request.AssignmentDescription,
+                    //  AssignmentDescription = request.AssignmentDescription,
                     ContentURL = request.AssignmentFileTypes,
-                    DueDate = request.AssignmentDueDate ?? DateTimeOffset.UtcNow.AddDays(7)
+                    DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
                 };
             }
             else
             {
                 lesson.Assignment.ContentURL = request.AssignmentFileTypes;
-                lesson.Assignment.DueDate = request.AssignmentDueDate ?? DateTimeOffset.UtcNow.AddDays(7);
+                lesson.Assignment.DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
             }
         }
         else

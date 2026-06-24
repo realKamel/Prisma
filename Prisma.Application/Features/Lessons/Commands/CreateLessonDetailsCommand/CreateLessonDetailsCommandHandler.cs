@@ -64,8 +64,9 @@ public class CreateLessonDetailsCommandHandler(
             }
         }
 
+        // 4. حفظ الدرس أولاً في قاعدة البيانات لينتج له الـ Id التلقائي بأمان 🚀
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        await lessonRepository.AddAsync(lesson, cancellationToken);
+         lessonRepository.Add(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 5. إضافة الـ Assignment صراحةً وربطه بالـ LessonId الناتج 🌟
@@ -79,7 +80,7 @@ public class CreateLessonDetailsCommandHandler(
             };
 
             var assignmentRepository = _unitOfWork.GetOrCreateRepository<Assignment, int>();
-            await assignmentRepository.AddAsync(assignment, cancellationToken);
+            assignmentRepository.Add(assignment);
             await _unitOfWork.SaveChangesAsync(cancellationToken); // حفظ الـ Assignment
 
             lesson.AssignmentId = assignment.Id;

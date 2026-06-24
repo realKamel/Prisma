@@ -42,12 +42,14 @@ public class TeacherQuizzesController(ISender sender) : ApiController
 
     [HttpGet]
     public async Task<IActionResult> GetList(
-        [FromQuery] QuizScope scope,
+        [FromQuery] string scope,
         [FromQuery] string? search,
         [FromQuery] string? status,
         CancellationToken ct)
     {
-        var result = await sender.Send(new GetTeacherQuizzesListQuery(scope, search, status), ct);
+        if (!Enum.TryParse<QuizScope>(scope, true, out var quizScope))
+            return BadRequest("Invalid scope value.");
+        var result = await sender.Send(new GetTeacherQuizzesListQuery(quizScope, search, status), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 

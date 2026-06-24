@@ -16,7 +16,8 @@ public record UpdateLessonDetailsCommand(
     bool AssignmentEnabled,
   //  string? AssignmentDescription,
     DateTimeOffset? AssignmentDueDate,
-    string? AssignmentFileTypes
+    string? AssignmentFileTypes,
+    bool IsPublished
 ) : IRequest<Result<string>>;
 
 public record ChapterCommandDto(string Name, string? VideoFileName);

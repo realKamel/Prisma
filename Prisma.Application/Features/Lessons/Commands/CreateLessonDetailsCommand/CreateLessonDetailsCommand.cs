@@ -14,7 +14,10 @@ public record CreateLessonDetailsCommand(
     bool AssignmentEnabled,
     DateTimeOffset? AssignmentDueDate,
     string? AssignmentFileTypes,
-    bool IsPublished
-) : IRequest<Result<int>>; 
+    bool IsPublished,
+      List<string> Outcomes,
+    string? ImageUrl,
+    List<int> AcademicYearIds // 🌟 المراحل الدراسية اللي المدرس اختارها للدرس الجديد
+) : IRequest<Result<int>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName);

@@ -16,13 +16,29 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
     public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request, CancellationToken cancellationToken)
     {
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new GetLessonEditorDetailsSpecification(request.Id);
+        var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
 
+        // 1. جلب بيانات الدرس بالـ Specification (ليتم تحميل الـ AcademicYears المربوطة به)
+        var spec = new GetLessonEditorDetailsSpecification(request.Id);
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
+
         if (lesson is null)
             throw new NotFoundException("Lesson", request.Id);
 
-        // عمل Mapping يدوي ونظيف للداتا لتطابق الفرونت إند بالملي 🚀
+        // 2. جلب كل الدروس كخيارات للمتطلب السابق (بشكل Async صريح)
+        var allLessons = await lessonRepository.ListAsync(cancellationToken);
+        var prerequisitesOptions = allLessons
+            .Where(l => l.Id != request.Id && !l.IsDeleted)
+            .Select(l => new LessonDto(l.Title ?? string.Empty, l.Id))
+            .ToList();
+
+        // 3. جلب كل السنوات الدراسية المتاحة في السيستم بالكامل (بشكل Async صريح وبدون .Result) 🌟
+        var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
+        var allAcademicYearsOptions = allAcademicYears
+            .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
+            .ToList();
+
+        // 4. عمل Mapping للـ لستتين بوضوح تام 🚀
         var response = new LessonEditorResponseDto(
             lesson.Id,
             lesson.Title,
@@ -32,7 +48,15 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
             lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
             lesson.Assignment != null,
             lesson.Assignment?.DueDate,
-            lesson.Assignment?.ContentURL
+            lesson.Assignment?.ContentURL,
+            lesson.ImageThumbnailUrl,
+            lesson.Outcomes?.ToList() ?? new List<string>(),
+
+            lesson.AcademicYears?.Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty)).ToList() ?? new List<AcademicYearResponseDto>(),
+
+            prerequisitesOptions,
+
+            allAcademicYearsOptions
         );
 
         return Result<LessonEditorResponseDto>.Success(response);

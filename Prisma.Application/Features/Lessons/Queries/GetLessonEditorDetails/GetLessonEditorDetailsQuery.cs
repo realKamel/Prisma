@@ -16,7 +16,14 @@ public record LessonEditorResponseDto(
     List<ChapterResponseDto> Chapters,
     bool AssignmentEnabled,
     DateTimeOffset? AssignmentDueDate,
-    string? AssignmentFileTypes
+    string? AssignmentFileTypes,
+    string? ImageUrl,
+    List<string?>? Outcomes,
+    List<AcademicYearResponseDto> SelectedAcademicYears,   
+    List<LessonDto> PrerequisitesOptions,
+    List<AcademicYearResponseDto> AllAcademicYearsOptions  
 );
 
+public record LessonDto(string Name, int Id);
 public record ChapterResponseDto(string Name, string? VideoFileName);
+public record AcademicYearResponseDto(int Id, string Name);

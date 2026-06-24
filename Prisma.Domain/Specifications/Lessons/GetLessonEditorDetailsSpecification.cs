@@ -11,6 +11,8 @@ public class GetLessonEditorDetailsSpecification : Specification<Lesson>
         Query.Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
              .Include(l => l.Sections)
              .Include(l => l.Assignment)
+             .Include(l=>l.AcademicYears)
+
              .AsNoTracking(); 
     }
 }

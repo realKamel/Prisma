@@ -14,10 +14,12 @@ public record UpdateLessonDetailsCommand(
     int? PrerequisiteLessonId,
     List<ChapterCommandDto> Chapters,
     bool AssignmentEnabled,
-  //  string? AssignmentDescription,
     DateTimeOffset? AssignmentDueDate,
     string? AssignmentFileTypes,
-    bool IsPublished
+    bool IsPublished,
+    List<int> AcademicYearIds ,
+    List<string> Outcomes,
+    string? ImageUrl
 ) : IRequest<Result<string>>;
 
 public record ChapterCommandDto(string Name, string? VideoFileName);

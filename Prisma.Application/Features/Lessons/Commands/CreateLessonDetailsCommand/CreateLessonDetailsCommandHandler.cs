@@ -23,7 +23,7 @@ public class CreateLessonDetailsCommandHandler(
 {
     public async Task<Result<int>> Handle(CreateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
-        // 1. تحقق الأمان والـ Role للمدرس
+        // 1. تحقق الأمان والـ Role (مدرس)
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
@@ -36,18 +36,17 @@ public class CreateLessonDetailsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can create lessons.");
 
-        // 2. إنشاء كائن الـ Lesson مع إعطاء قيم افتراضية للحقول الـ Required في قاعدة البيانات 🌟
+        // 2. إنشاء كائن الدرس وحالته Drafted
         var lesson = new Lesson
         {
             Title = request.Title,
             Description = request.Description,
             Price = request.Price,
-            PrerequisiteId = request.PrerequisiteLessonId,
-            Status = LessonStatus.Drafted,          // الحقل الأساسي الـ Enum
-            Duration = TimeSpan.Zero,               // قيمة افتراضية آمنة لمنع الـ DB Null Exception
-            IsEligible = true                       // قيمة افتراضية آمنة
+            PrerequisiteId = request.PrerequisiteLessonId, // المابينج الصح للـ Self-Relation
+            Status = LessonStatus.Drafted
         };
 
+        // 3. إضافة الفصول (Sections)
         if (request.Chapters != null)
         {
             int order = 1;
@@ -56,37 +55,26 @@ public class CreateLessonDetailsCommandHandler(
                 lesson.Sections.Add(new Section
                 {
                     Title = ch.Name,
-                    ContentURL = ch.VideoFileName,
-                    SortOrder = order++,
-                    Duration = TimeSpan.Zero,       // حقل مطلوب Non-nullable في كيان الـ Section 🌟
-                    IsPreview = false
+                    ContentURL = ch.VideoFileName, // اللينك الـ cdn المبعوت في الـ JSON هينزل هنا صح
+                    SortOrder = order++
                 });
             }
         }
 
-        // 4. حفظ الدرس أولاً في قاعدة البيانات لينتج له الـ Id التلقائي بأمان 🚀
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-         lessonRepository.Add(lesson);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        // 5. إضافة الـ Assignment صراحةً وربطه بالـ LessonId الناتج 🌟
+        // 4. إضافة الواجب (Assignment)
         if (request.AssignmentEnabled)
         {
-            var assignment = new Assignment
+            lesson.Assignment = new Assignment
             {
-                LessonId = lesson.Id,               // الربط الصريح عبر الـ Foreign Key
                 ContentURL = request.AssignmentFileTypes,
                 DueDate = request.AssignmentDueDate ?? DateTimeOffset.UtcNow.AddDays(7)
             };
-
-            var assignmentRepository = _unitOfWork.GetOrCreateRepository<Assignment, int>();
-            assignmentRepository.Add(assignment);
-            await _unitOfWork.SaveChangesAsync(cancellationToken); // حفظ الـ Assignment
-
-            lesson.AssignmentId = assignment.Id;
-            lessonRepository.Update(lesson);
-            await _unitOfWork.SaveChangesAsync(cancellationToken); 
         }
+
+        // 5. الحفظ في الداتا بيز
+        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        lessonRepository.Add(lesson);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<int>.Success(lesson.Id);
     }

@@ -45,7 +45,6 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Price = request.Price;
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
         lesson.Status = request.IsPublished? LessonStatus.Active:LessonStatus.Drafted;
-        
         lesson.Sections.Clear();
         if (request.Chapters != null)
         {

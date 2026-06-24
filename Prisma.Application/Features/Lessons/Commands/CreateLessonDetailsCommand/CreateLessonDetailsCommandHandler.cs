@@ -43,7 +43,7 @@ public class CreateLessonDetailsCommandHandler(
             Description = request.Description,
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId, // المابينج الصح للـ Self-Relation
-            Status = LessonStatus.Active
+            Status = request.IsPublished?LessonStatus.Active:LessonStatus.Drafted
         };
 
         // 3. إضافة الفصول (Sections)
@@ -67,7 +67,7 @@ public class CreateLessonDetailsCommandHandler(
             lesson.Assignment = new Assignment
             {
                 ContentURL = request.AssignmentFileTypes,
-                DueDate = request.AssignmentDueDate ?? DateTimeOffset.UtcNow.AddDays(7)
+                DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
             };
         }
 

@@ -43,7 +43,7 @@ public class CreateLessonDetailsCommandHandler(
             Description = request.Description,
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId, // المابينج الصح للـ Self-Relation
-            Status = LessonStatus.Drafted
+            Status = LessonStatus.Active
         };
 
         // 3. إضافة الفصول (Sections)

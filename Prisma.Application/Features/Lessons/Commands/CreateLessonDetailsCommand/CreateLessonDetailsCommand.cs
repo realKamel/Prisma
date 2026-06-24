@@ -13,7 +13,8 @@ public record CreateLessonDetailsCommand(
     List<ChapterCreateDto> Chapters,
     bool AssignmentEnabled,
     DateTimeOffset? AssignmentDueDate,
-    string? AssignmentFileTypes
+    string? AssignmentFileTypes,
+    bool IsPublished
 ) : IRequest<Result<int>>; 
 
 public record ChapterCreateDto(string Name, string? VideoFileName);

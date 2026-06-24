@@ -15,6 +15,7 @@ using Prisma.Infrastructure.Persistence.Repositories;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using StackExchange.Redis;
+using Prisma.Infrastructure.Services;
 
 namespace Prisma.Infrastructure;
 
@@ -84,6 +85,9 @@ public static class DependenciesInjection
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
 
+        services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
+        services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
+        services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
         //services.AddStackExchangeRedisCache(option =>
         //{
         //    option.Configuration = configuration.GetConnectionString("Redis");

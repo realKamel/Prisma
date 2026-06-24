@@ -58,7 +58,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return Ok(result);
     }
 
-    [HttpPost("editor")]
+    [HttpPost("add")]
     [ProducesResponseType<Result<int>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

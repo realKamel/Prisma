@@ -6,6 +6,7 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
@@ -43,8 +44,7 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Description = request.Description;
         lesson.Price = request.Price;
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
-
-
+        lesson.Status = request.IsPublished? LessonStatus.Active:LessonStatus.Drafted;
         lesson.Sections.Clear();
         if (request.Chapters != null)
         {

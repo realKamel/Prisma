@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Prisma.Infrastructure.Persistence;
@@ -12,9 +13,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624001512_AddExtractionJobs")]
+    partial class AddExtractionJobs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -920,12 +923,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("QuestionsJson")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("[]");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1817,6 +1814,50 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.ExtractionJob", b =>
+                {
+                    b.OwnsMany("Prisma.Domain.Entities.QuizAggregate.ExtractedQuestion", "Questions", b1 =>
+                        {
+                            b1.Property<int>("ExtractionJobId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAdd();
+
+                            b1.Property<bool?>("CorrectBool");
+
+                            b1.Property<int?>("CorrectIndex");
+
+                            b1.Property<string>("ModelAnswer")
+                                .IsRequired()
+                                .HasMaxLength(4000);
+
+                            b1.PrimitiveCollection<string>("Options")
+                                .IsRequired();
+
+                            b1.Property<int>("Score");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasMaxLength(4000);
+
+                            b1.Property<string>("Type")
+                                .IsRequired();
+
+                            b1.HasKey("ExtractionJobId", "__synthesizedOrdinal");
+
+                            b1.ToTable("ExtractionJobs");
+
+                            b1
+                                .ToJson("Questions")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ExtractionJobId");
+                        });
+
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuestionLessonQuiz", b =>

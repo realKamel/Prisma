@@ -41,6 +41,14 @@ public class LessonsController(IMediator _mediator) : ApiController
         var result = await _mediator.Send(query, cancellationToken);
         return Ok(result);
     }
+    
+    [HttpGet("options")]
+    public async Task<IActionResult> GetPrepDataForAdd(CancellationToken cancellationToken)
+    {
+        var query = new GetLessonFormOptionsQuery();
+        var result = await _mediator.Send(query, cancellationToken);
+        return Ok(result);
+    }
 
     [HttpGet("expired-details/{LessonId}")]
     public async Task<IActionResult> GetExpiredLessonDetails([FromRoute] string LessonId, CancellationToken cancellationToken)

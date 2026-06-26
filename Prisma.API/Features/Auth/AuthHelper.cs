@@ -22,7 +22,7 @@ public static class AuthHelper
             // Lax for localhost, None for cross - domain prod
             SameSite = isDevelopment ? SameSiteMode.Lax : SameSiteMode.None,
             // 5 minutes window to be used after it's expiry for refresh mechanism
-            Expires = DateTimeOffset.UtcNow.AddMinutes(20)
+            Expires = DateTimeOffset.UtcNow.AddDays(7)
         };
 
         var refreshTokenOptions = new CookieOptions

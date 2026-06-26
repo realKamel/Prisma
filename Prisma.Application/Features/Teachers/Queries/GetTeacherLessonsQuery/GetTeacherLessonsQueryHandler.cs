@@ -24,7 +24,7 @@ public class GetTeacherLessonsQueryHandler(
         var userId = _currentUserService.UserId;
         if (userId is null)
             if (userId is null)
-                return Result<List<TeacherLessonDto>>.Failure("User is not authenticated");
+                throw new UnauthorizedAccessException("User is not authenticated.");
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var spec = new TeacherLessonsSpecification();

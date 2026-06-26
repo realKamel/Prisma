@@ -1,12 +1,14 @@
-using System.Linq.Expressions;
 using Ardalis.Specification;
 using MediatR;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Teachers.Queries.DTOs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Students;
@@ -17,18 +19,28 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetTeacherDashboardStatusQuery,
         Result<GetTeacherDashboardStatusResponse>>
 {
+
     public async Task<Result<GetTeacherDashboardStatusResponse>> Handle(
         GetTeacherDashboardStatusQuery request, CancellationToken cancellationToken)
     {
+        var now = DateTimeOffset.UtcNow;
+
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
         var activeStudentsCount = await studentRepo.CountAsync(new ActiveStudentSpecification(), cancellationToken);
         var activeLessonsCount = await lessonRepo.CountAsync(new ActiveLessonsSpecification(), cancellationToken);
 
-        var now = DateTimeOffset.UtcNow;
-
+        var logs = (await auditRepo
+        .ListAsync(
+        new PagedLogsOrderByCreatedAtSpec<AuditLogDto>(l =>
+        l.UserEmail != SystemConstants.SystemEmail,
+        l => new AuditLogDto(l.Id, l.UserEmail, l.Action, l.TableName, l.CreatedAt),
+        0,
+        10),
+        cancellationToken)).ToArray();
 
         var sixtyDayEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithPaymentOrderByCreatedAtDesc(e => e.CreatedAt >= now.AddDays(-60)),
@@ -49,6 +61,13 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
         var totalEarningThisWeek = sixtyDayEnrollments
             .Where(e => e.CreatedAt >= now.AddDays(-7))
             .Sum(e => e.Payment?.Amount ?? 0);
+
+        var thisWeekEarning = sixtyDayEnrollments
+            .Where(e => e.CreatedAt >= now.AddDays(-7))
+            .GroupBy(e => e.CreatedAt!.Value.DayOfWeek)
+            .Select(g =>
+                new EarningEntry(g.Key.ToString(), g.Sum(d => d.Payment.Amount)))
+            .ToArray();
 
         var completedThisMonth = sixtyDayEnrollments
             .Count(e => e.IsCompleted && e.CompletedAt >= now.AddDays(-30));
@@ -82,8 +101,8 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
                 activeLessonsCount,
                 completedThisMonth,
                 completedAgainstLastMonthPercentage),
-            new WeekEarnings(totalEarningThisWeek, []),
+            new WeekEarnings(totalEarningThisWeek, thisWeekEarning),
             bestSales,
-            []);
+            logs);
     }
 }

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Interceptors;
@@ -37,7 +38,7 @@ internal class AuditLogInterceptor(ICurrentUserService currentUser) : SaveChange
     private List<AuditLog> BuildAuditLogs(DbContext context)
     {
         var now = DateTimeOffset.UtcNow;
-        var userEmail = currentUser.Email ?? "System";
+        var userEmail = currentUser.Email ?? SystemConstants.SystemEmail;
         var auditEntries = new List<AuditLog>();
 
         foreach (var entry in context.ChangeTracker.Entries())

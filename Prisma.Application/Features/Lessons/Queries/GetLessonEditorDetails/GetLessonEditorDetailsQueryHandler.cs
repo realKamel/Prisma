@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -52,7 +52,8 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
             lesson.ImageThumbnailUrl,
             lesson.Outcomes?.ToList() ?? new List<string>(),
 
-            lesson.AcademicYears?.Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty)).ToList() ?? new List<AcademicYearResponseDto>(),
+            //lesson.AcademicYears?.Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty)).ToList() ?? new List<AcademicYearResponseDto>(),
+            lesson.AcademicYears?.Select(ay => new AcademicYearResponseDto(ay.Id, "ay.Title" ?? string.Empty)).ToList() ?? new List<AcademicYearResponseDto>(),
 
             prerequisitesOptions,
 

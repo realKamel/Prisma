@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -82,7 +82,7 @@ public class CreateLessonDetailsCommandHandler(
                 var academicYear = await academicYearRepository.GetByIdAsync(id, cancellationToken);
                 if (academicYear != null)
                 {
-                    lesson.AcademicYears.Add(academicYear);
+                    //lesson.AcademicYears.Add(academicYear);
                 }
             }
         }

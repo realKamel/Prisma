@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -106,7 +106,7 @@ public class UpdateLessonDetailsCommandHandler(
                 .Where(ay => request.AcademicYearIds.Contains(ay.Id) && !ay.IsDeleted)
                 .ToList();
 
-            lesson.AcademicYears = selectedYears;
+            //lesson.AcademicYears = selectedYears;
         }
 
         lessonRepository.Update(lesson);

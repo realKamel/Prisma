@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
@@ -7,7 +6,7 @@ using Prisma.Application.Features.Authentication.Commands.Register;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 
-namespace Prisma.Application.Tests.Features.Authentication.Commands.RegisterCommandTest;
+namespace Prisma.Application.Tests.Features.Authentication.Commands;
 
 public class RegisterCommandHandlerTests
 
@@ -38,7 +37,7 @@ public class RegisterCommandHandlerTests
     {
         // Arrange
         _identityService
-            .FindByNameOrEmailAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
+            .FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
             .Returns((User?)null);
 
         _identityService
@@ -55,7 +54,7 @@ public class RegisterCommandHandlerTests
         // Assert
         Assert.True(result.Succeeded);
 
-        await _identityService.Received(1).FindByNameOrEmailAsync(ValidCommand.Email, ValidCommand.PhoneNumber);
+        await _identityService.Received(1).FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber);
 
         await _identityService.Received(1).CreateAsync(
             Arg.Is<Student>(u =>
@@ -76,7 +75,7 @@ public class RegisterCommandHandlerTests
     {
         // Arrange
         _identityService
-            .FindByNameOrEmailAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
+            .FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
             .Returns(new User());
 
         // Act & Assert
@@ -98,7 +97,7 @@ public class RegisterCommandHandlerTests
         };
 
         _identityService
-            .FindByNameOrEmailAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
+            .FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
             .Returns((User?)null);
 
         _identityService
@@ -121,7 +120,7 @@ public class RegisterCommandHandlerTests
         };
 
         _identityService
-            .FindByNameOrEmailAsync(command.Email, command.PhoneNumber)
+            .FindByEmailOrPhoneAsync(command.Email, command.PhoneNumber)
             .Returns((User?)null);
 
         _identityService

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Common.Responses.Generic;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
@@ -15,9 +13,9 @@ public record CreateLessonDetailsCommand(
     DateTimeOffset? AssignmentDueDate,
     string? AssignmentFileTypes,
     bool IsPublished,
-      List<string> Outcomes,
+    List<string> Outcomes,
     string? ImageUrl,
-    List<int> AcademicYearIds // 🌟 المراحل الدراسية اللي المدرس اختارها للدرس الجديد
+    List<int> AcademicYearIds
 ) : IRequest<Result<int>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName);

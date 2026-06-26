@@ -18,8 +18,8 @@ public record LessonEditorResponseDto(
     DateTimeOffset? AssignmentDueDate,
     string? AssignmentFileTypes,
     string? ImageUrl,
-    List<string?>? Outcomes,
-    List<AcademicYearResponseDto> SelectedAcademicYears,   
+    List<string>? Outcomes,
+    List<int> SelectedAcademicYears,   
     List<LessonDto> PrerequisitesOptions,
     List<AcademicYearResponseDto> AllAcademicYearsOptions  
 );

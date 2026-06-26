@@ -7,6 +7,7 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 using Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
 using Prisma.Application.Features.Assistants.Commands.UpdatePermissions;
+using Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 using Prisma.Application.Features.Assistants.Queries.GetAssistants;
 
 namespace Prisma.API.Features.Assistant;
@@ -53,6 +54,16 @@ public class AssistantsController(ISender mediator) : ApiController
         CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new UpdatePermissionCommand(id, permissions), cancellationToken);
+        return Ok(result);
+    }
+    
+    [HttpGet("lessons")]
+    [ProducesResponseType<Result<List<AssistantLessonDto>>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> GetAssistantLessons(CancellationToken token)
+    {
+        var result = await mediator.Send(new GetAssistantLessonsQuery(), token);
         return Ok(result);
     }
 }

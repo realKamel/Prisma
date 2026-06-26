@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -36,7 +31,6 @@ public class CreateLessonDetailsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can create lessons.");
 
-        // إنشاء كائن الدرس مع الحقول الجديدة
         var lesson = new Lesson
         {
             Title = request.Title,
@@ -44,11 +38,10 @@ public class CreateLessonDetailsCommandHandler(
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            ImageThumbnailUrl = request.ImageUrl, // 🌟 تسكين رابط الصورة
-            Outcomes = request.Outcomes           // 🌟 تسكين المخرجات التعليمية
+            ImageThumbnailUrl = request.ImageUrl,
+            Outcomes = request.Outcomes          
         };
 
-        // إضافة الفصول
         if (request.Chapters != null)
         {
             int order = 1;
@@ -63,7 +56,6 @@ public class CreateLessonDetailsCommandHandler(
             }
         }
 
-        // إضافة الواجب
         if (request.AssignmentEnabled)
         {
             lesson.Assignment = new Assignment
@@ -73,17 +65,19 @@ public class CreateLessonDetailsCommandHandler(
             };
         }
 
-        // ربط المراحل الدراسية المختارة بالدرس
         if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
         {
-            var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+            var academicYearLessonRepository = _unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
             foreach (var id in request.AcademicYearIds)
             {
-                var academicYear = await academicYearRepository.GetByIdAsync(id, cancellationToken);
-                if (academicYear != null)
+                var exist = await academicYearLessonRepository.GetByIdAsync(id);
+                if (exist is null)
+                    throw new BadRequestException("invalid academic year");
+                
+                lesson.AcademicYears.Add(new AcademicYearLesson()
                 {
-                    //lesson.AcademicYears.Add(academicYear);
-                }
+                    AcademicYearId = id
+                });
             }
         }
 

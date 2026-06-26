@@ -24,7 +24,7 @@ public class AssistantsController(ISender mediator) : ApiController
 
 
     [HttpGet]
-    [Authorize(AppRoles.Teacher)]
+    [Authorize(Roles = AppRoles.Teacher)]
     [ProducesResponseType<Result<List<AssistantInfo>>>(StatusCodes.Status200OK)]
     public async Task<ActionResult> GetAssistants(CancellationToken ctx)
     {
@@ -33,7 +33,7 @@ public class AssistantsController(ISender mediator) : ApiController
     }
 
     [HttpPost]
-    [Authorize(AppRoles.Teacher)]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<ActionResult> CreateAssistant(CreateAssistantCommand command, CancellationToken ctx)
     {
         var result = await mediator.Send(command, ctx);
@@ -48,7 +48,7 @@ public class AssistantsController(ISender mediator) : ApiController
     }
 
     [HttpPatch("{id}")]
-    [Authorize(AppRoles.Teacher)]
+    [Authorize(Roles = AppRoles.Teacher)]
     public async Task<ActionResult> UpdateAssistantPermissions(Guid id, List<string> permissions,
         CancellationToken cancellationToken)
     {

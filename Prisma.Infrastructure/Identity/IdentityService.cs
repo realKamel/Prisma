@@ -60,10 +60,6 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
 
     public async Task<IdentityResult> DeleteAsync(User user)
     {
-        user.PhoneNumber = $"Deleted:{user.PhoneNumber}";
-        user.Email = $"Deleted:{user.Email}";
-        await userManager.UpdateNormalizedEmailAsync(user);
-        await userManager.UpdateNormalizedUserNameAsync(user);
         return await userManager.DeleteAsync(user);
     }
 

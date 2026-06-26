@@ -1,21 +1,23 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Infrastructure.Services.Auth;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Identity;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
+using Prisma.Infrastructure.Services;
+using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using StackExchange.Redis;
-using Prisma.Infrastructure.Services;
 
 namespace Prisma.Infrastructure;
 
@@ -43,7 +45,6 @@ public static class DependenciesInjection
             {
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
-                options.LogTo(Console.WriteLine); // to log queries to console 
             }
         });
         services.AddIdentityCore<User>(options =>

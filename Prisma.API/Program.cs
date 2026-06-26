@@ -46,17 +46,20 @@ public class Program
                 });
             }
 
-            app.UseCors("CorsPolicy");
-
-            app.UseRouting();
-
-            app.UseAuthentication();
-
-            app.UseOutputCache();
-
-            app.UseAuthorization();
-
-            app.MapControllers();
+            // ═══════════════════════════════════════════════════
+            // CORRECT MIDDLEWARE ORDER
+            // ═══════════════════════════════════════════════════
+            app.UseRouting();              // 1. Routing first
+            
+            app.UseCors("CorsPolicy");     // 2. CORS before Auth
+            
+            app.UseAuthentication();       // 3. Auth
+            
+            app.UseOutputCache();          // 4. Cache
+            
+            app.UseAuthorization();        // 5. AuthZ
+            
+            app.MapControllers();          // 6. Endpoints last
 
             await app.RunAsync();
         }

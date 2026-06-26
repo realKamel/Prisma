@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -26,7 +21,6 @@ public class UpdateLessonDetailsCommandHandler(
 {
     public async Task<Result<string>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
-        // 1. تحقق الأمان والـ Roles
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
@@ -41,14 +35,12 @@ public class UpdateLessonDetailsCommandHandler(
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
-        // 2. استخدام الـ Specification الجديدة المسمية باسم الهاندلر 🌟
         var spec = new UpdateLessonDetailsSpecification(request.Id);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
             throw new NotFoundException("Lesson", request.Id);
 
-        // 3. تحديث البيانات الأساسية والمخرجات والصورة
         lesson.Title = request.Title;
         lesson.Description = request.Description;
         lesson.Price = request.Price;
@@ -57,7 +49,6 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.ImageThumbnailUrl = request.ImageUrl;
         lesson.Outcomes = request.Outcomes ?? new List<string>();
 
-        // 4. تحديث الفصول بأمان
         lesson.Sections.Clear();
         if (request.Chapters != null)
         {
@@ -73,7 +64,6 @@ public class UpdateLessonDetailsCommandHandler(
             }
         }
 
-        // 5. تعديل الواجب
         if (request.AssignmentEnabled)
         {
             if (lesson.Assignment == null)
@@ -103,10 +93,14 @@ public class UpdateLessonDetailsCommandHandler(
             var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
 
             var selectedYears = allAcademicYears
-                .Where(ay => request.AcademicYearIds.Contains(ay.Id) && !ay.IsDeleted)
+                .Where(ay => request.AcademicYearIds.Contains(ay.Id))
                 .ToList();
 
-            lesson.AcademicYears = selectedYears;
+            lesson.AcademicYears = selectedYears.Select(sy => new AcademicYearLesson
+            {
+                AcademicYearId = sy.Id,
+                LessonId = request.Id
+            }).ToList();
         }
 
         lessonRepository.Update(lesson);

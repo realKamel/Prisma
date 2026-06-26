@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -10,7 +7,6 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using static Prisma.Application.Common.Constants.AppClaims;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 
@@ -37,12 +33,12 @@ public class DeleteLessonCommandHandler(
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lesson = await lessonRepository.GetByIdAsync(request.LessonId, cancellationToken);
-        if (lesson is null || lesson.IsDeleted)
+        if (lesson is null)
             throw new NotFoundException("Lesson", request.LessonId);
 
         lessonRepository.Delete(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<string>.Success("Lesson deleted successfully (Soft Delete)");
+        return Result<string>.Success("Lesson deleted successfully");
     }
 }

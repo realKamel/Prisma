@@ -9,8 +9,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
+        builder.HasIndex(x => x.PhoneNumber).IsUnique();
+
         builder
-            .HasIndex(x => x.PhoneNumber)
-            .IsUnique();
+        .HasMany(x => x.Claims)
+        .WithOne()
+        .HasForeignKey(x => x.UserId);
     }
 }

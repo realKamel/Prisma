@@ -42,6 +42,7 @@ public static class DependenciesInjection
             {
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
+                options.LogTo(Console.WriteLine); // to log queries to console 
             }
         });
         services.AddIdentityCore<User>(options =>

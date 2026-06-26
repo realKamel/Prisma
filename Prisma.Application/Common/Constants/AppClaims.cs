@@ -97,5 +97,14 @@ public static class AppClaims
                     Permissions.ViewLessonAnalytics,
                 ],
             };
+
+        public static IReadOnlySet<string> All { get; } = typeof(Policies)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => (string)f.GetRawConstantValue()!)
+            .ToHashSet();
+
+        public static bool IsValid(string permission) => All.Contains(permission);
+        public static bool AreValid(IEnumerable<string> permissions) => permissions.All(IsValid);
     }
 }

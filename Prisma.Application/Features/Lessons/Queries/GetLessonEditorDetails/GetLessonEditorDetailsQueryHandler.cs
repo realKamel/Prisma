@@ -31,25 +31,27 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
         var allAcademicYearsOptions = allAcademicYears
             .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
             .ToList();
+        var existingAcademicYearIds = lesson.AcademicYears?
+            .Select(ay => ay.AcademicYearId)
+            .ToList() ?? new List<int>();
 
         var response = new LessonEditorResponseDto(
-            lesson.Id,
-            lesson.Title,
-            lesson.Description,
-            lesson.Price,
-            lesson.PrerequisiteId,
-            lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
-            lesson.Assignment != null,
-            lesson.Assignment?.DueDate,
-            lesson.Assignment?.ContentURL,
-            lesson.ImageThumbnailUrl,
-            lesson.Outcomes?.ToList() ?? new List<string>(),
-            lesson.AcademicYears?.Select(ay => ay.Id).ToList()?? new List<int>(),
+                lesson.Id,
+                lesson.Title,
+                lesson.Description,
+                lesson.Price,
+                lesson.PrerequisiteId,
+                lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
+                lesson.Assignment != null,
+                lesson.Assignment?.DueDate,
+                lesson.Assignment?.ContentURL,
+                lesson.ImageThumbnailUrl,
+                lesson.Outcomes?.ToList() ?? new List<string>(),
+existingAcademicYearIds,
+                prerequisitesOptions,
 
-            prerequisitesOptions,
-
-            allAcademicYearsOptions
-        );
+                allAcademicYearsOptions
+            );
 
         return Result<LessonEditorResponseDto>.Success(response);
     }

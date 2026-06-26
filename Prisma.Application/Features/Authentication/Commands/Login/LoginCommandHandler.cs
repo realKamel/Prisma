@@ -12,7 +12,7 @@ public class LoginCommandHandler(
 {
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Email);
+        var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Phone);
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
             throw new BadRequestException("Invalid credentials");

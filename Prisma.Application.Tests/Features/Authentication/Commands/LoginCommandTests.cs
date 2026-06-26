@@ -18,7 +18,10 @@ public class LoginCommandHandlerTests
 
     private readonly User _fakeUser = new()
     {
-        Id = Guid.CreateVersion7(), Email = "user@test.com", FirstName = "John", LastName = "Doe",
+        Id = Guid.CreateVersion7(),
+        Email = "user@test.com",
+        FirstName = "John",
+        LastName = "Doe",
     };
 
     public LoginCommandHandlerTests()
@@ -36,7 +39,7 @@ public class LoginCommandHandlerTests
         var roles = new List<string> { AppRoles.Student };
         var permissions = new List<Claim>();
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(true);
@@ -67,7 +70,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(true);
@@ -94,7 +97,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(true);
@@ -118,11 +121,13 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(true);
+
         _identityService.GetRolesAsync(_fakeUser).Returns(new List<string>()); // empty
+
         _identityService.GetClaimsAsync(_fakeUser)
             .Returns(new List<System.Security.Claims.Claim>());
         _jwtTokenService.GenerateAccessToken(default!, default!, default!, default!)
@@ -144,7 +149,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("ghost@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns((User?)null);
 
         // Act
@@ -161,7 +166,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("ghost@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns((User?)null);
 
         // Act
@@ -181,7 +186,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "wrong");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(false);
@@ -200,7 +205,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "wrong");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Email)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
             .Returns(_fakeUser);
         _identityService.CheckPasswordAsync(_fakeUser, command.Password)
             .Returns(false);

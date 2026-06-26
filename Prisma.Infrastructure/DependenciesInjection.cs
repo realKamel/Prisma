@@ -89,6 +89,8 @@ public static class DependenciesInjection
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
+        services.AddScoped<IFileService, FileService>();
+
         //services.AddStackExchangeRedisCache(option =>
         //{
         //    option.Configuration = configuration.GetConnectionString("Redis");

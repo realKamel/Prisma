@@ -1,4 +1,9 @@
-﻿using MediatR;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -21,6 +26,7 @@ public class UpdateLessonDetailsCommandHandler(
 {
     public async Task<Result<string>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
+        // 1. تحقق الأمان والـ Roles
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
@@ -34,17 +40,24 @@ public class UpdateLessonDetailsCommandHandler(
             throw new UnauthorizedException("Only teachers can modify lesson structures.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new TeacherLessonWithDetailsSpecification(request.Id);
+
+        // 2. استخدام الـ Specification الجديدة المسمية باسم الهاندلر 🌟
+        var spec = new UpdateLessonDetailsSpecification(request.Id);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
             throw new NotFoundException("Lesson", request.Id);
 
+        // 3. تحديث البيانات الأساسية والمخرجات والصورة
         lesson.Title = request.Title;
         lesson.Description = request.Description;
         lesson.Price = request.Price;
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
-        lesson.Status = request.IsPublished? LessonStatus.Active:LessonStatus.Drafted;
+        lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
+        lesson.ImageThumbnailUrl = request.ImageUrl;
+        lesson.Outcomes = request.Outcomes ?? new List<string>();
+
+        // 4. تحديث الفصول بأمان
         lesson.Sections.Clear();
         if (request.Chapters != null)
         {
@@ -53,18 +66,20 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 lesson.Sections.Add(new Section
                 {
-                    Title = ch.Name, ContentURL = ch.VideoFileName, SortOrder = order++
+                    Title = ch.Name,
+                    ContentURL = ch.VideoFileName,
+                    SortOrder = order++
                 });
             }
         }
 
+        // 5. تعديل الواجب
         if (request.AssignmentEnabled)
         {
             if (lesson.Assignment == null)
             {
                 lesson.Assignment = new Assignment
                 {
-                    //  AssignmentDescription = request.AssignmentDescription,
                     ContentURL = request.AssignmentFileTypes,
                     DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
                 };
@@ -77,9 +92,21 @@ public class UpdateLessonDetailsCommandHandler(
         }
         else
         {
-            // حذف الواجب تماماً من قاعدة البيانات وتصفير الـ Foreign Key
             lesson.Assignment = null;
             lesson.AssignmentId = null;
+        }
+
+        if (request.AcademicYearIds != null)
+        {
+            var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+
+            var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
+
+            var selectedYears = allAcademicYears
+                .Where(ay => request.AcademicYearIds.Contains(ay.Id) && !ay.IsDeleted)
+                .ToList();
+
+            lesson.AcademicYears = selectedYears;
         }
 
         lessonRepository.Update(lesson);

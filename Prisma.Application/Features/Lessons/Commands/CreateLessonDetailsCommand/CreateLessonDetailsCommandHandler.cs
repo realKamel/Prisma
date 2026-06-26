@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -11,7 +13,6 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using static Prisma.Application.Common.Constants.AppClaims;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 
@@ -23,7 +24,6 @@ public class CreateLessonDetailsCommandHandler(
 {
     public async Task<Result<int>> Handle(CreateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
-        // 1. تحقق الأمان والـ Role (مدرس)
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
@@ -36,17 +36,19 @@ public class CreateLessonDetailsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher))
             throw new UnauthorizedException("Only teachers can create lessons.");
 
-        // 2. إنشاء كائن الدرس وحالته Drafted
+        // إنشاء كائن الدرس مع الحقول الجديدة
         var lesson = new Lesson
         {
             Title = request.Title,
             Description = request.Description,
             Price = request.Price,
-            PrerequisiteId = request.PrerequisiteLessonId, // المابينج الصح للـ Self-Relation
-            Status = request.IsPublished?LessonStatus.Active:LessonStatus.Drafted
+            PrerequisiteId = request.PrerequisiteLessonId,
+            Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
+            ImageThumbnailUrl = request.ImageUrl, // 🌟 تسكين رابط الصورة
+            Outcomes = request.Outcomes           // 🌟 تسكين المخرجات التعليمية
         };
 
-        // 3. إضافة الفصول (Sections)
+        // إضافة الفصول
         if (request.Chapters != null)
         {
             int order = 1;
@@ -55,13 +57,13 @@ public class CreateLessonDetailsCommandHandler(
                 lesson.Sections.Add(new Section
                 {
                     Title = ch.Name,
-                    ContentURL = ch.VideoFileName, // اللينك الـ cdn المبعوت في الـ JSON هينزل هنا صح
+                    ContentURL = ch.VideoFileName,
                     SortOrder = order++
                 });
             }
         }
 
-        // 4. إضافة الواجب (Assignment)
+        // إضافة الواجب
         if (request.AssignmentEnabled)
         {
             lesson.Assignment = new Assignment
@@ -71,7 +73,20 @@ public class CreateLessonDetailsCommandHandler(
             };
         }
 
-        // 5. الحفظ في الداتا بيز
+        // ربط المراحل الدراسية المختارة بالدرس
+        if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
+        {
+            var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+            foreach (var id in request.AcademicYearIds)
+            {
+                var academicYear = await academicYearRepository.GetByIdAsync(id, cancellationToken);
+                if (academicYear != null)
+                {
+                    lesson.AcademicYears.Add(academicYear);
+                }
+            }
+        }
+
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         lessonRepository.Add(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

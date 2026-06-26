@@ -1,20 +1,20 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Assistants;
 
-namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
+namespace Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 
-public class GetTeacherLessonsQueryHandler(
+public class GetAssistantLessonsQueryHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService)
-    : IRequestHandler<GetTeacherLessonsQuery, Result<List<TeacherLessonDto>>>
+    : IRequestHandler<GetAssistantLessonsQuery, Result<List<AssistantLessonDto>>>
 {
-    public async Task<Result<List<TeacherLessonDto>>> Handle(
-        GetTeacherLessonsQuery request,
+    public async Task<Result<List<AssistantLessonDto>>> Handle(
+        GetAssistantLessonsQuery request,
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
@@ -22,25 +22,23 @@ public class GetTeacherLessonsQueryHandler(
             throw new UnauthorizedException("User is not authenticated.");
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
-        var spec = new TeacherLessonsSpecification();
+        var spec = new AssistantLessonsSpec();
         var lessons = await lessonRepository.ListAsync(spec, cancellationToken);
 
         var result = lessons.Select(lesson =>
         {
-            
-
-            return new TeacherLessonDto
+            return new AssistantLessonDto
             {
                 Id = lesson.Id,
-                Name = lesson.Title ?? string.Empty,
+                Title = lesson.Title ?? string.Empty,
                 Price = lesson.Price,
-
-                Students = lesson.Enrollments?.Count ?? 0,
-
+                StudentsCount = lesson.Enrollments?.Count ?? 0,
+                ChaptersCount = lesson.Sections?.Count ?? 0,
+                LastUpdatedAt = lesson.UpdatedAt ?? lesson.CreatedAt,
                 Status = lesson.Status.ToString().ToLowerInvariant()
             };
         }).ToList();
 
-        return Result<List<TeacherLessonDto>>.Success(result);
+        return Result<List<AssistantLessonDto>>.Success(result);
     }
 }

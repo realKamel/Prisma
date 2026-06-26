@@ -24,6 +24,11 @@ public class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(x => x.TotalDegree)
             .HasPrecision(8, 2);
 
+        builder
+            .HasIndex(x => x.LessonId)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

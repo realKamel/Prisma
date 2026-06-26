@@ -15,6 +15,10 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         //     .HasForeignKey(x => x.LessonId)
         //     .OnDelete(DeleteBehavior.Cascade);
 
+        builder
+        .HasIndex(x => x.LessonId)
+        .IsUnique()
+        .HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

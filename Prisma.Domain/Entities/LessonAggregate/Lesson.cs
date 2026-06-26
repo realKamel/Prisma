@@ -26,7 +26,7 @@ public class Lesson : BaseEntity
     // public Guid TeacherId { get; set; }
     // public Teacher Teacher { get; set; }
 
-    public ICollection<AcademicYear> AcademicYears { get; set; } = new List<AcademicYear>();
+    public ICollection<AcademicYearLesson> AcademicYears { get; set; } = new List<AcademicYearLesson>();
 
     public ICollection<Section> Sections { get; set; } = new List<Section>();
 

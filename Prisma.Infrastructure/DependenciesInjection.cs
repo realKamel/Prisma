@@ -35,8 +35,9 @@ public static class DependenciesInjection
                 //     errorCodesToAdd: null);
             });
 
-            options.AddInterceptors(serviceProvider
-                .GetRequiredService<AuditInterceptor>());
+            options.AddInterceptors(
+            serviceProvider.GetRequiredService<AuditInterceptor>(),
+            serviceProvider.GetRequiredService<AuditLogInterceptor>());
 
             if (environment.IsDevelopment())
             {
@@ -47,7 +48,7 @@ public static class DependenciesInjection
         });
         services.AddIdentityCore<User>(options =>
             {
-                options.User.RequireUniqueEmail = true;
+                //options.User.RequireUniqueEmail = true;
                 if (environment.IsDevelopment())
                 {
                     options.Password.RequiredLength = 4;
@@ -76,6 +77,7 @@ public static class DependenciesInjection
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
 
         services.AddScoped<AuditInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));

@@ -47,9 +47,8 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
             lesson.Assignment?.ContentURL,
             lesson.ImageThumbnailUrl,
             lesson.Outcomes?.ToList() ?? new List<string>(),
-
-            lesson.AcademicYears?.Select(ayl => new AcademicYearResponseDto(ayl.AcademicYearId, ayl.AcademicYear?.Title ?? string.Empty)).ToList(),
-
+            existingAcademicYearIds,
+            
             prerequisitesOptions,
 
                 allAcademicYearsOptions

@@ -89,21 +89,18 @@ public class UpdateLessonDetailsCommandHandler(
         if (request.AcademicYearIds != null)
         {
             var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
-            var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
 
-            lesson.AcademicYears.Clear();
+            var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
 
             var selectedYears = allAcademicYears
                 .Where(ay => request.AcademicYearIds.Contains(ay.Id))
                 .ToList();
 
-            foreach (var ay in selectedYears)
+            lesson.AcademicYears = selectedYears.Select(sy => new AcademicYearLesson
             {
-                lesson.AcademicYears.Add(new AcademicYearLesson
-                {
-                    AcademicYearId = ay.Id
-                });
-            }
+                AcademicYearId = sy.Id,
+                LessonId = request.Id
+            }).ToList();
         }
         lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

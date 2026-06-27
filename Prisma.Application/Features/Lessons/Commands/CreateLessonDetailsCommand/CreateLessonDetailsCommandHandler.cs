@@ -39,7 +39,7 @@ public class CreateLessonDetailsCommandHandler(
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
             ImageThumbnailUrl = request.ImageUrl,
-            Outcomes = request.Outcomes          
+            Outcomes = request.Outcomes
         };
 
         if (request.Chapters != null)
@@ -67,9 +67,14 @@ public class CreateLessonDetailsCommandHandler(
 
         if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
         {
+            var academicYearLessonRepository = _unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
             foreach (var id in request.AcademicYearIds)
             {
-                lesson.AcademicYears.Add(new AcademicYearLesson
+                var exist = await academicYearLessonRepository.GetByIdAsync(id);
+                if (exist is null)
+                    throw new BadRequestException("invalid academic year");
+
+                lesson.AcademicYears.Add(new AcademicYearLesson()
                 {
                     AcademicYearId = id
                 });

@@ -9,6 +9,8 @@ public record UpdateStudentCommand(
     string ThirdName,
     string LastName,
     string Mobile,
+    string Email,
+    string? NewPassword,
     int Grade,
     string? ParentMobile
 ) : IRequest<bool>;

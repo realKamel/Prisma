@@ -17,7 +17,7 @@ internal class GetAllAcademicYearsQueryHandler(IUnitOfWork unitOfWork)
 
         return years.Select(a => new AcademicYearOptionDto
         {
-            AcademicYearId = a.Id,
+            Id = a.Id,
             Name = a.Title ?? string.Empty
         }).ToList();
     }

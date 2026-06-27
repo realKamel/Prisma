@@ -1,21 +1,23 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Infrastructure.Services.Auth;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Identity;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
+using Prisma.Infrastructure.Services;
+using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using StackExchange.Redis;
-using Prisma.Infrastructure.Services;
 
 namespace Prisma.Infrastructure;
 
@@ -35,8 +37,9 @@ public static class DependenciesInjection
                 //     errorCodesToAdd: null);
             });
 
-            options.AddInterceptors(serviceProvider
-                .GetRequiredService<AuditInterceptor>());
+            options.AddInterceptors(
+            serviceProvider.GetRequiredService<AuditInterceptor>(),
+            serviceProvider.GetRequiredService<AuditLogInterceptor>());
 
             if (environment.IsDevelopment())
             {
@@ -46,7 +49,7 @@ public static class DependenciesInjection
         });
         services.AddIdentityCore<User>(options =>
             {
-                options.User.RequireUniqueEmail = true;
+                //options.User.RequireUniqueEmail = true;
                 if (environment.IsDevelopment())
                 {
                     options.Password.RequiredLength = 4;
@@ -75,6 +78,7 @@ public static class DependenciesInjection
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
 
         services.AddScoped<AuditInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
@@ -88,6 +92,8 @@ public static class DependenciesInjection
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
+        services.AddScoped<IFileService, FileService>();
+
         //services.AddStackExchangeRedisCache(option =>
         //{
         //    option.Configuration = configuration.GetConnectionString("Redis");

@@ -11,7 +11,7 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await identityService.FindByNameOrEmailAsync(request.Email, request.PhoneNumber);
+        var existingUser = await identityService.FindByEmailOrPhoneAsync(request.Email, request.PhoneNumber);
 
         if (existingUser is not null)
         {

@@ -24,7 +24,9 @@ public class QuestionLessonQuizConfiguration : IEntityTypeConfiguration<Question
             .OnDelete(DeleteBehavior.Cascade);
 
         // to not repeat the same question in the same quiz
-        builder.HasIndex(x => new { x.LessonQuizId, x.QuestionId }).IsUnique();
+        builder.HasIndex(x => new { x.LessonQuizId, x.QuestionId })
+        .IsUnique()
+        .HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

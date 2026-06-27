@@ -34,7 +34,8 @@ public class UpdateLessonDetailsCommandHandler(
             throw new UnauthorizedException("Only teachers can modify lesson structures.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new TeacherLessonWithDetailsSpecification(request.Id);
+
+        var spec = new UpdateLessonDetailsSpecification(request.Id);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
@@ -44,7 +45,10 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Description = request.Description;
         lesson.Price = request.Price;
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
-        lesson.Status = request.IsPublished? LessonStatus.Active:LessonStatus.Drafted;
+        lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
+        lesson.ImageThumbnailUrl = request.ImageUrl;
+        lesson.Outcomes = request.Outcomes ?? new List<string>();
+
         lesson.Sections.Clear();
         if (request.Chapters != null)
         {
@@ -53,7 +57,9 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 lesson.Sections.Add(new Section
                 {
-                    Title = ch.Name, ContentURL = ch.VideoFileName, SortOrder = order++
+                    Title = ch.Name,
+                    ContentURL = ch.VideoFileName,
+                    SortOrder = order++
                 });
             }
         }
@@ -64,7 +70,6 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 lesson.Assignment = new Assignment
                 {
-                    //  AssignmentDescription = request.AssignmentDescription,
                     ContentURL = request.AssignmentFileTypes,
                     DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
                 };
@@ -77,11 +82,26 @@ public class UpdateLessonDetailsCommandHandler(
         }
         else
         {
-            // حذف الواجب تماماً من قاعدة البيانات وتصفير الـ Foreign Key
             lesson.Assignment = null;
             lesson.AssignmentId = null;
         }
 
+        if (request.AcademicYearIds != null)
+        {
+            var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+
+            var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
+
+            var selectedYears = allAcademicYears
+                .Where(ay => request.AcademicYearIds.Contains(ay.Id))
+                .ToList();
+
+            lesson.AcademicYears = selectedYears.Select(sy => new AcademicYearLesson
+            {
+                AcademicYearId = sy.Id,
+                LessonId = request.Id
+            }).ToList();
+        }
         lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

@@ -23,36 +23,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("AcademicYearLesson", b =>
-                {
-                    b.Property<int>("AcademicYearsId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LessonsId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("AcademicYearsId", "LessonsId");
-
-                    b.HasIndex("LessonsId");
-
-                    b.ToTable("AcademicYearLesson");
-                });
-
-            modelBuilder.Entity("AcademicYearTeacher", b =>
-                {
-                    b.Property<int>("AcademicYearsId")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeachersId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("AcademicYearsId", "TeachersId");
-
-                    b.HasIndex("TeachersId");
-
-                    b.ToTable("AcademicYearTeacher");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
@@ -309,6 +279,101 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("AcademicYear");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcademicYearId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LessonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LessonId");
+
+                    b.HasIndex("AcademicYearId", "LessonId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("AcademicYearLesson");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AcademicYearId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TeacherId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeacherId1")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId1");
+
+                    b.HasIndex("AcademicYearId", "TeacherId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("AcademicYearTeacher");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
                 {
                     b.Property<int>("Id")
@@ -350,7 +415,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("LessonId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Assignment");
                 });
@@ -830,7 +896,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("StudentId");
 
                     b.HasIndex("QuizAttemptId", "QuestionId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("AttemptAnswer");
                 });
@@ -1036,7 +1103,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("QuestionId");
 
                     b.HasIndex("LessonQuizId", "QuestionId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("QuestionLessonQuiz");
                 });
@@ -1105,7 +1173,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("AcademicYearId");
 
                     b.HasIndex("LessonId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Quiz");
                 });
@@ -1182,6 +1251,62 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("QuizId", "StudentId");
 
                     b.ToTable("QuizAttempt");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TableName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditLog");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
@@ -1359,10 +1484,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasDatabaseName("UserNameIndex");
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("PhoneNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("Users", (string)null);
 
@@ -1546,36 +1673,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasDiscriminator().HasValue("Teacher");
                 });
 
-            modelBuilder.Entity("AcademicYearLesson", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.AcademicYear", null)
-                        .WithMany()
-                        .HasForeignKey("AcademicYearsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", null)
-                        .WithMany()
-                        .HasForeignKey("LessonsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("AcademicYearTeacher", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.AcademicYear", null)
-                        .WithMany()
-                        .HasForeignKey("AcademicYearsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
-                        .WithMany()
-                        .HasForeignKey("TeachersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Role", null)
@@ -1588,7 +1685,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.User", null)
-                        .WithMany()
+                        .WithMany("Claims")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1665,6 +1762,44 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.AcademicYear", "AcademicYear")
+                        .WithMany("Lessons")
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
+                        .WithMany("AcademicYears")
+                        .HasForeignKey("LessonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Lesson");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.AcademicYear", "AcademicYear")
+                        .WithMany("Teachers")
+                        .HasForeignKey("AcademicYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
+                        .WithMany("AcademicYears")
+                        .HasForeignKey("TeacherId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AcademicYear");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -1904,9 +2039,13 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYear", b =>
                 {
+                    b.Navigation("Lessons");
+
                     b.Navigation("Quizzes");
 
                     b.Navigation("Students");
+
+                    b.Navigation("Teachers");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -1916,6 +2055,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
+                    b.Navigation("AcademicYears");
+
                     b.Navigation("Assignment");
 
                     b.Navigation("Enrollments");
@@ -1955,6 +2096,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Answers");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.User", b =>
+                {
+                    b.Navigation("Claims");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.MCQQuestion", b =>
                 {
                     b.Navigation("Choices");
@@ -1979,6 +2125,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Teacher", b =>
                 {
+                    b.Navigation("AcademicYears");
+
                     b.Navigation("Assistants");
 
                     b.Navigation("Lessons");

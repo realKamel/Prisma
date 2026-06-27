@@ -137,16 +137,25 @@ public static class WebAppHelper
                         .AllowAnyMethod();
                 });
             });
-            services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+            // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+            // services.AddAuthorization(options =>
+            // {
+            //     foreach (var (policy, permissions) in AppClaims.Policies.PermissionMap)
+            //     {
+            //         options.AddPolicy(policy, builder =>
+            //             builder.RequireAssertion(ctx =>
+            //                 permissions.All(p =>
+            //                     ctx.User.Claims.Any(c => c.Type == AppClaims.PermissionsClaim && c.Value == p))));
+            //     }
+            // });
 
             services.AddAuthorization(options =>
             {
-                foreach (var (policy, permissions) in AppClaims.Policies.PermissionMap)
+                foreach (var policy in AppClaims.Policies.All)
                 {
-                    options.AddPolicy(policy, builder =>
-                        builder.RequireAssertion(ctx =>
-                            permissions.All(p =>
-                                ctx.User.Claims.Any(c => c.Type == AppClaims.PermissionsClaim && c.Value == p))));
+                    options.AddPolicy(policy, p =>
+                        p.RequireClaim(AppClaims.PermissionsClaim, policy));
                 }
             });
         }

@@ -9,8 +9,26 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder.ToTable("Users");
+
+
         builder
-            .HasIndex(x => x.PhoneNumber)
-            .IsUnique();
+        .HasMany(x => x.Claims)
+        .WithOne()
+        .HasForeignKey(x => x.UserId);
+
+
+        builder
+        .HasIndex(u => u.NormalizedEmail)
+        .HasDatabaseName("EmailIndex");
+
+        builder
+        .HasIndex("NormalizedUserName")
+        .IsUnique()
+        .HasFilter("\"IsDeleted\" = false")
+        .HasDatabaseName("UserNameIndex");
+
+        builder.HasIndex(x => x.PhoneNumber)
+       .IsUnique()
+       .HasFilter("\"IsDeleted\" = false");
     }
 }

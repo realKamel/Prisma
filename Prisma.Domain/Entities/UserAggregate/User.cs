@@ -27,4 +27,6 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public Guid? UpdatedBy { get; set; }
     public Guid? DeletedBy { get; set; }
     public bool IsDeleted { get; set; }
+
+    public ICollection<IdentityUserClaim<Guid>> Claims { get; } = new List<IdentityUserClaim<Guid>>();
 }

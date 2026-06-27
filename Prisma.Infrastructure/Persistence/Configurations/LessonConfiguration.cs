@@ -31,6 +31,7 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -7,6 +7,7 @@ using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails; // 🌟 الـ Namespace الخاص بـ الـ Editor الجديد
+using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
@@ -37,6 +38,14 @@ public class LessonsController(IMediator _mediator) : ApiController
     public async Task<IActionResult> GetLessonStatus([FromRoute] string LessonId, CancellationToken cancellationToken)
     {
         var query = new GetLessonStatusQuery(int.Parse(LessonId));
+        var result = await _mediator.Send(query, cancellationToken);
+        return Ok(result);
+    }
+    
+    [HttpGet("options")]
+    public async Task<IActionResult> GetPrepDataForAdd(CancellationToken cancellationToken)
+    {
+        var query = new GetLessonFormOptionsQuery();
         var result = await _mediator.Send(query, cancellationToken);
         return Ok(result);
     }
@@ -105,9 +114,29 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ToggleLessonStatus([FromRoute] string LessonId, CancellationToken cancellationToken)
     {
-        // إرسال الـ Command مع الـ Id القادم من الـ Route
         var result = await _mediator.Send(new ToggleLessonStatusCommand(int.Parse(LessonId)), cancellationToken);
 
         return Ok(result);
     }
+    [HttpPost("upload-materials/{LessonId}")]
+    [Consumes("multipart/form-data")] 
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UploadMaterials(
+        [FromRoute] string LessonId,
+        [FromForm] UploadMaterialsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UploadLessonMaterialsCommand(int.Parse(LessonId), request.Files);
+
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+}
+
+public class UploadMaterialsRequest
+{
+    public List<IFormFile> Files { get; set; } = new();
 }

@@ -106,6 +106,8 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
             request.ThirdName,
             request.LastName,
             request.Mobile,
+            request.Email,
+            request.NewPassword,
             request.Grade,
             request.ParentMobile);
 

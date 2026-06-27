@@ -7,6 +7,8 @@ public class EnrollmentByStudentAndLessonSpec : Specification<Enrollment>
 {
     public EnrollmentByStudentAndLessonSpec(Guid studentId, int lessonId)
     {
-        Query.Where(e => e.StudentId == studentId && e.LessonId == lessonId);
+        Query
+            .Where(e => e.StudentId == studentId && e.LessonId == lessonId)
+            .IgnoreQueryFilters();
     }
 }

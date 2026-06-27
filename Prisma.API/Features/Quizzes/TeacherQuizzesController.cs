@@ -1,3 +1,4 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
@@ -7,12 +8,13 @@ using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 using Prisma.Application.Features.Quizzes.Commands.DeleteQuiz;
 using Prisma.Application.Features.Quizzes.Commands.ExtractQuestionsFromPdf;
+using Prisma.Application.Features.Quizzes.Commands.OverrideAttemptScore;
 using Prisma.Application.Features.Quizzes.Queries.GetExtractionStatus;
 using Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStudents;
+using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizDetail;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 using Prisma.Domain.Enums;
-using MediatR;
 
 namespace Prisma.API.Features.Quizzes;
 
@@ -54,6 +56,13 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetDetail(int id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetTeacherQuizDetailQuery(id), ct);
+        return result.Succeeded ? Ok(result) : BadRequest(result);
+    }
+
     [HttpGet("{id:int}/students")]
     public async Task<IActionResult> GetStudents(
         int id,
@@ -74,6 +83,9 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         var result = await sender.Send(new DeleteQuizCommand(quizId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
+
+    
+
 
     // ========== NEW AI EXTRACTION ENDPOINTS ==========
 

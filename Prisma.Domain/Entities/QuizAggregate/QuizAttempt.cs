@@ -13,6 +13,7 @@ public class QuizAttempt : BaseEntity
     public Student Student { get; set; }
 
     public decimal Degree { get; set; }
+    public decimal PenaltyScore { get; set; } = 0;
 
     public DateTimeOffset StartedAt { get; set; }
 

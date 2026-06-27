@@ -10,6 +10,14 @@ public class GradingListItemDto
     public DateTimeOffset? SubmittedAt { get; set; }
     public string Status { get; set; } = string.Empty; // "submitted" | "graded"
     public decimal? Score { get; set; }
+    public decimal PenaltyScore { get; set; }
+
     public decimal TotalDegree { get; set; }
     public int PendingWrittenCount { get; set; }
+
+    // Security events recorded during the attempt
+    public int TabSwitchCount { get; set; }
+    public int CopyPasteAttemptCount { get; set; }
+
+    public bool HeldForSecurityReview { get; set; }
 }

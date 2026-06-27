@@ -103,7 +103,12 @@ public class GetQuizStudentsQueryHandler(IUnitOfWork unitOfWork)
                 SubmittedAt = submittedAt,
                 Score = score,
                 TotalDegree = quiz.TotalDegree,
-                PendingWrittenCount = pendingWrittenCount
+                PendingWrittenCount = pendingWrittenCount,
+
+                // Show 0 if no attempt exists
+                TabSwitchCount = attempt?.TabSwitchCount ?? 0,
+                CopyPasteAttemptCount = attempt?.CopyPasteAttemptCount ?? 0
+
             };
         }).ToList();
 

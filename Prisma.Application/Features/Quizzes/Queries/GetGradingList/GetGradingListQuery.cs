@@ -9,6 +9,7 @@ public record GetGradingListQuery(
     QuizScope Scope,
     string? Search,
     string? Status,
+    int? QuizId,
     int Page = 1,
     int PageSize = 20
 ) : IRequest<Result<GradingListResponseDto>>;

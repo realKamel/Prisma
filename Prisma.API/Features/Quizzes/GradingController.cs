@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Features.Quizzes.Commands.GradeWrittenAnswers;
+using Prisma.Application.Features.Quizzes.Commands.OverrideAttemptScore;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetGradingAttemptDetail;
 using Prisma.Application.Features.Quizzes.Queries.GetGradingList;
@@ -21,12 +22,13 @@ public class GradingController(ISender sender) : ApiController
         [FromQuery] QuizScope scope,
         [FromQuery] string? search,
         [FromQuery] string? status,
+         [FromQuery] int? quizId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         CancellationToken ct = default)
     {
         var result = await sender.Send(
-            new GetGradingListQuery(scope, search, status, page, pageSize), ct);
+            new GetGradingListQuery(scope, search, status,quizId, page, pageSize), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
@@ -47,5 +49,17 @@ public class GradingController(ISender sender) : ApiController
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
+    [HttpPatch("{attemptId:int}/override-score")]
+    public async Task<IActionResult> OverrideScore(
+    int attemptId,
+    [FromBody] OverrideScoreRequest body,
+    CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new OverrideAttemptScoreCommand(attemptId, body.PenaltyScore), ct);
+        return result.Succeeded ? Ok(result) : BadRequest(result);
+    }
+
     public record GradeWrittenAnswersRequest(List<WrittenAnswerGradeDto> Grades);
+    public record OverrideScoreRequest(decimal PenaltyScore);
 }

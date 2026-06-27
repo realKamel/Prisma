@@ -18,7 +18,7 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
     {
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         var attempts = await attemptRepo.ListAsync(
-            new GradingAttemptsSpecification(request.Scope), ct);
+            new GradingAttemptsSpecification(request.Scope, request.QuizId), ct);
 
         // Apply search in-memory (student name or quiz title)
         var filtered = attempts.AsEnumerable();
@@ -58,15 +58,25 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
             {
                 AttemptId = a.Id,
                 StudentId = a.StudentId,
-                StudentName = $"{a.Student.FirstName} {a.Student.LastName}".Trim(),
+                StudentName = $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}".Trim(),
                 QuizId = a.QuizId,
                 QuizTitle = a.Quiz.Title ?? string.Empty,
                 SubmittedAt = a.SubmittedAt,
                 Status = a.Status == QuizAttemptStatus.Submitted ? "submitted" : "graded",
                 Score = a.Status == QuizAttemptStatus.Graded ? a.Degree : null,
+                PenaltyScore = a.PenaltyScore,
                 TotalDegree = a.Quiz.TotalDegree,
+
                 // Count answers that still need grading (written with no score yet)
-                PendingWrittenCount = a.Answers.Count(ans => ans.Score == null)
+                PendingWrittenCount = a.Answers.Count(ans => ans.Score == null),
+
+                // Show 0 if no attempt exists
+                TabSwitchCount = a?.TabSwitchCount ?? 0,
+                CopyPasteAttemptCount = a?.CopyPasteAttemptCount ?? 0,
+
+                HeldForSecurityReview = a?.Status == QuizAttemptStatus.Submitted
+                && a.Answers.All(ans => ans.Score != null) 
+                && (a.TabSwitchCount + a.CopyPasteAttemptCount) > 0 
             })
             .ToList();
 

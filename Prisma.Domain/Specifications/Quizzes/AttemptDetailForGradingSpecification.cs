@@ -13,6 +13,7 @@ public class AttemptDetailForGradingSpecification: Specification<QuizAttempt>
             .Include(a => a.Answers)
             .Include(a => a.Quiz)
                 .ThenInclude(q => q.Questions)
-                    .ThenInclude(ql => ql.Question);
+                    .ThenInclude(ql => ql.Question)
+                        .ThenInclude(q => (q as MCQQuestion)!.Choices);
     }
 }

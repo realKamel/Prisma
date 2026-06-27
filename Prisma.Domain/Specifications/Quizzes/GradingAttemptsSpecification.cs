@@ -4,13 +4,12 @@ using System.Text;
 using Ardalis.Specification;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Prisma.Domain.Specifications.Quizzes;
 
 public class GradingAttemptsSpecification : Specification<QuizAttempt>
 {
-    public GradingAttemptsSpecification(QuizScope scope)
+    public GradingAttemptsSpecification(QuizScope scope, int? quizId)
     {
         Query
             // Only submitted or graded attempts are relevant for grading
@@ -20,5 +19,8 @@ public class GradingAttemptsSpecification : Specification<QuizAttempt>
             .Include(a => a.Student)
             .Include(a => a.Quiz)
             .Include(a => a.Answers);
+
+        if (quizId.HasValue)
+            Query.Where(a => a.QuizId == quizId.Value);
     }
 }

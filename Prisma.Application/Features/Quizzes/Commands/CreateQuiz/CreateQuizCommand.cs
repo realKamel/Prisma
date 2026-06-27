@@ -16,4 +16,4 @@ public record CreateQuizCommand(
     DateTimeOffset? AvailableFrom,
     DateTimeOffset? DueDate,
     List<CreateQuizQuestionDto> Questions
-) : IRequest<Result<CreateQuizResultDto>>;
+) : IRequest<Result<TeacherQuizListItemDto>>;

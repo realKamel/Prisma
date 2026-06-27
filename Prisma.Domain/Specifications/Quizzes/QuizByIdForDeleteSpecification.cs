@@ -9,7 +9,6 @@ public class QuizByIdForDeleteSpecification : Specification<Quiz>
     {
         Query
             .Where(x => x.Id == quizId)
-            .Include(x => x.Attempts)
-            .Include(x => x.Questions);
+            .Include(x => x.Attempts);
     }
 }

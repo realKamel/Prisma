@@ -70,7 +70,10 @@ public class GetGradingAttemptDetailQueryHandler(IUnitOfWork unitOfWork)
             SubmittedAt = attempt.SubmittedAt,
             TotalDegree = attempt.Quiz.TotalDegree,
             Score = attempt.Status == QuizAttemptStatus.Graded ? attempt.Degree : null,
+            PenaltyScore = attempt.PenaltyScore,
             Status = attempt.Status == QuizAttemptStatus.Submitted ? "submitted" : "graded",
+            //HeldForSecurityReview = (attempt.TabSwitchCount + attempt.CopyPasteAttemptCount) > 0,
+            //HeldForManualGrading = attempt.Answers.Any(a => a.Score == null),
             Questions = questions
         };
     }

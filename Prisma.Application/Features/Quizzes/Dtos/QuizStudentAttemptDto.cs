@@ -9,4 +9,8 @@ public class QuizStudentAttemptDto
     public decimal? Score { get; set; }
     public decimal TotalDegree { get; set; }
     public int PendingWrittenCount { get; set; } // > 0 => show "صحح" button
+
+    // Security events recorded during the attempt
+    public int TabSwitchCount { get; set; }
+    public int CopyPasteAttemptCount { get; set; }
 }

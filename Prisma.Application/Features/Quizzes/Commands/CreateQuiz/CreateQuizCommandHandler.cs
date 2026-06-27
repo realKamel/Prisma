@@ -11,9 +11,9 @@ using Prisma.Domain.Specifications.Lessons;
 namespace Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 
 public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
-    : IRequestHandler<CreateQuizCommand, Result<CreateQuizResultDto>>
+    : IRequestHandler<CreateQuizCommand, Result<TeacherQuizListItemDto>>
 {
-    public async Task<Result<CreateQuizResultDto>> Handle(CreateQuizCommand request, CancellationToken ct)
+    public async Task<Result<TeacherQuizListItemDto>> Handle(CreateQuizCommand request, CancellationToken ct)
     {
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         Lesson? lesson = null;
@@ -24,10 +24,10 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
              lesson = await lessonRepo.FirstOrDefaultAsync(new LessonByIdSpecification( request.LessonId!.Value), ct);
 
             if (lesson is null)
-                return Result<CreateQuizResultDto>.Failure("الحصة غير موجودة");
+                return Result<TeacherQuizListItemDto>.Failure("الحصة غير موجودة");
 
             if (lesson.QuizId.HasValue)
-                return Result<CreateQuizResultDto>.Failure("الحصة دي عندها اختبار بالفعل");
+                return Result<TeacherQuizListItemDto>.Failure("الحصة دي عندها اختبار بالفعل");
         }
 
         // بناء الأسئلة + الاختيارات
@@ -98,10 +98,22 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result<CreateQuizResultDto>.Success(new CreateQuizResultDto
+        return Result<TeacherQuizListItemDto>.Success(new TeacherQuizListItemDto
         {
             QuizId = quiz.Id,
-            TotalDegree = totalDegree
+            Title = quiz.Title ?? string.Empty,
+            Description = quiz.Description,
+            DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
+            QuestionsCount = request.Questions.Count,
+            TotalDegree = totalDegree,
+            AvailableFrom = quiz.AvailableFrom,
+            DueDate = quiz.DueDate,
+
+            // New quiz has no attempts yet
+            SubmittedCount = 0,
+            PendingGradingCount = 0,
+            AverageScore = null,
+            Status = "active"
         }, "تم إنشاء الاختبار بنجاح");
    
     }

@@ -2,18 +2,18 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Features.TeacherStudents.Requests;
+using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 using Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
 using Prisma.Application.Features.TeacherStudents.Commands.RevokeLesson;
 using Prisma.Application.Features.TeacherStudents.Commands.SendReport;
+using Prisma.Application.Features.TeacherStudents.Commands.UpdateStudent;
 using Prisma.Application.Features.TeacherStudents.Queries.GetAllStudents;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentActivities;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentDetails;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentLessons;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentStats;
 using Prisma.Application.Features.TeacherStudents.Queries.GetTeacherLessonsForGrant;
-using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
-
 
 namespace Prisma.API.Features.TeacherStudents;
 
@@ -26,20 +26,6 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllStudentsQuery(), cancellationToken);
-        return Ok(result);
-    }
-
-    [HttpGet("lessons")]
-    public async Task<IActionResult> GetLessons(CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
-        return Ok(result);
-    }
-
-    [HttpGet("academic-years")]
-    public async Task<IActionResult> GetAcademicYears(CancellationToken cancellationToken)
-    {
-        var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
         return Ok(result);
     }
 
@@ -78,6 +64,20 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("lessons")]
+    public async Task<IActionResult> GetAllLessons(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("academic-years")]
+    public async Task<IActionResult> GetAcademicYears(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] AddStudentRequest request, CancellationToken cancellationToken)
     {
@@ -89,6 +89,23 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
             request.Mobile,
             request.Email,
             request.Password,
+            request.Grade,
+            request.ParentMobile);
+
+        var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStudentRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateStudentCommand(
+            id,
+            request.FirstName,
+            request.SecondName,
+            request.ThirdName,
+            request.LastName,
+            request.Mobile,
             request.Grade,
             request.ParentMobile);
 

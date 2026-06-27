@@ -9,6 +9,7 @@ public class StudentsByTeacherSpec : Specification<Student>
     {
         Query.Where(s => s.TeacherId == teacherId)
              .Include(s => s.Enrollments)
+                 .ThenInclude(e => e.Lesson)
              .Include(s => s.QuizAttempts)
              .Include(s => s.AcademicYear);
     }

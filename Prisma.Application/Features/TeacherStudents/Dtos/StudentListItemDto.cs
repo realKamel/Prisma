@@ -1,5 +1,3 @@
-using Prisma.Domain.Enums;
-
 namespace Prisma.Application.Features.TeacherStudents.Dtos;
 
 public record StudentListItemDto(
@@ -11,4 +9,5 @@ public record StudentListItemDto(
     int AvgQuiz,
     bool Active,
     string? Phone,
-    string? ParentPhone);
+    string? ParentPhone,
+    List<string> LessonTitles);

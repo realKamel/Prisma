@@ -67,14 +67,9 @@ public class CreateLessonDetailsCommandHandler(
 
         if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
         {
-            var academicYearLessonRepository = _unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
             foreach (var id in request.AcademicYearIds)
             {
-                var exist = await academicYearLessonRepository.GetByIdAsync(id);
-                if (exist is null)
-                    throw new BadRequestException("invalid academic year");
-                
-                lesson.AcademicYears.Add(new AcademicYearLesson()
+                lesson.AcademicYears.Add(new AcademicYearLesson
                 {
                     AcademicYearId = id
                 });

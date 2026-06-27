@@ -23,6 +23,13 @@ public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork) : IRequestHandle
             var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => q.Degree) : 0;
             var active = enrollments.Any(e => e.Status == Domain.Enums.EnrollmentStatus.Active);
 
+
+            var lessonTitles = enrollments
+                .Where(e => e.Lesson?.Title != null)
+                .Select(e => e.Lesson!.Title!)
+                .Distinct()
+                .ToList();
+
             var lastActivity = "—";
             var lastQuiz = quizAttempts.OrderByDescending(q => q.CreatedAt).FirstOrDefault();
             var lastEnrollment = enrollments.OrderByDescending(e => e.CreatedAt).FirstOrDefault();
@@ -50,7 +57,8 @@ public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork) : IRequestHandle
                 avgQuiz,
                 active,
                 student.PhoneNumber,
-                student.ParentPhoneNumber));
+                student.ParentPhoneNumber,
+                lessonTitles));
         }
 
         return result;

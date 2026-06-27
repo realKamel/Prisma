@@ -12,6 +12,8 @@ using Prisma.Application.Features.TeacherStudents.Queries.GetStudentDetails;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentLessons;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentStats;
 using Prisma.Application.Features.TeacherStudents.Queries.GetTeacherLessonsForGrant;
+using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
+
 
 namespace Prisma.API.Features.TeacherStudents;
 
@@ -24,6 +26,20 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllStudentsQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("lessons")]
+    public async Task<IActionResult> GetLessons(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("academic-years")]
+    public async Task<IActionResult> GetAcademicYears(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
         return Ok(result);
     }
 

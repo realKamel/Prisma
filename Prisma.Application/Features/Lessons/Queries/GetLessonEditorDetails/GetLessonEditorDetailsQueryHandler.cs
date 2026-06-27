@@ -36,19 +36,21 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
             .ToList() ?? new List<int>();
 
         var response = new LessonEditorResponseDto(
-                lesson.Id,
-                lesson.Title,
-                lesson.Description,
-                lesson.Price,
-                lesson.PrerequisiteId,
-                lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
-                lesson.Assignment != null,
-                lesson.Assignment?.DueDate,
-                lesson.Assignment?.ContentURL,
-                lesson.ImageThumbnailUrl,
-                lesson.Outcomes?.ToList() ?? new List<string>(),
-existingAcademicYearIds,
-                prerequisitesOptions,
+            lesson.Id,
+            lesson.Title,
+            lesson.Description,
+            lesson.Price,
+            lesson.PrerequisiteId,
+            lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
+            lesson.Assignment != null,
+            lesson.Assignment?.DueDate,
+            lesson.Assignment?.ContentURL,
+            lesson.ImageThumbnailUrl,
+            lesson.Outcomes?.ToList() ?? new List<string>(),
+
+            lesson.AcademicYears?.Select(ayl => new AcademicYearResponseDto(ayl.AcademicYearId, ayl.AcademicYear?.Title ?? string.Empty)).ToList(),
+
+            prerequisitesOptions,
 
                 allAcademicYearsOptions
             );

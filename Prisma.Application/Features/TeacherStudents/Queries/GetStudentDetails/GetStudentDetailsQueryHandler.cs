@@ -22,6 +22,12 @@ public class GetStudentDetailsQueryHandler(IUnitOfWork unitOfWork) : IRequestHan
         var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => q.Degree) : 0;
         var active = enrollments.Any(e => e.Status == Domain.Enums.EnrollmentStatus.Active);
 
+        var lessonTitles = enrollments
+            .Where(e => e.Lesson?.Title != null)
+            .Select(e => e.Lesson!.Title!)
+            .Distinct()
+            .ToList();
+
         return new StudentListItemDto(
             student.Id,
             $"{student.FirstName} {student.SecondName} {student.ThirdName} {student.LastName}".Trim(),
@@ -31,6 +37,7 @@ public class GetStudentDetailsQueryHandler(IUnitOfWork unitOfWork) : IRequestHan
             avgQuiz,
             active,
             student.PhoneNumber,
-            student.ParentPhoneNumber);
+            student.ParentPhoneNumber,
+            lessonTitles);
     }
 }

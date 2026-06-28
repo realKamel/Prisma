@@ -17,6 +17,7 @@ using Prisma.Infrastructure.Services;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
+using Prisma.Infrastructure.Services.PaymentService;
 using StackExchange.Redis;
 
 namespace Prisma.Infrastructure;
@@ -93,6 +94,14 @@ public static class DependenciesInjection
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
         services.AddScoped<IFileService, FileService>();
+
+        services.Configure<PaymobSettings>(configuration.GetSection("PaymobSettings"));
+
+        services.AddHttpClient<PaymobCardService>();
+        services.AddHttpClient<PaymobFawryService>();
+
+        services.AddKeyedScoped<IPaymentService, PaymobCardService>("card");
+        services.AddKeyedScoped<IPaymentService, PaymobFawryService>("fawry");
 
         //services.AddStackExchangeRedisCache(option =>
         //{

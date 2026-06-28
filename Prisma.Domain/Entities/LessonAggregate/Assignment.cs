@@ -9,6 +9,7 @@ public class Assignment : BaseEntity
 
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
+    public int Grade {set; get;}
 
     public ICollection<AssignmentSubmission> Submissions { get; set; } = new List<AssignmentSubmission>();
 }

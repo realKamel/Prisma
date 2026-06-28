@@ -10,7 +10,8 @@ public class AssignmentSubmission : BaseEntity
 
     public int AssignmentId { get; set; }
     public Assignment Assignment { get; set; }
-
+    public int? Score {set; get;}
+    public string? Notes {set; get;}  
     public string? FileUrl { get; set; }
     public DateTimeOffset SubmittedAt { get; set; }
 }

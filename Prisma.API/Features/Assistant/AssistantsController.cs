@@ -7,6 +7,7 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 using Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
 using Prisma.Application.Features.Assistants.Commands.UpdatePermissions;
+using Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 using Prisma.Application.Features.Assistants.Queries.GetAssistants;
 
@@ -66,4 +67,12 @@ public class AssistantsController(ISender mediator) : ApiController
         var result = await mediator.Send(new GetAssistantLessonsQuery(), token);
         return Ok(result);
     }
+
+    [HttpGet("dashboard")]
+    public async Task<ActionResult> GetAssistantDashboard(CancellationToken ctx)
+    {
+        var result = await mediator.Send(new GetAssistantDashboardQuery(), ctx);
+        return Ok(result);
+    }
+
 }

@@ -28,8 +28,8 @@ public class CreateLessonDetailsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher))
-            throw new UnauthorizedException("Only teachers can create lessons.");
+        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant))
+            throw new UnauthorizedException("Only teachers and assistants can create lessons.");
 
         var lesson = new Lesson
         {

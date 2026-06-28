@@ -26,8 +26,8 @@ public class DeleteLessonCommandHandler(
 
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher))
-            throw new UnauthorizedException("Only teachers can delete lessons");
+        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant))
+            throw new UnauthorizedException("Only teachers and assistants can delete lessons");
 
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

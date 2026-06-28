@@ -30,8 +30,8 @@ public class UpdateLessonDetailsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher))
-            throw new UnauthorizedException("Only teachers can modify lesson structures.");
+        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant))
+            throw new UnauthorizedException("Only teachers and assistants can modify lesson structures.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 

@@ -37,8 +37,8 @@ public class UploadLessonMaterialsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher))
-            throw new UnauthorizedException("Only teachers can upload materials to lessons.");
+        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant))
+            throw new UnauthorizedException("Only teachers and assistants can upload materials to lessons.");
 
         // 2. جلب الدرس بالـ Specification المخصصة المفتوح فيها الـ Tracking
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

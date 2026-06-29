@@ -22,12 +22,11 @@ public class UploadLessonMaterialsCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
-    IFileService _fileService 
+    IStorageService storageService
 ) : IRequestHandler<UploadLessonMaterialsCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(UploadLessonMaterialsCommand request, CancellationToken cancellationToken)
     {
-        // 1. تحقق الأمان والـ Roles (المدرس فقط)
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
@@ -40,7 +39,6 @@ public class UploadLessonMaterialsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant))
             throw new UnauthorizedException("Only teachers and assistants can upload materials to lessons.");
 
-        // 2. جلب الدرس بالـ Specification المخصصة المفتوح فيها الـ Tracking
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new UploadLessonMaterialsSpecification(request.LessonId);
 
@@ -49,22 +47,21 @@ public class UploadLessonMaterialsCommandHandler(
             throw new NotFoundException("Lesson", request.LessonId);
 
         if (request.Files == null || !request.Files.Any())
-            return Result<string>.Failure("No files were uploaded.");
+            throw new BadRequestException("No files provided for upload.");
 
-        // 3. الـ Loop على الملفات ورفعها عبر السيرفس وحفظها جوه الـ LessonMaterials
         foreach (var file in request.Files)
         {
             if (file.Length > 0)
             {
-                // 🌟 استخدام السيرفس لرفع الملف وتحديد الفولدر الفرعي (materials)
-                string fileUrl = await _fileService.UploadFileAsync(file, "materials", cancellationToken);
+                var filename = $"material/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                using var stream = file.OpenReadStream();
 
-                // حساب حجم الملف بشكل مقروء (Readable Size)
+                await storageService.UploadFileAsync("prisma",filename ,stream ,file.ContentType, cancellationToken);
+
                 string fileSize = file.Length < 1024 * 1024
                     ? $"{Math.Round((double)file.Length / 1024, 1)} KB"
                     : $"{Math.Round((double)file.Length / (1024 * 1024), 1)} MB";
 
-                // تحديد نوع الملف بناءً على الامتداد ليتوافق مع الـ Enum (LessonMaterialType)
                 var ext = Path.GetExtension(file.FileName).ToLower();
                 var materialType = ext switch
                 {
@@ -73,19 +70,17 @@ public class UploadLessonMaterialsCommandHandler(
                     _ => LessonMaterialType.PDF
                 };
 
-                // إضافة المادة التعليمية للدرس
                 lesson.LessonMaterials.Add(new LessonMaterial
                 {
                     Title = Path.GetFileNameWithoutExtension(file.FileName),
                     Size = fileSize,
                     Type = materialType,
-                    DownloadUrl = fileUrl,
+                    DownloadUrl = filename,
                     LessonId = lesson.Id
                 });
             }
         }
 
-        // 4. حفظ التعديلات النهائية في قاعدة البيانات
         lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

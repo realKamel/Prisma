@@ -40,7 +40,7 @@ public class UploadLessonMaterialsCommandHandler(
             throw new UnauthorizedException("Only teachers and assistants can upload materials to lessons.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new UploadLessonMaterialsSpecification(request.LessonId);
+        var spec = new LessonMaterialsSpecification(request.LessonId);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)

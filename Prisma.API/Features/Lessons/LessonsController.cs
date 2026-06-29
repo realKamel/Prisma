@@ -5,12 +5,14 @@ using Prisma.API.Common;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
+using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails; // 🌟 الـ Namespace الخاص بـ الـ Editor الجديد
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
+using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 
@@ -134,6 +136,35 @@ public class LessonsController(IMediator _mediator) : ApiController
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
     }
+
+    [HttpDelete("delete-material/{LessonId}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteMaterial(
+        [FromRoute] string LessonId,
+        [FromRoute] string MaterialId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteLessonMaterialCommand(int.Parse(LessonId), int.Parse(MaterialId));
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("materials/{LessonId}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLessonMaterials([FromRoute] string LessonId, CancellationToken cancellationToken)
+    {
+        var query = new GetLessonMaterialQuery(int.Parse(LessonId));
+        var result = await _mediator.Send(query, cancellationToken);
+        return Ok(result);
+    }
+
+
 }
 
 public class UploadMaterialsRequest

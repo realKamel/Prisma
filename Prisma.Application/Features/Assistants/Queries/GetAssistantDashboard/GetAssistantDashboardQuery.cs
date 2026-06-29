@@ -29,8 +29,8 @@ public record KpiTile(
 
 public record ActivityItem(
     int Id,
-    string Icon,
-    string Message,
+    string Action,
+    string TableName,
     DateTimeOffset CreatedAt
 );
 

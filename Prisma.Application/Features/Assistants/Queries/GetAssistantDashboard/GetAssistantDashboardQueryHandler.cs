@@ -76,11 +76,7 @@ public class GetAssistantDashboardQueryHandler(
             cancellationToken);
 
         var activities = logs
-            .Select(l =>
-            {
-                var (icon, message) = ResolveActivity(l.Action, l.TableName);
-                return new ActivityItem(l.Id, icon, message, l.CreatedAt!.Value);
-            })
+            .Select(l => new ActivityItem(l.Id, l.Action, l.TableName, l.CreatedAt ?? DateTimeOffset.UtcNow))
             .ToList();
 
         // ── Permissions ────────────────────────────────────────
@@ -130,15 +126,4 @@ public class GetAssistantDashboardQueryHandler(
         var passed = attempts.Count(a => a.Degree >= a.Quiz.TotalDegree * 0.5m);
         return passed / (double)attempts.Count;
     }
-
-    private static (string Icon, string Message) ResolveActivity(string action, string tableName) =>
-    (action.ToLowerInvariant(), tableName.ToLowerInvariant()) switch
-    {
-        ("insert", "enrollments") => ("bi-send-fill", "تسجيل جديد"),
-        ("delete", "enrollments") => ("bi-x-circle-fill", "إلغاء تسجيل"),
-        ("create", "payments") => ("bi-credit-card-fill", "عملية دفع"),
-        ("update", "assignmentsubmissions") => ("bi-file-earmark-check-fill", "تحديث واجب"),
-        ("update", "quizattempts") => ("bi-patch-check-fill", "تسليم كويز"),
-        _ => ("bi-activity", $"{action} · {tableName}"),
-    };
 }

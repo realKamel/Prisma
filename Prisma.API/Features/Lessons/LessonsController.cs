@@ -168,9 +168,9 @@ public class LessonsController(IMediator _mediator) : ApiController
     [HttpPost("{lessonId:int}/assignment/submit")]
     public async Task<IActionResult> SubmitAssignment(
     int lessonId,
-    IFormFile file)
+    IFormFile file, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file));
+        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file),cancellationToken);
         return Ok(result);
     }
 }

@@ -1,3 +1,4 @@
+using Amazon.S3;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,7 @@ using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.PaymentService;
+using Prisma.Infrastructure.Services.StorageService;
 using StackExchange.Redis;
 
 namespace Prisma.Infrastructure;
@@ -102,6 +104,25 @@ public static class DependenciesInjection
 
         services.AddKeyedScoped<IPaymentService, PaymobCardService>("card");
         services.AddKeyedScoped<IPaymentService, PaymobFawryService>("fawry");
+
+        var storageConfig = configuration.GetSection("Storage");
+
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var config = new AmazonS3Config
+            {
+                ServiceURL = storageConfig["ServiceUrl"],
+                ForcePathStyle = bool.Parse(storageConfig["ForcePathStyle"]!)
+            };
+
+            return new AmazonS3Client(
+                storageConfig["AccessKey"],
+                storageConfig["SecretKey"],
+                config
+            );
+        });
+
+        services.AddScoped<IStorageService, S3StorageService>();
 
         //services.AddStackExchangeRedisCache(option =>
         //{

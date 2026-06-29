@@ -19,3 +19,12 @@ public class TeacherQuizListItemDto
     // Computed status
     public string Status { get; set; } = string.Empty; // "active" | "pending_grading" | "completed"
 }
+
+
+public class TeacherQuizzesListResponseDto
+{
+    public List<TeacherQuizListItemDto> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+}

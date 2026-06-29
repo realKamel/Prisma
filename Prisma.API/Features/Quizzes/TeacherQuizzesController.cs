@@ -48,11 +48,13 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         [FromQuery] string scope,
         [FromQuery] string? search,
         [FromQuery] string? status,
-        CancellationToken ct)
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
     {
         if (!Enum.TryParse<QuizScope>(scope, true, out var quizScope))
             return BadRequest("Invalid scope value.");
-        var result = await sender.Send(new GetTeacherQuizzesListQuery(quizScope, search, status), ct);
+        var result = await sender.Send(new GetTeacherQuizzesListQuery(quizScope, search, status, page, pageSize), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 

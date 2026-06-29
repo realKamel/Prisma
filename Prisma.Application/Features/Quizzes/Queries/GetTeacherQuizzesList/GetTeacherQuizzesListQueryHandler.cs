@@ -10,9 +10,9 @@ using Prisma.Domain.Specifications.Quizzes;
 namespace Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 
 public class GetTeacherQuizzesListQueryHandler(IUnitOfWork unitOfWork)
-    : IRequestHandler<GetTeacherQuizzesListQuery, Result<List<TeacherQuizListItemDto>>>
+    : IRequestHandler<GetTeacherQuizzesListQuery, Result<TeacherQuizzesListResponseDto>>
 {
-    public async Task<Result<List<TeacherQuizListItemDto>>> Handle(GetTeacherQuizzesListQuery request, CancellationToken ct)
+    public async Task<Result<TeacherQuizzesListResponseDto>> Handle(GetTeacherQuizzesListQuery request, CancellationToken ct)
     {
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
 
@@ -68,7 +68,22 @@ public class GetTeacherQuizzesListQueryHandler(IUnitOfWork unitOfWork)
         // Apply status filter in-memory (computed field, can't filter in DB)
         if (!string.IsNullOrWhiteSpace(request.Status))
             items = items.Where(i => i.Status == request.Status).ToList();
+        var totalCount = items.Count;
 
-        return items;
+        // Pagination
+        var page = Math.Max(1, request.Page);
+        var pageSize = Math.Clamp(request.PageSize, 1, 100);
+        var pagedItems = items
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return new TeacherQuizzesListResponseDto
+        {
+            Items = pagedItems,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 }

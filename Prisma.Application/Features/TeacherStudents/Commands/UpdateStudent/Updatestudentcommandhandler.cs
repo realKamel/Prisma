@@ -13,7 +13,7 @@ public class UpdateStudentCommandHandler(
     UserManager<User> userManager)
     : IRequestHandler<UpdateStudentCommand, bool>
 {
-    private static readonly Guid TeacherId = Guid.Parse("b90a811d-98a4-4353-81a5-cc75e32699b2");
+    private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
 
     public async Task<bool> Handle(UpdateStudentCommand request, CancellationToken cancellationToken)
     {

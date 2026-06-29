@@ -97,7 +97,6 @@ public class GetAssistantDashboardQueryHandler(
             .Select(kvp => new Permission(
                 Id:     kvp.Value,
                 Status: heldPolicies.Contains(kvp.Key) ? "on" : "off"))
-            .Append(new Permission("revenue", "off"))
             .ToList();
 
         // ── Assemble ───────────────────────────────────────────

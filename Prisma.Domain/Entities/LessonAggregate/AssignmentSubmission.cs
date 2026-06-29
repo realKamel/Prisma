@@ -14,4 +14,9 @@ public class AssignmentSubmission : BaseEntity
     public string? Notes {set; get;}  
     public string? FileUrl { get; set; }
     public DateTimeOffset SubmittedAt { get; set; }
+
+    // Grading lock — prevents two teachers grading the same submission simultaneously
+    public bool IsBeingGraded { get; set; }
+    public DateTimeOffset? GradingStartedAt { get; set; }
+    public Guid? GradingByUserId { get; set; }
 }

@@ -74,5 +74,15 @@ public class AssistantsController(ISender mediator) : ApiController
         var result = await mediator.Send(new GetAssistantDashboardQuery(), ctx);
         return Ok(result);
     }
-
+    [HttpGet("detailed-logs")]
+    [ProducesResponseType<Result<GetAssistantDetailedLogsResponseDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> GetAssistantDetailedLogs([FromQuery] int take, CancellationToken token)
+    {
+        var query = new GetAssistantDetailedLogsQuery(take);
+        var result = await mediator.Send(query, token);
+        return Ok(result);
+    }
 }
+

@@ -29,8 +29,10 @@ public record KpiTile(
 
 public record ActivityItem(
     int Id,
-    string Type,
-    DateTimeOffset CreatedAt);
+    string Icon,
+    string Message,
+    DateTimeOffset CreatedAt
+);
 
 public record Permission(
     string Id,

@@ -31,34 +31,34 @@ public class GetAssistantDashboardQueryHandler(
         new Dictionary<string, string>
         {
             [AppClaims.Policies.CanManageEnrollments] = "students",
-            [AppClaims.Policies.CanManageContent]     = "content",
-            [AppClaims.Policies.CanViewReports]       = "reports",
-            [AppClaims.Policies.CanEvaluateStudents]  = "grading",
+            [AppClaims.Policies.CanManageContent] = "content",
+            [AppClaims.Policies.CanViewReports] = "reports",
+            [AppClaims.Policies.CanEvaluateStudents] = "grading",
         };
 
     public async Task<Result<GetAssistantDashboardResponse>> Handle(
         GetAssistantDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        var now           = DateTimeOffset.UtcNow;
-        var weekStart     = now.AddDays(-7);
+        var now = DateTimeOffset.UtcNow;
+        var weekStart = now.AddDays(-7);
         var prevWeekStart = now.AddDays(-14);
 
-        var enrollmentRepo  = unitOfWork.GetOrCreateRepository<Enrollment, int>();
-        var lessonRepo      = unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var quizAttemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-        var submissionRepo  = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
-        var auditRepo       = unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
+        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
         // ── KPI 1 · Active students ────────────────────────────
-        var activeNow      = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(), cancellationToken);
+        var activeNow = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(), cancellationToken);
         var activeLastWeek = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(before: weekStart), cancellationToken);
-        var studentDelta   = activeNow - activeLastWeek;
+        var studentDelta = activeNow - activeLastWeek;
 
         // ── KPI 2 · Quizzes this week + pass-rate delta ────────
         var quizzesThisWeek = await quizAttemptRepo.CountAsync(new QuizAttemptsSpec(from: weekStart), cancellationToken);
 
-        var gradedThisWeek = await quizAttemptRepo.ListAsync(new QuizAttemptsSpec(from: weekStart,     to: now,       status: QuizAttemptStatus.Graded), cancellationToken);
+        var gradedThisWeek = await quizAttemptRepo.ListAsync(new QuizAttemptsSpec(from: weekStart, to: now, status: QuizAttemptStatus.Graded), cancellationToken);
         var gradedLastWeek = await quizAttemptRepo.ListAsync(new QuizAttemptsSpec(from: prevWeekStart, to: weekStart, status: QuizAttemptStatus.Graded), cancellationToken);
 
         var passRateDelta = ComputePassRate(gradedThisWeek) - ComputePassRate(gradedLastWeek);
@@ -67,7 +67,7 @@ public class GetAssistantDashboardQueryHandler(
         var ungradedSubmissions = await submissionRepo.CountAsync(new UngradedSubmissionsSpec(), cancellationToken);
 
         // ── KPI 4 · Lessons ────────────────────────────────────
-        var totalLessons       = await lessonRepo.CountAsync(new LessonsSpec(), cancellationToken);
+        var totalLessons = await lessonRepo.CountAsync(new LessonsSpec(), cancellationToken);
         var newLessonsThisWeek = await lessonRepo.CountAsync(new LessonsSpec(from: weekStart), cancellationToken);
 
         // ── Activities ─────────────────────────────────────────
@@ -76,15 +76,16 @@ public class GetAssistantDashboardQueryHandler(
             cancellationToken);
 
         var activities = logs
-            .Select(l => new ActivityItem(
-                Id:        l.Id,
-                Type:      ResolveActivityType(l.Action, l.TableName),
-                CreatedAt: l.CreatedAt!.Value))
+            .Select(l =>
+            {
+                var (icon, message) = ResolveActivity(l.Action, l.TableName);
+                return new ActivityItem(l.Id, icon, message, l.CreatedAt!.Value);
+            })
             .ToList();
 
         // ── Permissions ────────────────────────────────────────
         var assistant = await userManager.FindByIdAsync(currentUser.UserId!.Value.ToString());
-        var claims    = assistant is not null
+        var claims = assistant is not null
             ? await userManager.GetClaimsAsync(assistant)
             : [];
 
@@ -95,7 +96,7 @@ public class GetAssistantDashboardQueryHandler(
 
         var permissions = PermissionMap
             .Select(kvp => new Permission(
-                Id:     kvp.Value,
+                Id: kvp.Value,
                 Status: heldPolicies.Contains(kvp.Key) ? "on" : "off"))
             .ToList();
 
@@ -103,7 +104,7 @@ public class GetAssistantDashboardQueryHandler(
         var response = new GetAssistantDashboardResponse
         {
             Teacher = new DashboardTeacher(
-                Name:           assistant is not null
+                Name: assistant is not null
                                     ? $"{assistant.FirstName} {assistant.LastName}"
                                     : string.Empty,
                 SupervisorName: SupervisorName),
@@ -116,7 +117,7 @@ public class GetAssistantDashboardQueryHandler(
                 new("lessons",     totalLessons,        newLessonsThisWeek, newLessonsThisWeek  > 0 ? "up" : "down", "coral"),
             ],
 
-            Activities  = activities,
+            Activities = activities,
             Permissions = permissions,
         };
 
@@ -130,17 +131,14 @@ public class GetAssistantDashboardQueryHandler(
         return passed / (double)attempts.Count;
     }
 
-    private static string ResolveActivityType(string action, string tableName) =>
-        (action.ToLowerInvariant(), tableName.ToLowerInvariant()) switch
-        {
-            ("insert", "enrollments")           => "grant",
-            ("delete", "enrollments")           => "revoke",
-            ("insert", "assignmentsubmissions") => "grade",
-            ("update", "assignmentsubmissions") => "grade",
-            ("insert", "quizattempts")          => "grade",
-            ("update", "quizattempts")          => "grade",
-            ("select", "students")              => "view",
-            ("insert", "auditlogs")             => "report",
-            _                                   => "view",
-        };
+    private static (string Icon, string Message) ResolveActivity(string action, string tableName) =>
+    (action.ToLowerInvariant(), tableName.ToLowerInvariant()) switch
+    {
+        ("insert", "enrollments") => ("bi-send-fill", "تسجيل جديد"),
+        ("delete", "enrollments") => ("bi-x-circle-fill", "إلغاء تسجيل"),
+        ("create", "payments") => ("bi-credit-card-fill", "عملية دفع"),
+        ("update", "assignmentsubmissions") => ("bi-file-earmark-check-fill", "تحديث واجب"),
+        ("update", "quizattempts") => ("bi-patch-check-fill", "تسليم كويز"),
+        _ => ("bi-activity", $"{action} · {tableName}"),
+    };
 }

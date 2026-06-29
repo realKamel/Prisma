@@ -5,12 +5,15 @@ using Prisma.API.Common;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
+using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
+using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
-using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails; // 🌟 الـ Namespace الخاص بـ الـ Editor الجديد
+using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
+using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 
@@ -41,7 +44,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         var result = await _mediator.Send(query, cancellationToken);
         return Ok(result);
     }
-    
+
     [HttpGet("options")]
     public async Task<IActionResult> GetPrepDataForAdd(CancellationToken cancellationToken)
     {
@@ -88,7 +91,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return Ok(result);
     }
 
- 
+
 
     [HttpPut("editor/{LessonId}")]
     [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
@@ -98,7 +101,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateLessonEditorDetails(
         [FromRoute] string LessonId,
-        [FromBody] UpdateLessonDetailsCommand command, 
+        [FromBody] UpdateLessonDetailsCommand command,
         CancellationToken cancellationToken)
     {
         var finalCommand = command with { Id = int.Parse(LessonId) };
@@ -119,7 +122,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return Ok(result);
     }
     [HttpPost("upload-materials/{LessonId}")]
-    [Consumes("multipart/form-data")] 
+    [Consumes("multipart/form-data")]
     [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -132,6 +135,42 @@ public class LessonsController(IMediator _mediator) : ApiController
         var command = new UploadLessonMaterialsCommand(int.Parse(LessonId), request.Files);
 
         var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpDelete("delete-material/{LessonId:int}/{MaterialId:int}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteMaterial(
+        [FromRoute] int LessonId,
+        [FromRoute] int MaterialId,
+        CancellationToken cancellationToken)
+    {
+        var command = new DeleteLessonMaterialCommand(LessonId, MaterialId);
+        var result = await _mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("materials/{LessonId}")]
+    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetLessonMaterials([FromRoute] string LessonId, CancellationToken cancellationToken)
+    {
+        var query = new GetLessonMaterialQuery(int.Parse(LessonId));
+        var result = await _mediator.Send(query, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpPost("{lessonId:int}/assignment/submit")]
+    public async Task<IActionResult> SubmitAssignment(
+    int lessonId,
+    IFormFile file, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file),cancellationToken);
         return Ok(result);
     }
 }

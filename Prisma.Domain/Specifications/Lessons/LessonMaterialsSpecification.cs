@@ -3,9 +3,9 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Domain.Specifications.Teachers;
 
-public class UploadLessonMaterialsSpecification : Specification<Lesson>
+public class LessonMaterialsSpecification : Specification<Lesson>
 {
-    public UploadLessonMaterialsSpecification(int lessonId)
+    public LessonMaterialsSpecification(int lessonId)
     {
         Query.Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
              .Include(l => l.LessonMaterials);

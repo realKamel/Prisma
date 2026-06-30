@@ -2,6 +2,7 @@
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
@@ -22,10 +23,17 @@ public class GetLessonsCatalogQueryHandler(
 
         var studentId = currentUser.UserId.Value;
 
+        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var student = await studentRepo.GetByIdAsync(studentId, cancellationToken) ?? throw new UnauthorizedException();
+
+        if (student.AcademicYearId is null)
+            throw new StudentAcademicYearNotSetException(studentId);
+
+
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lessons = await lessonRepo.ListAsync(
-            new LessonsCatalogSpecification(), cancellationToken);
+            new LessonsCatalogSpecification(student.AcademicYearId.Value), cancellationToken);
 
         var result = lessons
             .Select(lesson => MapLesson(lesson, studentId, lessons))

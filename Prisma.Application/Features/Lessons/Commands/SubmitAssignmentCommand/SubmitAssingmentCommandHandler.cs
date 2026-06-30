@@ -53,6 +53,7 @@ public class SubmitAssignmentCommandHandler(
             StudentId = studentId.Value,
             AssignmentId =assignment.Id,
             FileUrl = objectKey,
+            Title = request.File.FileName,
             SubmittedAt = DateTimeOffset.UtcNow
         };
 

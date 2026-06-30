@@ -7,6 +7,8 @@ public class Assignment : BaseEntity
     public string? ContentURL { get; set; }
     public DateTimeOffset DueDate { get; set; }
 
+    public string? Title { get; set; }
+
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
     public int Grade {set; get;}

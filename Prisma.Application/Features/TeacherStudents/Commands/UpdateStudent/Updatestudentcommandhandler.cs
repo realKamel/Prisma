@@ -10,6 +10,7 @@ namespace Prisma.Application.Features.TeacherStudents.Commands.UpdateStudent;
 public class UpdateStudentCommandHandler(
     IUnitOfWork unitOfWork,
     IIdentityService identityService,
+    ICurrentUserService currentUserService,
     UserManager<User> userManager)
     : IRequestHandler<UpdateStudentCommand, bool>
 {
@@ -18,9 +19,9 @@ public class UpdateStudentCommandHandler(
     public async Task<bool> Handle(UpdateStudentCommand request, CancellationToken cancellationToken)
     {
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
-
+        var TeacherId = currentUserService.UserId ;
         var student = await studentRepo.FirstOrDefaultAsync(
-            new StudentByIdForUpdateSpec(request.StudentId, TeacherId),
+            new StudentByIdForUpdateSpec(request.StudentId, TeacherId.Value),
             cancellationToken);
 
         if (student is null)

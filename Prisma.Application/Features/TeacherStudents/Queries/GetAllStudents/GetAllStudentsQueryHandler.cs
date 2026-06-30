@@ -1,19 +1,21 @@
 using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.TeacherStudents.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Queries.GetAllStudents;
 
-public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork)
+public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<GetAllStudentsQuery, List<StudentListItemDto>>
 {
-    private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
+    // private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
 
     public async Task<List<StudentListItemDto>> Handle(GetAllStudentsQuery request, CancellationToken cancellationToken)
     {
+        var TeacherId = currentUserService.UserId ;
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var students = await studentRepo.ListAsync(new StudentsByTeacherSpec(TeacherId), cancellationToken);
+        var students = await studentRepo.ListAsync(new StudentsByTeacherSpec(TeacherId.Value), cancellationToken);
 
         var result = new List<StudentListItemDto>();
         foreach (var student in students)

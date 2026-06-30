@@ -7,6 +7,8 @@ public class AssignmentSubmission : BaseEntity
 {
     public Guid StudentId { get; set; }
     public Student Student { get; set; }
+    public string? Title { get; set; }
+
 
     public int AssignmentId { get; set; }
     public Assignment Assignment { get; set; }

@@ -11,8 +11,6 @@ public class LessonsCatalogSpecification : Specification<Lesson>
             .Include(x => x.Sections)
             .ThenInclude(s => s.Progresses);
 
-        // AddInclude(x => x.Enrollments);
-        // AddInclude(x => x.Sections);
-        // AddInclude($"{nameof(Lesson.Sections)}.{nameof(Section.Progresses)}");
+        
     }
 }

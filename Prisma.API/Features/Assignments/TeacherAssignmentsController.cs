@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
+using Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
@@ -47,5 +48,14 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
-    public record GradeSubmissionRequest(int Score, string? Note);
+    [HttpPost("{submissionId:int}/release-lock")]
+    public async Task<IActionResult> ReleaseLock(int submissionId, CancellationToken ct)
+    {
+        var result = await sender.Send(
+            new ReleaseAssignmentGradingLockCommand(submissionId), ct);
+        return result.Succeeded ? Ok(result) : BadRequest(result);
+    }
+
 }
+public record GradeSubmissionRequest(int Score, string? Note);
+

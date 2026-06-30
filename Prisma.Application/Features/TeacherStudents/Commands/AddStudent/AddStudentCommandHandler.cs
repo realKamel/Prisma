@@ -11,12 +11,15 @@ namespace Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 
 public class AddStudentCommandHandler(
     IIdentityService identityService,
+    ICurrentUserService currentUserService,
     IUnitOfWork unitOfWork) : IRequestHandler<AddStudentCommand, Result>
 {
-    private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
+    // private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
 
     public async Task<Result> Handle(AddStudentCommand request, CancellationToken cancellationToken)
     {
+        var TeacherId = currentUserService.UserId ;
+
         var existingUser = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Mobile);
         if (existingUser is not null)
         {

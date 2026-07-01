@@ -25,12 +25,12 @@ public class ToggleLessonStatusCommandHandler(
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher))
+        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Admin))
             throw new UnauthorizedException("Only teachers can toggle lesson status.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

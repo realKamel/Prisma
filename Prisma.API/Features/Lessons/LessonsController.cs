@@ -71,10 +71,11 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpPost("add")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType<Result<int>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> CreateLesson([FromBody] CreateLessonDetailsCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateLesson([FromForm] CreateLessonDetailsCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -93,18 +94,19 @@ public class LessonsController(IMediator _mediator) : ApiController
 
 
 
-    [HttpPut("editor/{LessonId}")]
+    [HttpPut("editor/{LessonId:int}")]
+    [Consumes("multipart/form-data")]
     [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateLessonEditorDetails(
-        [FromRoute] string LessonId,
-        [FromBody] UpdateLessonDetailsCommand command,
+        [FromRoute] int LessonId,
+        [FromForm] UpdateLessonDetailsCommand command,
         CancellationToken cancellationToken)
     {
-        var finalCommand = command with { Id = int.Parse(LessonId) };
+        var finalCommand = command with { Id = LessonId };
 
         var result = await _mediator.Send(finalCommand, cancellationToken);
 
@@ -170,7 +172,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     int lessonId,
     IFormFile file, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file),cancellationToken);
+        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
         return Ok(result);
     }
 }

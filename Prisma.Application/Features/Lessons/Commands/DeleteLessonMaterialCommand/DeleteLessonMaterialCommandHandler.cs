@@ -28,12 +28,12 @@ public class DeleteLessonMaterialCommandHandler
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant))
+        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant)&& !roles.Contains(AppRoles.Admin))
             throw new UnauthorizedException("Only teachers and assistants can delete materials from lessons.");
         
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

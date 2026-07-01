@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using MediatR;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Prisma.Application.Common.Responses.Generic;
 
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
@@ -14,12 +13,12 @@ public record UpdateLessonDetailsCommand(
     int? PrerequisiteLessonId,
     List<ChapterCommandDto> Chapters,
     bool AssignmentEnabled,
+    IFormFile? AssignmentFile,
     DateTimeOffset? AssignmentDueDate,
-    string? AssignmentFileTypes,
     bool IsPublished,
     List<int> AcademicYearIds ,
     List<string> Outcomes,
-    string? ImageUrl
+    IFormFile? ImageFile
 ) : IRequest<Result<string>>;
 
 public record ChapterCommandDto(string Name, string? VideoFileName);

@@ -129,6 +129,8 @@ public static class DependenciesInjection
         });
 
         services.AddScoped<IStorageService, S3StorageService>();
+        services.AddScoped<IVideoStorageService, MinioVideoStorageService>();
+        services.AddHostedService<StorageBucketPolicyInitializer>();
 
         //services.AddStackExchangeRedisCache(option =>
         //{

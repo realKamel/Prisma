@@ -32,7 +32,7 @@ public class UpdateLessonDetailsCommandHandler(
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant)  && !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("Only teachers and assistants can modify lesson structures.");
+            throw new UnauthorizedException("Only teachers, assistants, and admins can modify lesson structures.");
         var storageKeysToDelete = new List<string>();
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

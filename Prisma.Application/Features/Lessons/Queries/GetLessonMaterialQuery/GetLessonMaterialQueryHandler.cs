@@ -30,7 +30,7 @@ public class GetLessonMaterialQueryHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Student))
+        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Student) && !roles.Contains(AppRoles.Admin))
             throw new UnauthorizedException("You are not authorized to view lesson materials.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();

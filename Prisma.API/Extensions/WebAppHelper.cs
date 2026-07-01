@@ -1,12 +1,16 @@
 using System.Text;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Middlewares;
 using Prisma.Application;
+using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Common.Constants;
+using Prisma.Application.Common.Constants.BackgroundJobs;
 using Prisma.Infrastructure;
 using Prisma.Infrastructure.Authorization;
+using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
@@ -131,7 +135,7 @@ public static class WebAppHelper
                     policy.WithOrigins(
                             "http://localhost:4200", // Dev Angular
                             "https://localhost:4200") // If Angular also behind proxy
-                        //"https://PrismaEdu.com"     // Prod
+                                                      //"https://PrismaEdu.com"     // Prod
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
@@ -168,6 +172,20 @@ public static class WebAppHelper
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
             await services.SeedAppDataAsync();
+        }
+    }
+
+    public static void UseRecurringJobs(this WebApplication app)
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+
+            //Every Friday at 10:00 PM
+            jobService.AddOrUpdateRecurring<ReportGenerationJob>(
+                JobQueues.Reports,
+                x => x.GenerateWeekly(),
+                Cron.Weekly(DayOfWeek.Friday, 22, 0));
         }
     }
 }

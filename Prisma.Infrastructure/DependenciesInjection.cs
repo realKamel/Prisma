@@ -1,4 +1,6 @@
 using Amazon.S3;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -7,9 +9,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants.BackgroundJobs;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Infrastructure.BackgroundJobs;
+using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Identity;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
@@ -133,5 +139,41 @@ public static class DependenciesInjection
         //    .PersistKeysToStackExchangeRedis(
         //        ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
         //        "DataProtection-Keys");
+
+        services.AddHangfireWithConfig(configuration);
+        services.AddSingleton<IBackgroundJobService, HangfireBackgroundJobService>();
+
+        // Register job classes (Hangfire needs them for DI)
+        //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
+        services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
+    }
+
+    private static void AddHangfireWithConfig(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(options =>
+            {
+                options.UseNpgsqlConnection(configuration.GetConnectionString("DefaultSqlConnection"));
+            }));
+
+        // Start background job server (required for processing)
+        services.AddHangfireServer(options =>
+        {
+            options.ServerName = $"prisma-api-{Environment.MachineName}";
+            // Process all queues
+            options.Queues = new[]
+            {
+                JobQueues.Default,
+                JobQueues.Reports,
+                JobQueues.VideoProcessing,
+                JobQueues.AuthCleanup,
+            };
+            options.WorkerCount = 5;
+            options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
+        });
+
     }
 }

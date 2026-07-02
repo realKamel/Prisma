@@ -80,7 +80,7 @@ public class DataSeeder(
 
                     foreach (var user in users)
                     {
-                        await userManager.CreateAsync(user, "P@ssword");
+                        await userManager.CreateAsync(user, "P@ssw0rd");
 
                         if (user is Teacher)
                         {

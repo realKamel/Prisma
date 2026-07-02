@@ -33,10 +33,12 @@ public class GetStudentProfileQueryHandler(
         if (student == null)
             throw new NotFoundException("Student", userId.Value);
 
-        string fullName = $"{student.FirstName} {student.LastName}".Trim();
 
         var profileDto = new StudentProfileDto(
-            Name: fullName,
+            FirstName: student.FirstName ?? string.Empty,
+            SecondName: student.SecondName ?? string.Empty,
+            ThirdName: student.ThirdName ?? string.Empty,
+            LastName: student.LastName ?? string.Empty,
             Mobile: student.PhoneNumber ?? string.Empty,
             Email: student.Email ?? string.Empty,
             Grade: student.AcademicYear?.Title ?? string.Empty, 

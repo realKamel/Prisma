@@ -1,13 +1,19 @@
 ﻿using MediatR;
+using Microsoft.Extensions.Configuration;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 
-public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
+public class GetLessonEditorDetailsQueryHandler(
+    IUnitOfWork _unitOfWork,
+    IStorageService storageService,
+    IConfiguration configuration)
     : IRequestHandler<GetLessonEditorDetailsQuery, Result<LessonEditorResponseDto>>
 {
     public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request, CancellationToken cancellationToken)
@@ -21,9 +27,8 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
         if (lesson is null)
             throw new NotFoundException("Lesson", request.Id);
 
-        var allLessons = await lessonRepository.ListAsync(cancellationToken);
-        var prerequisitesOptions = allLessons
-            .Where(l => l.Id != request.Id && !l.IsDeleted)
+        var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id);
+        var prerequisitesOptions = (await lessonRepository.ListAsync(prerequisiteSpec, cancellationToken))
             .Select(l => new LessonDto(l.Title ?? string.Empty, l.Id))
             .ToList();
 
@@ -31,9 +36,12 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
         var allAcademicYearsOptions = allAcademicYears
             .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
             .ToList();
-        var existingAcademicYearIds = lesson.AcademicYears?
+
+        var existingAcademicYearIds = lesson.AcademicYears
             .Select(ay => ay.AcademicYearId)
-            .ToList() ?? new List<int>();
+            .ToList();
+
+        var thumbnail = storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl);
 
         var response = new LessonEditorResponseDto(
             lesson.Id,
@@ -44,15 +52,13 @@ public class GetLessonEditorDetailsQueryHandler(IUnitOfWork _unitOfWork)
             lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
             lesson.Assignment != null,
             lesson.Assignment?.DueDate,
-            lesson.Assignment?.ContentURL,
-            lesson.ImageThumbnailUrl,
+            lesson.Assignment?.Title,
+            thumbnail,
             lesson.Outcomes?.ToList() ?? new List<string>(),
             existingAcademicYearIds,
-            
             prerequisitesOptions,
-
-                allAcademicYearsOptions
-            );
+            allAcademicYearsOptions
+        );
 
         return Result<LessonEditorResponseDto>.Success(response);
     }

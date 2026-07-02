@@ -6,7 +6,6 @@ using Prisma.Application.Common.Responses.Generic;
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 
 public record GetLessonEditorDetailsQuery(int Id) : IRequest<Result<LessonEditorResponseDto>>;
-
 public record LessonEditorResponseDto(
     int Id,
     string? Title,
@@ -16,7 +15,7 @@ public record LessonEditorResponseDto(
     List<ChapterResponseDto> Chapters,
     bool AssignmentEnabled,
     DateTimeOffset? AssignmentDueDate,
-    string? AssignmentFileTypes,
+    string? AssignmentFileName,
     string? ImageUrl,
     List<string>? Outcomes,
     List<int> SelectedAcademicYears,   

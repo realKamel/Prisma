@@ -8,7 +8,7 @@ public class GetLessonEditorDetailsSpecification : Specification<Lesson>
     public GetLessonEditorDetailsSpecification(int lessonId)
         : base()
     {
-        Query.Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
+        Query.Where(lesson => lesson.Id == lessonId)
              .Include(l => l.Sections)
              .Include(l => l.Assignment)
              .Include(l=>l.AcademicYears)

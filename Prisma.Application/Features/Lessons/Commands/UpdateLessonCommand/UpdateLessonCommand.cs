@@ -9,7 +9,6 @@ public record UpdateLessonDetailsCommand(
     string Title,
     string? Description,
     decimal Price,
-    int? ValidityDays,
     int? PrerequisiteLessonId,
     List<ChapterCommandDto> Chapters,
     bool AssignmentEnabled,

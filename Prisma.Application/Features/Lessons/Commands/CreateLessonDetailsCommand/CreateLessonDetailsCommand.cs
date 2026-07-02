@@ -8,7 +8,6 @@ public record CreateLessonDetailsCommand(
     string Title,
     string? Description,
     decimal Price,
-    int? ValidityDays,
     int? PrerequisiteLessonId,
     List<ChapterCreateDto> Chapters,
     bool AssignmentEnabled,

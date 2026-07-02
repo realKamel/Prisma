@@ -20,6 +20,11 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(x => x.GeneratedCode)
+            .WithOne(g => g.Enrollment)
+            .HasForeignKey<Enrollment>(x => x.GeneratedCodeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

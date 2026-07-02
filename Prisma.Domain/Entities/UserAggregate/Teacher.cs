@@ -10,4 +10,6 @@ public class Teacher : User
     public ICollection<AcademicYearTeacher> AcademicYears { get; set; } = new List<AcademicYearTeacher>();
     public ICollection<Assistant> Assistants { get; set; } = new List<Assistant>();
     public TeacherLandingSettings? TeacherLandingSettings { get; set; }
+    public TeacherPreferences Preferences { get; set; } = null!;
+
 }

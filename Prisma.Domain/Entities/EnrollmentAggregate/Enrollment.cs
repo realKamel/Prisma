@@ -9,10 +9,8 @@ namespace Prisma.Domain.Entities.EnrollmentAggregate;
 public class Enrollment : BaseEntity
 {
     public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
-    public EnrollmentMethod EnrollmentMethod { get; set; } // 
-
+    public EnrollmentMethod EnrollmentMethod { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
-
     public bool IsCompleted { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
 
@@ -25,6 +23,6 @@ public class Enrollment : BaseEntity
     public Payment? Payment { get; set; }
     public int? PaymentId { get; set; }
 
-    public int? RedeemCodeId { get; set; } // set when GrantType == RedeemCode
-    public RedeemCode? RedeemCode { get; set; }
+    public int? GeneratedCodeId { get; set; } // set when EnrollmentMethod == RedeemCode
+    public GeneratedCode? GeneratedCode { get; set; }
 }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Prisma.Application.Common.Validators;
+using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
@@ -20,20 +21,21 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
             .SetValidator(new PersonNameValidator());
 
         RuleFor(x => x.Email)
-            .SetValidator(new EmailValidator());
+            .Email();
 
         RuleFor(x => x.PhoneNumber)
-            .SetValidator(new EgyptianPhoneNumberValidator());
+            .EgyptianPhoneNumber();
 
         RuleFor(x => x.Password)
-            .SetValidator(new PasswordValidator());
+            .StrongPassword();
 
         RuleFor(x => x.ConfirmPassword)
             .NotEmpty()
+            .WithMessage("Confirm Password is required.")
             .Must((model, confirm) => confirm == model.ConfirmPassword)
             .WithMessage("Passwords do not match.");
 
         RuleFor(x => x.ParentPhoneNumber)
-            .SetValidator(new EgyptianPhoneNumberValidator());
+            .EgyptianPhoneNumber();
     }
 }

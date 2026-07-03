@@ -1,5 +1,6 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Exceptions;
 
@@ -12,7 +13,7 @@ public class LoginCommandHandler(
 {
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Phone);
+        var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Phone, cancellationToken);
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
             throw new BadRequestException("Invalid credentials");
@@ -20,7 +21,7 @@ public class LoginCommandHandler(
         var roles = (await identityService.GetRolesAsync(user)).ToList();
 
         var permissions = await identityService.GetClaimsAsync(user);
-
+        var permissionList = permissions.Select(permission => permission.Value).ToArray();
         var accessToken = jwtTokenService
             .GenerateAccessToken(user.Id, user.Email, roles, permissions);
 
@@ -37,10 +38,12 @@ public class LoginCommandHandler(
         return new LoginResponse(
             accessToken,
             refreshToken,
-            new(user.Id,
+            new LoginCredentials(user.Id,
                 user.Email,
                 user.FirstName,
                 user.SecondName,
-                roles.Count == 0 ? null : roles[0]));
+                roles.Count == 0 ? null : roles[0],
+                permissionList)
+        );
     }
 }

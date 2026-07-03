@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using Prisma.Application.Common.Validators;
+using Prisma.Application.Common.Validators.ValidationExtensions;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 
 namespace Prisma.Application.Features.Authentication.Commands.EmailVerification;
@@ -9,13 +10,15 @@ public class EmailVerificationRequestCommandValidation : AbstractValidator<Email
     public EmailVerificationRequestCommandValidation()
     {
         RuleFor(x => x.Email)
-            .SetValidator(new EmailValidator());
+            .Email();
     }
 }
+
 public class ConfirmEmailCommandValidation : AbstractValidator<ConfirmEmailCommand>
 {
     public ConfirmEmailCommandValidation()
     {
         RuleFor(x => x.Email)
-            .SetValidator(new EmailValidator());    }
+            .Email();
+    }
 }

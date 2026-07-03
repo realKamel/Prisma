@@ -1,5 +1,6 @@
 using FluentValidation;
 using Prisma.Application.Common.Validators;
+using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 
@@ -25,22 +26,22 @@ public class AddStudentCommandValidator : AbstractValidator<AddStudentCommand>
 
         RuleFor(x => x.Mobile)
             .NotEmpty()
-            .SetValidator(new EgyptianPhoneNumberValidator());
+            .EgyptianPhoneNumber();
 
         RuleFor(x => x.Email)
             .NotEmpty().EmailAddress()
-            .SetValidator(new EmailValidator());
+            .Email();
 
         RuleFor(x => x.Password)
             .NotEmpty().MinimumLength(8).MaximumLength(128)
-            .SetValidator(new PasswordValidator());
+            .StrongPassword();
 
         RuleFor(x => x.Grade)
             .NotEmpty().WithMessage("Grade is required.");
 
         RuleFor(x => x.ParentMobile)
             .NotEmpty()
-            .SetValidator(new EgyptianPhoneNumberValidator());
+            .EgyptianPhoneNumber();
 
         RuleFor(x => x)
             .Must(x => x.Mobile != x.ParentMobile)

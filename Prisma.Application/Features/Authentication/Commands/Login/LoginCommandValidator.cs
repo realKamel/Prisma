@@ -1,5 +1,5 @@
 using FluentValidation;
-using Prisma.Application.Common.Validators;
+using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
@@ -14,17 +14,17 @@ public class LoginCommandValidator : AbstractValidator<LoginCommand>
         When(x => !string.IsNullOrWhiteSpace(x.Email), () =>
         {
             RuleFor(x => x.Email)
-                .SetValidator(new EmailValidator());
+                .Email();
         });
 
         When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
         {
             RuleFor(x => x.Phone)
-                .SetValidator(new EgyptianPhoneNumberValidator());
+                .EgyptianPhoneNumber();
         });
 
         RuleFor(x => x.Password)
-            .SetValidator(new PasswordValidator());
+            .StrongPassword();
     }
 
     private static bool HaveEmailOrPhone(LoginCommand command)

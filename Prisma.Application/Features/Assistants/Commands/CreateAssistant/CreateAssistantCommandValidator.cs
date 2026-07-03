@@ -1,6 +1,7 @@
 using FluentValidation;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Validators;
+using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 
@@ -13,11 +14,13 @@ public class CreateAssistantCommandValidator : AbstractValidator<CreateAssistant
         RuleFor(command => command.LastName)
             .SetValidator(new PersonNameValidator());
         RuleFor(c => c.PhoneNumber)
-            .SetValidator(new EgyptianPhoneNumberValidator());
+            .EgyptianPhoneNumber();
         RuleFor(c => c.Password)
-            .SetValidator(new PasswordValidator());
+            .StrongPassword();
         RuleFor(command => command.Email)
-            .SetValidator(new EmailValidator());
+            .NotEmpty().WithMessage("Email is required.")
+            .EmailAddress()
+            .WithMessage("Email is invalid.");
 
         RuleFor(command => command.Policies)
             .Must(permissions => permissions.Length > 0)

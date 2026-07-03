@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
+using Prisma.Domain.Entities;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -160,6 +161,8 @@ public class DataSeeder(
 
         await userManager.CreateAsync(teacher, "AhmedP@ssword");
         await userManager.AddToRoleAsync(teacher, AppRoles.Teacher);
+        dbContext.Set<TeacherPreferences>().Add(TeacherPreferences.CreateDefault(teacher.Id));
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task SeedAppDataAsync(JsonElement root)
@@ -188,6 +191,8 @@ public class DataSeeder(
             await SeedDataAsync<SectionProgress>(root, options);
             await SeedDataAsync<AssignmentSubmission>(root, options);
             await SeedDataAsync<RedeemCode>(root, options);
+            await SeedDataAsync<TeacherPreferences>(root, options); 
+
             await SeedDataAsync<Payment>(root, options);
         }
         catch (Exception e)

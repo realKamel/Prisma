@@ -12,9 +12,9 @@ public class TeacherPreferencesConfiguration : IEntityTypeConfiguration<TeacherP
     public void Configure(EntityTypeBuilder<TeacherPreferences> builder)
     {
 
-        builder.HasKey(p => p.TeacherId); 
+        builder.HasKey(p => p.Id); 
 
-        builder.Property(p => p.TeacherId)
+        builder.Property(p => p.Id)
             .ValueGeneratedNever(); 
 
         builder.Property(p => p.AccentColor)
@@ -24,7 +24,7 @@ public class TeacherPreferencesConfiguration : IEntityTypeConfiguration<TeacherP
 
         builder.HasOne(p => p.Teacher)
             .WithOne(t => t.Preferences)
-            .HasForeignKey<TeacherPreferences>(p => p.TeacherId)
+            .HasForeignKey<TeacherPreferences>(p => p.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

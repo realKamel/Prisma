@@ -3732,5 +3732,12 @@
   ],
   "AspNetUserClaims": [],
   "AspNetUserLogins": [],
-  "AspNetUserTokens": []
+  "AspNetUserTokens": [],
+  "TeacherPreferences": [
+    {
+      "Id": "fbc51c24-b6ac-4713-87ba-57c47c8d1cd1",
+      "AccentColor": "Purple"
+       
+    }
+  ]
 }

@@ -58,6 +58,8 @@ public class Program
 
             app.UseAuthorization();
 
+            app.UseRecurringJobs();
+
             app.MapControllers();
 
             await app.RunAsync();

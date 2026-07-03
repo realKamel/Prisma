@@ -34,7 +34,7 @@ public class UpdateStudentProfileCommandHandler(
         student.ThirdName = request.thirdName.Trim();
         student.LastName = request.LastName.Trim();
         student.PhoneNumber = request.Mobile.Trim();
-        student.AcademicYearId = request.AcademicYearId;
+        student.AcademicYearId = request.Grade;
         student.ParentPhoneNumber = request.ParentMobile.Trim();
 
      

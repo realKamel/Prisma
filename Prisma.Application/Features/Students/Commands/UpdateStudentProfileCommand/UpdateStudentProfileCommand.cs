@@ -12,6 +12,6 @@ public record UpdateStudentProfileCommand(
     string thirdName,
     string LastName,
     string Mobile,
-    int AcademicYearId, 
+    int Grade, 
     string ParentMobile
 ) : IRequest<Result<bool>>;

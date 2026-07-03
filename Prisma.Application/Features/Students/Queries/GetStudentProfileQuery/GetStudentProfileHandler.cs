@@ -41,8 +41,8 @@ public class GetStudentProfileQueryHandler(
             LastName: student.LastName ?? string.Empty,
             Mobile: student.PhoneNumber ?? string.Empty,
             Email: student.Email ?? string.Empty,
-            Grade: student.AcademicYear?.Title ?? string.Empty, 
-            Parent: student.ParentPhoneNumber ?? string.Empty  
+            Grade: student.AcademicYearId ?? 0, 
+            ParentMobile: student.ParentPhoneNumber ?? string.Empty  
         );
 
         return Result<StudentProfileDto>.Success(profileDto);

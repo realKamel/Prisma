@@ -193,7 +193,7 @@ public static class WebAppHelper
         {
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
-                Authorization = new[] { new HangfireDashboardAuthFilter() } //TODO: restrict to admins
+                Authorization = [new HangfireDashboardAuthFilter()] //TODO: restrict to admins
             });
         }
     }

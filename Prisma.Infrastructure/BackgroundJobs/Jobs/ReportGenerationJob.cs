@@ -1,7 +1,7 @@
 using Hangfire;
 using MediatR;
 using Prisma.Application.Abstractions.BackgroundJobs;
-using Prisma.Application.Common.Constants.BackgroundJobs;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Reports.Commands.GenerateWeeklyReport;
 
 namespace Prisma.Infrastructure.BackgroundJobs.Jobs;

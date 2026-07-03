@@ -23,6 +23,11 @@ public class Lesson : BaseEntity
 
     public bool IsEligible { get; set; }
 
+    public string? Transcript { get; set; }
+    public string? Summary { get; set; }
+
+    public ICollection<LessonTranscriptChunk> Chunks { get; set; } = [];
+
     // public Guid TeacherId { get; set; }
     // public Teacher Teacher { get; set; }
 

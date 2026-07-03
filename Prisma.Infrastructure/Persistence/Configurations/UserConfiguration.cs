@@ -12,23 +12,22 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
 
         builder
-        .HasMany(x => x.Claims)
-        .WithOne()
-        .HasForeignKey(x => x.UserId);
+            .HasMany(x => x.Claims)
+            .WithOne()
+            .HasForeignKey(x => x.UserId);
 
 
         builder
-        .HasIndex(u => u.NormalizedEmail)
-        .HasDatabaseName("EmailIndex");
+            .HasIndex(u => u.NormalizedEmail)
+            .HasDatabaseName("EmailIndex");
 
         builder
-        .HasIndex("NormalizedUserName")
-        .IsUnique()
-        .HasFilter("\"IsDeleted\" = false")
-        .HasDatabaseName("UserNameIndex");
+            .HasIndex("NormalizedUserName")
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false")
+            .HasDatabaseName("UserNameIndex");
 
         builder.HasIndex(x => x.PhoneNumber)
-       .IsUnique()
-       .HasFilter("\"IsDeleted\" = false");
+            .HasFilter("\"IsDeleted\" = false");
     }
 }

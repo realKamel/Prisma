@@ -1,4 +1,4 @@
-namespace Prisma.Application.Common.Constants.BackgroundJobs;
+namespace Prisma.Application.Common.Constants;
 
 public static class JobQueues
 {

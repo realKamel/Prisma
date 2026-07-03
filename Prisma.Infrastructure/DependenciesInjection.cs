@@ -1,17 +1,15 @@
 using Amazon.S3;
 using Hangfire;
 using Hangfire.PostgreSql;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using OpenAI;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Constants.BackgroundJobs;
+using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.BackgroundJobs;
@@ -26,7 +24,6 @@ using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.PaymentService;
 using Prisma.Infrastructure.Services.StorageService;
-using StackExchange.Redis;
 
 namespace Prisma.Infrastructure;
 
@@ -36,66 +33,14 @@ public static class DependenciesInjection
         IHostEnvironment environment)
     {
         services.AddHttpContextAccessor();
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgsqlOptions =>
-            {
-                // npgsqlOptions.EnableRetryOnFailure(
-                //     maxRetryCount: 5,
-                //     maxRetryDelay: TimeSpan.FromSeconds(10),
-                //     errorCodesToAdd: null);
-            });
 
-            options.AddInterceptors(
-            serviceProvider.GetRequiredService<AuditInterceptor>(),
-            serviceProvider.GetRequiredService<AuditLogInterceptor>());
-
-            if (environment.IsDevelopment())
-            {
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-            }
-        });
-        services.AddIdentityCore<User>(options =>
-            {
-                //options.User.RequireUniqueEmail = true;
-                if (environment.IsDevelopment())
-                {
-                    options.Password.RequiredLength = 4;
-                    options.Password.RequireDigit = false;
-                    options.Password.RequireUppercase = false;
-                    options.Password.RequireLowercase = false;
-                    options.Password.RequireNonAlphanumeric = false;
-                }
-                else
-                {
-                    options.Password.RequiredLength = 8;
-                    options.Password.RequireDigit = true;
-                    options.Password.RequireUppercase = true;
-                    options.Password.RequireLowercase = true;
-                    options.Password.RequireNonAlphanumeric = true;
-
-                    options.Lockout.MaxFailedAccessAttempts = 5;
-                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-                }
-            })
-            .AddRoles<Domain.Entities.UserAggregate.Role>()
-            .AddDefaultTokenProviders()
-            .AddEntityFrameworkStores<AppDbContext>();
-
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-
-        services.AddScoped<AuditInterceptor>();
-        services.AddScoped<AuditLogInterceptor>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddPersistenceConfig(configuration, environment);
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.AddScoped<IEmailService, EmailService>();
 
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IIdentityService, IdentityService>();
 
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
@@ -148,6 +93,9 @@ public static class DependenciesInjection
         // Register job classes (Hangfire needs them for DI)
         //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
         services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
+        // var client = new AzureOpenApiClient("API_KEY").GetChatClient();
+        // var agent = client.Create
+        // services.AddSingleton();
     }
 
     private static void AddHangfireWithConfig(this IServiceCollection services, IConfiguration configuration)
@@ -176,6 +124,68 @@ public static class DependenciesInjection
             options.WorkerCount = 5;
             options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
         });
+    }
 
+    private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        {
+            options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgSqlOptions =>
+            {
+                // npgsqlOptions.EnableRetryOnFailure(
+                //     maxRetryCount: 5,
+                //     maxRetryDelay: TimeSpan.FromSeconds(10),
+                //     errorCodesToAdd: null);
+                npgSqlOptions.UseVector();
+            });
+
+            options.AddInterceptors(
+                serviceProvider.GetRequiredService<AuditInterceptor>(),
+                serviceProvider.GetRequiredService<AuditLogInterceptor>());
+
+            if (!environment.IsDevelopment())
+            {
+                return;
+            }
+
+            options.EnableSensitiveDataLogging();
+            options.EnableDetailedErrors();
+        });
+        services.AddIdentityCore<User>(options =>
+            {
+                //options.User.RequireUniqueEmail = true;
+                if (environment.IsDevelopment())
+                {
+                    options.Password.RequiredLength = 4;
+                    options.Password.RequireDigit = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequireNonAlphanumeric = false;
+                }
+                else
+                {
+                    options.Password.RequiredLength = 8;
+                    options.Password.RequireDigit = true;
+                    options.Password.RequireUppercase = true;
+                    options.Password.RequireLowercase = true;
+                    options.Password.RequireNonAlphanumeric = true;
+
+                    options.Lockout.MaxFailedAccessAttempts = 5;
+                    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+                }
+            })
+            .AddRoles<Domain.Entities.UserAggregate.Role>()
+            .AddDefaultTokenProviders()
+            .AddEntityFrameworkStores<AppDbContext>();
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        services.AddScoped<IVectorSearchRepository, VectorSearchRepository>();
+
+        services.AddScoped<AuditInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IDataSeeder, DataSeeder>();
     }
 }

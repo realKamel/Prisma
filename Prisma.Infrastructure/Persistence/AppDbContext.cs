@@ -12,6 +12,8 @@ public class AppDbContext(DbContextOptions options)
         // to apply all configuration for class that implements IEntityTypeConfiguration
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.HasPostgresExtension("vector");
+
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }

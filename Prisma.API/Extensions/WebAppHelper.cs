@@ -1,15 +1,13 @@
 using System.Text;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Prisma.API.Filters;
 using Prisma.API.Middlewares;
 using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Constants.BackgroundJobs;
 using Prisma.Infrastructure;
-using Prisma.Infrastructure.Authorization;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
@@ -135,7 +133,7 @@ public static class WebAppHelper
                     policy.WithOrigins(
                             "http://localhost:4200", // Dev Angular
                             "https://localhost:4200") // If Angular also behind proxy
-                                                      //"https://PrismaEdu.com"     // Prod
+                        //"https://PrismaEdu.com"     // Prod
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
@@ -165,27 +163,38 @@ public static class WebAppHelper
         }
     }
 
-    public static async Task UseDataSeedingAsync(this WebApplication app)
+    extension(WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
+        public async Task UseDataSeedingAsync()
         {
-            using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-            await services.SeedAppDataAsync();
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+                await services.SeedAppDataAsync();
+            }
         }
-    }
 
-    public static void UseRecurringJobs(this WebApplication app)
-    {
-        using (var scope = app.Services.CreateScope())
+        public void UseRecurringJobs()
         {
-            var jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+            using (var scope = app.Services.CreateScope())
+            {
+                var jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
 
-            //Every Friday at 10:00 PM
-            jobService.AddOrUpdateRecurring<ReportGenerationJob>(
-                JobQueues.Reports,
-                x => x.GenerateWeekly(),
-                Cron.Weekly(DayOfWeek.Friday, 22, 0));
+                //Every Friday at 10:00 PM
+                jobService.AddOrUpdateRecurring<ReportGenerationJob>(
+                    JobQueues.Reports,
+                    x => x.GenerateWeekly(),
+                    Cron.Weekly(DayOfWeek.Friday, 22, 0));
+            }
+        }
+
+        public void UseHangfireUi()
+        {
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireDashboardAuthFilter() } //TODO: restrict to admins
+            });
         }
     }
 }

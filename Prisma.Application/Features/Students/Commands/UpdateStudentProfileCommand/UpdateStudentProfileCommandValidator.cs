@@ -20,7 +20,7 @@ public sealed class UpdateStudentProfileCommandValidator : AbstractValidator<Upd
             .NotEmpty().WithMessage("رقم الموبايل مطلوب.")
             .Matches(@"^01[0125]\d{8}$").WithMessage("رقم الموبايل غير صحيح.");
 
-        RuleFor(x => x.AcademicYearId)
+        RuleFor(x => x.Grade)
             .GreaterThan(0).WithMessage("يجب اختيار الصف الدراسي بشكل صحيح.");
 
         RuleFor(x => x.ParentMobile)

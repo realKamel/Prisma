@@ -81,7 +81,7 @@ public class DataSeeder(
 
                     foreach (var user in users)
                     {
-                        await userManager.CreateAsync(user, "P@ssword");
+                        await userManager.CreateAsync(user, "P@ssw0rd");
 
                         if (user is Teacher)
                         {
@@ -145,8 +145,8 @@ public class DataSeeder(
             LastName = "Mostafa",
             Subject = "English",
             PhoneNumber = "01010101010",
-            UserName = "ahmed@prisma.com",
-            Email = "ahmed@prisma.com"
+            UserName = "ahmed@gmail.com",
+            Email = "ahmed@gmail.com"
         };
 
         try
@@ -191,6 +191,7 @@ public class DataSeeder(
             await SeedDataAsync<SectionProgress>(root, options);
             await SeedDataAsync<AssignmentSubmission>(root, options);
             await SeedDataAsync<RedeemCode>(root, options);
+            await SeedDataAsync<GeneratedCode>(root, options);
             await SeedDataAsync<TeacherPreferences>(root, options); 
 
             await SeedDataAsync<Payment>(root, options);

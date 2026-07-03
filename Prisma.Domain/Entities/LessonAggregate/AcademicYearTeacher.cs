@@ -9,5 +9,5 @@ public class AcademicYearTeacher : BaseEntity
     public int AcademicYearId { get; set; }
 
     public Teacher Teacher { get; set; }
-    public int TeacherId { get; set; }
+    public Guid TeacherId { get; set; }
 }

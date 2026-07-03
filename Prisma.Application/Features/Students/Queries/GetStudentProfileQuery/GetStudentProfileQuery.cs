@@ -15,6 +15,6 @@ public record StudentProfileDto(
     string LastName,
     string Mobile,
     string Email,
-    string Grade,
-    string Parent
+    int Grade,
+    string ParentMobile
 );

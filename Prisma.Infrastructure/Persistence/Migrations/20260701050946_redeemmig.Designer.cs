@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Prisma.Infrastructure.Persistence;
@@ -12,9 +13,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260701050946_redeemmig")]
+    partial class redeemmig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1326,42 +1329,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("QuizAttempt");
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("AccentColor")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TeacherPreferences");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -2159,17 +2126,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
-                        .WithOne("Preferences")
-                        .HasForeignKey("Prisma.Domain.Entities.TeacherPreferences", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Teacher");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Assistant", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", null)
@@ -2297,9 +2253,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Assistants");
 
                     b.Navigation("Lessons");
-
-                    b.Navigation("Preferences")
-                        .IsRequired();
 
                     b.Navigation("Students");
                 });

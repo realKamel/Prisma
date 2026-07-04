@@ -178,6 +178,8 @@ public class DataSeeder(
 
             await SeedDataAsync<AcademicYear>(root, options);
             await SeedDataAsync<Lesson>(root, options);
+            await SeedDataAsync<AcademicYearTeacher>(root, options);
+            await SeedDataAsync<AcademicYearLesson>(root, options);
             await SeedDataAsync<Section>(root, options);
             await SeedDataAsync<Assignment>(root, options);
             await SeedDataAsync<Enrollment>(root, options);
@@ -192,7 +194,7 @@ public class DataSeeder(
             await SeedDataAsync<AssignmentSubmission>(root, options);
             await SeedDataAsync<RedeemCode>(root, options);
             await SeedDataAsync<GeneratedCode>(root, options);
-            await SeedDataAsync<TeacherPreferences>(root, options); 
+            await SeedDataAsync<TeacherPreferences>(root, options);
 
             await SeedDataAsync<Payment>(root, options);
         }

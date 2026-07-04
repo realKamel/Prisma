@@ -31,7 +31,7 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": true
+      "IsDeleted": false
     },
     {
       "Id": 4,
@@ -42,7 +42,7 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": true
+      "IsDeleted": false
     },
     {
       "Id": 5,
@@ -53,11 +53,33 @@
       "CreatedBy": null,
       "UpdatedBy": null,
       "DeletedBy": null,
-      "IsDeleted": true
+      "IsDeleted": false
     },
     {
       "Id": 6,
       "Title": "الصف الثالث الثانوي",
+      "CreatedAt": "2025-11-30T10:32:00.195Z",
+      "UpdatedAt": "2026-02-12T09:55:00.195Z",
+      "DeletedAt": "2025-10-14T06:55:00.195Z",
+      "CreatedBy": null,
+      "UpdatedBy": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+        {
+      "Id": 7,
+      "Title": "الصف الرابع الثانوي",
+      "CreatedAt": "2025-11-30T10:32:00.195Z",
+      "UpdatedAt": "2026-02-12T09:55:00.195Z",
+      "DeletedAt": "2025-10-14T06:55:00.195Z",
+      "CreatedBy": null,
+      "UpdatedBy": null,
+      "DeletedBy": null,
+      "IsDeleted": true
+    },
+        {
+      "Id": 8,
+      "Title": "الصف الخامس الثانوي",
       "CreatedAt": "2025-11-30T10:32:00.195Z",
       "UpdatedAt": "2026-02-12T09:55:00.195Z",
       "DeletedAt": "2025-10-14T06:55:00.195Z",
@@ -111,16 +133,112 @@
   ],
   "AcademicYearTeacher": [
     {
-      "AcademicYearsId": 1,
-      "TeachersId": "b90a811d-98a4-4353-81a5-cc75e32699b2"
+      "Id": 1,
+      "AcademicYearId": 1,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 2,
-      "TeachersId": "b90a811d-98a4-4353-81a5-cc75e32699b2"
+      "Id": 2,
+      "AcademicYearId": 2,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 1,
-      "TeachersId": "2471cfe8-e264-4c80-8ebf-82ab79a2dd22"
+      "Id": 3,
+      "AcademicYearId": 3,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 4,
+      "AcademicYearId": 4,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 5,
+      "AcademicYearId": 5,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 6,
+      "AcademicYearId": 6,
+      "TeacherId": "b90a811d-98a4-4353-81a5-cc75e32699b2",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 7,
+      "AcademicYearId": 4,
+      "TeacherId": "019ec7b3-6fa9-7a51-b345-33c889a47e38",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 8,
+      "AcademicYearId": 5,
+      "TeacherId": "019ec7b3-6fa9-7a51-b345-33c889a47e38",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 9,
+      "AcademicYearId": 6,
+      "TeacherId": "019ec7b3-6fa9-7a51-b345-33c889a47e38",
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     }
   ],
   "Lesson": [
@@ -335,32 +453,280 @@
   ],
   "AcademicYearLesson": [
     {
-      "AcademicYearsId": 1,
-      "LessonsId": 1
+      "Id": 1,
+      "AcademicYearId": 1,
+      "LessonId": 1,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 1,
-      "LessonsId": 2
+      "Id": 2,
+      "AcademicYearId": 1,
+      "LessonId": 2,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 1,
-      "LessonsId": 3
+      "Id": 3,
+      "AcademicYearId": 1,
+      "LessonId": 3,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 2,
-      "LessonsId": 4
+      "Id": 4,
+      "AcademicYearId": 1,
+      "LessonId": 4,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 2,
-      "LessonsId": 5
+      "Id": 5,
+      "AcademicYearId": 2,
+      "LessonId": 4,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 2,
-      "LessonsId": 6
+      "Id": 6,
+      "AcademicYearId": 2,
+      "LessonId": 5,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     },
     {
-      "AcademicYearsId": 1,
-      "LessonsId": 4
+      "Id": 7,
+      "AcademicYearId": 2,
+      "LessonId": 6,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 8,
+      "AcademicYearId": 3,
+      "LessonId": 1,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 9,
+      "AcademicYearId": 3,
+      "LessonId": 5,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 10,
+      "AcademicYearId": 3,
+      "LessonId": 7,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 11,
+      "AcademicYearId": 3,
+      "LessonId": 8,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 12,
+      "AcademicYearId": 4,
+      "LessonId": 2,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 13,
+      "AcademicYearId": 4,
+      "LessonId": 3,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 14,
+      "AcademicYearId": 4,
+      "LessonId": 6,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 15,
+      "AcademicYearId": 4,
+      "LessonId": 7,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 16,
+      "AcademicYearId": 5,
+      "LessonId": 1,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 17,
+      "AcademicYearId": 5,
+      "LessonId": 4,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 18,
+      "AcademicYearId": 5,
+      "LessonId": 5,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 19,
+      "AcademicYearId": 5,
+      "LessonId": 8,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 20,
+      "AcademicYearId": 6,
+      "LessonId": 3,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 21,
+      "AcademicYearId": 6,
+      "LessonId": 6,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 22,
+      "AcademicYearId": 6,
+      "LessonId": 7,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
+    },
+    {
+      "Id": 23,
+      "AcademicYearId": 6,
+      "LessonId": 8,
+      "CreatedAt": "2025-09-01T08:00:00Z",
+      "CreatedBy": null,
+      "UpdatedAt": "2025-09-01T08:00:00Z",
+      "UpdatedBy": null,
+      "DeletedAt": null,
+      "DeletedBy": null,
+      "IsDeleted": false
     }
   ],
   "Section": [
@@ -3907,8 +4273,7 @@
       "TeacherLandingSettings": null,
       "PasswordResetConfirmed": false
     }
-  ]
-,
+  ],
   "Quiz": [
     {
       "Id": 1,
@@ -3989,12 +4354,5 @@
   ],
   "AspNetUserClaims": [],
   "AspNetUserLogins": [],
-  "AspNetUserTokens": [],
-  "TeacherPreferences": [
-    {
-      "Id": "fbc51c24-b6ac-4713-87ba-57c47c8d1cd1",
-      "AccentColor": "Purple"
-       
-    }
-  ]
+  "AspNetUserTokens": []
 }

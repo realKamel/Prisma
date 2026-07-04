@@ -66,7 +66,7 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
             .Where(e => e.CreatedAt >= now.AddDays(-7))
             .GroupBy(e => e.CreatedAt!.Value.DayOfWeek)
             .Select(g =>
-                new EarningEntry(g.Key.ToString(), g.Sum(d => d.Payment.Amount)))
+                new EarningEntry(g.Key.ToString(), g.Sum(d => d.Payment?.Amount ?? 0)))
             .ToArray();
 
         var completedThisMonth = sixtyDayEnrollments

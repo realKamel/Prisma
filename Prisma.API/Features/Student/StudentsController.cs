@@ -9,6 +9,7 @@ using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
 using Prisma.Application.Features.Students.Commands.UpdateStudentProfileCommand;
 using Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
+using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Application.Features.Students.Queries.GetStudentProfileQuery;
 
 namespace Prisma.API.Features.Student;
@@ -74,6 +75,14 @@ public class StudentsController(ISender mediator) : ApiController
     public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
+        return Ok(result);
+    }
+    [HttpGet("payments/history")]
+    [ProducesResponseType<Result<StudentPaymentHistoryResponseDto>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<StudentPaymentHistoryResponseDto>>(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> GetPaymentHistory(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetStudentPaymentHistoryQuery(), cancellationToken);
         return Ok(result);
     }
 }

@@ -4,5 +4,5 @@ public enum EnrollmentMethod
 {
     OnlinePayment = 0,
     RedeemCode = 1,
-    TeacherGrant = 2
+    TeacherGrant = 2,
 }

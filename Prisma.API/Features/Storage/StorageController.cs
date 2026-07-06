@@ -2,11 +2,11 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Features.Storage.Commands.DeleteFile;
-using Prisma.Application.Features.Storage.Commands.GetDownloadUrl;
 using Prisma.Application.Features.Storage.Commands.UploadFile;
+using Prisma.Application.Features.Storage.Queries.GetDownloadUrl;
 
 
-namespace Prisma.API.Features.Student;
+namespace Prisma.API.Features.Storage;
 
 public class StorageController(IMediator mediator) : ApiController
 {

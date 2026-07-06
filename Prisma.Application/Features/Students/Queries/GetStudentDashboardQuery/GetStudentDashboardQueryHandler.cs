@@ -16,7 +16,8 @@ namespace Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 
 public class GetStudentDashboardQueryHandler(
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IStorageService storageService)
     : IRequestHandler<GetStudentDashboardQuery, Result<GetStudentDashboardResponse>>
 {
     public async Task<Result<GetStudentDashboardResponse>> Handle(
@@ -103,7 +104,8 @@ public class GetStudentDashboardQueryHandler(
                 TeacherInitial = teacher[0].ToString(),
                 CurrentChapter = currentChapter,
                 TotalChapters = lesson.Sections.Count,
-                PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty
+                PosterUrl = lesson.ImageThumbnailUrl !=null?
+                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty
             };
         }
 
@@ -124,7 +126,8 @@ public class GetStudentDashboardQueryHandler(
 
                 Duration = lesson.Duration,
 
-                PosterUrl = lesson.ImageThumbnailUrl ?? string.Empty,
+                PosterUrl = lesson.ImageThumbnailUrl !=null?
+                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,
                 Status = status.ToString().ToLower(),
                 ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
                                      ? (int)(enrollment.ExpiresAt.Value - now).TotalDays

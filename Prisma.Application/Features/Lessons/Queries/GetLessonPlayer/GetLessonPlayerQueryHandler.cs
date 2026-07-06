@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
 public class GetLessonPlayerQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
+    ICurrentUserService currentUserService,
+    IVideoStorageService videoStorageService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
 {
     public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request,
         CancellationToken cancellationToken)
@@ -43,7 +37,24 @@ public class GetLessonPlayerQueryHandler(
         var expiryDays = enrollment?.ExpiresAt is not null
             ? (int)(enrollment.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
             : 0;
+        var sections = new List<SectionDto>();
+        foreach (var s in lesson.Sections ?? [])
+        {
+            var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
+            var contentUrl = s.PlaybackId != null
+                ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)
+                : null;
 
+            sections.Add(new SectionDto
+            {
+                Id = s.SortOrder,
+                Title = s.Title ?? string.Empty,
+                Duration = s.Duration.ToString(@"hh\:mm\:ss"),
+                IsCompleted = progress?.IsCompleted ?? false,
+                ContentUrl = contentUrl,
+                Progress = progress?.IsCompleted == true ? 100 : 0
+            });
+        }
         var result = new LessonPlayerResult
         {
             Id = lesson.Id,
@@ -90,19 +101,7 @@ public class GetLessonPlayerQueryHandler(
                     DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
                 },
 
-            Sections = lesson.Sections?.Select(s =>
-            {
-                var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
-                return new SectionDto
-                {
-                    Id = s.SortOrder,
-                    Title = s.Title ?? string.Empty,
-                    Duration = s.Duration.ToString(@"hh\:mm\:ss"),
-                    IsCompleted = progress?.IsCompleted ?? false,
-                    ContentUrl = s.ContentURL,
-                    Progress = progress?.IsCompleted == true ? 100 : 0
-                };
-            }).ToList() ?? new List<SectionDto>()
+            Sections = sections
         };
 
         return Result<LessonPlayerResult>.Success(result);

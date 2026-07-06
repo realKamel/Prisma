@@ -18,6 +18,8 @@ public record UpdateLessonDetailsCommand(
     List<int> AcademicYearIds ,
     List<string> Outcomes,
     IFormFile? ImageFile
-) : IRequest<Result<string>>;
+) : IRequest<Result<UpdateLessonResponse>>;
+public record UpdateLessonResponse(List<NewSectionResult> NewSections);
+public record NewSectionResult(int SectionId, int ChapterIndex);
 
 public record ChapterCommandDto(string Name, string? VideoFileName);

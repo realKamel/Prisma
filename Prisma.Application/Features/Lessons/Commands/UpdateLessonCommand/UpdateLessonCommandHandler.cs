@@ -18,9 +18,9 @@ public class UpdateLessonDetailsCommandHandler(
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
     IStorageService storageService)
-    : IRequestHandler<UpdateLessonDetailsCommand, Result<string>>
+    : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
 {
-    public async Task<Result<string>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
@@ -31,7 +31,7 @@ public class UpdateLessonDetailsCommandHandler(
             throw new UnauthorizedException("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant)  && !roles.Contains(AppRoles.Admin))
+        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
             throw new UnauthorizedException("Only teachers, assistants, and admins can modify lesson structures.");
         var storageKeysToDelete = new List<string>();
 
@@ -50,6 +50,7 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
         lesson.Outcomes = request.Outcomes ?? new List<string>();
 
+        var newSections = new List<(Section Section, int ChapterIndex)>();
         if (request.Chapters != null)
         {
             var existingSections = lesson.Sections.ToList();
@@ -59,25 +60,28 @@ public class UpdateLessonDetailsCommandHandler(
                 lesson.Sections.Remove(s); // TODO trigger storage deletion here
 
             int order = 1;
+            int chapterIndex = 0;
             foreach (var ch in request.Chapters)
             {
                 var section = existingSections.FirstOrDefault(x => x.ContentURL == ch.VideoFileName);
 
                 if (section is null)
                 {
-                    lesson.Sections.Add(new Section
+                    var newSection = new Section
                     {
                         Title = ch.Name,
                         ContentURL = ch.VideoFileName,
                         SortOrder = order++
-                    });
-                    // TODO new section -> trigger video upload flow here
+                    };
+                    lesson.Sections.Add(newSection);
+                    newSections.Add((newSection, chapterIndex));
                 }
                 else
                 {
                     section.Title = ch.Name;
                     section.SortOrder = order++;
                 }
+                chapterIndex++;
             }
         }
 
@@ -168,6 +172,8 @@ public class UpdateLessonDetailsCommandHandler(
                 // TODO log
             }
         }
-        return Result<string>.Success("Lesson structure updated successfully");
+        return Result<UpdateLessonResponse>.Success(
+            new UpdateLessonResponse(
+                newSections.Select(x => new NewSectionResult(x.Section.Id, x.ChapterIndex)).ToList()));
     }
 }

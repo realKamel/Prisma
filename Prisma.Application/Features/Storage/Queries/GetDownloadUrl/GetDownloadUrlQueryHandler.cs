@@ -1,7 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 
-namespace Prisma.Application.Features.Storage.Commands.GetDownloadUrl;
+namespace Prisma.Application.Features.Storage.Queries.GetDownloadUrl;
 
 public class GetDownloadUrlQueryHandler(IStorageService storage) : IRequestHandler<GetDownloadUrlQuery, string>
 {

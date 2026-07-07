@@ -11,7 +11,8 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 public class GetLessonPlayerQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IVideoStorageService videoStorageService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
+    IVideoStorageService videoStorageService,
+    IStorageService storageService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
 {
     public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request,
         CancellationToken cancellationToken)
@@ -48,13 +49,35 @@ public class GetLessonPlayerQueryHandler(
             sections.Add(new SectionDto
             {
                 Id = s.SortOrder,
+                SectionId = s.Id,
                 Title = s.Title ?? string.Empty,
                 Duration = s.Duration.ToString(@"hh\:mm\:ss"),
                 IsCompleted = progress?.IsCompleted ?? false,
                 ContentUrl = contentUrl,
-                Progress = progress?.IsCompleted == true ? 100 : 0
+                Progress = progress?.IsCompleted == true ? 100 : 0,
+                WatchedSeconds = progress?.WatchedSeconds ?? 0
             });
         }
+        
+        var materials = new List<MaterialDto>();
+        foreach (var m in lesson.LessonMaterials ?? [])
+        {
+            materials.Add(new MaterialDto
+            {
+                Title = m.Title ?? string.Empty,
+                DownloadUrl = m.DownloadUrl != null
+                    ? await storageService.GetDownloadUrlAsync("prisma", m.DownloadUrl)
+                    : string.Empty,
+                Type = (int)m.Type switch
+                {
+                    0 => "pdf",
+                    1 => "video",
+                    2 => "audio",
+                    _ => "unknown"
+                }
+            });
+        }
+
         var result = new LessonPlayerResult
         {
             Id = lesson.Id,
@@ -67,19 +90,7 @@ public class GetLessonPlayerQueryHandler(
 
             ValidityDays = expiryDays > 0 ? expiryDays : 30,
             Outcomes = lesson.Outcomes?.ToList() ?? new List<string>(),
-            Materials = lesson.LessonMaterials?.Select(m => new MaterialDto
-            {
-                Title = m.Title ?? string.Empty,
-                DownloadUrl = m.DownloadUrl ?? string.Empty,
-
-                Type = ((int)m.Type) switch
-                {
-                    0 => "pdf",
-                    1 => "video",
-                    2 => "audio",
-                    _ => "unknown"
-                }
-            }).ToList() ?? new List<MaterialDto>(),
+            Materials = materials,
 
 
             Quiz = quiz is null
@@ -88,8 +99,8 @@ public class GetLessonPlayerQueryHandler(
                 {
                     Id = quiz.Id,
                     QuestionsCount = quiz.Questions?.Count ?? 0,
-                    DurationMinutes = (int)(quiz.TimeInMinutes.TotalMinutes),
-                    PassingScore = 0
+                    DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
+                    PassingScore = (int)quiz.TotalDegree / 2
                 },
 
             Assignment = assignment is null
@@ -97,7 +108,8 @@ public class GetLessonPlayerQueryHandler(
                 : new AssignmentDto
                 {
                     Id = assignment.Id,
-                    ContentURL = assignment.ContentURL ?? string.Empty,
+                    ContentURL = assignment.ContentURL != null ?
+                    await storageService.GetDownloadUrlAsync("prisma", assignment.ContentURL) : string.Empty,
                     DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
                 },
 

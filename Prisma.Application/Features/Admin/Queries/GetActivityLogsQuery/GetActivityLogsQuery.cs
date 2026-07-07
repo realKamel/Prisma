@@ -25,5 +25,6 @@ public record ActivityEventDto(
     string Role,
     string Action,
     string TableName,
-    string EntityId
+    string EntityId,
+    string? Detail
 );

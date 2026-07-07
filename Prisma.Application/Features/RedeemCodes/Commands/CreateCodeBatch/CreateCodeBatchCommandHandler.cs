@@ -7,6 +7,7 @@ using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
+using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 namespace Prisma.Application.Features.RedeemCodes.Commands.CreateCodeBatch;
 
 internal class CreateCodeBatchCommandHandler(
@@ -45,7 +46,7 @@ internal class CreateCodeBatchCommandHandler(
 
         var generatedCodes = GenerateUniqueCodes(request.Count, prefix);
 
-        var batch = new RedeemCode
+        var batch = new RedeemCodeEntity
         {
             LessonId = request.LessonId,
             AcademicYearId = request.AcademicYearId,
@@ -57,7 +58,7 @@ internal class CreateCodeBatchCommandHandler(
                 .ToList(),
         };
 
-        var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
+        var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
         batchRepo.Add(batch);
         await unitOfWork.SaveChangesAsync(ct);
 

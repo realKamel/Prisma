@@ -2,6 +2,7 @@
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
@@ -30,8 +31,10 @@ public class GetLessonPlayerQueryHandler(
 
         var enrollment = lesson.Enrollments?.FirstOrDefault(e => e.StudentId == studentId.Value);
         var quiz = lesson.Quiz;
-        var assignment = lesson.Assignment;
+        var attempt = quiz?.Attempts?.FirstOrDefault(a => a.StudentId == studentId.Value);
 
+        var assignment = lesson.Assignment;
+        var submission = assignment?.Submissions?.FirstOrDefault(a => a.StudentId == studentId.Value);
         const string teacher = "أ. أحمد مصطفى";
         const string subject = "لغه انجليزيه";
 
@@ -58,7 +61,7 @@ public class GetLessonPlayerQueryHandler(
                 WatchedSeconds = progress?.WatchedSeconds ?? 0
             });
         }
-        
+
         var materials = new List<MaterialDto>();
         foreach (var m in lesson.LessonMaterials ?? [])
         {
@@ -92,16 +95,14 @@ public class GetLessonPlayerQueryHandler(
             Outcomes = lesson.Outcomes?.ToList() ?? new List<string>(),
             Materials = materials,
 
-
-            Quiz = quiz is null
-                ? null
-                : new QuizDto
-                {
-                    Id = quiz.Id,
-                    QuestionsCount = quiz.Questions?.Count ?? 0,
-                    DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
-                    PassingScore = (int)quiz.TotalDegree / 2
-                },
+            Quiz = quiz is null ? null : new QuizDto
+            {
+                Id = quiz.Id,
+                QuestionsCount = quiz.Questions?.Count ?? 0,
+                DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
+                PassingScore = (int)quiz.TotalDegree,
+                IsAttempted = attempt != null,
+            },
 
             Assignment = assignment is null
                 ? null
@@ -110,7 +111,8 @@ public class GetLessonPlayerQueryHandler(
                     Id = assignment.Id,
                     ContentURL = assignment.ContentURL != null ?
                     await storageService.GetDownloadUrlAsync("prisma", assignment.ContentURL) : string.Empty,
-                    DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
+                    DueDate = assignment.DueDate.ToString("yyyy-MM-dd"),
+                    FileName = submission != null ? submission.Title! : string.Empty
                 },
 
             Sections = sections

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
+using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
@@ -173,6 +174,12 @@ public class LessonsController(IMediator _mediator) : ApiController
     IFormFile file, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
+        return Ok(result);
+    }
+    [HttpDelete("{lessonId:int}/assignment/submission")]
+    public async Task<IActionResult> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
         return Ok(result);
     }
 }

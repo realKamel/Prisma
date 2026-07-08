@@ -43,6 +43,7 @@ public class QuizDto
     public int QuestionsCount { get; set; }
     public int DurationMinutes { get; set; }
     public int PassingScore { get; set; }
+    public bool IsAttempted { get; set; }
 }
 
 public class AssignmentDto
@@ -50,8 +51,8 @@ public class AssignmentDto
     public int Id { get; set; }
     public string ContentURL { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
+    public string FileName { get; set;} = string.Empty;
 }
-
 
 public class SectionDto
 {

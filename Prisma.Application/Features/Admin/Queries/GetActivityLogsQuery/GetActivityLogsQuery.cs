@@ -5,11 +5,12 @@ using Prisma.Application.Common.Responses.Generic;
 
 namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
 
-public record GetActivityLogsQuery(int Take = 20, string Role = "all") : IRequest<Result<ActivityLogResponseDto>>;
+public record GetActivityLogsQuery(int Skip = 0, int Take = 20) : IRequest<Result<ActivityLogResponseDto>>;
 
 public record ActivityLogResponseDto(
-    ActivityLogStatsDto Stats,
-    List<ActivityEventDto> Events
+    ActivityLogStatsDto? Stats,
+    List<ActivityEventDto> Events,
+    bool HasMore
 );
 
 public record ActivityLogStatsDto(

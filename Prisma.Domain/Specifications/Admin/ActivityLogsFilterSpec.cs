@@ -1,16 +1,16 @@
-﻿using System;
-using Ardalis.Specification;
-using Prisma.Domain.Entities.UserAggregate;
+﻿using Ardalis.Specification; 
+using Prisma.Domain.Entities.UserAggregate; 
 
 namespace Prisma.Domain.Specifications.AuditLogs;
 
-public sealed class ActivityLogsFilterSpec : Specification<AuditLog>
+
+public class ActivityLogsFilterSpec : Specification<AuditLog>
 {
-    public ActivityLogsFilterSpec(int take)
+    public ActivityLogsFilterSpec(int skip, int take)
     {
         Query
-            .OrderByDescending(l => l.CreatedAt)
-            .Take(take)
-            .AsNoTracking();
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip(skip)
+            .Take(take);
     }
 }

@@ -24,12 +24,17 @@ public class GetActivityLogsQueryHandler(
     {
         var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
-        var spec = new ActivityLogsFilterSpec(request.Take);
+        // Fetch one extra record so we know whether there's a next page,
+        // without needing a separate COUNT() query.
+        var spec = new ActivityLogsFilterSpec(request.Skip, request.Take + 1);
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);
+
+        bool hasMore = logs.Count > request.Take;
+        var pageLogs = hasMore ? logs.Take(request.Take).ToList() : logs.ToList();
 
         var eventItems = new List<ActivityEventDto>();
 
-        foreach (var log in logs)
+        foreach (var log in pageLogs)
         {
             string userRole = "system";
             string userNameDisplay = "النظام";
@@ -52,12 +57,6 @@ public class GetActivityLogsQueryHandler(
                 }
             }
 
-            if (!string.Equals(request.Role, "all", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(userRole, request.Role, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
             eventItems.Add(new ActivityEventDto(
                 CreatedAt: log.CreatedAt ?? DateTimeOffset.UtcNow,
                 User: userNameDisplay,
@@ -69,24 +68,28 @@ public class GetActivityLogsQueryHandler(
             ));
         }
 
-        int totalEvents = eventItems.Count;
+        ActivityLogStatsDto? statsDto = null;
 
-        var todayDate = DateTimeOffset.UtcNow.Date;
-        int todayEvents = eventItems.Count(e => e.CreatedAt.Date == todayDate);
+        // Stats are only computed on the first page (Skip == 0) so the
+        // frontend keeps the original numbers as more pages get appended.
+        // TODO: ideally this should come from a dedicated aggregate query
+        // over the full AuditLog table rather than just the fetched page.
+        if (request.Skip == 0)
+        {
+            var todayDate = DateTimeOffset.UtcNow.Date;
 
-        int activeUsersCount = eventItems.Select(e => e.User).Distinct().Count();
-
-        int alertsCount = eventItems.Count(e => e.Action.Contains("DELETE", StringComparison.OrdinalIgnoreCase) || e.Action.Contains("REVOKE", StringComparison.OrdinalIgnoreCase));
-
-        var statsDto = new ActivityLogStatsDto(
-            TotalEvents: totalEvents,
-            TodayEvents: todayEvents,
-            ActiveUsers: activeUsersCount,
-            Alerts: alertsCount
-        );
+            statsDto = new ActivityLogStatsDto(
+                TotalEvents: eventItems.Count,
+                TodayEvents: eventItems.Count(e => e.CreatedAt.Date == todayDate),
+                ActiveUsers: eventItems.Select(e => e.User).Distinct().Count(),
+                Alerts: eventItems.Count(e =>
+                    e.Action.Contains("DELETE", StringComparison.OrdinalIgnoreCase) ||
+                    e.Action.Contains("REVOKE", StringComparison.OrdinalIgnoreCase))
+            );
+        }
 
         return Result<ActivityLogResponseDto>.Success(
-            new ActivityLogResponseDto(statsDto, eventItems)
+            new ActivityLogResponseDto(statsDto, eventItems, hasMore)
         );
     }
 

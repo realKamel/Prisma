@@ -17,7 +17,8 @@ public class UpdateLessonDetailsCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
-    IStorageService storageService)
+    IStorageService storageService,
+    IVideoStorageService videoStorageService)
     : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
 {
     public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
@@ -34,7 +35,7 @@ public class UpdateLessonDetailsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
             throw new UnauthorizedException("Only teachers, assistants, and admins can modify lesson structures.");
         var storageKeysToDelete = new List<string>();
-
+        var assetsToDelete = new List<string>();
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var spec = new UpdateLessonDetailsSpecification(request.Id);
@@ -57,7 +58,11 @@ public class UpdateLessonDetailsCommandHandler(
             var incomingUrls = request.Chapters.Select(ch => ch.VideoFileName).ToHashSet();
 
             foreach (var s in existingSections.Where(s => !incomingUrls.Contains(s.ContentURL)))
-                lesson.Sections.Remove(s); // TODO trigger storage deletion here
+            {
+                lesson.Sections.Remove(s);
+                if(s.AssetId!=null)
+                    assetsToDelete.Add(s.AssetId);
+            } 
 
             int order = 1;
             int chapterIndex = 0;
@@ -161,6 +166,17 @@ public class UpdateLessonDetailsCommandHandler(
         }
         lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        foreach (var asset in assetsToDelete)
+        {
+            try
+            {
+                await videoStorageService.DeleteVideoAsync(asset,cancellationToken);
+            }
+            catch
+            {
+                // TODO log
+            }
+        }
         foreach (var key in storageKeysToDelete)
         {
             try

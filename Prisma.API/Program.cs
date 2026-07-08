@@ -1,5 +1,7 @@
+using System.Text;
 using Prisma.API.Extensions;
 using Prisma.API.Middlewares;
+using Prisma.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
@@ -25,6 +27,10 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
+
+            builder.AddAiAgents();
+
+            builder.AddWorkflows();
 
             var app = builder.Build();
 
@@ -60,6 +66,26 @@ public class Program
 
             app.UseRecurringJobs();
 
+            app.MapHealthChecks();
+            app.MapGet("/sse", async (HttpContext ctx, CancellationToken ct) =>
+            {
+                ctx.Response.Headers.Append("Content-Type", "text/event-stream");
+                ctx.Response.Headers.Append("Cache-Control", "no-cache");
+                ctx.Response.Headers.Append("Connection", "keep-alive");
+
+                await ctx.Response.WriteAsync("data: Connected\n\n", cancellationToken: ct);
+                await ctx.Response.Body.FlushAsync(ct);
+
+                // Simulate real-time events
+                for (int i = 1; i <= 10 && !ct.IsCancellationRequested; i++)
+                {
+                    await Task.Delay(1000, ct);
+                    var message = $"data: {{\"time\":\"{DateTime.Now:HH:mm:ss}\",\"count\":{i}}}\n\n";
+                    await ctx.Response.WriteAsync(message, Encoding.UTF8, cancellationToken: ct);
+                    await ctx.Response.Body.FlushAsync(ct);
+                }
+            });
+            app.MapOpenAiResponses(app.Environment);
             app.MapControllers();
 
             await app.RunAsync();

@@ -10,6 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Agents.AI.DevUI" Version="1.13.0-preview.260703.1" />
+    <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.13.0-preview.260703.1" />
+    <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.13.0-alpha.260703.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
       <PrivateAssets>all</PrivateAssets>
@@ -34,6 +43,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj" />
     <ProjectReference Include="..\Prisma.Infrastructure\Prisma.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\Ai\" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Features.Storage.Commands.DeleteVideo;
 using Prisma.Application.Features.Storage.Commands.MuxWebhook;
+using Prisma.Application.Features.Storage.Queries.GetAudioUrl;
 using Prisma.Application.Features.Storage.Queries.GetUploadUrl;
 using Prisma.Application.Features.Storage.Queries.GetVideoUrl;
 
@@ -24,7 +25,12 @@ public class VideoStorageController(IMediator mediator) : ApiController
         var url = await mediator.Send(new GetVideoUrlQuery(objectKey));
         return Ok(url);
     }
-
+    [HttpGet("audio-url")]
+    public async Task<IActionResult> GetAudioUrl([FromQuery] string objectKey)
+    {
+        var url = await mediator.Send(new GetAudioUrlQuery(objectKey));
+        return Ok(url);
+    }
     [HttpDelete("delete")]
     public async Task<IActionResult> Delete([FromQuery] string objectKey, CancellationToken cancellationToken)
     {

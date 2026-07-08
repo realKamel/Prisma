@@ -26,7 +26,14 @@ public class MuxVideoStorageService(IConfiguration configuration, IMuxTokenServi
             NewAssetSettings = new CreateAssetRequest
             {
                 PlaybackPolicies = new List<PlaybackPolicy> { PlaybackPolicy.Signed },
-                Passthrough = sectionId.ToString()
+                Passthrough = sectionId.ToString(),
+                StaticRenditions = new List<CreateStaticRenditionRequest>
+                {
+                    new CreateStaticRenditionRequest
+                    {
+                        Resolution = CreateStaticRenditionRequest.ResolutionEnum.AudioOnly
+                    }
+                }
             },
             CorsOrigin = "*"
         });
@@ -39,7 +46,11 @@ public class MuxVideoStorageService(IConfiguration configuration, IMuxTokenServi
         var token = muxTokenService.GeneratePlaybackToken(playbackId);
         return Task.FromResult($"https://stream.mux.com/{playbackId}.m3u8?token={token}");
     }
-
+    public Task<string> GetAudioUrlAsync(string playbackId)
+    {
+        var token = muxTokenService.GeneratePlaybackToken(playbackId);
+        return Task.FromResult($"https://stream.mux.com/{playbackId}/audio.m4a?token={token}");
+    }
     public async Task DeleteVideoAsync(string objectKey, CancellationToken cancellationToken = default)
     {
         await _assetsApi.DeleteAssetAsync(objectKey);

@@ -31,9 +31,9 @@ public class MuxTokenService(IConfiguration configuration) : IMuxTokenService
         var token = new JwtSecurityToken(
             claims: new[]
             {
-                new Claim("sub", playbackId),
-                new Claim("aud", "v"),
-                new Claim("kid", keyId),
+            new Claim("sub", playbackId),
+            new Claim("aud", "v"),
+            new Claim("kid", keyId),
             },
             expires: DateTime.UtcNow.AddHours(expiryHours),
             signingCredentials: signingCredentials

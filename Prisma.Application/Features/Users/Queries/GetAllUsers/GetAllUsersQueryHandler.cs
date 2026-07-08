@@ -17,10 +17,10 @@ public class GetAllUsersQueryHandler(IUnitOfWork unitOfWork)
         var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
         var adminRepo     = unitOfWork.GetOrCreateRepository<Admin, Guid>();
 
-        var students   = await studentRepo.ListAsync(cancellationToken);
-        var teachers   = await teacherRepo.ListAsync(cancellationToken);
-        var assistants = await assistantRepo.ListAsync(cancellationToken);
-        var admins     = await adminRepo.ListAsync(cancellationToken);
+        var students   = (await studentRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var teachers   = (await teacherRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var assistants = (await assistantRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var admins     = (await adminRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
 
         var result = new List<UserListItemDto>();
         result.AddRange(students.Select(u => Map(u, AppRoles.Student)));

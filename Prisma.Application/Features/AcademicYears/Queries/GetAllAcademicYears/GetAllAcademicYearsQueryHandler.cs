@@ -7,7 +7,7 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 
-internal class GetAllAcademicYearsQueryHandler(IUnitOfWork unitOfWork)
+public class GetAllAcademicYearsQueryHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetAllAcademicYearsQuery, Result<List<AcademicYearOptionDto>>>
 {
     public async Task<Result<List<AcademicYearOptionDto>>> Handle(GetAllAcademicYearsQuery request, CancellationToken ct)

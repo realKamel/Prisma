@@ -40,7 +40,6 @@ public class GetStudentPaymentHistoryQueryHandler(
             bool hasCompletedPayment = enrollment.Payment?.Status == PaymentStatus.Completed;
             bool isTeacherGrant = enrollment.EnrollmentMethod == EnrollmentMethod.TeacherGrant;
 
-            // enrollment مالوش استحقاق حقيقي (مش كود، ومفيش Payment مكتمل) — يتجاهل
             if (!isPaidViaCode && !hasCompletedPayment && !isTeacherGrant)
                 continue;
 

@@ -18,9 +18,9 @@ public class CreateLessonDetailsCommandHandler(
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
     IStorageService storageService)
-    : IRequestHandler<CreateLessonDetailsCommand, Result<int>>
+    : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
-    public async Task<Result<int>> Handle(CreateLessonDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetailsCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
@@ -100,7 +100,9 @@ public class CreateLessonDetailsCommandHandler(
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         lessonRepository.Add(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        return Result<int>.Success(lesson.Id);
+        List<int> sectionIds = lesson.Sections.Select(s=>s.Id).ToList();
+        var response = new CreateLessonResponse(lesson.Id, sectionIds); 
+        return Result<CreateLessonResponse>.Success(response);
     }
 }
 

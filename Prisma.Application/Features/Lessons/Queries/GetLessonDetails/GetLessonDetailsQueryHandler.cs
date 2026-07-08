@@ -14,14 +14,15 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
 public class GetLessonDetailsQueryHandler(
     IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService)
+    ICurrentUserService _currentUserService,
+    IStorageService storageService)
     : IRequestHandler<GetLessonDetailsQuery, Result<LessonDetailsDto>>
 {
     public async Task<Result<LessonDetailsDto>> Handle(GetLessonDetailsQuery request,
         CancellationToken cancellationToken)
     {
         Guid? currentStudentId = _currentUserService.UserId;
-        if(currentStudentId is null)
+        if (currentStudentId is null)
             throw new UnauthorizedException("User is not authenticated");
 
         var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
@@ -36,7 +37,7 @@ public class GetLessonDetailsQueryHandler(
         int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
-        bool isPrerequisiteCompleted = true; 
+        bool isPrerequisiteCompleted = true;
 
         if (lesson.Prerequisite != null)
         {
@@ -51,7 +52,8 @@ public class GetLessonDetailsQueryHandler(
         var lessonDto = new LessonDetailsDto
         {
             Id = lesson.Id,
-            Url=lesson.ImageThumbnailUrl ?? "",
+            Url = lesson.ImageThumbnailUrl != null ?
+                storageService.GetPublicUrl("prisma", lesson.ImageThumbnailUrl) : string.Empty,
             Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",
@@ -67,7 +69,7 @@ public class GetLessonDetailsQueryHandler(
                 $"{(int)s.Duration.TotalMinutes} د",
                 s.IsPreview
             )).ToList() ?? [],
-            
+
             Outcomes = lesson.Outcomes?.ToList() ?? [],
             Prerequisites = lesson.Prerequisite != null
                 ? [new PrerequisiteDto(lesson.Prerequisite.Title ?? "", isPrerequisiteCompleted)]

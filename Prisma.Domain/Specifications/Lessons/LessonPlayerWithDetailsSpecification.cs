@@ -10,14 +10,15 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson>
     {
         Query.Where(lesson => lesson.Id == lessonId)
             .Include(l => l.Sections)
-            .ThenInclude(s => s.Progresses)
+                .ThenInclude(s => s.Progresses)
             .Include(l => l.Quiz)
-            .ThenInclude(q => q.Questions)
+                .ThenInclude(q => q.Questions)
+            .Include(l => l.Quiz)
+                .ThenInclude(q => q.Attempts)
             .Include(l => l.Assignment)
+                .ThenInclude(a=>a.Submissions)
             .Include(l => l.LessonMaterials)
             .Include(l => l.Enrollments)
             .AsNoTracking();
-
-
     }
 }

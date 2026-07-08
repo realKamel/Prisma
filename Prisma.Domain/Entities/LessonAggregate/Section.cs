@@ -17,4 +17,9 @@ public class Section : BaseEntity
     public TimeSpan Duration { get; set; }
 
     public bool IsPreview { get; set; } = false; // معاينه مجانيه
+
+    //video streaming
+    public string? UploadId { get; set; }
+    public string? AssetId { get; set; }
+    public string? PlaybackId { get; set; }
 }

@@ -1,23 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
 public class GetLessonPlayerQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
+    ICurrentUserService currentUserService,
+    IVideoStorageService videoStorageService,
+    IStorageService storageService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
 {
     public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request,
         CancellationToken cancellationToken)
@@ -35,14 +31,55 @@ public class GetLessonPlayerQueryHandler(
 
         var enrollment = lesson.Enrollments?.FirstOrDefault(e => e.StudentId == studentId.Value);
         var quiz = lesson.Quiz;
-        var assignment = lesson.Assignment;
+        var attempt = quiz?.Attempts?.FirstOrDefault(a => a.StudentId == studentId.Value);
 
+        var assignment = lesson.Assignment;
+        var submission = assignment?.Submissions?.FirstOrDefault(a => a.StudentId == studentId.Value);
         const string teacher = "أ. أحمد مصطفى";
         const string subject = "لغه انجليزيه";
 
         var expiryDays = enrollment?.ExpiresAt is not null
             ? (int)(enrollment.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
             : 0;
+        var sections = new List<SectionDto>();
+        foreach (var s in lesson.Sections ?? [])
+        {
+            var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
+            var contentUrl = s.PlaybackId != null
+                ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)
+                : null;
+
+            sections.Add(new SectionDto
+            {
+                Id = s.SortOrder,
+                SectionId = s.Id,
+                Title = s.Title ?? string.Empty,
+                Duration = s.Duration.ToString(@"hh\:mm\:ss"),
+                IsCompleted = progress?.IsCompleted ?? false,
+                ContentUrl = contentUrl,
+                Progress = progress?.IsCompleted == true ? 100 : 0,
+                WatchedSeconds = progress?.WatchedSeconds ?? 0
+            });
+        }
+
+        var materials = new List<MaterialDto>();
+        foreach (var m in lesson.LessonMaterials ?? [])
+        {
+            materials.Add(new MaterialDto
+            {
+                Title = m.Title ?? string.Empty,
+                DownloadUrl = m.DownloadUrl != null
+                    ? await storageService.GetDownloadUrlAsync("prisma", m.DownloadUrl)
+                    : string.Empty,
+                Type = (int)m.Type switch
+                {
+                    0 => "pdf",
+                    1 => "video",
+                    2 => "audio",
+                    _ => "unknown"
+                }
+            });
+        }
 
         var result = new LessonPlayerResult
         {
@@ -56,53 +93,29 @@ public class GetLessonPlayerQueryHandler(
 
             ValidityDays = expiryDays > 0 ? expiryDays : 30,
             Outcomes = lesson.Outcomes?.ToList() ?? new List<string>(),
-            Materials = lesson.LessonMaterials?.Select(m => new MaterialDto
+            Materials = materials,
+
+            Quiz = quiz is null ? null : new QuizDto
             {
-                Title = m.Title ?? string.Empty,
-                DownloadUrl = m.DownloadUrl ?? string.Empty,
-
-                Type = ((int)m.Type) switch
-                {
-                    0 => "pdf",
-                    1 => "video",
-                    2 => "audio",
-                    _ => "unknown"
-                }
-            }).ToList() ?? new List<MaterialDto>(),
-
-
-            Quiz = quiz is null
-                ? null
-                : new QuizDto
-                {
-                    Id = quiz.Id,
-                    QuestionsCount = quiz.Questions?.Count ?? 0,
-                    DurationMinutes = (int)(quiz.TimeInMinutes.TotalMinutes),
-                    PassingScore = 0
-                },
+                Id = quiz.Id,
+                QuestionsCount = quiz.Questions?.Count ?? 0,
+                DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
+                PassingScore = (int)quiz.TotalDegree,
+                IsAttempted = attempt != null,
+            },
 
             Assignment = assignment is null
                 ? null
                 : new AssignmentDto
                 {
                     Id = assignment.Id,
-                    ContentURL = assignment.ContentURL ?? string.Empty,
-                    DueDate = assignment.DueDate.ToString("yyyy-MM-dd")
+                    ContentURL = assignment.ContentURL != null ?
+                    await storageService.GetDownloadUrlAsync("prisma", assignment.ContentURL) : string.Empty,
+                    DueDate = assignment.DueDate.ToString("yyyy-MM-dd"),
+                    FileName = submission != null ? submission.Title! : string.Empty
                 },
 
-            Sections = lesson.Sections?.Select(s =>
-            {
-                var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
-                return new SectionDto
-                {
-                    Id = s.SortOrder,
-                    Title = s.Title ?? string.Empty,
-                    Duration = s.Duration.ToString(@"hh\:mm\:ss"),
-                    IsCompleted = progress?.IsCompleted ?? false,
-                    ContentUrl = s.ContentURL,
-                    Progress = progress?.IsCompleted == true ? 100 : 0
-                };
-            }).ToList() ?? new List<SectionDto>()
+            Sections = sections
         };
 
         return Result<LessonPlayerResult>.Success(result);

@@ -679,6 +679,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AssetId")
+                        .HasColumnType("text");
+
                     b.Property<string>("ContentURL")
                         .HasColumnType("text");
 
@@ -706,6 +709,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int>("LessonId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("PlaybackId")
+                        .HasColumnType("text");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
@@ -718,6 +724,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UploadId")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -766,6 +775,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<double>("WatchedSeconds")
+                        .HasColumnType("double precision");
 
                     b.HasKey("Id");
 

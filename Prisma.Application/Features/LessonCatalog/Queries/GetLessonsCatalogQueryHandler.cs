@@ -12,7 +12,8 @@ namespace Prisma.Application.Features.LessonCatalog.Queries;
 
 public class GetLessonsCatalogQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    IStorageService storageService)
     : IRequestHandler<GetLessonsCatalogQuery, Result<ICollection<LessonCatalogDto>>>
 {
     public async Task<Result<ICollection<LessonCatalogDto>>> Handle(GetLessonsCatalogQuery request,
@@ -80,7 +81,8 @@ public class GetLessonsCatalogQueryHandler(
             TeacherInitial = "أ",
             Subject = "اللغة الإنجليزية",
             DurationHours = (int)lesson.Duration.TotalHours,
-            ImageThumbnailUrl = lesson.ImageThumbnailUrl,
+            ImageThumbnailUrl = lesson.ImageThumbnailUrl !=null?
+                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,
             Currency = "جنيه",
         };
     }

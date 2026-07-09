@@ -154,8 +154,8 @@ public static class WebAppHelper
                 {
                     policy.WithOrigins(
                             "http://localhost:4200", // Dev Angular
-                            "https://localhost:4200") // If Angular also behind proxy
-                        //"https://PrismaEdu.com"     // Prod
+                            "https://localhost:4200", // If Angular also behind proxy
+                            "https://prismaedu.netlify.app/") // Prod
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();

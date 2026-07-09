@@ -4,7 +4,8 @@ using Prisma.Application.Features.Teachers.Queries.DTOs;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 
-public record GetTeacherDashboardStatusQuery() : IRequest<Result<GetTeacherDashboardStatusResponse>>;
+public record GetTeacherDashboardStatusQuery(Guid? TeacherId = null)
+    : IRequest<Result<GetTeacherDashboardStatusResponse>>;
 
 public record GetTeacherDashboardStatusResponse(
     Stats Stats,

@@ -27,7 +27,7 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
         {
             var search = request.Search.Trim();
             filtered = filtered.Where(a =>
-                $"{a.Student.FirstName} {a.Student.LastName}"
+                $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}"
                     .Contains(search, StringComparison.OrdinalIgnoreCase)
                 || (a.Quiz.Title ?? string.Empty)
                     .Contains(search, StringComparison.OrdinalIgnoreCase));
@@ -58,7 +58,8 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
             {
                 AttemptId = a.Id,
                 StudentId = a.StudentId,
-                StudentName = $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}".Trim(),
+                StudentName = string.Join(" ", new[] { a.Student.FirstName, a.Student.SecondName, a.Student.ThirdName, a.Student.LastName }
+                                    .Where(s => !string.IsNullOrWhiteSpace(s))),
                 QuizId = a.QuizId,
                 QuizTitle = a.Quiz.Title ?? string.Empty,
                 SubmittedAt = a.SubmittedAt,

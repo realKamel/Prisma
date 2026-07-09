@@ -14,7 +14,7 @@ public class GradingAttemptDetailDto
     public decimal? Score { get; set; }
     public decimal PenaltyScore { get; set; }
     public string Status { get; set; } = string.Empty; // "submitted" | "graded"
-    //public bool HeldForSecurityReview { get; set; }
-    //public bool HeldForManualGrading { get; set; }
+    public bool HeldForSecurityReview { get; set; }
+    public bool HeldForManualGrading { get; set; }
     public List<GradingQuestionDto> Questions { get; set; } = new();
 }

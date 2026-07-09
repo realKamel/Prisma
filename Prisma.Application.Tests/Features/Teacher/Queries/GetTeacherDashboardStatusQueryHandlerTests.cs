@@ -38,7 +38,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditRepo);
 
-        _sut = new GetTeacherDashboardStatusQueryHandler(_unitOfWork);
+        //_sut = new GetTeacherDashboardStatusQueryHandler(_unitOfWork);
 
         // Defaults so every test doesn't have to stub every repo call
         _studentRepo.CountAsync(Arg.Any<ActiveStudentSpecification>(), Arg.Any<CancellationToken>()).Returns(0);

@@ -45,7 +45,9 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
                 Title = quiz.Title ?? string.Empty,
                 Status = "locked",
                 TotalDegree = quiz.TotalDegree,
-                AvailableAt = quiz.DueDate
+                AvailableAt = quiz.DueDate,
+                TabSwitchCount  = attempt.TabSwitchCount,
+                CopyPasteAttemptCount = attempt.CopyPasteAttemptCount
             });
         }
 
@@ -61,7 +63,10 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
                 CorrectCount = attempt.Answers.Count(a => a.IsCorrect == true),
                 WrongCount = attempt.Answers.Count(a => a.IsCorrect == false),
                 PendingCount = attempt.Answers.Count(a => a.Score == null),
-                Review = null
+                Review = null,
+                TabSwitchCount = attempt.TabSwitchCount,
+                CopyPasteAttemptCount = attempt.CopyPasteAttemptCount
+
             });
         }
 
@@ -110,7 +115,10 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
             WrongCount = attempt.Answers.Count(a => a.IsCorrect == false),
             PendingCount = 0,
             GradedAt = attempt.UpdatedAt,
-            Review = review
+            Review = review,
+            TabSwitchCount = attempt.TabSwitchCount,
+            CopyPasteAttemptCount = attempt.CopyPasteAttemptCount
+
         });
     }
 }

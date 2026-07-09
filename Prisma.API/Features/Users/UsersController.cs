@@ -10,8 +10,11 @@ using Prisma.Application.Features.Users.Commands.CreateUser;
 using Prisma.Application.Features.Users.Commands.DeleteUser;
 using Prisma.Application.Features.Users.Commands.UpdateUser;
 using Prisma.Application.Features.Users.Dtos;
+using Prisma.Application.Features.Users.Queries.GetAdminProfile;
 using Prisma.Application.Features.Users.Queries.GetAllUsers;
+using Prisma.Application.Features.Users.Queries.GetAssistantProfile;
 using Prisma.Application.Features.Users.Queries.GetTeacherOptions;
+using Prisma.Application.Features.Users.Queries.GetTeacherProfile;
 using Prisma.Application.Features.Users.Queries.GetUserById;
 
 namespace Prisma.API.Features.Users;
@@ -32,6 +35,30 @@ public class UsersController(ISender mediator) : ApiController
     public async Task<ActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new GetUserByIdQuery(id), ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/teacher-dashboard")]
+    [ProducesResponseType<Result<RoleProfileDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetTeacherDashboard(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetTeacherProfileQuery(id), ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/assistant-dashboard")]
+    [ProducesResponseType<Result<RoleProfileDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetAssistantDashboard(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetAssistantProfileQuery(id), ct);
+        return Ok(result);
+    }
+
+    [HttpGet("{id:guid}/admin-dashboard")]
+    [ProducesResponseType<Result<RoleProfileDto>>(StatusCodes.Status200OK)]
+    public async Task<ActionResult> GetAdminDashboard(Guid id, CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetAdminProfileQuery(id), ct);
         return Ok(result);
     }
 

@@ -1,5 +1,5 @@
-using Ardalis.Specification;
 using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Teachers.Queries.DTOs;
@@ -12,14 +12,16 @@ using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Students;
+using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 
-public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
+public class GetTeacherDashboardStatusQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService)
     : IRequestHandler<GetTeacherDashboardStatusQuery,
         Result<GetTeacherDashboardStatusResponse>>
 {
-
     public async Task<Result<GetTeacherDashboardStatusResponse>> Handle(
         GetTeacherDashboardStatusQuery request, CancellationToken cancellationToken)
     {
@@ -29,21 +31,37 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var userRepo = unitOfWork.GetOrCreateRepository<User, Guid>();
 
-        var activeStudentsCount = await studentRepo.CountAsync(new ActiveStudentSpecification(), cancellationToken);
+        var teacherId = request.TeacherId ?? currentUserService.UserId;
+        string? teacherEmail = currentUserService.Email;
+
+        if (request.TeacherId.HasValue && request.TeacherId != currentUserService.UserId)
+        {
+            var teacherUser = await userRepo.FirstOrDefaultAsync(
+                new UserByIdSpecification(request.TeacherId.Value), cancellationToken);
+            teacherEmail = teacherUser?.Email;
+        }
+
+        // Students: Student.TeacherId is a real FK — this is a genuine filter.
+        var activeStudentsCount = teacherId.HasValue
+            ? await studentRepo.CountAsync(new ActiveStudentSpecification(teacherId.Value), cancellationToken)
+            : await studentRepo.CountAsync(new ActiveStudentSpecification(), cancellationToken);
+
         var activeLessonsCount = await lessonRepo.CountAsync(new ActiveLessonsSpecification(), cancellationToken);
 
-        var logs = (await auditRepo
-        .ListAsync(
-        new PagedLogsOrderByCreatedAtSpec<AuditLogDto>(l =>
-        l.UserEmail != SystemConstants.SystemEmail,
-        l => new AuditLogDto(l.Id, l.UserEmail, l.Action, l.TableName, l.CreatedAt),
-        0,
-        10),
-        cancellationToken)).ToArray();
+        var logsSpec = new PagedLogsOrderByCreatedAtSpec<AuditLogDto>(
+            l => l.UserEmail != SystemConstants.SystemEmail
+                 && (teacherEmail == null || l.UserEmail == teacherEmail),
+            l => new AuditLogDto(l.Id, l.UserEmail, l.Action, l.TableName, l.CreatedAt),
+            0,
+            10);
+        var logs = (await auditRepo.ListAsync(logsSpec, cancellationToken)).ToArray();
 
         var sixtyDayEnrollments = await enrollmentRepo.ListAsync(
-            new EnrollmentWithPaymentOrderByCreatedAtDesc(e => e.CreatedAt >= now.AddDays(-60)),
+            new EnrollmentWithPaymentOrderByCreatedAtDesc(e =>
+                e.CreatedAt >= now.AddDays(-60)
+                && (teacherId == null || e.Student.TeacherId == teacherId)),
             cancellationToken);
 
         var thisMonthEarning = sixtyDayEnrollments
@@ -80,7 +98,9 @@ public class GetTeacherDashboardStatusQueryHandler(IUnitOfWork unitOfWork)
             : ((decimal)completedThisMonth / completedLastMonth) * 100;
 
         var bestSalesEnrollments = await enrollmentRepo.ListAsync(
-            new EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc(e => e.Lesson.Status == LessonStatus.Active),
+            new EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc(e =>
+                e.Lesson.Status == LessonStatus.Active
+                && (teacherId == null || e.Student.TeacherId == teacherId)),
             cancellationToken);
 
         var bestSales = bestSalesEnrollments

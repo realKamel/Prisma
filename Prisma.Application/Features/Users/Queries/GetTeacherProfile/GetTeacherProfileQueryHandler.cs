@@ -25,21 +25,13 @@ public class GetTeacherProfileQueryHandler(
         var name = string.Join(" ", new[] { teacher.FirstName, teacher.SecondName, teacher.ThirdName, teacher.LastName }
             .Where(p => !string.IsNullOrWhiteSpace(p)));
 
-        // NOTE: GetTeacherDashboardStatusQuery's underlying specs
-        // (ActiveStudentSpecification, ActiveLessonsSpecification, the
-        // earnings/enrollment queries) are NOT filtered by teacher on the
-        // backend today — they return platform-wide numbers regardless of
-        // which teacher is viewed. That's an existing limitation inherited
-        // from that query, not something introduced here. Every teacher's
-        // profile will show identical KPI numbers until those specs are
-        // scoped by TeacherId in GetTeacherDashboardStatusQueryHandler.
-        var dashboardResult = await mediator.Send(new GetTeacherDashboardStatusQuery(), cancellationToken);
+        var dashboardResult = await mediator.Send(new GetTeacherDashboardStatusQuery(request.TeacherId), cancellationToken);
 
         var stats = new List<ProfileStatDto>
         {
             new("أرباح هذا الشهر", $"{dashboardResult.Data.Stats.TotalEarningsForThisMonth:N0}", "text-[var(--purple-lt)]"),
             new("الطلاب النشطون", dashboardResult.Data.Stats.TotalActiveStudents.ToString(), "text-[var(--mint)]"),
-            new("الدروس النشطة", dashboardResult.Data.Stats.TotalActiveLessons.ToString(), "text-[var(--star)]"),
+            new("الدروس النشطة (عام للمنصة)", dashboardResult.Data.Stats.TotalActiveLessons.ToString(), "text-[var(--star)]"),
             new("دروس مكتملة هذا الشهر", dashboardResult.Data.Stats.TotalCompletedLessonsAgainstThisMonth.ToString(), "text-[var(--coral)]"),
         };
 

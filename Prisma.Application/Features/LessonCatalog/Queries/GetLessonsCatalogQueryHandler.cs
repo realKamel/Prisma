@@ -38,18 +38,18 @@ public class GetLessonsCatalogQueryHandler(
             new LessonsCatalogSpecification(student.AcademicYearId.Value), cancellationToken);
 
         var result = lessons
-            .Select(lesson => MapLesson(lesson, student, lessons))
+            .Select(lesson => MapLesson(lesson, studentId, lessons))
             .ToList();
 
         return Result<ICollection<LessonCatalogDto>>.Success(result);
     }
 
-    private LessonCatalogDto MapLesson(Lesson lesson, Student student, ICollection<Lesson> allLessons)
+    private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
     {
-        var status = DetermineStatus(lesson, student.Id, allLessons);
+        var status = DetermineStatus(lesson, studentId, allLessons);
 
         var enrollment = lesson.Enrollments
-            .FirstOrDefault(x => x.StudentId == student.Id);
+            .FirstOrDefault(x => x.StudentId == studentId);
 
         var statusString = status switch
         {
@@ -78,9 +78,9 @@ public class GetLessonsCatalogQueryHandler(
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
             ExpiredDate = expiredDateLabel,
-            TeacherName = $"{student.Teacher.FirstName} {student.Teacher.LastName}",
+            TeacherName = $"أحمد مصطفي",
             TeacherInitial = "أ. ",
-            Subject = student.Teacher.Subject,
+            Subject = "اللغة الانجليزية",
             DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl = lesson.ImageThumbnailUrl !=null?
                 storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,

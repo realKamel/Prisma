@@ -78,8 +78,8 @@ public class GetLessonsCatalogQueryHandler(
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
             ExpiredDate = expiredDateLabel,
-            TeacherName = $"أحمد مصطفي",
-            TeacherInitial = "أ. ",
+            TeacherName = $"أ. أحمد مصطفي",
+            TeacherInitial = "أم",
             Subject = "اللغة الانجليزية",
             DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl = lesson.ImageThumbnailUrl !=null?

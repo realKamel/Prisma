@@ -9,7 +9,7 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
-namespace Prisma.Application.Tests.Features.Quizzes.Commands.NewFolder.CreateQuiz;
+namespace Prisma.Application.Tests.Features.Quizzes.Commands.CreateQuiz;
 
 
 public class CreateQuizCommandHandlerTests

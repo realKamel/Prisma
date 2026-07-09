@@ -4,7 +4,7 @@ using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Enums;
 
-namespace Prisma.Application.Tests.Features.Quizzes.Commands.NewFolder.CreateQuiz;
+namespace Prisma.Application.Tests.Features.Quizzes.Commands.CreateQuiz;
 
 public class CreateQuizCommandValidatorTests
 {

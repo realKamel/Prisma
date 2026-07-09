@@ -77,8 +77,9 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             Title = quiz.Title ?? string.Empty,
             TeacherName = student?.Teacher is not null
             ? $"{student.Teacher.FirstName} {student.Teacher.LastName}"
-            : "أحمد مصطفي",
-            Subject = quiz.Lesson?.Title,
+            : "أ. أحمد مصطفي",
+            Subject = "اللغة الانجليزية",
+            Instructions = quiz.Description ?? "لا يوجد تعليمات لهذا الإختبار",
             DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
             RemainingSeconds = Math.Max(0, (int)((attempt.StartedAt + quiz.TimeInMinutes - now).TotalSeconds)),
             Questions = quiz.Questions.Select(ql =>

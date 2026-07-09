@@ -9,6 +9,7 @@ public class QuizTakingDto
     public string Title { get; set; } = string.Empty;
     public string? TeacherName { get; set; }
     public string? Subject { get; set; }
+    public string? Instructions { get; set; }
     public int DurationMinutes { get; set; }
     public int RemainingSeconds { get; set; }
     public List<QuizQuestionTakingDto> Questions { get; set; } = new();

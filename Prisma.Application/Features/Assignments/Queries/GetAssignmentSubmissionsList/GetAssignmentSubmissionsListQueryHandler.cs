@@ -147,7 +147,7 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork, IC
                     MaxScore = assignment.Grade,
                     Status = status,
                     IsBeingGraded = isBeingGraded,
-                    GradingByUserName = submission?.IsBeingGraded == true && submission.GradingByUserId.HasValue
+                    GradingByUserName = isBeingGraded && submission?.GradingByUserId.HasValue == true
                     ? gradingUserNamesById.GetValueOrDefault(submission.GradingByUserId.Value)
                     : null
                 });

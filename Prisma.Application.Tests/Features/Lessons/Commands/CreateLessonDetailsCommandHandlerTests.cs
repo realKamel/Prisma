@@ -8,123 +8,282 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
 public class CreateLessonDetailsCommandHandlerTests
 {
-    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ICurrentUserService _currentUserService;
     private readonly UserManager<User> _userManager;
-    private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
-    private readonly CreateLessonDetailsCommandHandler _sut;
+    private readonly IStorageService _storageService;
+    private readonly IRepository<Lesson, int> _lessonRepo;
+    private readonly IRepository<AcademicYear, int> _academicYearRepo;
+    private readonly CreateLessonDetailsCommandHandler _handler;
 
     public CreateLessonDetailsCommandHandlerTests()
     {
+        _unitOfWork = Substitute.For<IUnitOfWork>();
+        _currentUserService = Substitute.For<ICurrentUserService>();
+        _storageService = Substitute.For<IStorageService>();
+        _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+        _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
+
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
+        _userManager = Substitute.For<UserManager<User>>(store, null!, null!, null!, null!, null!, null!, null!, null!);
 
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AcademicYear, int>().Returns(_academicYearRepo);
 
-        _sut = new CreateLessonDetailsCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+
+        _handler = new CreateLessonDetailsCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+    }
+
+    private IFormFile CreateMockFile(string fileName, string contentType)
+    {
+        var file = Substitute.For<IFormFile>();
+        file.FileName.Returns(fileName);
+        file.ContentType.Returns(contentType);
+        file.Length.Returns(100);
+        file.OpenReadStream().Returns(new MemoryStream());
+        return file;
     }
 
     [Fact]
     public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
     {
-        var command = CreateFakeCommand();
+        // Arrange
         _currentUserService.UserId.Returns((Guid?)null);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        // Act
+        var act = async () => await _handler.Handle(
+            new CreateLessonDetailsCommand(
+                "title",
+                "desc",
+                10,
+                null,
+                new List<ChapterCreateDto>(),
+                false,
+                null,
+                null,
+                true,
+                new List<int>(),
+                new List<string>(),
+                null),CancellationToken.None);
 
+        // Assert
         await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
     }
 
     [Fact]
-    public async Task Handle_WhenPayloadIsValid_CreatesLessonAndReturnsSuccess()
+    public async Task Handle_WhenUserNotFoundInIdentity_ThrowsUnauthorizedException()
     {
         // Arrange
-        var command = CreateFakeCommand(academicYearIds: [1]);
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
-
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-
-        var validYears = new List<AcademicYear> { new() { Id = 1, Title = "الصف الأول" } };
-        _academicYearRepo.ListAsync(Arg.Any<AcademicYearsByIdsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(validYears);
-
-        // التعديل هنا: محاكاة تمرير الـ contentType في الـ Mock
-        // قم بتعديل هذا الجزء في ملف CreateLessonDetailsCommandHandlerTests.cs
-_storageService.UploadFileAsync(
-    Arg.Any<string>(),             // 1. bucketName (string)
-    Arg.Any<string>(),             // 2. objectKey (string)
-    Arg.Any<Stream>(),             // 3. content (Stream)
-    Arg.Any<string>(),             // 4. contentType (string)
-    Arg.Any<CancellationToken>()   // 5. cancellationToken (CancellationToken)
-)
-.Returns(Task.FromResult("fake-storage-key")); // استخدم Task.FromResult لإرجاع القيمة بشكل صحيح
-
-        _lessonRepo.When(x => x.Add(Arg.Any<Lesson>())).Do(call =>
-        {
-            var lesson = call.Arg<Lesson>();
-            lesson.Id = 500;
-            if (lesson.Sections != null && lesson.Sections.Any())
-            {
-                lesson.Sections.First().Id = 901;
-            }
-        });
+        _userManager.FindByIdAsync(userId.ToString()).Returns((User?)null);
 
         // Act
-        var result = await _sut.Handle(command, CancellationToken.None);
+        var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
+                "title",
+                "desc",
+                10,
+                null,
+                new List<ChapterCreateDto>(),
+                false,
+                null,
+                null,
+                true,
+                new List<int>(),
+                new List<string>(),
+                null), CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User not found.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserLacksRequiredRole_ThrowsUnauthorizedException()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid() };
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Student }); // Missing Teacher/Assistant/Admin
+
+        // Act
+        var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
+                "title",
+                "desc",
+                10,
+                null,
+                new List<ChapterCreateDto>(),
+                false,
+                null,
+                null,
+                true,
+                new List<int>(),
+                new List<string>(),
+                null), CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("Only teachers and assistants can create lessons.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenAcademicYearsAreInvalid_ThrowsBadRequestException()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid() };
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Teacher });
+
+        var command = new CreateLessonDetailsCommand
+        ("Maths",
+                "desc",
+                10,
+                null,
+                new List<ChapterCreateDto>(),
+                false,
+                null,
+                null,
+                true,
+                new List<int> { 1, 2 },
+                new List<string>(),
+                null);
+
+        // Simulating DB returning fewer matching years than requested (e.g. invalid IDs)
+        _academicYearRepo.ListAsync(Arg.Any<AcademicYearsByIdsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(new List<AcademicYear> { new() { Id = 1 } });
+
+        // Act
+        var act = async () => await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<BadRequestException>().WithMessage("invalid academic year");
+    }
+
+    [Fact]
+    public async Task Handle_HappyPath_CreatesLessonWithAllAssetsAndDetails()
+    {
+        // Arrange
+        var user = new User { Id = Guid.NewGuid() };
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Assistant });
+
+        var mockImage = CreateMockFile("thumbnail.jpg", "image/jpeg");
+        var mockAssignment = CreateMockFile("homework.pdf", "application/pdf");
+
+        var command = new CreateLessonDetailsCommand
+        (
+            "Calculus I",
+            "Introductory Calculus",
+            150m,
+            42,
+            new List<ChapterCreateDto>
+            {
+                new ChapterCreateDto("Limits Intro", "vid1.mp4" ),
+                new ChapterCreateDto("Derivatives Intro", "vid2.mp4" )
+            },
+            true,
+            mockAssignment,
+            DateTimeOffset.UtcNow.AddDays(5),
+            true,
+            new List<int> { 10 },
+            new List<string> { "Learn Limits", "Learn Derivatives" },
+            mockImage
+        );
+
+        _academicYearRepo.ListAsync(Arg.Any<AcademicYearsByIdsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(new List<AcademicYear> { new() { Id = 10 } });
+
+        Lesson? savedLesson = null;
+        _lessonRepo.Add(Arg.Do<Lesson>(l => savedLesson = l));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
-        result.Data.lessonId.Should().Be(500);
+        result.Data.Should().NotBeNull();
+
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        _lessonRepo.Received(1).Add(Arg.Any<Lesson>());
+
+        // Structural Validation on Intercepted Domain Entity
+        savedLesson.Should().NotBeNull();
+        savedLesson!.Title.Should().Be("Calculus I");
+        savedLesson.Description.Should().Be("Introductory Calculus");
+        savedLesson.Price.Should().Be(150m);
+        savedLesson.PrerequisiteId.Should().Be(42);
+        savedLesson.Status.Should().Be(LessonStatus.Active);
+        savedLesson.Outcomes.Should().ContainInOrder("Learn Limits", "Learn Derivatives");
+
+        // Thumbnail Assertions
+        savedLesson.ImageThumbnailUrl.Should().StartWith("lessons/thumbnails/").And.EndWith(".jpg");
+        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.ImageThumbnailUrl!, Arg.Any<Stream>(), "image/jpeg", Arg.Any<CancellationToken>());
+
+        // Chapter Order Assertions
+        savedLesson.Sections.Should().HaveCount(2);
+        savedLesson.Sections.ElementAt(0).Title.Should().Be("Limits Intro");
+        savedLesson.Sections.ElementAt(0).SortOrder.Should().Be(1);
+        savedLesson.Sections.ElementAt(1).Title.Should().Be("Derivatives Intro");
+        savedLesson.Sections.ElementAt(1).SortOrder.Should().Be(2);
+
+        // Assignment Assertions
+        savedLesson.Assignment.Should().NotBeNull();
+        savedLesson.Assignment!.Title.Should().Be("homework");
+        savedLesson.Assignment.ContentURL.Should().StartWith("assignments/").And.EndWith(".pdf");
+        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.Assignment.ContentURL, Arg.Any<Stream>(), "application/pdf", Arg.Any<CancellationToken>());
+
+        // Academic Year Assertions
+        savedLesson.AcademicYears.Should().HaveCount(1);
+        savedLesson.AcademicYears.Single().AcademicYearId.Should().Be(10);
     }
 
-    private static CreateLessonDetailsCommand CreateFakeCommand(List<int>? academicYearIds = null)
+    [Fact]
+    public async Task Handle_WhenOptionalFieldsAreNull_DefaultsCorrectly()
     {
-        var mockImageFile = Substitute.For<IFormFile>();
-        mockImageFile.FileName.Returns("thumbnail.jpg");
-        mockImageFile.ContentType.Returns("image/jpeg"); // إضافة الـ ContentType للـ Mock
-        mockImageFile.OpenReadStream().Returns(new MemoryStream());
-
-        var mockAssignmentFile = Substitute.For<IFormFile>();
-        mockAssignmentFile.FileName.Returns("homework.pdf");
-        mockAssignmentFile.ContentType.Returns("application/pdf"); // إضافة الـ ContentType للـ Mock
-        mockAssignmentFile.OpenReadStream().Returns(new MemoryStream());
-
-        return new CreateLessonDetailsCommand(
-            Title: "درس القراءة والنصوص",
-            Description: "شرح مفصل",
-            Price: 120.00m,
-            PrerequisiteLessonId: null,
-            Chapters: [new ChapterCreateDto("الفصل الأول", "video.mp4")],
-            AssignmentEnabled: true,
-            AssignmentFile: mockAssignmentFile,
-            AssignmentDueDate: DateTimeOffset.UtcNow.AddDays(5),
-            IsPublished: true,
-            AcademicYearIds: academicYearIds ?? [1],
-            Outcomes: ["فهم القواعد"],
-            ImageFile: mockImageFile
+        // Arrange
+        var user = new User { Id = Guid.NewGuid() };
+        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Admin });
+        var command = new CreateLessonDetailsCommand
+        (
+            "Draft Lesson",
+            "Introductory Calculus",
+            150m,
+            42,
+            null,
+            false,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null
         );
+
+
+        Lesson? savedLesson = null;
+        _lessonRepo.Add(Arg.Do<Lesson>(l => savedLesson = l));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Succeeded.Should().BeTrue();
+        savedLesson.Should().NotBeNull();
+        savedLesson!.Status.Should().Be(LessonStatus.Drafted);
+        savedLesson.Outcomes.Should().BeEmpty();
+        savedLesson.Sections.Should().BeEmpty();
+        savedLesson.AcademicYears.Should().BeEmpty();
+        savedLesson.ImageThumbnailUrl.Should().BeNull();
+        savedLesson.Assignment.Should().BeNull();
     }
 }

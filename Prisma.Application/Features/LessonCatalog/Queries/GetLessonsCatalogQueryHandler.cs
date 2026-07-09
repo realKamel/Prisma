@@ -27,6 +27,7 @@ public class GetLessonsCatalogQueryHandler(
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var student = await studentRepo.GetByIdAsync(studentId, cancellationToken) ?? throw new UnauthorizedException();
 
+        
         if (student.AcademicYearId is null)
             throw new StudentAcademicYearNotSetException(studentId);
 
@@ -37,18 +38,18 @@ public class GetLessonsCatalogQueryHandler(
             new LessonsCatalogSpecification(student.AcademicYearId.Value), cancellationToken);
 
         var result = lessons
-            .Select(lesson => MapLesson(lesson, studentId, lessons))
+            .Select(lesson => MapLesson(lesson, student, lessons))
             .ToList();
 
         return Result<ICollection<LessonCatalogDto>>.Success(result);
     }
 
-    private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
+    private LessonCatalogDto MapLesson(Lesson lesson, Student student, ICollection<Lesson> allLessons)
     {
-        var status = DetermineStatus(lesson, studentId, allLessons);
+        var status = DetermineStatus(lesson, student.Id, allLessons);
 
         var enrollment = lesson.Enrollments
-            .FirstOrDefault(x => x.StudentId == studentId);
+            .FirstOrDefault(x => x.StudentId == student.Id);
 
         var statusString = status switch
         {
@@ -77,10 +78,10 @@ public class GetLessonsCatalogQueryHandler(
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
             ExpiredDate = expiredDateLabel,
-            TeacherName = "أ. أحمد مصطفى",
-            TeacherInitial = "أ",
-            Subject = "اللغة الإنجليزية",
-            DurationHours = (int)lesson.Duration.TotalHours,
+            TeacherName = $"{student.Teacher.FirstName} {student.Teacher.LastName}",
+            TeacherInitial = "أ. ",
+            Subject = student.Teacher.Subject,
+            DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl = lesson.ImageThumbnailUrl !=null?
                 storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,
             Currency = "جنيه",

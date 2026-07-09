@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.TeacherPreferences.Dtos;
 using Prisma.Domain.Entities.UserAggregate;

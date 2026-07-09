@@ -4,6 +4,7 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
@@ -16,7 +17,7 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
     public async Task<Result<QuizTakingDto>> Handle(GetQuizForTakingQuery request, CancellationToken ct)
     {
         var studentId = currentUser.UserId!.Value;
-
+        
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
         var quiz = await quizRepo
             .FirstOrDefaultAsync(new QuizWithQuestionsAndLessonSpecification(request.QuizId), ct);
@@ -40,7 +41,8 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             if (now >= deadline)
             {
                 await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
-                attempt = null; // مبقى لسه InProgress، نرجع رسالة بدل تكرار الأسئلة
+                return Result<QuizTakingDto>.Failure("انتهى وقت هذه المحاولة"); 
+
             }
         }
 
@@ -65,12 +67,17 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
 
         var savedAnswers = attempt.Answers.ToDictionary(a => a.QuestionId);
 
+        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var student = await studentRepo.GetByIdAsync(studentId, ct);
+
         var dto = new QuizTakingDto
         {
             AttemptId = attempt.Id,
             QuizId = quiz.Id,
             Title = quiz.Title ?? string.Empty,
-            TeacherName = null, 
+            TeacherName = student?.Teacher is not null
+            ? $"{student.Teacher.FirstName} {student.Teacher.LastName}"
+            : "أحمد مصطفي",
             Subject = quiz.Lesson?.Title,
             DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
             RemainingSeconds = Math.Max(0, (int)((attempt.StartedAt + quiz.TimeInMinutes - now).TotalSeconds)),

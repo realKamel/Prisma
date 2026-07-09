@@ -20,25 +20,29 @@ public class CreateQuizQuestionDtoValidator: AbstractValidator<CreateQuizQuestio
 
         // MCQ: لازم خيارين على الأقل، وخيار صح واحد بالظبط
         RuleFor(x => x.Choices)
+            .Cascade(CascadeMode.Stop)
+
             .NotNull()
-            .WithMessage("لازم تضيفي اختيارات للسؤال")
+            .WithMessage("لازم تضيف/ي اختيارات للسؤال")
 
             .Must(c => c!.Count >= 2)
             .WithMessage("لازم خيارين على الأقل")
 
             .Must(c => c!.Count(ch => ch.IsCorrect) == 1)
-            .WithMessage("لازم تحددي إجابة صحيحة واحدة بالظبط")
+            .WithMessage("لازم تحدد/ي إجابة صحيحة واحدة بالظبط")
 
             .When(x => x.Type == QuestionType.MCQ);
 
         // TrueFalse: لازم خيارين بالظبط
         RuleFor(x => x.Choices)
+            .Cascade(CascadeMode.Stop)
+
             .NotNull()
             .Must(c => c!.Count == 2)
             .WithMessage("سؤال صح/غلط لازم يكون عنده خيارين بالظبط")
 
             .Must(c => c!.Count(ch => ch.IsCorrect) == 1)
-            .WithMessage("لازم تحددي إجابة صحيحة واحدة بالظبط")
+            .WithMessage("لازم تحدد/ي إجابة صحيحة واحدة بالظبط")
 
             .When(x => x.Type == QuestionType.TrueFalse);
 

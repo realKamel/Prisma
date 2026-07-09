@@ -24,8 +24,7 @@ public class GetActivityLogsQueryHandler(
     {
         var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
-        // Fetch one extra record so we know whether there's a next page,
-        // without needing a separate COUNT() query.
+       
         var spec = new ActivityLogsFilterSpec(request.Skip, request.Take + 1);
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);
 
@@ -70,10 +69,7 @@ public class GetActivityLogsQueryHandler(
 
         ActivityLogStatsDto? statsDto = null;
 
-        // Stats are only computed on the first page (Skip == 0) so the
-        // frontend keeps the original numbers as more pages get appended.
-        // TODO: ideally this should come from a dedicated aggregate query
-        // over the full AuditLog table rather than just the fetched page.
+       
         if (request.Skip == 0)
         {
             var todayDate = DateTimeOffset.UtcNow.Date;

@@ -25,7 +25,6 @@ public class GetAssistantDetailedLogsQueryHandler(
         GetAssistantDetailedLogsQuery request,
         CancellationToken cancellationToken)
     {
-        // 🔒 1. التحقق من هوية اليوزر الحالي بنفس أسلوب السيستم عندكِ
         var userId = _currentUserService.UserId;
         if (userId is null)
             throw new UnauthorizedException("User is not authenticated.");
@@ -34,11 +33,9 @@ public class GetAssistantDetailedLogsQueryHandler(
 
         var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
-        // 🌟 2. استدعاء الـ Specification الخاصة بكِ بالملي بدون أي تغيير
         var spec = new RecentAssistantLogsSpec(userEmail, request.Take);
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);
 
-        // جلب الـ Repositories الأخرى لربط البيانات ديناميكياً
         var studentRepository = _unitOfWork.GetOrCreateRepository<Student, Guid>();
         var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
@@ -53,7 +50,6 @@ public class GetAssistantDetailedLogsQueryHandler(
             string studentName = "—";
             string gradeName = "";
 
-            // Mapping لنوع العملية بناءً على الكلمات المفتاحية في الـ Action
             if (log.Action != null)
             {
                 if (log.Action.Contains("Grant", StringComparison.OrdinalIgnoreCase)) { type = "grant"; subText = "صلاحية نظام"; }
@@ -61,10 +57,9 @@ public class GetAssistantDetailedLogsQueryHandler(
                 else if (log.Action.Contains("Search", StringComparison.OrdinalIgnoreCase)) { type = "search"; }
             }
 
-            // 🌟 3. قراءة البيانات ديناميكياً بالـ Specifications الداخلية لحل مشكلة الـ Query()
             if (!string.IsNullOrEmpty(log.EntityId))
             {
-                // أ- لو السجل يخص جدول الـ Enrollment (عمليات منح وإلغاء صلاحيات الدروس)
+                
                 if (log.TableName?.Equals("Enrollment", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(log.EntityId, out int enrollmentId))
                 {
                     var enrollmentSpec = new EnrollmentWithStudentAndLessonSpec(enrollmentId);
@@ -90,7 +85,6 @@ public class GetAssistantDetailedLogsQueryHandler(
                         }
                     }
                 }
-                // ب- لو السجل يخص جدول الـ Student مباشرة (عرض أو تعديل ملف طالب)
                 else if (log.TableName?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true && Guid.TryParse(log.EntityId, out Guid studentGuid))
                 {
                     var studentSpec = new StudentWithAcademicYearSpec(studentGuid);
@@ -109,7 +103,6 @@ public class GetAssistantDetailedLogsQueryHandler(
                 }
             }
 
-            // ⏱️ 4. حساب وقت وتاريخ العملية بأمان وتوافق مع الـ Nullable
             var logTime = log.CreatedAt?.AddHours(3) ?? DateTimeOffset.UtcNow;
             string timeString = logTime.ToString("hh:mm tt");
             string dateString = logTime.Date == DateTimeOffset.UtcNow.Date ? "اليوم" :
@@ -129,7 +122,6 @@ public class GetAssistantDetailedLogsQueryHandler(
             ));
         }
 
-        // 📊 5. حساب الـ Meta الإحصائية ديناميكياً للـ Dashboard
         int totalThisMonth = logItems.Count;
         int grantedCount = logItems.Count(l => l.Type == "grant");
         int revokedCount = logItems.Count(l => l.Type == "revoke");

@@ -7,13 +7,16 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 
 public class DeleteLessonCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
-    UserManager<User> _userManager)
+    UserManager<User> _userManager,
+    IStorageService storageService,
+    IVideoStorageService videoStorageService)
     : IRequestHandler<DeleteLessonCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(DeleteLessonCommand request, CancellationToken cancellationToken)
@@ -32,13 +35,23 @@ public class DeleteLessonCommandHandler(
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
-        var lesson = await lessonRepository.GetByIdAsync(request.LessonId, cancellationToken);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(new LessonWithEnrollmentSpec(request.LessonId), cancellationToken);
         if (lesson is null)
             throw new NotFoundException("Lesson", request.LessonId);
 
+        if (lesson.Enrollments != null)
+            lesson.Enrollments.Clear();
+        
+        if(lesson.ImageThumbnailUrl!=null)
+            await storageService.DeleteFileAsync("prisma",lesson.ImageThumbnailUrl);
+
+        if (lesson.Sections != null)
+            foreach(var section in lesson.Sections)
+                if(section.AssetId!=null)
+                    await videoStorageService.DeleteVideoAsync(section.AssetId);
+                    
         lessonRepository.Delete(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-
         return Result<string>.Success("Lesson deleted successfully");
     }
 }

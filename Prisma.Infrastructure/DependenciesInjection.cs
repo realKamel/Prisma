@@ -1,17 +1,26 @@
+using System.ClientModel;
+using System.Diagnostics.CodeAnalysis;
 using Amazon.S3;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.Agents.AI.DurableTask;
+using Microsoft.Agents.AI.Hosting;
+using Microsoft.Agents.AI.Workflows;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenAI;
+using Prisma.Application.Abstractions.Ai;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Infrastructure.AgenticWorkflows.ReportGeneratorWorkflow;
+using Prisma.Infrastructure.Ai;
 using Prisma.Infrastructure.BackgroundJobs;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Identity;
@@ -32,16 +41,12 @@ public static class DependenciesInjection
     public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration,
         IHostEnvironment environment)
     {
-        services.AddHttpContextAccessor();
-
         services.AddPersistenceConfig(configuration, environment);
+
+        services.AddIdentityWithConfig(configuration);
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.AddScoped<IEmailService, EmailService>();
-
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-        services.AddSingleton<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IIdentityService, IdentityService>();
 
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
@@ -89,18 +94,15 @@ public static class DependenciesInjection
         //        ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
         //        "DataProtection-Keys");
 
-        services.AddHangfireWithConfig(configuration);
-        services.AddSingleton<IBackgroundJobService, HangfireBackgroundJobService>();
+        services.AddBackgroundJobsAndHangfireWithConfig(configuration);
 
-        // Register job classes (Hangfire needs them for DI)
-        //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
-        services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
-        // var client = new AzureOpenApiClient("API_KEY").GetChatClient();
-        // var agent = client.Create
-        // services.AddSingleton();
+#pragma warning disable MEAI001
+        services.AddAiIntegrationServices(configuration);
+#pragma warning restore MEAI001
     }
 
-    private static void AddHangfireWithConfig(this IServiceCollection services, IConfiguration configuration)
+    private static void AddBackgroundJobsAndHangfireWithConfig(this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddHangfire(config => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -126,11 +128,21 @@ public static class DependenciesInjection
             options.WorkerCount = 5;
             options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
         });
+
+        services.AddSingleton<IBackgroundJobService, HangfireBackgroundJobService>();
+
+        // Register job classes (Hangfire needs them for DI)
+        //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
+        services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
     }
 
     private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
         IHostEnvironment environment)
     {
+        // services.AddDbContextFactory<AppDbContext>(options =>
+        //     options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"),
+        //         npgSqlOptions => npgSqlOptions.UseVector()));
+
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgSqlOptions =>
@@ -177,17 +189,116 @@ public static class DependenciesInjection
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 }
             })
-            .AddRoles<Domain.Entities.UserAggregate.Role>()
+            .AddRoles<Role>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-        services.AddScoped<IVectorSearchRepository, VectorSearchRepository>();
 
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<AuditLogInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
+    }
+
+    private static void AddIdentityWithConfig(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHttpContextAccessor();
+        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IIdentityService, IdentityService>();
+    }
+
+    [Experimental("MEAI001")]
+    private static void AddAiIntegrationServices(this IServiceCollection services, IConfiguration configuration)
+    {
+        var openAiConfig = configuration.GetSection("OpenAI");
+        // Console.WriteLine(
+        //     $"OpenAI Config: {openAiConfig["ApiKey"]}, {openAiConfig["FastChatModel"]},
+        // {openAiConfig["ReasoningModel"]}, {openAiConfig["EmbeddingModel"]}, {openAiConfig["SpeechModel"]}");
+        // var openAiClient = new OpenAIClient(openAiConfig["ApiKey"]!);
+        var options = new OpenAIClientOptions
+        {
+            Endpoint = new Uri("https://models.github.ai/inference")
+        };
+
+        var openAiClient = new OpenAIClient(new ApiKeyCredential(openAiConfig["ApiKey"]!), options);
+
+        services.AddKeyedChatClient(AIType.FastChat,
+            openAiClient.GetChatClient(openAiConfig["FastChatModel"]!).AsIChatClient());
+
+        services.AddKeyedChatClient(AIType.Reasoning,
+            openAiClient.GetChatClient(openAiConfig["ReasoningModel"]!).AsIChatClient());
+
+        services.AddKeyedEmbeddingGenerator(AIType.Embedding,
+            openAiClient.GetEmbeddingClient(openAiConfig["EmbeddingModel"]!).AsIEmbeddingGenerator());
+
+        services.AddKeyedSpeechToTextClient(AIType.SpeechToText,
+            openAiClient.GetAudioClient(openAiConfig["SpeechModel"]!).AsISpeechToTextClient());
+
+
+        services.AddScoped<IRagQuestionAnswering, RagQuestionAnsweringService>();
+
+        services.AddScoped<IGradingAssistant, GradingAssistantService>();
+        services.AddScoped<IReportGenerator, ReportGeneratorService>();
+        services.AddScoped<ITranscriptionService, TranscriptionService>();
+
+        services.AddSingleton<IEmbeddingService, EmbeddingService>();
+        services.AddSingleton<IVectorSearchRepository, VectorSearchRepository>();
+        services.AddSingleton<AgentRagTools>();
+
+        // services.AddSingleton<ChatHistoryProvider>(sp =>
+        //     new PostgresChatHistoryProvider(
+        //         sp.GetRequiredService<IDbContextFactory<AppDbContext>>(),
+        //         maxMessagesToLoad: 40));
+
+        services.AddSingleton<GetStudentStatusExecutor>();
+        services.AddSingleton<NarrativeGenerationExecutor>();
+    }
+
+    public static void AddAiAgents(this IHostApplicationBuilder app)
+    {
+        app.AddAIAgent(AIAgentRole.ChatAgent.DefaultAgent,
+                AIAgentRole.ChatAgent.DefaultAgentInstructions, AIType.FastChat)
+            .WithInMemorySessionStore();
+
+        app.AddAIAgent(AIAgentRole.ChatAgent.GradingAgent,
+            AIAgentRole.ChatAgent.GradingAgentInstructions, AIType.Reasoning);
+
+        // app.AddAIAgent(AIAgentRole.ChatAgent.KnowledgeRagChatAgent,
+        //         AIAgentRole.ChatAgent.KnowledgeRagChatAgentInstructions, AIType.FastChat)
+        //     .WithInMemorySessionStore();
+
+
+        app.AddAIAgent(AIAgentRole.ChatAgent.KnowledgeRagChatAgent,
+            ((provider, key) =>
+            {
+                var chatClient = provider.GetRequiredKeyedService<IChatClient>(AIType.FastChat);
+                var ragFunctions = provider.GetRequiredService<AgentRagTools>();
+
+                return chatClient.AsAIAgent(
+                    AIAgentRole.ChatAgent.KnowledgeRagChatAgentInstructions,
+                    name: key,
+                    tools:
+                    [
+                        AIFunctionFactory.Create(ragFunctions.SearchLessonsContentAsync),
+                        AIFunctionFactory.Create(ragFunctions.SearchLessonContentAsync)
+                    ]
+                );
+            })).WithInMemorySessionStore();
+    }
+
+    public static void AddWorkflows(this IHostApplicationBuilder app)
+    {
+        app.AddWorkflow("Report-Generator", (sp, key) =>
+        {
+            var processor = sp.GetRequiredService<GetStudentStatusExecutor>();
+            var narrativeGenerator = sp.GetRequiredService<NarrativeGenerationExecutor>();
+            return new WorkflowBuilder(processor)
+                .WithName(key)
+                .AddEdge(processor, narrativeGenerator)
+                .Build();
+        });
     }
 }

@@ -17,11 +17,11 @@ public record AdminStatsResponseDto(
 public record KpiDto(
     string Id,
     decimal Value,
-    decimal Delta // الرقم الصافي (مثلاً: 23 أو -5) والفرونت يحدد اتجاه السهم واللون
+    decimal Delta 
 );
 
 public record RevenueWeekDto(
-    DateTimeOffset Date, // تاريخ اليوم الصافي والفرونت يجيب منه اسم اليوم بالعربي (أحد، اثنين...)
+    DateTimeOffset Date, 
     decimal Amount,
     bool IsToday
 );

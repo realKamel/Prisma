@@ -2,5 +2,5 @@ namespace Prisma.Application.Abstractions.BackgroundJobs;
 
 public interface IReportGenerationJob
 {
-    Task GenerateWeekly();
+    Task GenerateWeekly(CancellationToken cancellationToken = default);
 }

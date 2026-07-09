@@ -1,5 +1,7 @@
+using System.Text;
 using Prisma.API.Extensions;
 using Prisma.API.Middlewares;
+using Prisma.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
@@ -25,6 +27,10 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
+
+            builder.AddAiAgents();
+
+            builder.AddWorkflows();
 
             var app = builder.Build();
 
@@ -59,6 +65,10 @@ public class Program
             app.UseAuthorization();
 
             app.UseRecurringJobs();
+
+            app.MapHealthChecks();
+
+            app.MapOpenAiResponses(app.Environment);
 
             app.MapControllers();
 

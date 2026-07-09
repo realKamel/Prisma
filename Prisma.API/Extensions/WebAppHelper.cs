@@ -1,6 +1,9 @@
 using System.Text;
 using Hangfire;
+using HealthChecks.UI.Client;
+using Microsoft.Agents.AI.DevUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Middlewares;
@@ -62,6 +65,25 @@ public static class WebAppHelper
             //    options.KnownIPNetworks.Clear();
             //    options.KnownProxies.Clear();
             //});
+
+            services.AddHealthChecks();
+            // .AddNpgSql(
+            //     configuration.GetConnectionString("DefaultSqlConnection")!,
+            //     name: "PostgreSQL Database",
+            //     failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+            //     tags: new[] { "db", "postgres" }
+            // );
+            // services.AddHealthChecksUI(setup =>
+            // {
+            //     // Points the UI dashboard to the JSON data endpoint mapped below
+            //     setup.AddHealthCheckEndpoint("Application Database Health", "/health-json");
+            //     setup.SetEvaluationTimeInSeconds(15); // Polls every 15 seconds
+            //     setup.DisableDatabaseMigrations();
+            // }).AddSqliteStorage("Data Source=healthchecks.db");
+
+            services.AddOpenAIResponses();
+            services.AddOpenAIConversations();
+            services.AddDevUI();
         }
 
         private void AddJwtAuthentication(IConfiguration configuration,
@@ -195,6 +217,29 @@ public static class WebAppHelper
             {
                 Authorization = [new HangfireDashboardAuthFilter()] //TODO: restrict to admins
             });
+        }
+
+        public void MapHealthChecks()
+        {
+            app.MapHealthChecks("/health-json", new HealthCheckOptions
+            {
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
+            app.MapHealthChecksUI(options =>
+            {
+                options.UIPath = "/health-ui"; // URL path to open in browser
+            });
+        }
+
+        public void MapOpenAiResponses(IHostEnvironment environment)
+        {
+            app.MapOpenAIResponses();
+            app.MapOpenAIConversations();
+            if (environment.IsDevelopment())
+            {
+                // Map DevUI endpoint to /devui
+                app.MapDevUI();
+            }
         }
     }
 }

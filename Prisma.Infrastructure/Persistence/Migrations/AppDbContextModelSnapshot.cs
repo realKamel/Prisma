@@ -1472,6 +1472,37 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLog");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.ChatSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SerializedSessionJson")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ChatSession");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
                 {
                     b.Property<Guid>("Id")

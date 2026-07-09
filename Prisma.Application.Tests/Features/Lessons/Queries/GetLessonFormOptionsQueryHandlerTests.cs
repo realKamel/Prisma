@@ -1,0 +1,100 @@
+﻿using FluentAssertions;
+using NSubstitute;
+using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
+using Prisma.Application.Features.Lessons.Queries.GetLessonFormOptions;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Interfaces;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace Prisma.Application.Tests.Features.Lessons.Queries;
+
+public class GetLessonFormOptionsQueryHandlerTests
+{
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
+    private readonly GetLessonFormOptionsQueryHandler _sut;
+
+    public GetLessonFormOptionsQueryHandlerTests()
+    {
+        // إعداد الـ Repositories داخل الـ Unit of Work الوهمي
+        _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
+        _unitOfWork.GetOrCreateRepository<AcademicYear, int>().Returns(_academicYearRepo);
+
+        _sut = new GetLessonFormOptionsQueryHandler(_unitOfWork);
+    }
+
+    [Fact]
+    public async Task Handle_WhenOptionsExist_ReturnsMappedLessonFormOptionsResponseDto()
+    {
+        // Arrange
+        var query = new GetLessonFormOptionsQuery();
+
+        // بناء دروس وهمية لتكون خيارات للمتطلبات السابقة (Prerequisites)
+        var fakeLessons = new List<Lesson>
+        {
+            new() { Id = 10, Title = "درس القراءة: الحرية" },
+            new() { Id = 11, Title = "درس النحو: المبتدأ والخبر" }
+        };
+
+        // بناء مراحل دراسية وهمية
+        var fakeAcademicYears = new List<AcademicYear>
+        {
+            new() { Id = 1, Title = "الصف الأول الإعدادي" },
+            new() { Id = 2, Title = "الصف الثاني الإعدادي" }
+        };
+
+        // عمل Mock للـ ListAsync لكل Repository لترجع البيانات المجهزة
+        _lessonRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(fakeLessons);
+        _academicYearRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(fakeAcademicYears);
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+
+        // التحقق من صحة الخيارات الخاصة بالمتطلبات السابقة للدروس (PrerequisitesOptions)
+        result.Data.PrerequisitesOptions.Should().HaveCount(2);
+        result.Data.PrerequisitesOptions[0].Id.Should().Be(10);
+        result.Data.PrerequisitesOptions[0].Name.Should().Be("درس القراءة: الحرية");
+        result.Data.PrerequisitesOptions[1].Id.Should().Be(11);
+        result.Data.PrerequisitesOptions[1].Name.Should().Be("درس النحو: المبتدأ والخبر");
+
+        // التحقق من صحة الخيارات الخاصة بالمراحل الدراسية (AllAcademicYearsOptions)
+        result.Data.AllAcademicYearsOptions.Should().HaveCount(2);
+        result.Data.AllAcademicYearsOptions[0].Id.Should().Be(1);
+        result.Data.AllAcademicYearsOptions[0].Name.Should().Be("الصف الأول الإعدادي");
+        result.Data.AllAcademicYearsOptions[1].Id.Should().Be(2);
+        result.Data.AllAcademicYearsOptions[1].Name.Should().Be("الصف الثاني الإعدادي");
+    }
+
+    [Fact]
+    public async Task Handle_WhenNoOptionsExist_ReturnsEmptyOptionsLists()
+    {
+        // Arrange
+        var query = new GetLessonFormOptionsQuery();
+
+        // محاكاة قواعد البيانات الفارغة بإرجاع قوائم فارغة
+        _lessonRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Lesson>());
+        _academicYearRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<AcademicYear>());
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+
+        // التأكد من أن القوائم فارغة تماماً وليست Null لضمان عدم حدوث مشاكل في فرونت إند
+        result.Data.PrerequisitesOptions.Should().BeEmpty();
+        result.Data.AllAcademicYearsOptions.Should().BeEmpty();
+    }
+}

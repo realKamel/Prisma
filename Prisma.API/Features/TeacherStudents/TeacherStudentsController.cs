@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Features.TeacherStudents.Requests;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 using Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
@@ -17,7 +18,7 @@ using Prisma.Application.Features.TeacherStudents.Queries.GetTeacherLessonsForGr
 
 namespace Prisma.API.Features.TeacherStudents;
 
-[Authorize(Roles = "Teacher")]
+[Authorize(Roles = "Teacher,Admin")]
 [Route("api/[controller]")]
 [ApiController]
 public class TeacherStudentsController(IMediator mediator) : ControllerBase

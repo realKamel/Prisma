@@ -10,7 +10,7 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
 
-internal class GradeAssignmentSubmissionCommandHandler(
+public class GradeAssignmentSubmissionCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GradeAssignmentSubmissionCommand, Result>

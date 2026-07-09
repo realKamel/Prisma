@@ -10,7 +10,7 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
 
-internal class ReleaseAssignmentGradingLockCommandHandler(
+public class ReleaseAssignmentGradingLockCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<ReleaseAssignmentGradingLockCommand, Result>

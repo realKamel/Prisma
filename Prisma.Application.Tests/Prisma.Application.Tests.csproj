@@ -39,8 +39,4 @@
       <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Features\Assignments\Commands\" />
-    </ItemGroup>
-
 </Project>

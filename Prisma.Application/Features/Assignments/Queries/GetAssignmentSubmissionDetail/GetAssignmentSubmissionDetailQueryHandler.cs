@@ -11,7 +11,7 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 
-internal class GetAssignmentSubmissionDetailQueryHandler(
+public class GetAssignmentSubmissionDetailQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GetAssignmentSubmissionDetailQuery, Result<AssignmentSubmissionDetailDto>>

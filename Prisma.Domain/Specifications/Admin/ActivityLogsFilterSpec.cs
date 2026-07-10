@@ -1,8 +1,7 @@
-﻿using Ardalis.Specification; 
-using Prisma.Domain.Entities.UserAggregate; 
+﻿using Ardalis.Specification;
+using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Domain.Specifications.AuditLogs;
-
+namespace Prisma.Domain.Specifications.Admin;
 
 public class ActivityLogsFilterSpec : Specification<AuditLog>
 {

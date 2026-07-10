@@ -6,7 +6,6 @@ namespace Prisma.Domain.Specifications.Lessons;
 public class LessonPlayerWithDetailsSpecification : Specification<Lesson>
 {
     public LessonPlayerWithDetailsSpecification(int lessonId)
-        : base()
     {
         Query.Where(lesson => lesson.Id == lessonId)
             .Include(l => l.Sections)

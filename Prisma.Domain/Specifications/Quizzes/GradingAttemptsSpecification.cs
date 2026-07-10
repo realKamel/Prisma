@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Ardalis.Specification;
+﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 
@@ -14,7 +11,7 @@ public class GradingAttemptsSpecification : Specification<QuizAttempt>
         Query
             // Only submitted or graded attempts are relevant for grading
             .Where(a => a.Status == QuizAttemptStatus.Submitted
-                     || a.Status == QuizAttemptStatus.Graded)
+                        || a.Status == QuizAttemptStatus.Graded)
             .Where(a => a.Quiz.Scope == scope)
             .Include(a => a.Student)
             .Include(a => a.Quiz)

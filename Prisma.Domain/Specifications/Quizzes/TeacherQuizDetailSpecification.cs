@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Ardalis.Specification;
+﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Domain.Specifications.Quizzes;

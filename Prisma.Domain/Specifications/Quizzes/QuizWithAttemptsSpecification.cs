@@ -1,7 +1,6 @@
 ﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.QuizAggregate;
 
-
 namespace Prisma.Domain.Specifications.Quizzes;
 
 public class QuizWithAttemptsSpecification : Specification<Quiz>

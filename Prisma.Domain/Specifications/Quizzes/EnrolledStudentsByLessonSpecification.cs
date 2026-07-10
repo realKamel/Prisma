@@ -10,7 +10,7 @@ public class EnrolledStudentsByLessonSpecification : Specification<Enrollment>
     {
         Query
             .Where(e => e.LessonId == lessonId
-                     && e.Status == EnrollmentStatus.Active)
+                        && e.Status == EnrollmentStatus.Active)
             .Include(e => e.Student);
     }
 }

@@ -1,9 +1,8 @@
-﻿using System;
-using global::Prisma.Domain.Entities.PaymentAggregate;
-using global::Prisma.Domain.Enums;
-using Ardalis.Specification; // أو حسب مكتبة الـ Specification اللي عندك
+﻿using Ardalis.Specification;
+using Prisma.Domain.Entities.PaymentAggregate;
+using Prisma.Domain.Enums;
 
-namespace Prisma.Domain.Specifications.AdminDashboard;
+namespace Prisma.Domain.Specifications.Admin;
 
 public sealed class AdminSuccessfulPaymentsSpec : Specification<Payment>
 {

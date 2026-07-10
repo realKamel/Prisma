@@ -1,6 +1,5 @@
 ﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Prisma.Domain.Specifications.Assignments;
 

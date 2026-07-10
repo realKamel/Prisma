@@ -1,7 +1,7 @@
-﻿using global::Prisma.Domain.Entities.EnrollmentAggregate;
-using Ardalis.Specification;
+﻿using Ardalis.Specification;
+using Prisma.Domain.Entities.EnrollmentAggregate;
 
-namespace Prisma.Domain.Specifications.AdminDashboard;
+namespace Prisma.Domain.Specifications.Admin;
 
 public sealed class AdminLatestEnrollmentsSpec : Specification<Enrollment>
 {

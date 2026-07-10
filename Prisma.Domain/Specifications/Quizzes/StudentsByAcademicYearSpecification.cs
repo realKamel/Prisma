@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Ardalis.Specification;
+﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.UserAggregate;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Prisma.Domain.Specifications.Quizzes;
 
@@ -13,5 +9,4 @@ public class StudentsByAcademicYearSpecification : Specification<Student>
     {
         Query.Where(s => s.AcademicYearId == academicYearId);
     }
-
 }

@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Ardalis.Specification;
+﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Enums;
 
@@ -11,7 +10,7 @@ public class EnrolledStudentsByLessonIdsSpecification : Specification<Enrollment
     {
         Query
             .Where(e => lessonIds.Contains(e.LessonId!.Value)
-                     && e.Status == EnrollmentStatus.Active)
+                        && e.Status == EnrollmentStatus.Active)
             .Include(e => e.Student);
     }
 }

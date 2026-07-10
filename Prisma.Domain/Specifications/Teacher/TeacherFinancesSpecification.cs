@@ -2,7 +2,7 @@
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 
-namespace Prisma.Domain.Specifications.Teachers;
+namespace Prisma.Domain.Specifications.Teacher;
 
 public class TeacherFinancesSpecification : Specification<Payment>
 {

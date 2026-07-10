@@ -7,7 +7,7 @@ using Prisma.Application.Features.Users.Commands.CreateUser;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 
-namespace Prisma.Application.Tests.Features.Users.Commands;
+namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class CreateUserCommandHandlerTests
 {

@@ -5,7 +5,7 @@ using Prisma.Application.Features.Users.Queries.GetUserById;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 
-namespace Prisma.Application.Tests.Features.Users.Queries;
+namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class GetUserByIdQueryHandlerTests
 {

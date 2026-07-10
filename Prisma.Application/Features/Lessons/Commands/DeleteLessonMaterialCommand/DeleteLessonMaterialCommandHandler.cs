@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 
@@ -42,7 +37,7 @@ public class DeleteLessonMaterialCommandHandler
         if (lesson is null)
             throw new NotFoundException("Lesson material", request.MaterialId);
 
-        LessonMaterial materialToDelete =  lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
+        var materialToDelete =  lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
         if (materialToDelete != null)
         {
             

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -14,7 +8,7 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 
@@ -31,7 +25,7 @@ public class UploadLessonMaterialsCommandHandler(
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
             throw new UnauthorizedException("User not found.");
 

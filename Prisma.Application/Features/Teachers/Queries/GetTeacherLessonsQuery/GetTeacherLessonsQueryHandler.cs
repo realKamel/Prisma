@@ -4,7 +4,7 @@ using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Teacher;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 

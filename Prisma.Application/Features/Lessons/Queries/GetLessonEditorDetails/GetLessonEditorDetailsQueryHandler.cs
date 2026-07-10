@@ -6,7 +6,6 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 
@@ -41,7 +40,9 @@ public class GetLessonEditorDetailsQueryHandler(
             .Select(ay => ay.AcademicYearId)
             .ToList();
 
-        var thumbnail = storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl);
+        var thumbnail = lesson.ImageThumbnailUrl!=null?
+        storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl)
+        :string.Empty;
 
         var response = new LessonEditorResponseDto(
             lesson.Id,

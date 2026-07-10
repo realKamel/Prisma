@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.AuditLogs;
+using Prisma.Domain.Specifications.Admin;
 
 namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
 

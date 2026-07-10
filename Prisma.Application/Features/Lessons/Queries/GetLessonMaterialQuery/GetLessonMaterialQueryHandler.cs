@@ -8,15 +8,14 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
 
 public class GetLessonMaterialQueryHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
-    UserManager<User> _userManager,
-    IStorageService _storageService
+    UserManager<User> _userManager
 ) : IRequestHandler<GetLessonMaterialQuery, Result<List<LessonMaterialDto>>>
 {
     public async Task<Result<List<LessonMaterialDto>>> Handle(GetLessonMaterialQuery request, CancellationToken cancellationToken)
@@ -25,7 +24,7 @@ public class GetLessonMaterialQueryHandler(
         if (userId is null)
             throw new UnauthorizedException("User must be authenticated.");
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
             throw new UnauthorizedException("User not found.");
 
@@ -44,14 +43,12 @@ public class GetLessonMaterialQueryHandler(
 
         foreach (var material in lesson.LessonMaterials)
         {
-            var downloadUrl = await _storageService.GetDownloadUrlAsync("prisma", material.DownloadUrl);
-
             materials.Add(new LessonMaterialDto(
                 material.Id,
                 material.Title,
                 material.Size,
                 material.Type.ToString(),
-                material.CreatedAt?.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG")) 
+                material.CreatedAt?.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG")) ?? string.Empty
             ));
         }
 

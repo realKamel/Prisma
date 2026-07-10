@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.AdminDashboard;
+using Prisma.Domain.Specifications.Admin;
 
 namespace Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
 

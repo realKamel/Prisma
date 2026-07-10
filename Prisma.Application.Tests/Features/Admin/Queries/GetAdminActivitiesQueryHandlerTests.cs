@@ -1,11 +1,12 @@
 ﻿using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.AdminDashboard;
+using Prisma.Domain.Specifications.Admin;
 
 namespace Prisma.Application.Tests.Features.AdminDashboard.Queries;
 

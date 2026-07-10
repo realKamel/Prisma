@@ -3,8 +3,10 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
+using Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Admin;
 using Prisma.Domain.Specifications.AuditLogs;
 
 namespace Prisma.Application.Tests.Features.ActivityLogs.Queries;

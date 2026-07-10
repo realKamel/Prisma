@@ -9,13 +9,13 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Prisma.Domain.Specifications.Lessons;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;

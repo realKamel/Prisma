@@ -7,12 +7,13 @@ using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Teacher;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Teachers.Queries;

@@ -7,11 +7,12 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
+using Prisma.Domain.Specifications.Teacher;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Teachers.Queries;

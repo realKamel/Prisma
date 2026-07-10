@@ -15,7 +15,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Lessons;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;

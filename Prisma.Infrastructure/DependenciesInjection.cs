@@ -20,6 +20,7 @@ using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.AgenticWorkflows.ReportGeneratorWorkflow;
+using Prisma.Infrastructure.AgenticWorkflows.WrittenQuestionGradingWorkflow;
 using Prisma.Infrastructure.Ai;
 using Prisma.Infrastructure.BackgroundJobs;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
@@ -51,7 +52,7 @@ public static class DependenciesInjection
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
-        services.AddScoped<IFileService, FileService>();
+        // services.AddScoped<IFileService, FileService>();
 
         services.Configure<PaymobSettings>(configuration.GetSection("PaymobSettings"));
 
@@ -255,6 +256,8 @@ public static class DependenciesInjection
 
         services.AddSingleton<GetStudentStatusExecutor>();
         services.AddSingleton<NarrativeGenerationExecutor>();
+        services.AddSingleton<GetWrittenQuestionExecutor>();
+        services.AddSingleton<GradingQuestionExecutor>();
     }
 
     public static void AddAiAgents(this IHostApplicationBuilder app)
@@ -298,6 +301,17 @@ public static class DependenciesInjection
             return new WorkflowBuilder(processor)
                 .WithName(key)
                 .AddEdge(processor, narrativeGenerator)
+                .Build();
+        });
+
+        app.AddWorkflow("Written-Quesions-Grades", (sp, key) =>
+        {
+            var processor = sp.GetRequiredService<GetWrittenQuestionExecutor>();
+            var grader = sp.GetRequiredService<GradingQuestionExecutor>();
+
+            return new WorkflowBuilder(processor)
+                .AddEdge(processor, grader)
+                .WithName(key)
                 .Build();
         });
     }

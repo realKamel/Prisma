@@ -18,7 +18,8 @@ public partial class NarrativeGenerationExecutor(IServiceScopeFactory servicePro
     {
         using var scope = serviceProvider.CreateScope();
         var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
-        var agent = scope.ServiceProvider.GetRequiredKeyedService<AIAgent>(AIAgentRole.ChatAgent.ReportGeneratorAgent);
+        var agent = scope.ServiceProvider
+            .GetRequiredKeyedService<AIAgent>(AIAgentRole.ChatAgent.ReportGeneratorAgent);
 
         var quizzes = message
             .Attempts

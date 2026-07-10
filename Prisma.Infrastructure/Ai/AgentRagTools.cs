@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Ai;
 using Prisma.Domain.Interfaces;
 
@@ -6,7 +7,8 @@ namespace Prisma.Infrastructure.Ai;
 
 internal sealed class AgentRagTools(
     IVectorSearchRepository vectorSearchRepository,
-    IEmbeddingService embeddingService)
+    IEmbeddingService embeddingService,
+    IServiceScopeFactory serviceScopeFactory)
 
 {
     [Description("Search the knowledge base for relevant lesson content to answer the user's question.")]

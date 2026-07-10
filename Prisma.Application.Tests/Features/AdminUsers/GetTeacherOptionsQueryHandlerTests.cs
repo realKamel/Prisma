@@ -4,7 +4,7 @@ using Prisma.Application.Features.Users.Queries.GetTeacherOptions;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
-namespace Prisma.Application.Tests.Features.Users.Queries;
+namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class GetTeacherOptionsQueryHandlerTests
 {

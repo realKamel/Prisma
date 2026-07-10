@@ -8,7 +8,7 @@ using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Users;
 
-namespace Prisma.Application.Tests.Features.Users.Commands;
+namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class DeleteUserCommandHandlerTests
 {

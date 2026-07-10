@@ -49,7 +49,7 @@ public class AskRagQuestionCommandHandler(
         // 3. Stream the tokens immediately to Angular
         await foreach (var item in answerStream.ConfigureAwait(false))
         {
-            answerText.Append(item.Text); // Use Append instead of AppendLine for clean streaming text concatenation
+            answerText.Append(item.Text);
 
             // Capture the thread state as it arrives in the stream chunks
             if (!string.IsNullOrEmpty(item.ThreadState))
@@ -57,7 +57,6 @@ public class AskRagQuestionCommandHandler(
                 finalThreadState = item.ThreadState;
             }
 
-            // Yield wrapped in your Result type
             yield return new AskRagQuestionCommandResponse(session.Id, item.Text);
         }
 

@@ -3,6 +3,7 @@ using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Users.Queries.GetAllUsers;
@@ -10,17 +11,18 @@ namespace Prisma.Application.Features.Users.Queries.GetAllUsers;
 public class GetAllUsersQueryHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetAllUsersQuery, Result<List<UserListItemDto>>>
 {
-    public async Task<Result<List<UserListItemDto>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<UserListItemDto>>> Handle(GetAllUsersQuery request,
+        CancellationToken cancellationToken)
     {
-        var studentRepo   = unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var teacherRepo   = unitOfWork.GetOrCreateRepository<Teacher, Guid>();
+        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var teacherRepo = unitOfWork.GetOrCreateRepository<Teacher, Guid>();
         var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
-        var adminRepo     = unitOfWork.GetOrCreateRepository<Admin, Guid>();
+        var adminRepo = unitOfWork.GetOrCreateRepository<Domain.Entities.UserAggregate.Admin, Guid>();
 
-        var students   = (await studentRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
-        var teachers   = (await teacherRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var students = (await studentRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var teachers = (await teacherRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
         var assistants = (await assistantRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
-        var admins     = (await adminRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
+        var admins = (await adminRepo.ListAsync(cancellationToken)).Where(u => !u.IsDeleted);
 
         var result = new List<UserListItemDto>();
         result.AddRange(students.Select(u => Map(u, AppRoles.Student)));
@@ -54,11 +56,11 @@ public class GetAllUsersQueryHandler(IUnitOfWork unitOfWork)
         if (dt is null) return "—";
         var diff = DateTimeOffset.UtcNow - dt.Value;
         if (diff.TotalMinutes < 1) return "الآن";
-        if (diff.TotalHours   < 1) return $"منذ {(int)diff.TotalMinutes} دقيقة";
-        if (diff.TotalDays    < 1) return $"منذ {(int)diff.TotalHours} ساعة";
-        if (diff.TotalDays    < 2) return "منذ يوم";
-        if (diff.TotalDays    < 7) return $"منذ {(int)diff.TotalDays} أيام";
-        if (diff.TotalDays    < 30) return "منذ أسبوع";
+        if (diff.TotalHours < 1) return $"منذ {(int)diff.TotalMinutes} دقيقة";
+        if (diff.TotalDays < 1) return $"منذ {(int)diff.TotalHours} ساعة";
+        if (diff.TotalDays < 2) return "منذ يوم";
+        if (diff.TotalDays < 7) return $"منذ {(int)diff.TotalDays} أيام";
+        if (diff.TotalDays < 30) return "منذ أسبوع";
         return "منذ فترة";
     }
 }

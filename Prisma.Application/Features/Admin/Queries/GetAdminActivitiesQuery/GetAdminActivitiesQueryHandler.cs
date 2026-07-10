@@ -1,21 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.AdminDashboard;
+using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
+namespace Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 
 public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
-    : IRequestHandler<GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
+    : IRequestHandler<AdminDashboard.Queries.GetAdminActivities.GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
 {
-    public async Task<Result<List<AdminActivityDto>>> Handle(GetAdminActivitiesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<AdminActivityDto>>> Handle(AdminDashboard.Queries.GetAdminActivities.GetAdminActivitiesQuery request, CancellationToken cancellationToken)
     {
         var enrollmentRepo = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();

@@ -1,20 +1,21 @@
 ﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Teacher;
 
-namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
+namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 
 public class GetTeacherLessonsQueryHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService)
-    : IRequestHandler<GetTeacherLessonsQuery, Result<List<TeacherLessonDto>>>
+    : IRequestHandler<GetTeacherLessons.GetTeacherLessonsQuery, Result<List<TeacherLessonDto>>>
 {
     public async Task<Result<List<TeacherLessonDto>>> Handle(
-        GetTeacherLessonsQuery request,
+        GetTeacherLessons.GetTeacherLessonsQuery request,
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
@@ -27,8 +28,6 @@ public class GetTeacherLessonsQueryHandler(
 
         var result = lessons.Select(lesson =>
         {
-            
-
             return new TeacherLessonDto
             {
                 Id = lesson.Id,

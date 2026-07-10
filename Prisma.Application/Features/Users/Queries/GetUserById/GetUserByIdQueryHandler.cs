@@ -19,11 +19,11 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
 
         var role = user switch
         {
-            Student   => AppRoles.Student,
-            Teacher   => AppRoles.Teacher,
+            Student => AppRoles.Student,
+            Teacher => AppRoles.Teacher,
             Assistant => AppRoles.Assistant,
-            Admin     => AppRoles.Admin,
-            _         => "Unknown",
+            Domain.Entities.UserAggregate.Admin => AppRoles.Admin,
+            _ => "Unknown",
         };
 
         // TeacherId is only meaningful for Student — Assistant→Teacher isn't

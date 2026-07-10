@@ -67,7 +67,7 @@ public class UpdateUserCommandHandler(
             Student   => AppRoles.Student,
             Teacher   => AppRoles.Teacher,
             Assistant => AppRoles.Assistant,
-            Admin     => AppRoles.Admin,
+            Domain.Entities.UserAggregate.Admin     => AppRoles.Admin,
             _         => "Unknown",
         };
 

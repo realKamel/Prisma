@@ -32,7 +32,7 @@ public class CreateUserCommandHandler(IIdentityService identityService)
             // Policies claims — an admin can grant permissions afterward via the
             // existing AssistantsController.UpdateAssistantPermissions endpoint.
             AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow },
-            AppRoles.Admin => new Admin { Id = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow },
+            AppRoles.Admin => new Domain.Entities.UserAggregate.Admin { Id = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow },
             _ => throw new BadRequestException($"Unknown role '{request.Role}'."),
         };
 

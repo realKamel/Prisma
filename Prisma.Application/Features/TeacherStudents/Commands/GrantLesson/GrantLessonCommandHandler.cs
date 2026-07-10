@@ -1,8 +1,8 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Common.Responses;
-using Prisma.Application.Features.TeacherStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
@@ -13,9 +13,9 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
 {
     public async Task<Result> Handle(GrantLessonCommand request, CancellationToken cancellationToken)
     {
-        var studentRepo    = unitOfWork.GetOrCreateRepository<Domain.Entities.UserAggregate.Student, Guid>();
+        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
-        var lessonRepo     = unitOfWork.GetOrCreateRepository<Domain.Entities.LessonAggregate.Lesson, int>();
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var student = await studentRepo.GetByIdAsync(request.StudentId, cancellationToken);
         if (student is null)
@@ -36,28 +36,28 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
                 throw new BadRequestException("Student is already enrolled in this lesson.");
 
             // Student had this lesson before and was revoked — restore it
-            existing.IsDeleted        = false;
-            existing.DeletedAt        = null;
-            existing.DeletedBy        = null;
-            existing.Status           = EnrollmentStatus.Active;
+            existing.IsDeleted = false;
+            existing.DeletedAt = null;
+            existing.DeletedBy = null;
+            existing.Status = EnrollmentStatus.Active;
             existing.EnrollmentMethod = EnrollmentMethod.TeacherGrant;
-            existing.ExpiresAt        = DateTimeOffset.UtcNow.AddDays(request.ValidityDays);
-            existing.UpdatedAt        = DateTimeOffset.UtcNow;
+            existing.ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays);
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Force EF to treat this as a modification not an insertion
-            unitOfWork.DbContext.Entry(existing).State = EntityState.Modified;
+            // unitOfWork.DbContext.Entry(existing).State = EntityState.Modified;
         }
         else
         {
             // Fresh enrollment — DB sequence generates the Id
             var enrollment = new Enrollment
             {
-                Status           = EnrollmentStatus.Active,
+                Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.TeacherGrant,
-                ExpiresAt        = DateTimeOffset.UtcNow.AddDays(request.ValidityDays),
-                LessonId         = request.LessonId,
-                StudentId        = request.StudentId,
-                CreatedAt        = DateTimeOffset.UtcNow
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays),
+                LessonId = request.LessonId,
+                StudentId = request.StudentId,
+                CreatedAt = DateTimeOffset.UtcNow
             };
 
             enrollmentRepo.Add(enrollment);

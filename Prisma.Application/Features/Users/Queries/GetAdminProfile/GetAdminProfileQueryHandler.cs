@@ -20,7 +20,7 @@ public class GetAdminProfileQueryHandler(
         var userRepo = unitOfWork.GetOrCreateRepository<User, Guid>();
         var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.AdminId), cancellationToken);
 
-        if (user is not Admin admin)
+        if (user is not Domain.Entities.UserAggregate.Admin admin)
             throw new NotFoundException(nameof(Admin), request.AdminId);
 
         // NOTE: unlike Teacher/Assistant above, this platform-wide scoping is
@@ -39,7 +39,8 @@ public class GetAdminProfileQueryHandler(
             .ToList();
 
         var activities = activitiesResult.Data
-            .Select(a => new ProfileActivityDto(a.Details, a.ActivityDate.ToString("yyyy-MM-dd hh:mm tt"), "bg-[var(--purple)]"))
+            .Select(a =>
+                new ProfileActivityDto(a.Details, a.ActivityDate.ToString("yyyy-MM-dd hh:mm tt"), "bg-[var(--purple)]"))
             .ToList();
 
         return Result<RoleProfileDto>.Success(new RoleProfileDto(name, stats, activities));
@@ -50,10 +51,10 @@ public class GetAdminProfileQueryHandler(
     // rather than touching that existing handler.
     private static ProfileStatDto MapKpi(KpiDto k) => k.Id switch
     {
-        "students"     => new ProfileStatDto("الطلاب", k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
-        "revenue"      => new ProfileStatDto("الإيرادات", $"{k.Value:N0} ج.م", "text-[var(--mint)]"),
+        "students" => new ProfileStatDto("الطلاب", k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
+        "revenue" => new ProfileStatDto("الإيرادات", $"{k.Value:N0} ج.م", "text-[var(--mint)]"),
         "lessons-sold" => new ProfileStatDto("الدروس المباعة", k.Value.ToString("N0"), "text-[var(--star)]"),
-        "uptime"       => new ProfileStatDto("نسبة التشغيل", $"{k.Value:0.#}٪", "text-[var(--coral)]"),
-        _              => new ProfileStatDto(k.Id, k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
+        "uptime" => new ProfileStatDto("نسبة التشغيل", $"{k.Value:0.#}٪", "text-[var(--coral)]"),
+        _ => new ProfileStatDto(k.Id, k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
     };
 }

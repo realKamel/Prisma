@@ -1,25 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.AuditLogs;
+using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
+namespace Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 
 public class GetActivityLogsQueryHandler(
     IUnitOfWork _unitOfWork,
     UserManager<User> _userManager
-) : IRequestHandler<GetActivityLogsQuery, Result<ActivityLogResponseDto>>
+) : IRequestHandler<ActivityLogs.Queries.GetActivityLogs.GetActivityLogsQuery, Result<ActivityLogResponseDto>>
 {
     public async Task<Result<ActivityLogResponseDto>> Handle(
-        GetActivityLogsQuery request,
+        ActivityLogs.Queries.GetActivityLogs.GetActivityLogsQuery request,
         CancellationToken cancellationToken)
     {
         var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();

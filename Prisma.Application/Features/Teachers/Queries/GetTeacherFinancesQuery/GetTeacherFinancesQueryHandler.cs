@@ -1,22 +1,18 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.Specifications.Teacher;
 
-namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
+namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 
 public class GetTeacherFinancesQueryHandler(
     IUnitOfWork _unitOfWork, ICurrentUserService _currentUserService
-) : IRequestHandler<GetTeacherFinancesQuery, Result<List<RawTransactionDto>>>
+) : IRequestHandler<GetTeacherFinances.GetTeacherFinancesQuery, Result<List<RawTransactionDto>>>
 {
-    public async Task<Result<List<RawTransactionDto>>> Handle(GetTeacherFinancesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<RawTransactionDto>>> Handle(GetTeacherFinances.GetTeacherFinancesQuery request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)

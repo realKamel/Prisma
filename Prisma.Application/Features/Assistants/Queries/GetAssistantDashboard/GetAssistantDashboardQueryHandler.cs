@@ -1,5 +1,4 @@
-﻿using Ardalis.Specification;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -10,6 +9,7 @@ using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Assignments;
 using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
@@ -52,14 +52,19 @@ public class GetAssistantDashboardQueryHandler(
 
         // ── KPI 1 · Active students ────────────────────────────
         var activeNow = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(), cancellationToken);
-        var activeLastWeek = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(before: weekStart), cancellationToken);
+        var activeLastWeek =
+            await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(before: weekStart), cancellationToken);
         var studentDelta = activeNow - activeLastWeek;
 
         // ── KPI 2 · Quizzes this week + pass-rate delta ────────
-        var quizzesThisWeek = await quizAttemptRepo.CountAsync(new QuizAttemptsSpec(from: weekStart), cancellationToken);
+        var quizzesThisWeek =
+            await quizAttemptRepo.CountAsync(new QuizAttemptsSpec(from: weekStart), cancellationToken);
 
-        var gradedThisWeek = await quizAttemptRepo.ListAsync(new QuizAttemptsSpec(from: weekStart, to: now, status: QuizAttemptStatus.Graded), cancellationToken);
-        var gradedLastWeek = await quizAttemptRepo.ListAsync(new QuizAttemptsSpec(from: prevWeekStart, to: weekStart, status: QuizAttemptStatus.Graded), cancellationToken);
+        var gradedThisWeek = await quizAttemptRepo.ListAsync(
+            new QuizAttemptsSpec(from: weekStart, to: now, status: QuizAttemptStatus.Graded), cancellationToken);
+        var gradedLastWeek = await quizAttemptRepo.ListAsync(
+            new QuizAttemptsSpec(from: prevWeekStart, to: weekStart, status: QuizAttemptStatus.Graded),
+            cancellationToken);
 
         var passRateDelta = ComputePassRate(gradedThisWeek) - ComputePassRate(gradedLastWeek);
 
@@ -101,16 +106,16 @@ public class GetAssistantDashboardQueryHandler(
         {
             Teacher = new DashboardTeacher(
                 Name: assistant is not null
-                                    ? $"{assistant.FirstName} {assistant.LastName}"
-                                    : string.Empty,
+                    ? $"{assistant.FirstName} {assistant.LastName}"
+                    : string.Empty,
                 SupervisorName: SupervisorName),
 
             Kpis =
             [
-                new("students",    activeNow,           studentDelta,       studentDelta       >= 0 ? "up" : "down", "purple"),
-                new("quizzes",     quizzesThisWeek,     passRateDelta,      passRateDelta      >= 0 ? "up" : "down", "mint"),
-                new("assignments", ungradedSubmissions, 0,                  "down",                                  "star"),
-                new("lessons",     totalLessons,        newLessonsThisWeek, newLessonsThisWeek  > 0 ? "up" : "down", "coral"),
+                new("students", activeNow, studentDelta, studentDelta >= 0 ? "up" : "down", "purple"),
+                new("quizzes", quizzesThisWeek, passRateDelta, passRateDelta >= 0 ? "up" : "down", "mint"),
+                new("assignments", ungradedSubmissions, 0, "down", "star"),
+                new("lessons", totalLessons, newLessonsThisWeek, newLessonsThisWeek > 0 ? "up" : "down", "coral"),
             ],
 
             Activities = activities,

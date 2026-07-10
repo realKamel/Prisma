@@ -1,9 +1,7 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.EnrollmentAggregate;
-using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -32,7 +30,7 @@ internal class RedeemCodeCommandHandler(
         // ── 1. Load the student (need AcademicYearId) ──
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var student = await studentRepo.GetByIdAsync(studentId, ct)
-            ?? throw new NotFoundException("Student", studentId);
+                      ?? throw new NotFoundException("Student", studentId);
 
         if (student.AcademicYearId is null)
             throw new BadRequestException("Student is not assigned to an academic year.");
@@ -40,8 +38,8 @@ internal class RedeemCodeCommandHandler(
         // ── 2. Find the GeneratedCode by code value ──
         var generatedCodeRepo = unitOfWork.GetOrCreateRepository<GeneratedCode, int>();
         var generatedCode = await generatedCodeRepo.FirstOrDefaultAsync(
-            new GeneratedCodeByValueSpecification(request.Code), ct)
-            ?? throw new BadRequestException("الكود غلط — تأكد إنك كتبته صح");
+                                new GeneratedCodeByValueSpecification(request.Code), ct)
+                            ?? throw new BadRequestException("الكود غلط — تأكد إنك كتبته صح");
 
         // ── 3. Already used? ──
         if (generatedCode.RedeemedByStudentId is not null)
@@ -50,8 +48,8 @@ internal class RedeemCodeCommandHandler(
         // ── 4. Load the batch to check lesson + academic year ──
         var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
         var batch = await batchRepo.FirstOrDefaultAsync(
-            new CodeBatchWithLessonSpecification(generatedCode.BatchId), ct)
-            ?? throw new NotFoundException("CodeBatch", generatedCode.BatchId);
+                        new CodeBatchWithLessonSpecification(generatedCode.BatchId), ct)
+                    ?? throw new NotFoundException("CodeBatch", generatedCode.BatchId);
 
         // ── 5. Validate lesson matches ──
         if (batch.LessonId != request.LessonId)
@@ -72,7 +70,7 @@ internal class RedeemCodeCommandHandler(
         // ── 8. Mark the code as redeemed ──
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
-        unitOfWork.DbContext.Entry(generatedCode).State = EntityState.Modified;
+        // unitOfWork.DbContext.Entry(generatedCode).State = EntityState.Modified;
 
         // ── 9. Create or restore enrollment ──
         var expiresAt = DateTimeOffset.UtcNow.AddDays(30);
@@ -80,28 +78,28 @@ internal class RedeemCodeCommandHandler(
         Enrollment enrollment;
         if (existing is not null && existing.IsDeleted)
         {
-            existing.IsDeleted        = false;
-            existing.DeletedAt        = null;
-            existing.DeletedBy        = null;
-            existing.Status           = EnrollmentStatus.Active;
+            existing.IsDeleted = false;
+            existing.DeletedAt = null;
+            existing.DeletedBy = null;
+            existing.Status = EnrollmentStatus.Active;
             existing.EnrollmentMethod = EnrollmentMethod.RedeemCode;
-            existing.ExpiresAt        = expiresAt;
-            existing.UpdatedAt        = DateTimeOffset.UtcNow;
-            existing.GeneratedCodeId  = generatedCode.Id;
-            unitOfWork.DbContext.Entry(existing).State = EntityState.Modified;
+            existing.ExpiresAt = expiresAt;
+            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            existing.GeneratedCodeId = generatedCode.Id;
+            // unitOfWork.DbContext.Entry(existing).State = EntityState.Modified;
             enrollment = existing;
         }
         else
         {
             enrollment = new Enrollment
             {
-                Status           = EnrollmentStatus.Active,
+                Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.RedeemCode,
-                ExpiresAt        = expiresAt,
-                LessonId         = request.LessonId,
-                StudentId        = studentId,
-                GeneratedCodeId  = generatedCode.Id,
-                CreatedAt        = DateTimeOffset.UtcNow,
+                ExpiresAt = expiresAt,
+                LessonId = request.LessonId,
+                StudentId = studentId,
+                GeneratedCodeId = generatedCode.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
             };
             enrollmentRepo.Add(enrollment);
         }
@@ -111,7 +109,7 @@ internal class RedeemCodeCommandHandler(
         return new RedeemCodeResponse
         {
             EnrollmentId = enrollment.Id,
-            ExpiresAt    = expiresAt,
+            ExpiresAt = expiresAt,
         };
     }
 }

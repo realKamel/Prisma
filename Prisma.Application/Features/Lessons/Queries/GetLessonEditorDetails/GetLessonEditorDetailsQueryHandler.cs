@@ -40,7 +40,9 @@ public class GetLessonEditorDetailsQueryHandler(
             .Select(ay => ay.AcademicYearId)
             .ToList();
 
-        var thumbnail = storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl);
+        var thumbnail = lesson.ImageThumbnailUrl!=null?
+        storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl)
+        :string.Empty;
 
         var response = new LessonEditorResponseDto(
             lesson.Id,

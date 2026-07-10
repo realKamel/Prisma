@@ -37,7 +37,7 @@ public class DeleteLessonMaterialCommandHandler(
         if (lesson is null)
             throw new NotFoundException("Lesson material", request.MaterialId);
 
-        LessonMaterial materialToDelete = lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
+        var materialToDelete =  lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
         if (materialToDelete != null)
         {
             await storageService.DeleteFileAsync("prisma", materialToDelete.DownloadUrl, cancellationToken);

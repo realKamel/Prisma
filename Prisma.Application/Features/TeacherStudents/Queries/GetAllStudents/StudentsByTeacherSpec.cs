@@ -1,3 +1,4 @@
+
 using Ardalis.Specification;
 using Prisma.Domain.Entities.UserAggregate;
 
@@ -5,9 +6,9 @@ namespace Prisma.Application.Features.TeacherStudents.Queries.GetAllStudents;
 
 public class StudentsByTeacherSpec : Specification<Student>
 {
-    public StudentsByTeacherSpec(Guid teacherId)
+    public StudentsByTeacherSpec()
     {
-        Query.Where(s => s.TeacherId == teacherId)
+        Query
              .Include(s => s.Enrollments)
                  .ThenInclude(e => e.Lesson)
              .Include(s => s.QuizAttempts)

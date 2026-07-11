@@ -18,7 +18,7 @@ using Prisma.Application.Features.TeacherStudents.Queries.GetTeacherLessonsForGr
 
 namespace Prisma.API.Features.TeacherStudents;
 
-[Authorize(Roles = "Teacher,Admin")]
+[Authorize(Roles = "Teacher,Admin,Assistant")]
 [Route("api/[controller]")]
 [ApiController]
 public class TeacherStudentsController(IMediator mediator) : ControllerBase

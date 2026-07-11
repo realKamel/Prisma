@@ -1,7 +1,9 @@
+using System.ClientModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OpenAI;
 using OpenAI.Chat;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -34,8 +36,10 @@ public class OpenAiExamExtractor : IOpenAiExamExtractor
             return;
         }
 
-        var apiKey = configuration["OpenAI:ApiKey"];
-        _logger.LogInformation("🔑 OpenAI ApiKey present={Present}", !string.IsNullOrEmpty(apiKey));
+        var apiKey    = configuration["OpenAI:ApiKey"];
+        var modelName = configuration["OpenAI:FastChatModel"] ?? "openai/gpt-4o-mini";
+
+        _logger.LogInformation("🔑 OpenAI ApiKey present={Present}, Model={Model}", !string.IsNullOrEmpty(apiKey), modelName);
 
         if (string.IsNullOrEmpty(apiKey))
         {
@@ -44,8 +48,21 @@ public class OpenAiExamExtractor : IOpenAiExamExtractor
             return;
         }
 
-        _chatClient = new ChatClient(model: "gpt-4o", apiKey: apiKey);
-        _logger.LogInformation("✅ ChatClient created");
+        // IMPORTANT: must point at GitHub Models, same endpoint used in
+        // DependenciesInjection.cs (AddAiIntegrationServices). Constructing a
+        // bare `new ChatClient(model, apiKey)` defaults to api.openai.com,
+        // which rejects a GitHub PAT with 401. Also, "gpt-4o" alone (no
+        // provider prefix) is not a valid GitHub Models model id — it must be
+        // e.g. "openai/gpt-4o-mini", which is why we read it from config
+        // instead of hardcoding it.
+        var clientOptions = new OpenAIClientOptions
+        {
+            Endpoint = new Uri("https://models.github.ai/inference")
+        };
+        var openAiClient = new OpenAIClient(new ApiKeyCredential(apiKey), clientOptions);
+        _chatClient = openAiClient.GetChatClient(modelName);
+
+        _logger.LogInformation("✅ ChatClient created for GitHub Models — model={Model}", modelName);
     }
 
     public async IAsyncEnumerable<ExtractionProgress> ExtractQuestionsAsync(
@@ -169,7 +186,7 @@ public class OpenAiExamExtractor : IOpenAiExamExtractor
             return new List<ExtractedQuestion>();
         }
 
-        _logger.LogInformation("🤖 Calling OpenAI — pdfText length={Len}", pdfText?.Length ?? 0);
+        _logger.LogInformation("🤖 Calling GitHub Models — pdfText length={Len}", pdfText?.Length ?? 0);
 
         try
         {
@@ -211,8 +228,8 @@ public class OpenAiExamExtractor : IOpenAiExamExtractor
             var completion = await _chatClient.CompleteChatAsync(messages, cancellationToken: cancellationToken);
             var response   = completion.Value.Content[0].Text;
 
-            _logger.LogInformation("🤖 OpenAI response length={Len}", response?.Length ?? 0);
-            _logger.LogInformation("🤖 OpenAI raw (first 300): {Raw}",
+            _logger.LogInformation("🤖 GitHub Models response length={Len}", response?.Length ?? 0);
+            _logger.LogInformation("🤖 GitHub Models raw (first 300): {Raw}",
                 (response ?? "")[..Math.Min(300, response?.Length ?? 0)]);
 
             var parsed = ParseJson(response ?? "{}");
@@ -221,7 +238,7 @@ public class OpenAiExamExtractor : IOpenAiExamExtractor
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ OpenAI call failed");
+            _logger.LogError(ex, "❌ GitHub Models call failed");
             return new List<ExtractedQuestion>();
         }
     }

@@ -38,12 +38,11 @@ public abstract class PaymobService
                 email,
                 phone_number = "NA"
             },
-            notification_url = "https://your-backend-link.com/api/v1/payments/webhook",
-            redirection_url = "http://your-frontend-link.com/payment/callback"
+            notification_url = Settings.NotificationUrl,
+            redirection_url = Settings.RedirectionUrl,
         });
 
         var raw = await res.Content.ReadAsStringAsync();
-        Console.WriteLine("Paymob intention response: " + raw);
 
         var data = JsonNode.Parse(raw)?.AsObject();
         var clientSecret = data!["client_secret"]!.ToString();

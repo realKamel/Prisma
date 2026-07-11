@@ -6,12 +6,9 @@ namespace Prisma.Domain.Specifications.RedeemCodes;
 public class TeacherCodeBatchesSpecification : Specification<RedeemCode>
 {
     public TeacherCodeBatchesSpecification(
-        Guid teacherId,
         int? academicYearId,
         int? lessonId)
     {
-        Query.Where(b => b.CreatedByTeacherId == teacherId);
-
         if (academicYearId.HasValue)
             Query.Where(b => b.AcademicYearId == academicYearId.Value);
 

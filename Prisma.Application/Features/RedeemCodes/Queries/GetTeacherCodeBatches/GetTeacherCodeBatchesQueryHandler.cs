@@ -18,13 +18,13 @@ internal class GetTeacherCodeBatchesQueryHandler(
         GetTeacherCodeBatchesQuery request,
         CancellationToken ct)
     {
-        if (currentUser.UserId is not { } teacherId)
+        if (!currentUser.IsAuthenticated)
             throw new UnauthorizedException("User is not authenticated.");
 
         var repo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
 
         var batches = await repo.ListAsync(
-            new TeacherCodeBatchesSpecification(teacherId, request.AcademicYearId, request.LessonId), ct);
+            new TeacherCodeBatchesSpecification(request.AcademicYearId, request.LessonId), ct);
 
         var result = batches.Select(b => new CodeBatchListItemDto
         {

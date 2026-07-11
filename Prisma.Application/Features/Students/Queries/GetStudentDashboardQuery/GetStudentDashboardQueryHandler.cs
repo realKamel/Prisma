@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.UserAggregate;
@@ -104,12 +99,14 @@ public class GetStudentDashboardQueryHandler(
                 TeacherInitial = teacher[0].ToString(),
                 CurrentChapter = currentChapter,
                 TotalChapters = lesson.Sections.Count,
-                PosterUrl = lesson.ImageThumbnailUrl !=null?
-                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty
+                PosterUrl = lesson.ImageThumbnailUrl != null ?
+                await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty
+                // PosterUrl = lesson.ImageThumbnailUrl != null ?
+                //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty
             };
         }
 
-        var lessons = student.Enrollments.Select(enrollment =>
+        var lessonTasks = student.Enrollments.Select(async enrollment =>
         {
             var lesson = enrollment.Lesson!;
             var now = DateTimeOffset.UtcNow;
@@ -126,14 +123,16 @@ public class GetStudentDashboardQueryHandler(
 
                 Duration = lesson.Duration,
 
-                PosterUrl = lesson.ImageThumbnailUrl !=null?
-                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,
+                PosterUrl = lesson.ImageThumbnailUrl != null
+                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
+                    : string.Empty,
                 Status = status.ToString().ToLower(),
                 ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
-                                     ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
-                                     : null,
+                                    ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
+                                    : null,
             };
-        }).ToList();
+        });
+        var lessons = (await Task.WhenAll(lessonTasks)).ToList();
 
         return Result<GetStudentDashboardResponse>.Success(new GetStudentDashboardResponse
         {

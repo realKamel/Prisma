@@ -48,7 +48,7 @@ public class CreateLessonDetailsCommandHandler(
         {
             var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
             using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync("prisma", storageKey, stream, request.ImageFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.ImageFile.ContentType, cancellationToken);
             lesson.ImageThumbnailUrl = storageKey;
         }
 
@@ -70,7 +70,7 @@ public class CreateLessonDetailsCommandHandler(
         {
             var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
             using var stream = request.AssignmentFile.OpenReadStream();
-            await storageService.UploadFileAsync("prisma", storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
 
             lesson.Assignment = new Assignment
             {

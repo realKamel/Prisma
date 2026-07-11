@@ -40,7 +40,7 @@ public class DeleteLessonMaterialCommandHandler(
         var materialToDelete =  lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
         if (materialToDelete != null)
         {
-            await storageService.DeleteFileAsync("prisma", materialToDelete.DownloadUrl, cancellationToken);
+            await storageService.DeleteFileAsync(storageService.DefaultBucketName, materialToDelete.DownloadUrl, cancellationToken);
 
             lesson.LessonMaterials.Remove(materialToDelete);
 

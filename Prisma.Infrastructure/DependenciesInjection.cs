@@ -83,7 +83,7 @@ public static class DependenciesInjection
         services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
         services.AddScoped<IMuxTokenService, MuxTokenService>();
 
-        services.AddHostedService<StorageBucketPolicyInitializer>();
+        // services.AddHostedService<StorageBucketPolicyInitializer>();
 
         //services.AddStackExchangeRedisCache(option =>
         //{

@@ -43,7 +43,7 @@ public class DeleteLessonCommandHandler(
             lesson.Enrollments.Clear();
         
         if(lesson.ImageThumbnailUrl!=null)
-            await storageService.DeleteFileAsync("prisma",lesson.ImageThumbnailUrl);
+            await storageService.DeleteFileAsync(storageService.DefaultBucketName,lesson.ImageThumbnailUrl);
 
         if (lesson.Sections != null)
             foreach(var section in lesson.Sections)

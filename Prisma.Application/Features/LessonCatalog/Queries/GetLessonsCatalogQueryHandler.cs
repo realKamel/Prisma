@@ -27,7 +27,7 @@ public class GetLessonsCatalogQueryHandler(
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var student = await studentRepo.GetByIdAsync(studentId, cancellationToken) ?? throw new UnauthorizedException();
 
-        
+
         if (student.AcademicYearId is null)
             throw new StudentAcademicYearNotSetException(studentId);
 
@@ -37,14 +37,18 @@ public class GetLessonsCatalogQueryHandler(
         var lessons = await lessonRepo.ListAsync(
             new LessonsCatalogSpecification(student.AcademicYearId.Value), cancellationToken);
 
-        var result = lessons
-            .Select(lesson => MapLesson(lesson, studentId, lessons))
-            .ToList();
+        // var result = lessons
+        //     .Select(lesson => await MapLesson(lesson, studentId, lessons))
+        //     .ToList();
+        var result = (await Task.WhenAll(
+                    lessons.Select(lesson => MapLesson(lesson, studentId, lessons))
+                )).ToList();
 
         return Result<ICollection<LessonCatalogDto>>.Success(result);
     }
+    // private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
 
-    private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
+    private async Task<LessonCatalogDto> MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
     {
         var status = DetermineStatus(lesson, studentId, allLessons);
 
@@ -82,8 +86,10 @@ public class GetLessonsCatalogQueryHandler(
             TeacherInitial = "أم",
             Subject = "اللغة الانجليزية",
             DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
-            ImageThumbnailUrl = lesson.ImageThumbnailUrl !=null?
-                storageService.GetPublicUrl("prisma",lesson.ImageThumbnailUrl) : string.Empty,
+            ImageThumbnailUrl = lesson.ImageThumbnailUrl != null ?
+                await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,
+            // ImageThumbnailUrl = lesson.ImageThumbnailUrl != null ?
+            //      storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,
             Currency = "جنيه",
         };
     }

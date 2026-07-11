@@ -34,7 +34,7 @@ public class DeleteSubmissionCommandHandler(
 
         try
         {
-            await storage.DeleteFileAsync("prisma", submission.FileUrl, cancellationToken);
+            await storage.DeleteFileAsync(storage.DefaultBucketName, submission.FileUrl, cancellationToken);
         }
         catch { }
 

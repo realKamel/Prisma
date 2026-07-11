@@ -96,7 +96,7 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
                 using var stream = request.AssignmentFile.OpenReadStream();
-                await storageService.UploadFileAsync("prisma", storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
+                await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
 
                 if (lesson.Assignment is null)
                 {
@@ -135,7 +135,7 @@ public class UpdateLessonDetailsCommandHandler(
         {
             var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
             using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync("prisma", storageKey, stream, request.ImageFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.ImageFile.ContentType, cancellationToken);
 
             if (!string.IsNullOrEmpty(lesson.ImageThumbnailUrl))
                 storageKeysToDelete.Add(lesson.ImageThumbnailUrl);
@@ -181,7 +181,7 @@ public class UpdateLessonDetailsCommandHandler(
         {
             try
             {
-                await storageService.DeleteFileAsync("prisma", key, cancellationToken);
+                await storageService.DeleteFileAsync(storageService.DefaultBucketName, key, cancellationToken);
             }
             catch
             {

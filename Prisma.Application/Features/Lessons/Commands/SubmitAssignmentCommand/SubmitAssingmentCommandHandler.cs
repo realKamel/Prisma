@@ -41,7 +41,7 @@ public class SubmitAssignmentCommandHandler(
 
         await using var stream = request.File.OpenReadStream();
         await storage.UploadFileAsync(
-            bucketName: "prisma",
+            bucketName: storage.DefaultBucketName,
             objectKey: objectKey,
             content: stream,
             contentType: request.File.ContentType,

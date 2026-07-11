@@ -69,7 +69,7 @@ public class GetLessonPlayerQueryHandler(
             {
                 Title = m.Title ?? string.Empty,
                 DownloadUrl = m.DownloadUrl != null
-                    ? await storageService.GetDownloadUrlAsync("prisma", m.DownloadUrl)
+                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, m.DownloadUrl)
                     : string.Empty,
                 Type = (int)m.Type switch
                 {
@@ -110,7 +110,7 @@ public class GetLessonPlayerQueryHandler(
                 {
                     Id = assignment.Id,
                     ContentURL = assignment.ContentURL != null ?
-                    await storageService.GetDownloadUrlAsync("prisma", assignment.ContentURL) : string.Empty,
+                    await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, assignment.ContentURL) : string.Empty,
                     DueDate = assignment.DueDate.ToString("yyyy-MM-dd"),
                     FileName = submission != null ? submission.Title! : string.Empty
                 },

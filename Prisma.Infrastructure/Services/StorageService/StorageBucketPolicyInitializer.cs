@@ -26,7 +26,7 @@ public class StorageBucketPolicyInitializer : IHostedService
 
         if (publicPrefixesSection is { Length: > 0 })
         {
-            await storageService.SetPublicReadPolicyAsync(bucketName, publicPrefixesSection);
+            // await storageService.SetPublicReadPolicyAsync(bucketName, publicPrefixesSection);
         }
     }
 

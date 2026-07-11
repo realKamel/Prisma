@@ -50,7 +50,7 @@ public class UploadLessonMaterialsCommandHandler(
                 var filename = $"material/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
                 using var stream = file.OpenReadStream();
 
-                await storageService.UploadFileAsync("prisma",filename ,stream ,file.ContentType, cancellationToken);
+                await storageService.UploadFileAsync(storageService.DefaultBucketName,filename ,stream ,file.ContentType, cancellationToken);
 
                 string fileSize = file.Length < 1024 * 1024
                     ? $"{Math.Round((double)file.Length / 1024, 1)} KB"

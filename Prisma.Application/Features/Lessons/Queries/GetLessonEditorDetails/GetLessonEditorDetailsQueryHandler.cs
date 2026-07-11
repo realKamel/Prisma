@@ -11,8 +11,7 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 
 public class GetLessonEditorDetailsQueryHandler(
     IUnitOfWork _unitOfWork,
-    IStorageService storageService,
-    IConfiguration configuration)
+    IStorageService storageService)
     : IRequestHandler<GetLessonEditorDetailsQuery, Result<LessonEditorResponseDto>>
 {
     public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request, CancellationToken cancellationToken)
@@ -40,9 +39,11 @@ public class GetLessonEditorDetailsQueryHandler(
             .Select(ay => ay.AcademicYearId)
             .ToList();
 
-        var thumbnail = lesson.ImageThumbnailUrl!=null?
-        storageService.GetPublicUrl(configuration.GetSection("Storage")["BucketName"]!, lesson.ImageThumbnailUrl)
-        :string.Empty;
+        var thumbnail = lesson.ImageThumbnailUrl != null ?
+        await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
+        : string.Empty;
+        // var thumbnail = lesson.ImageThumbnailUrl != null ?
+        //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty;
 
         var response = new LessonEditorResponseDto(
             lesson.Id,

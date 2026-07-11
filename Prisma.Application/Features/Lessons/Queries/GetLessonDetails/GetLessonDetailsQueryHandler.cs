@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MediatR;
+﻿using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -53,8 +50,9 @@ public class GetLessonDetailsQueryHandler(
         {
             Id = lesson.Id,
             Url = lesson.ImageThumbnailUrl != null ?
-                storageService.GetPublicUrl("prisma", lesson.ImageThumbnailUrl) : string.Empty,
-            Title = lesson.Title ?? "",
+                await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,
+            // Url = lesson.ImageThumbnailUrl != null ?
+            //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,            Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",
             StudentsCount = lesson.Enrollments?.Count ?? 0,

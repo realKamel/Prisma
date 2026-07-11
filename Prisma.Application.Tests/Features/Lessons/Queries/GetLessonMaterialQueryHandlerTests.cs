@@ -37,7 +37,7 @@ public class GetLessonMaterialQueryHandlerTests
     {
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
 
-        _sut = new GetLessonMaterialQueryHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+        _sut = new GetLessonMaterialQueryHandler(_unitOfWork, _currentUserService, _userManager);
     }
 
     [Fact]

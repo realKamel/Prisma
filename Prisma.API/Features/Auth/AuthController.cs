@@ -102,7 +102,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     public async Task<ActionResult> ConfirmEmail([FromQuery] ConfirmEmailCommand command)
     {
         var result = await mediator.Send(command);
-        return Redirect("http://localhost:4200/email-confirmed");
+        return Redirect("http://localhost:4200/login");
     }
 
     [Authorize]

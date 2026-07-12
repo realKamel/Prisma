@@ -102,7 +102,7 @@ public class GetLessonDetailsQueryHandlerTests
             .Returns(fakeLesson);
 
         // الـ Mock الخاص بالـ Storage Service
-        _storageService.GetPublicUrl("prisma", "thumb.png").Returns("https://cdn.prisma.com/thumb.png");
+        _storageService.GetDownloadUrlAsync("prisma", "thumb.png").Returns("https://cdn.prisma.com/thumb.png");
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

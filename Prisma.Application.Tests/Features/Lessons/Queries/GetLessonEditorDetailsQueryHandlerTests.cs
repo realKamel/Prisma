@@ -23,7 +23,6 @@ public class GetLessonEditorDetailsQueryHandlerTests
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
     private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
     private readonly GetLessonEditorDetailsQueryHandler _sut;
 
     public GetLessonEditorDetailsQueryHandlerTests()
@@ -35,9 +34,8 @@ public class GetLessonEditorDetailsQueryHandlerTests
         // إعداد الـ Configuration للـ Storage Section
         var configSection = Substitute.For<IConfigurationSection>();
         configSection["BucketName"].Returns("prisma-bucket");
-        _configuration.GetSection("Storage").Returns(configSection);
 
-        _sut = new GetLessonEditorDetailsQueryHandler(_unitOfWork, _storageService, _configuration);
+        _sut = new GetLessonEditorDetailsQueryHandler(_unitOfWork, _storageService);
     }
 
     [Fact]
@@ -113,7 +111,7 @@ public class GetLessonEditorDetailsQueryHandlerTests
             .Returns(fakeAllAcademicYears);
 
         // إعداد الـ Mock الخاص بالـ Storage Service
-        _storageService.GetPublicUrl("prisma-bucket", "lesson-thumb.jpg").Returns("https://cdn.prisma.com/lesson-thumb.jpg");
+        _storageService.GetDownloadUrlAsync("prisma-bucket", "lesson-thumb.jpg").Returns("https://cdn.prisma.com/lesson-thumb.jpg");
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

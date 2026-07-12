@@ -290,7 +290,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var dto = Assert.Single(result.Data!);
         Assert.Equal(string.Empty, dto.ImageThumbnailUrl);
 
-        _storageService.DidNotReceive().GetPublicUrl(Arg.Any<string>(), Arg.Any<string>());
+        _storageService.DidNotReceive().GetDownloadUrlAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Fact]
@@ -302,7 +302,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var lesson = CreateLesson(id: 1, thumbnailUrl: "lessons/1/thumb.png");
 
         _storageService
-            .GetPublicUrl("prisma", "lessons/1/thumb.png")
+            .GetDownloadUrlAsync("prisma", "lessons/1/thumb.png")
             .Returns("https://cdn.example.com/prisma/lessons/1/thumb.png");
 
         SetupStudentAndLessons(student, [lesson]);

@@ -38,10 +38,6 @@ public class RedeemCodeCommandHandlerTests
         _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepo);
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
-        // DbContext entry mock for state management
-        var dbContext = Substitute.For<DbContext>();
-        _unitOfWork.DbContext.Returns(dbContext);
-
         _sut = new RedeemCodeCommandHandler(_unitOfWork, _currentUser);
     }
 

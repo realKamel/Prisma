@@ -14,10 +14,10 @@ public class AttemptAnswer : BaseEntity
     public int QuestionId { get; set; }
     public Question Question { get; set; }
 
-    public int ChoiceId { get; set; }
-    public Choice Choice { get; set; }
+    public int? ChoiceId { get; set; }
+    public Choice? Choice { get; set; }
 
-    public decimal Score { get; set; }
-    public bool IsCorrect { get; set; }
+    public decimal? Score { get; set; }
+    public bool? IsCorrect { get; set; }
     public string? TextAnswer { get; set; }
 }

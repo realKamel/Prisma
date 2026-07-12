@@ -15,10 +15,10 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasForeignKey(x => x.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Lesson)
-            .WithMany(x => x.Payments)
-            .HasForeignKey(x => x.LessonId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // builder.HasOne(x => x.Lesson)
+        //     .WithMany(x => x.Payments)
+        //     .HasForeignKey(x => x.LessonId)
+        //     .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(p => p.Amount)
             .HasPrecision(12, 2);

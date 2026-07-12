@@ -10,9 +10,16 @@ public class Section : BaseEntity
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
 
+    public int SortOrder { get; set; }
+
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();
 
     public TimeSpan Duration { get; set; }
 
     public bool IsPreview { get; set; } = false; // معاينه مجانيه
+
+    //video streaming
+    public string? UploadId { get; set; }
+    public string? AssetId { get; set; }
+    public string? PlaybackId { get; set; }
 }

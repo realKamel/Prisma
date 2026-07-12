@@ -3,7 +3,7 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
-public class Role : IdentityRole<Guid>, IAuditable
+public class Role : IdentityRole<Guid>, IEntity<Guid>, IAuditable
 {
     public Role() : base() { }
     public Role(string roleName) : base(roleName) { }

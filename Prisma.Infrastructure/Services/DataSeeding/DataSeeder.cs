@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
+using Prisma.Domain.Entities;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -25,7 +26,9 @@ public class DataSeeder(
     {
         if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
         {
-            throw new Exception("There is Pending Migrations");
+            //throw new Exception("There is Pending Migrations");
+            logger.LogInformation("Applying New Migration to Database");
+            await dbContext.Database.MigrateAsync();
         }
 
         if (!await dbContext.Users.AnyAsync())
@@ -78,11 +81,11 @@ public class DataSeeder(
 
                     foreach (var user in users)
                     {
-                        await userManager.CreateAsync(user, "P@ssword");
+                        await userManager.CreateAsync(user, "P@ssw0rd");
 
                         if (user is Teacher)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Teacher);
+                            await userManager.AddToRoleAsync(user, AppRoles.Teacher);
                             if (user is Teacher teacher)
                             {
                                 teacher.TeacherLandingSettings = await ReadTeacherSettingJsonFileAsync();
@@ -90,15 +93,15 @@ public class DataSeeder(
                         }
                         else if (user is Assistant)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Assistant);
+                            await userManager.AddToRoleAsync(user, AppRoles.Assistant);
                         }
                         else if (user is Admin)
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Admin);
+                            await userManager.AddToRoleAsync(user, AppRoles.Admin);
                         }
                         else
                         {
-                            await userManager.AddToRoleAsync(user, AppClaims.Roles.Student);
+                            await userManager.AddToRoleAsync(user, AppRoles.Student);
                         }
                     }
                 }
@@ -142,8 +145,8 @@ public class DataSeeder(
             LastName = "Mostafa",
             Subject = "English",
             PhoneNumber = "01010101010",
-            UserName = "ahmed@prisma.com",
-            Email = "ahmed@prisma.com"
+            UserName = "ahmed@gmail.com",
+            Email = "ahmed@gmail.com"
         };
 
         try
@@ -157,36 +160,15 @@ public class DataSeeder(
         }
 
         await userManager.CreateAsync(teacher, "AhmedP@ssword");
-        await userManager.AddToRoleAsync(teacher, AppClaims.Roles.Teacher);
+        await userManager.AddToRoleAsync(teacher, AppRoles.Teacher);
+        dbContext.Set<TeacherPreferences>().Add(TeacherPreferences.CreateDefault(teacher.Id));
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task SeedAppDataAsync(JsonElement root)
     {
-        // var migrations = await dbContext.Database.GetPendingMigrationsAsync();
-        //
-        // if (migrations.Any())
-        // {
-        //     throw new Exception("There is Pending Migrations");
-        // }
-
         try
         {
-            // var seedPath = Path.Combine(
-            //     AppContext.BaseDirectory, "SeedData", "seed_app_data.json");
-            //
-            // Console.WriteLine(seedPath);
-            //
-            // if (!File.Exists(seedPath))
-            // {
-            //     logger.LogWarning("Seed file not found: {Path}", seedPath);
-            //     return;
-            // }
-
-            //
-            // await using FileStream stream = File.OpenRead(seedPath);
-            // using JsonDocument document = await JsonDocument.ParseAsync(stream,
-            //     new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
-
             var questionSettings = new JsonSerializerSettings();
 
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -196,11 +178,13 @@ public class DataSeeder(
 
             await SeedDataAsync<AcademicYear>(root, options);
             await SeedDataAsync<Lesson>(root, options);
+            await SeedDataAsync<AcademicYearTeacher>(root, options);
+            await SeedDataAsync<AcademicYearLesson>(root, options);
             await SeedDataAsync<Section>(root, options);
             await SeedDataAsync<Assignment>(root, options);
             await SeedDataAsync<Enrollment>(root, options);
             await SeedDataAsync<Question>(root, options, questionSettings);
-            await SeedDataAsync<LessonQuiz>(root, options);
+            await SeedDataAsync<Quiz>(root, options);
             await SeedDataAsync<Choice>(root, options);
             await SeedDataAsync<QuestionLessonQuiz>(root, options);
             await SeedDataAsync<QuizAttempt>(root, options);
@@ -209,6 +193,9 @@ public class DataSeeder(
             await SeedDataAsync<SectionProgress>(root, options);
             await SeedDataAsync<AssignmentSubmission>(root, options);
             await SeedDataAsync<RedeemCode>(root, options);
+            await SeedDataAsync<GeneratedCode>(root, options);
+            await SeedDataAsync<TeacherPreferences>(root, options);
+
             await SeedDataAsync<Payment>(root, options);
         }
         catch (Exception e)
@@ -245,24 +232,17 @@ public class DataSeeder(
     {
         logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
 
-        if (serializerSettings is null)
+        if (!root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
         {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
-            {
-                return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
-                // dbContext.Set<TEntity>().AddRange(entities ?? []);
-            }
-        }
-        else
-        {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output))
-            {
-                return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
-                // dbContext.Set<TEntity>().AddRange(entities ?? []);
-            }
+            return [];
         }
 
-        return [];
+        if (serializerSettings is null)
+        {
+            return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
+        }
+
+        return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
     }
 
     private async Task SeedDataAsync<TEntity>(JsonElement root, JsonSerializerOptions options,
@@ -271,27 +251,22 @@ public class DataSeeder(
     {
         logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
 
-        if (serializerSettings is null)
+        if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
+            !await dbContext.Set<TEntity>().AnyAsync())
         {
-            if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
-                !await dbContext.Set<TEntity>().AnyAsync())
+            List<TEntity> entities;
+            if (serializerSettings is null)
             {
-                var entities = JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
-                dbContext.Set<TEntity>().AddRange(entities);
+                entities = JsonConvert
+                    .DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
             }
+            else
+            {
+                entities = JsonConvert
+                    .DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
+            }
+
+            dbContext.Set<TEntity>().AddRange(entities);
         }
     }
-
-    // private List<Question> SeedQuestionData(JsonElement root)
-    // {
-    //     var settings = new JsonSerializerSettings();
-    //     settings.Converters.Add(new QuestionConverter());
-    //     logger.LogInformation("Seeding Check: {name}", nameof(Question));
-    //     if (root.TryGetProperty(nameof(Question), out JsonElement output))
-    //     {
-    //         return JsonConvert.DeserializeObject<List<Question>>(output.GetRawText(), settings) ?? [];
-    //     }
-    //
-    //     return [];
-    // }
 }

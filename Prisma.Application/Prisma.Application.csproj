@@ -7,18 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Authentication\Queries\" />
     <Folder Include="Features\LessonCatalog\Commands\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageReference Include="MediatR" Version="14.1.0" />
+    <PackageReference Include="MediatR" Version="14.2.0" />
+    <PackageReference Include="Microsoft.Agents.AI.Abstractions" Version="1.13.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.6.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj" />
   </ItemGroup>
+  <ItemGroup>
+  <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+    <_Parameter1>Prisma.Application.Tests</_Parameter1>
+  </AssemblyAttribute>
+</ItemGroup>
 
 </Project>

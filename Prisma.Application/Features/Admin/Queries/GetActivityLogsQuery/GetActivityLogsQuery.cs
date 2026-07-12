@@ -1,0 +1,31 @@
+﻿using System;
+using System.Collections.Generic;
+using MediatR;
+using Prisma.Application.Common.Responses.Generic;
+
+namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
+
+public record GetActivityLogsQuery(int Skip = 0, int Take = 20) : IRequest<Result<ActivityLogResponseDto>>;
+
+public record ActivityLogResponseDto(
+    ActivityLogStatsDto? Stats,
+    List<ActivityEventDto> Events,
+    bool HasMore
+);
+
+public record ActivityLogStatsDto(
+    int TotalEvents,
+    int TodayEvents,
+    int ActiveUsers,
+    int Alerts
+);
+
+public record ActivityEventDto(
+    DateTimeOffset CreatedAt,
+    string User,
+    string Role,
+    string Action,
+    string TableName,
+    string EntityId,
+    string? Detail
+);

@@ -1,10 +1,11 @@
 using Prisma.Domain.Common;
-using Prisma.Domain.Entities;
 
 namespace Prisma.Domain.Interfaces;
 
 public interface IUnitOfWork
 {
-    public IRepository<TEntity> GetOrCreateRepository<TEntity>() where TEntity : BaseEntity;
-    public Task<int> SaveChangesAsync(CancellationToken ct = default);
+    IRepository<TEntity, TKey> GetOrCreateRepository<TEntity, TKey>()
+        where TEntity : class, IEntity<TKey>;
+
+    Task<int> SaveChangesAsync(CancellationToken ct);
 }

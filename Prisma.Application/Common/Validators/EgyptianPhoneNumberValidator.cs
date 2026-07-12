@@ -1,16 +1,21 @@
+using System.Text.RegularExpressions;
 using FluentValidation;
 
 namespace Prisma.Application.Common.Validators;
 
-public class EgyptianPhoneNumberValidator : AbstractValidator<string?>
+public class EgyptianPhoneNumberValidator : AbstractValidator<string>
 {
+    private static readonly Regex PhoneRegex = new(@"^(010|011|012|015)\d{8}$");
+
     public EgyptianPhoneNumberValidator()
     {
         RuleFor(x => x)
-            .Cascade(CascadeMode.Stop)
-            .NotEmpty()
-            .WithMessage("{PropertyName} is required.")
-            .Matches(@"^01[0125][0-9]{8}$")
-            .WithMessage("Phone number must be in correct format (e.g., 01123456789).");
+            .Must(BeValidEgyptianPhone)
+            .WithMessage("Invalid Egyptian phone number.");
+    }
+
+    private static bool BeValidEgyptianPhone(string phone)
+    {
+        return !string.IsNullOrWhiteSpace(phone) && PhoneRegex.IsMatch(phone);
     }
 }

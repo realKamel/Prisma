@@ -11,11 +11,12 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
     {
         get
         {
-            var value = httpContextAccessor
-                            .HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                        httpContextAccessor.HttpContext?
-                            .User.FindFirstValue(JwtRegisteredClaimNames.Sub);
-            // If UserId is not defined as NameIdentifier we search for JwtRegisteredClaimNames.Sub
+            string? value = httpContextAccessor
+                                .HttpContext?.User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+                            httpContextAccessor.HttpContext?
+                                .User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // If UserId is not defined as JwtRegisteredClaimNames.Sub we search for NameIdentifier
 
             return Guid.TryParse(value, out Guid id) ? id : null;
         }

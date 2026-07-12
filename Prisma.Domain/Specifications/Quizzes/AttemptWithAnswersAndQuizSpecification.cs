@@ -1,0 +1,16 @@
+﻿using Ardalis.Specification;
+using Prisma.Domain.Entities.QuizAggregate;
+
+namespace Prisma.Domain.Specifications.Quizzes;
+
+public class AttemptWithAnswersAndQuizSpecification : Specification<QuizAttempt>
+{
+    public AttemptWithAnswersAndQuizSpecification(int attemptId)
+    {
+        Query
+            .Where(a => a.Id == attemptId)
+            .Include(a => a.Answers)
+            .Include(a => a.Quiz)
+                .ThenInclude(q => q.Questions);
+    }
+}

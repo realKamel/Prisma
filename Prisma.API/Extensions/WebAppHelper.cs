@@ -1,10 +1,17 @@
 using System.Text;
+using Hangfire;
+using HealthChecks.UI.Client;
+using Microsoft.Agents.AI.DevUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Prisma.API.Filters;
 using Prisma.API.Middlewares;
 using Prisma.Application;
+using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure;
+using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
@@ -13,100 +20,226 @@ namespace Prisma.API.Extensions;
 
 public static class WebAppHelper
 {
-    public static void AddWebAppServices(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
+    extension(IServiceCollection services)
     {
-        // web api services
-        services.AddSerilog((sp, loggerConfiguration) => loggerConfiguration
-            .ReadFrom.Configuration(configuration)
-            .ReadFrom.Services(sp)
-            .Enrich.FromLogContext());
-        services.AddControllers();
-        services.AddOpenApi();
+        public void AddWebAppServices(IConfiguration configuration, IHostEnvironment hostEnvironment)
+        {
+            // web api services
+            services.AddSerilog((sp, loggerConfiguration) => loggerConfiguration
+                .ReadFrom.Configuration(configuration)
+                .ReadFrom.Services(sp)
+                .Enrich.FromLogContext());
+            services.AddControllers();
+            services.AddOpenApi();
 
-        services.AddScoped<GlobalExceptionHandlingMiddleware>();
+            services.AddScoped<GlobalExceptionHandlingMiddleware>();
 
-        //Application Services
-        services.AddApplicationServices();
+            //Application Services
+            services.AddApplicationServices();
 
-        //Infrastructure Services
-        services.AddInfrastructureServices(configuration, hostEnvironment);
+            //Infrastructure Services
+            services.AddInfrastructureServices(configuration, hostEnvironment);
 
-        services.AddJwtAuthentication(configuration, hostEnvironment);
-    }
+            services.AddJwtAuthentication(configuration, hostEnvironment);
 
-    public static void AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
-    {
-        var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
-        var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
-
-        services
-            .AddAuthentication(options =>
+            services.AddOutputCache(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context =>
-                    {
-                        context.Token = context.Request.Cookies["access_token"];
-                        return Task.CompletedTask;
-                    }
-                };
+                //  Default policy for ALL endpoints
+                options.AddBasePolicy(builder =>
+                    builder.Expire(TimeSpan.FromSeconds(10)));
 
-                if (hostEnvironment.IsDevelopment())
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        // ValidIssuer = jwtSettings.Issuer,
-                        // ValidAudience = jwtSettings.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        // ClockSkew = TimeSpan.Zero
-                    };
-                }
-                else
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwtSettings.Issuer,
-                        ValidAudience = jwtSettings.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ClockSkew = TimeSpan.Zero
-                    };
-                }
+                // Named policies
+                options.AddPolicy(CachePolicyNames.Short.Name, builder =>
+                    builder.Expire(CachePolicyNames.Short.Duration));
 
-                options.RequireHttpsMetadata = !hostEnvironment.IsDevelopment();
+                options.AddPolicy(CachePolicyNames.Long.Name, builder =>
+                    builder.Expire(CachePolicyNames.Long.Duration));
             });
 
-        //introduce more policies when needed
-        services.AddAuthorizationBuilder()
-            .AddPolicy(AppClaims.Policies.CanManageCourses, policy =>
-                policy.RequireClaim(AppClaims.PermissionsClaim,
-                    AppClaims.Permissions.ManageCourses));
+            // Add forwarded headers BEFORE anything else that reads the request scheme
+            //services.Configure<ForwardedHeadersOptions>(options =>
+            //{
+            //    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+            //    // Trust Caddy (Docker internal network) — safe since Caddy is only entry point
+            //    options.KnownIPNetworks.Clear();
+            //    options.KnownProxies.Clear();
+            //});
+
+            services.AddHealthChecks();
+            // .AddNpgSql(
+            //     configuration.GetConnectionString("DefaultSqlConnection")!,
+            //     name: "PostgreSQL Database",
+            //     failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+            //     tags: new[] { "db", "postgres" }
+            // );
+            // services.AddHealthChecksUI(setup =>
+            // {
+            //     // Points the UI dashboard to the JSON data endpoint mapped below
+            //     setup.AddHealthCheckEndpoint("Application Database Health", "/health-json");
+            //     setup.SetEvaluationTimeInSeconds(15); // Polls every 15 seconds
+            //     setup.DisableDatabaseMigrations();
+            // }).AddSqliteStorage("Data Source=healthchecks.db");
+
+            services.AddOpenAIResponses();
+            services.AddOpenAIConversations();
+            services.AddDevUI();
+        }
+
+        private void AddJwtAuthentication(IConfiguration configuration,
+            IHostEnvironment hostEnvironment)
+        {
+            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
+            var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            context.Token = context.Request.Cookies[AppCookies.AccessToken];
+                            return Task.CompletedTask;
+                        }
+                    };
+
+                    if (hostEnvironment.IsDevelopment())
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = false,
+                            ValidateAudience = false,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            // ValidIssuer = jwtSettings.Issuer,
+                            // ValidAudience = jwtSettings.Audience,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ClockSkew = TimeSpan.Zero
+                        };
+                    }
+                    else
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidateIssuerSigningKey = true,
+                            ValidIssuer = jwtSettings.Issuer,
+                            ValidAudience = jwtSettings.Audience,
+                            IssuerSigningKey = new SymmetricSecurityKey(key),
+                            ClockSkew = TimeSpan.Zero
+                        };
+                    }
+
+                    options.RequireHttpsMetadata = !hostEnvironment.IsDevelopment();
+                });
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("Dev", policy =>
+                {
+                    policy.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+                options.AddPolicy("CorsPolicy", policy =>
+                {
+                    policy.WithOrigins(
+                            "http://localhost:4200", // Dev Angular
+                            "https://localhost:4200", // If Angular also behind proxy
+                            "https://prismaedu.netlify.app/") // Prod
+                        .AllowCredentials()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+            // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+
+            // services.AddAuthorization(options =>
+            // {
+            //     foreach (var (policy, permissions) in AppClaims.Policies.PermissionMap)
+            //     {
+            //         options.AddPolicy(policy, builder =>
+            //             builder.RequireAssertion(ctx =>
+            //                 permissions.All(p =>
+            //                     ctx.User.Claims.Any(c => c.Type == AppClaims.PermissionsClaim && c.Value == p))));
+            //     }
+            // });
+
+            services.AddAuthorization(options =>
+            {
+                foreach (var policy in AppClaims.Policies.All)
+                {
+                    options.AddPolicy(policy, p =>
+                        p.RequireClaim(AppClaims.PermissionsClaim, policy));
+                }
+            });
+        }
     }
 
-    public static async Task UseDataSeedingAsync(this WebApplication app)
+    extension(WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
+        public async Task UseDataSeedingAsync()
         {
-            using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-            // await services.SeedIdentityAsync();
-            await services.SeedAppDataAsync();
-            // await services.SeedRolesAsync();
-            // await services.SeedUsersAsync();
+            if (app.Environment.IsDevelopment())
+            {
+                using var scope = app.Services.CreateScope();
+                var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+                await services.SeedAppDataAsync();
+            }
+        }
+
+        public void UseRecurringJobs()
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+
+                //Every Friday at 10:00 PM
+                jobService.AddOrUpdateRecurring<ReportGenerationJob>(
+                    JobQueues.Reports,
+                    x => x.GenerateWeekly(),
+                    Cron.Weekly(DayOfWeek.Friday, 22, 0));
+            }
+        }
+
+        public void UseHangfireUi()
+        {
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = [new HangfireDashboardAuthFilter()] //TODO: restrict to admins
+            });
+        }
+
+        public void MapHealthChecks()
+        {
+            app.MapHealthChecks("/health-json", new HealthCheckOptions
+            {
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
+            app.MapHealthChecksUI(options =>
+            {
+                options.UIPath = "/health-ui"; // URL path to open in browser
+            });
+        }
+
+        public void MapOpenAiResponses(IHostEnvironment environment)
+        {
+            app.MapOpenAIResponses();
+            app.MapOpenAIConversations();
+            if (environment.IsDevelopment())
+            {
+                // Map DevUI endpoint to /devui
+                app.MapDevUI();
+            }
         }
     }
 }

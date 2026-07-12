@@ -1,5 +1,7 @@
+using System.Text;
 using Prisma.API.Extensions;
 using Prisma.API.Middlewares;
+using Prisma.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
@@ -26,12 +28,18 @@ public class Program
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
 
+            builder.AddAiAgents();
+
+            builder.AddWorkflows();
+
             var app = builder.Build();
 
             await app.UseDataSeedingAsync();
 
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
+            //app.UseForwardedHeaders();
+            //app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
 
             if (app.Environment.IsDevelopment())
@@ -44,13 +52,23 @@ public class Program
                 });
             }
 
-            app.UseHttpsRedirection();
+            app.UseRouting();
 
-            app.UseCors("Dev");
+            app.UseCors("CorsPolicy");
+
+            app.UseHangfireUi();
 
             app.UseAuthentication();
 
+            app.UseOutputCache();
+
             app.UseAuthorization();
+
+            app.UseRecurringJobs();
+
+            app.MapHealthChecks();
+
+            app.MapOpenAiResponses(app.Environment);
 
             app.MapControllers();
 

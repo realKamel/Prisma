@@ -8,7 +8,7 @@ public class UserHierarchyConverter : JsonConverter
 {
     public override bool CanConvert(Type objectType) => objectType == typeof(User);
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         // Load the JSON object into memory
         var jsonObject = JObject.Load(reader);
@@ -35,7 +35,7 @@ public class UserHierarchyConverter : JsonConverter
         return user;
     }
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         throw new NotImplementedException("Only needed if you are serializing/saving back to JSON.");
     }

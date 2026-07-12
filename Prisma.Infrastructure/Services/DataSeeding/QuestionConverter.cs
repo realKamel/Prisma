@@ -9,7 +9,7 @@ public class QuestionConverter : JsonConverter
     // Tells Newtonsoft to only apply this converter to the base Question class
     public override bool CanConvert(Type objectType) => objectType == typeof(Question);
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         // Load the JSON object into memory
         var jsonObject = JObject.Load(reader);
@@ -34,7 +34,7 @@ public class QuestionConverter : JsonConverter
         return question;
     }
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         throw new NotImplementedException("Only needed if you are serializing/saving back to JSON.");
     }

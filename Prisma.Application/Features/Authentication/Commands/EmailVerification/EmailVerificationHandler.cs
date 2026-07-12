@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Responses;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Domain.Entities.UserAggregate;
@@ -17,8 +18,7 @@ namespace Prisma.Application.Features.Authentication.Commands.EmailVerification;
 
 public class EmailVerificationRequestHandler(
     UserManager<User> _userManager,
-    IEmailService _emailService,
-    IConfiguration _config)
+    IEmailService _emailService)
     : IRequestHandler<EmailVerificationRequestCommand, Result>
 {
     public async Task<Result> Handle(EmailVerificationRequestCommand request, CancellationToken cancellationToken)
@@ -31,7 +31,7 @@ public class EmailVerificationRequestHandler(
         }
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-        var verificationLink = $"{_config["AppSettings:BaseUrl"]}/api/v1/auth/confirm-email?email={request.Email}&token={Uri.EscapeDataString(emailToken)}";
+        var verificationLink = $"http://localhost:5117/api/v1/auth/confirm-email?email={request.Email}&token={Uri.EscapeDataString(emailToken)}";
         await _emailService.SendAsync(request.Email, "Email Verification", $"Please verify your email by clicking on the following link: {verificationLink}");
         return Result.Success("Verification email sent successfully.");
     }

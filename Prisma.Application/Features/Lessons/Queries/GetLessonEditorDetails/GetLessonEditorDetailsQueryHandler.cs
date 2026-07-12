@@ -1,0 +1,67 @@
+﻿using MediatR;
+using Microsoft.Extensions.Configuration;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Responses.Generic;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Exceptions;
+using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
+
+namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
+
+public class GetLessonEditorDetailsQueryHandler(
+    IUnitOfWork _unitOfWork,
+    IStorageService storageService)
+    : IRequestHandler<GetLessonEditorDetailsQuery, Result<LessonEditorResponseDto>>
+{
+    public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request, CancellationToken cancellationToken)
+    {
+        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+
+        var spec = new GetLessonEditorDetailsSpecification(request.Id);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
+
+        if (lesson is null)
+            throw new NotFoundException("Lesson", request.Id);
+
+        var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id);
+        var prerequisitesOptions = (await lessonRepository.ListAsync(prerequisiteSpec, cancellationToken))
+            .Select(l => new LessonDto(l.Title ?? string.Empty, l.Id))
+            .ToList();
+
+        var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
+        var allAcademicYearsOptions = allAcademicYears
+            .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
+            .ToList();
+
+        var existingAcademicYearIds = lesson.AcademicYears
+            .Select(ay => ay.AcademicYearId)
+            .ToList();
+
+        var thumbnail = lesson.ImageThumbnailUrl != null ?
+        await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
+        : string.Empty;
+        // var thumbnail = lesson.ImageThumbnailUrl != null ?
+        //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty;
+
+        var response = new LessonEditorResponseDto(
+            lesson.Id,
+            lesson.Title,
+            lesson.Description,
+            lesson.Price,
+            lesson.PrerequisiteId,
+            lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
+            lesson.Assignment != null,
+            lesson.Assignment?.DueDate,
+            lesson.Assignment?.Title,
+            thumbnail,
+            lesson.Outcomes?.ToList() ?? new List<string>(),
+            existingAcademicYearIds,
+            prerequisitesOptions,
+            allAcademicYearsOptions
+        );
+
+        return Result<LessonEditorResponseDto>.Success(response);
+    }
+}

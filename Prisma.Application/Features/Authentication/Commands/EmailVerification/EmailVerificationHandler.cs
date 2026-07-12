@@ -31,7 +31,7 @@ public class EmailVerificationRequestHandler(
         }
         var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-        var verificationLink = $"http//localhost:5117/api/v1/auth/confirm-email?email={request.Email}&token={Uri.EscapeDataString(emailToken)}";
+        var verificationLink = $"http://localhost:5117/api/v1/auth/confirm-email?email={request.Email}&token={Uri.EscapeDataString(emailToken)}";
         await _emailService.SendAsync(request.Email, "Email Verification", $"Please verify your email by clicking on the following link: {verificationLink}");
         return Result.Success("Verification email sent successfully.");
     }

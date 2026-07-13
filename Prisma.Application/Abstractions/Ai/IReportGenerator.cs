@@ -1,26 +1,24 @@
-using Prisma.Domain.Entities.EnrollmentAggregate;
+using Prisma.Application.Common.DTOs.Ai;
 
 namespace Prisma.Application.Abstractions.Ai;
 
 public interface IReportGenerator
 {
-    Task<string> GenerateReportAsync(ReportRequest request, CancellationToken ct);
+    Task<string> GenerateReportAsync(StudentData request, CancellationToken ct);
 }
 
 public enum ReportType
 {
     TeacherPerformanceSummary,
     StudentProgressReport,
-    CourseCompletionReport,
+    LessonCompletionReport,
     WeeklyEarningsSummary
 }
 
 public sealed record ReportRequest(
-    ReportType Type,
-    string RecipientName,
-    DateOnly PeriodStart,
-    DateOnly PeriodEnd,
-    IReadOnlyList<ReportMetric> Metrics,
+    string StudentName,
+    List<AttemptReportDto> Attempts,
+    List<EnrollmentReportDto> Enrollments,
     string? AdditionalContext = null);
 
 public sealed record ReportMetric(string Label, string Value, string? Trend = null);

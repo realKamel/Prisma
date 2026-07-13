@@ -44,4 +44,10 @@ internal sealed class AgentRagTools(
 
         return string.Join("\n---\n", chunks.Select(c => c.Content));
     }
+
+    [Description("Get Student Personal Information Like Name,etc.")]
+    public async Task<string> GetStudentInfo()
+    {
+        return await Task.FromResult("");
+    }
 }

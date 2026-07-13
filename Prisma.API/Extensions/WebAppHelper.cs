@@ -152,10 +152,14 @@ public static class WebAppHelper
                 });
                 options.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.WithOrigins(
-                            "http://localhost:4200", // Dev Angular
-                            "https://localhost:4200", // If Angular also behind proxy
-                            "https://prismaedu.netlify.app/") // Prod
+                    //policy.WithOrigins(
+                    //        "http://localhost:4200", // Dev Angular
+                    //        "https://localhost:4200", // If Angular also behind proxy
+                    //        "https://prismaedu.netlify.app") // Prod
+                    //    .AllowCredentials()
+                    //    .AllowAnyHeader()
+                    //    .AllowAnyMethod();
+                    policy.AllowAnyOrigin()
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();

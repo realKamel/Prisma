@@ -10,15 +10,20 @@ using Prisma.Domain.Specifications.Students;
 namespace Prisma.Infrastructure.BackgroundJobs.Jobs;
 
 public class ReportGenerationJob(
-    IUnitOfWork uow,
-    [FromKeyedServices("Report-Generator")]
-    Workflow workflow)
+    IServiceProvider serviceProvider)
     : IReportGenerationJob
 {
     [Queue(JobQueues.Reports)]
     [AutomaticRetry(Attempts = 3)]
+    [JobDisplayName("Student Report Generation")]
     public async Task GenerateWeekly(CancellationToken cancellationToken = default)
     {
+        using var scope = serviceProvider.CreateScope();
+
+        var workflow = scope.ServiceProvider.GetKeyedService<Workflow>("Report-Generator");
+
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+
         var repo = uow.GetOrCreateRepository<Student, Guid>();
 
         var studentIds = await repo.ListAsync(new ActiveStudentIds(), cancellationToken);

@@ -2,10 +2,10 @@ using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Common.Constants;
+using Prisma.Application.Common.DTOs.Ai;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
-using Prisma.Infrastructure.AgenticWorkflows.DTOs;
 
 namespace Prisma.Infrastructure.AgenticWorkflows.WrittenQuestionGradingWorkflow;
 

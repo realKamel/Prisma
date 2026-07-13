@@ -1,7 +1,7 @@
-namespace Prisma.Infrastructure.AgenticWorkflows.DTOs;
+namespace Prisma.Application.Common.DTOs.Ai;
 
 public record StudentData(
     Guid StudentId,
-    string StudentName,
+    StudentNames StudentName,
     IEnumerable<EnrollmentReportDto> Enrollments,
     IEnumerable<AttemptReportDto> Attempts);

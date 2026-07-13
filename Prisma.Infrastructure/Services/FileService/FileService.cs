@@ -1,14 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Prisma.Application.Abstractions.Services;
 
-namespace Prisma.Infrastructure.Services;
+namespace Prisma.Infrastructure.Services.FileService;
 
-public class FileService(IWebHostEnvironment _webHostEnvironment) : IFileService
+public class FileService(IWebHostEnvironment _webHostEnvironment) 
 {
     public async Task<string> UploadFileAsync(IFormFile file, string subFolder, CancellationToken cancellationToken)
     {

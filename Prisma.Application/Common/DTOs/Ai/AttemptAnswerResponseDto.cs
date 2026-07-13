@@ -1,4 +1,4 @@
-namespace Prisma.Infrastructure.AgenticWorkflows.DTOs;
+namespace Prisma.Application.Common.DTOs.Ai;
 
 public record AttemptAnswerResponseDto(
     int QuizAttemptId,

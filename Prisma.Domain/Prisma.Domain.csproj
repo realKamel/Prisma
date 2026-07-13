@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Ardalis.Specification" Version="9.3.1" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.11" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
+        <PackageReference Include="Ardalis.Specification" Version="9.3.1"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity" Version="2.3.11"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9"/>
     </ItemGroup>
 
 </Project>

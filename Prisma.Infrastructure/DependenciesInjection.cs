@@ -34,6 +34,8 @@ using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.PaymentService;
 using Prisma.Infrastructure.Services.StorageService;
+using Groq.Extensions.DependencyInjection;
+using Groq.Core.Clients;
 
 namespace Prisma.Infrastructure;
 
@@ -135,6 +137,12 @@ public static class DependenciesInjection
         // Register job classes (Hangfire needs them for DI)
         //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
         services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
+
+        services.AddHttpClient<MuxHttpClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://stream.mux.com");
+            client.DefaultRequestHeaders.Accept.Clear();
+        });
     }
 
     private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
@@ -260,7 +268,7 @@ public static class DependenciesInjection
         services.AddSingleton<GradingQuestionExecutor>();
     }
 
-    public static void AddAiAgents(this IHostApplicationBuilder app)
+    public static void AddAiAgents(this IHostApplicationBuilder app, IConfiguration configuration)
     {
         app.AddAIAgent(AIAgentRole.ChatAgent.DefaultAgent,
                 AIAgentRole.ChatAgent.DefaultAgentInstructions, AIType.FastChat)
@@ -290,6 +298,12 @@ public static class DependenciesInjection
                     ]
                 );
             })).WithInMemorySessionStore();
+        app.AddGroqApiServices(options =>
+        {
+            options.ApiKey = configuration.GetSection("Groq")["ApiKey"];
+            options.Timeout = TimeSpan.FromSeconds(100);
+            options.MaxRetries = 3;
+        });
     }
 
     public static void AddWorkflows(this IHostApplicationBuilder app)

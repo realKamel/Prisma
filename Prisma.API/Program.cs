@@ -1,4 +1,3 @@
-using System.Text;
 using Prisma.API.Extensions;
 using Prisma.API.Middlewares;
 using Prisma.Infrastructure;
@@ -28,9 +27,9 @@ public class Program
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
 
-            builder.AddAiAgents();
+            builder.AddAiAgents(builder.Configuration);
 
-            builder.AddWorkflows();
+            // builder.AddWorkflows();
 
             var app = builder.Build();
 

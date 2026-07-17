@@ -30,7 +30,7 @@ public class EmailVerificationTests
         // Mock AppSettings config mapping
         _config["AppSettings:BaseUrl"].Returns("https://testapi.prisma.com");
 
-        _requestHandler = new EmailVerificationRequestHandler(_userManager, _emailService, _config);
+        _requestHandler = new EmailVerificationRequestHandler(_userManager, _emailService);
         _confirmHandler = new ConfirmEmailHandler(_userManager);
     }
 
@@ -40,7 +40,7 @@ public class EmailVerificationTests
     public async Task Request_WhenUserDoesNotExist_ThrowsBadRequestException()
     {
         // Arrange
-        var command = new EmailVerificationRequestCommand( "ghost@prisma.com" );
+        var command = new EmailVerificationRequestCommand("ghost@prisma.com");
         _userManager.FindByEmailAsync(command.Email).Returns((User?)null);
 
         // Act
@@ -55,7 +55,7 @@ public class EmailVerificationTests
     public async Task Request_WhenEmailIsAlreadyConfirmed_ThrowsBadRequestException()
     {
         // Arrange
-        var command = new EmailVerificationRequestCommand ("verified@prisma.com");
+        var command = new EmailVerificationRequestCommand("verified@prisma.com");
         var user = new User { Email = command.Email, EmailConfirmed = true };
         _userManager.FindByEmailAsync(command.Email).Returns(user);
 
@@ -71,7 +71,7 @@ public class EmailVerificationTests
     public async Task Request_HappyPath_GeneratesTokenAndSendsEmail()
     {
         // Arrange
-        var command = new EmailVerificationRequestCommand ("newuser@prisma.com");
+        var command = new EmailVerificationRequestCommand("newuser@prisma.com");
         var user = new User { Email = command.Email, EmailConfirmed = false };
         var generatedToken = "raw-token-123+xyz";
         var expectedEscapedToken = Uri.EscapeDataString(generatedToken);
@@ -102,7 +102,7 @@ public class EmailVerificationTests
     public async Task Confirm_WhenUserDoesNotExist_ThrowsBadRequestException()
     {
         // Arrange
-        var command = new ConfirmEmailCommand ("ghost@prisma.com", "any-token");
+        var command = new ConfirmEmailCommand("ghost@prisma.com", "any-token");
         _userManager.FindByEmailAsync(command.Email).Returns((User?)null);
 
         // Act
@@ -116,7 +116,7 @@ public class EmailVerificationTests
     public async Task Confirm_WhenEmailIsAlreadyConfirmed_ThrowsBadRequestException()
     {
         // Arrange
-        var command = new ConfirmEmailCommand( "alreadyconfirmed@prisma.com", "any-token" );
+        var command = new ConfirmEmailCommand("alreadyconfirmed@prisma.com", "any-token");
         var user = new User { Email = command.Email, EmailConfirmed = true };
         _userManager.FindByEmailAsync(command.Email).Returns(user);
 
@@ -131,11 +131,12 @@ public class EmailVerificationTests
     public async Task Confirm_WhenTokenIsInvalidOrExpired_ThrowsBadRequestException()
     {
         // Arrange
-        var command = new ConfirmEmailCommand ("user@prisma.com", "invalid-token");
+        var command = new ConfirmEmailCommand("user@prisma.com", "invalid-token");
         var user = new User { Email = command.Email, EmailConfirmed = false };
 
         _userManager.FindByEmailAsync(command.Email).Returns(user);
-        _userManager.ConfirmEmailAsync(user, command.Token).Returns(IdentityResult.Failed(new IdentityError { Description = "Invalid token." }));
+        _userManager.ConfirmEmailAsync(user, command.Token)
+            .Returns(IdentityResult.Failed(new IdentityError { Description = "Invalid token." }));
 
         // Act
         var act = async () => await _confirmHandler.Handle(command, CancellationToken.None);
@@ -148,7 +149,7 @@ public class EmailVerificationTests
     public async Task Confirm_HappyPath_SuccessfullyConfirmsEmail()
     {
         // Arrange
-        var command = new ConfirmEmailCommand ("user@prisma.com", "valid-token");
+        var command = new ConfirmEmailCommand("user@prisma.com", "valid-token");
         var user = new User { Email = command.Email, EmailConfirmed = false };
 
         _userManager.FindByEmailAsync(command.Email).Returns(user);

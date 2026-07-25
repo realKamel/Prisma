@@ -1,13 +1,17 @@
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
 using Prisma.Application.Behaviours;
+using Prisma.Application.Common.Constants;
+using Prisma.Application.Common.Options;
 
 namespace Prisma.Application;
 
 public static class DependenciesInjection
 {
-    public static void AddApplicationServices(this IServiceCollection services)
+    public static void AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddValidatorsFromAssemblyContaining<ApplicationAssemblyMarker>();
         services.AddMediatR(cfg =>
@@ -18,5 +22,14 @@ public static class DependenciesInjection
 
         // Register the pipeline behavior
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        services.Configure<FeatureOptions>(configuration.GetSection(AppFeatureKeys.SectionKey));
+
+        services.AddFeatureManagement();
+
+        services.AddOptions<FeatureOptions>()
+            .Bind(configuration.GetSection(AppFeatureKeys.SectionKey))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 }

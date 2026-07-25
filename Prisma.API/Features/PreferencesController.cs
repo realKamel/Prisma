@@ -12,11 +12,9 @@ namespace Prisma.API.Features;
 public class PreferencesController(ISender sender) : ApiController
 {
     [HttpGet("accent")]
-    public async Task<IActionResult> GetAccentColor([FromQuery] string teacherEmail, CancellationToken ct)
+    public async Task<ActionResult> GetAccentColor([FromQuery] string teacherEmail, CancellationToken ct)
     {
         var result = await sender.Send(new GetAccentColorQuery(teacherEmail), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 }
-
-

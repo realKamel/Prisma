@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.TeacherPreferences.Commands.UpdateAccentColor;
-using Prisma.Application.Features.TeacherPreferences.Queries.GetAccentColor;
+
 
 namespace Prisma.API.Features.Teacher;
 
@@ -13,7 +13,7 @@ namespace Prisma.API.Features.Teacher;
 public class TeacherPreferencesController(ISender sender) : ApiController
 {
     [HttpPut("accent")]
-    public async Task<IActionResult> UpdateAccentColor(
+    public async Task<ActionResult> UpdateAccentColor(
         [FromBody] UpdateAccentColorCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);

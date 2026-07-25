@@ -18,28 +18,28 @@ namespace Prisma.API.Features.Quizzes;
 public class StudentQuizzesController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetList([FromQuery] string? filter, CancellationToken ct)
+    public async Task<ActionResult> GetList([FromQuery] string? filter, CancellationToken ct)
     {
         var result = await sender.Send(new GetStudentQuizzesListQuery(filter), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("{quizId:int}")]
-    public async Task<IActionResult> GetForTaking(int quizId, CancellationToken ct)
+    public async Task<ActionResult> GetForTaking(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new GetQuizForTakingQuery(quizId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("{quizId:int}/result")]
-    public async Task<IActionResult> GetResult(int quizId, CancellationToken ct)
+    public async Task<ActionResult> GetResult(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new GetQuizResultQuery(quizId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpPatch("attempts/{attemptId:int}/answer")]
-    public async Task<IActionResult> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
+    public async Task<ActionResult> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
     {
         var result =
             await sender.Send(new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
@@ -48,7 +48,7 @@ public class StudentQuizzesController(ISender sender) : ApiController
     }
 
     [HttpPost("attempts/{attemptId:int}/submit")]
-    public async Task<IActionResult> Submit(int attemptId, CancellationToken ct)
+    public async Task<ActionResult> Submit(int attemptId, CancellationToken ct)
     {
         var result = await sender.Send(new SubmitQuizAttemptCommand(attemptId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
@@ -56,7 +56,7 @@ public class StudentQuizzesController(ISender sender) : ApiController
 
 
     [HttpPost("attempts/{attemptId:int}/security-event")]
-    public async Task<IActionResult> ReportSecurityEvent(
+    public async Task<ActionResult> ReportSecurityEvent(
         int attemptId, [FromBody] ReportSecurityEventRequest body, CancellationToken ct)
     {
         var result = await sender.Send(new ReportSecurityEventCommand(attemptId, body.EventType), ct);

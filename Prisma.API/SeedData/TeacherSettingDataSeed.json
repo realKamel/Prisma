@@ -4,19 +4,19 @@
     "title": "الفهم الحقيقي يبدأ من هنا",
     "badges": [
       {
-        "icon": "bi-patch-check-fill",
+        "icon": "bootstrapPatchCheckFill",
         "text": "درجة كاملة"
       },
       {
-        "icon": "bi-calendar-check",
+        "icon": "bootstrapCalendarCheck",
         "text": "درسك الجاي جاهز"
       },
       {
-        "icon": "bi-lightning-charge",
+        "icon": "bootstrapLightningCharge",
         "text": "٢٤٨ طالب نشط"
       },
       {
-        "icon": "bi-star-fill",
+        "icon": "bootstrapStarFill",
         "text": "تقييم ٥ من ٥"
       }
     ],

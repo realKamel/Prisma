@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Prisma.API.Common;
 using Prisma.API.Features.TeacherStudents.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
@@ -18,69 +19,68 @@ using Prisma.Application.Features.TeacherStudents.Queries.GetTeacherLessonsForGr
 
 namespace Prisma.API.Features.TeacherStudents;
 
-[Authorize(Roles = "Teacher,Admin,Assistant")]
-[Route("api/[controller]")]
+[Authorize(Roles = $"{AppRoles.Teacher},{AppRoles.Admin},{AppRoles.Assistant}")]
 [ApiController]
-public class TeacherStudentsController(IMediator mediator) : ControllerBase
+public class TeacherStudentsController(IMediator mediator) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetAll(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllStudentsQuery(), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentDetailsQuery(id), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}/lessons")]
-    public async Task<IActionResult> GetLessons(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetLessons(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentLessonsQuery(id), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}/activities")]
-    public async Task<IActionResult> GetActivities(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetActivities(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentActivitiesQuery(id), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("{id:guid}/stats")]
-    public async Task<IActionResult> GetStats(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetStats(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentStatsQuery(id), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("lessons-for-grant")]
-    public async Task<IActionResult> GetLessonsForGrant(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetLessonsForGrant(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("lessons")]
-    public async Task<IActionResult> GetAllLessons(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetAllLessons(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("academic-years")]
-    public async Task<IActionResult> GetAcademicYears(CancellationToken cancellationToken)
+    public async Task<ActionResult> GetAcademicYears(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] AddStudentRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> Create([FromBody] AddStudentRequest request, CancellationToken cancellationToken)
     {
         var command = new AddStudentCommand(
             request.FirstName,
@@ -98,7 +98,8 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateStudentRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> Update(Guid id, [FromBody] UpdateStudentRequest request,
+        CancellationToken cancellationToken)
     {
         var command = new UpdateStudentCommand(
             id,
@@ -117,7 +118,8 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("grant")]
-    public async Task<IActionResult> GrantLesson([FromBody] GrantLessonRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> GrantLesson([FromBody] GrantLessonRequest request,
+        CancellationToken cancellationToken)
     {
         var command = new GrantLessonCommand(
             request.StudentId,
@@ -130,14 +132,15 @@ public class TeacherStudentsController(IMediator mediator) : ControllerBase
     }
 
     [HttpDelete("{studentId:guid}/lessons/{lessonId:int}")]
-    public async Task<IActionResult> RevokeLesson(Guid studentId, int lessonId, CancellationToken cancellationToken)
+    public async Task<ActionResult> RevokeLesson(Guid studentId, int lessonId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new RevokeLessonCommand(studentId, lessonId), cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("reports/send")]
-    public async Task<IActionResult> SendReport([FromBody] SendReportRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult> SendReport([FromBody] SendReportRequest request,
+        CancellationToken cancellationToken)
     {
         var command = new SendReportCommand(
             request.StudentIds,

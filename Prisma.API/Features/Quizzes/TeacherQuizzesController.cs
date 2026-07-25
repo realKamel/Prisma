@@ -23,28 +23,28 @@ namespace Prisma.API.Features.Quizzes;
 public class TeacherQuizzesController(ISender sender) : ApiController
 {
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateQuizCommand command, CancellationToken ct)
+    public async Task<ActionResult> Create([FromBody] CreateQuizCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("available-lessons")]
-    public async Task<IActionResult> GetAvailableLessons(CancellationToken ct)
+    public async Task<ActionResult> GetAvailableLessons(CancellationToken ct)
     {
         var result = await sender.Send(new GetLessonsAvailableForQuizQuery(), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("academic-years")]
-    public async Task<IActionResult> GetAcademicYears(CancellationToken ct)
+    public async Task<ActionResult> GetAcademicYears(CancellationToken ct)
     {
         var result = await sender.Send(new GetAllAcademicYearsQuery(), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetList(
+    public async Task<ActionResult> GetList(
         [FromQuery] string scope,
         [FromQuery] string? search,
         [FromQuery] string? status,
@@ -59,14 +59,14 @@ public class TeacherQuizzesController(ISender sender) : ApiController
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetDetail(int id, CancellationToken ct)
+    public async Task<ActionResult> GetDetail(int id, CancellationToken ct)
     {
         var result = await sender.Send(new GetTeacherQuizDetailQuery(id), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
     [HttpGet("{id:int}/students")]
-    public async Task<IActionResult> GetStudents(
+    public async Task<ActionResult> GetStudents(
         int id,
         [FromQuery] string? search,
         [FromQuery] string? status,
@@ -80,21 +80,19 @@ public class TeacherQuizzesController(ISender sender) : ApiController
     }
 
     [HttpDelete("{quizId:int}")]
-    public async Task<IActionResult> DeleteQuiz(int quizId, CancellationToken ct)
+    public async Task<ActionResult> DeleteQuiz(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new DeleteQuizCommand(quizId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
 
-    
-
 
     // ========== NEW AI EXTRACTION ENDPOINTS ==========
 
     [HttpPost("extract/upload")]
-    public async Task<IActionResult> UploadAndExtract(IFormFile file, CancellationToken ct)
+    public async Task<ActionResult> UploadAndExtract(IFormFile? file, CancellationToken ct)
     {
-        if (file == null || file.Length == 0)
+        if (file is null || file.Length == 0)
             return BadRequest(Result.Failure("لم يتم رفع أي ملف"));
 
         if (!file.ContentType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
@@ -108,7 +106,7 @@ public class TeacherQuizzesController(ISender sender) : ApiController
 
         await using (var stream = new FileStream(filePath, FileMode.Create))
         {
-            await file.CopyToAsync(stream);
+            await file.CopyToAsync(stream, ct);
         }
 
         var result = await sender.Send(new ExtractQuestionsFromPdfCommand(file.FileName, filePath), ct);
@@ -116,7 +114,7 @@ public class TeacherQuizzesController(ISender sender) : ApiController
     }
 
     [HttpGet("extract/status/{jobId:int}")]
-    public async Task<IActionResult> GetExtractionStatus(int jobId, CancellationToken ct)
+    public async Task<ActionResult> GetExtractionStatus(int jobId, CancellationToken ct)
     {
         var result = await sender.Send(new GetExtractionStatusQuery(jobId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);

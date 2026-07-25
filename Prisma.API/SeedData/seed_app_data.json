@@ -66,7 +66,7 @@
       "DeletedBy": null,
       "IsDeleted": false
     },
-        {
+    {
       "Id": 7,
       "Title": "الصف الرابع الثانوي",
       "CreatedAt": "2025-11-30T10:32:00.195Z",
@@ -77,7 +77,7 @@
       "DeletedBy": null,
       "IsDeleted": true
     },
-        {
+    {
       "Id": 8,
       "Title": "الصف الخامس الثانوي",
       "CreatedAt": "2025-11-30T10:32:00.195Z",
@@ -3815,19 +3815,19 @@
           "title": "الفهم الحقيقي يبدأ من هنا",
           "badges": [
             {
-              "icon": "bi-patch-check-fill",
+              "icon": "bootstrapPatchCheckFill",
               "text": "درجة كاملة"
             },
             {
-              "icon": "bi-calendar-check",
+              "icon": "bootstrapCalendarCheck",
               "text": "درسك الجاي جاهز"
             },
             {
-              "icon": "bi-lightning-charge",
+              "icon": "bootstrapLightningCharge",
               "text": "٢٤٨ طالب نشط"
             },
             {
-              "icon": "bi-star-fill",
+              "icon": "bootstrapStarFill",
               "text": "تقييم ٥ من ٥"
             }
           ],

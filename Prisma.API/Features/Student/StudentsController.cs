@@ -25,7 +25,7 @@ public class StudentsController(ISender mediator) : ApiController
         return Ok(result);
     }
 
-    // [Authorize(Roles = AppRoles.Student)]
+    [Authorize(Roles = AppRoles.Student)]
     [HttpGet("history")]
     [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status404NotFound)]
@@ -61,7 +61,8 @@ public class StudentsController(ISender mediator) : ApiController
     [ProducesResponseType<Result<bool>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<bool>>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<Result<bool>>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> UpdateProfile([FromBody] UpdateStudentProfileCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult> UpdateProfile([FromBody] UpdateStudentProfileCommand command,
+        CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
@@ -72,11 +73,13 @@ public class StudentsController(ISender mediator) : ApiController
     [ProducesResponseType<Result<bool>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<bool>>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<Result<bool>>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordCommand command,
+        CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
     }
+
     [HttpGet("payments/history")]
     [ProducesResponseType<Result<StudentPaymentHistoryResponseDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<StudentPaymentHistoryResponseDto>>(StatusCodes.Status500InternalServerError)]

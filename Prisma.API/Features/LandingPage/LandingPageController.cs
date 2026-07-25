@@ -1,31 +1,17 @@
-﻿using System.Text;
-using System.Text.Json;
-using MediatR;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Prisma.API.Common;
+﻿using Prisma.API.Common;
 using Prisma.Application.Features.LandingPage.Queries.ExportLandingPage;
-namespace Prisma.API.Features.LandingPage;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
+namespace Prisma.API.Features.LandingPage;
 
-    public class LandingPageController : ApiController
+public class LandingPageController(IMediator mediator) : ApiController
 {
-        private readonly IMediator _mediator;
+    [HttpGet("export/{email}")]
+    public async Task<ActionResult> ExportLandingPage(string email, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new ExportLandingPageQuery(email), cancellationToken);
 
-        public LandingPageController(IMediator mediator)
-        {
-            _mediator = mediator;
-        }
-
-        [HttpGet("export/{email}")]
-        public async Task<IActionResult> ExportLandingPage(string email , CancellationToken cancellationToken )
-        {
-            var query = new ExportLandingPageQuery(email);
-
-            var result = await _mediator.Send(query, cancellationToken);
-
-            return Ok(result);
-        }
+        return Ok(result);
     }
+}

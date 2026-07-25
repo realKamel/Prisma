@@ -18,13 +18,11 @@ namespace Prisma.API.Features.RedeemCodes;
 
 public class CodesController(ISender mediator) : ApiController
 {
-    // ── Teacher endpoints ──────────────────────────────────────────────────
-
     [HttpGet("batches")]
     [Authorize(Roles = AppRoles.Teacher + "," + AppRoles.Assistant)]
     [ProducesResponseType<Result<List<CodeBatchListItemDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetBatches(
+    public async Task<ActionResult> GetBatches(
         [FromQuery] int? academicYearId,
         [FromQuery] int? lessonId,
         CancellationToken ct)
@@ -39,7 +37,7 @@ public class CodesController(ISender mediator) : ApiController
     [ProducesResponseType<Result<CodeBatchDetailDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetBatchDetail(
+    public async Task<ActionResult> GetBatchDetail(
         [FromRoute] int batchId,
         CancellationToken ct)
     {
@@ -53,7 +51,7 @@ public class CodesController(ISender mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreateBatch(
+    public async Task<ActionResult> CreateBatch(
         [FromBody] CreateCodeBatchCommand command,
         CancellationToken ct)
     {
@@ -65,7 +63,7 @@ public class CodesController(ISender mediator) : ApiController
     [Authorize(Roles = AppRoles.Teacher + "," + AppRoles.Assistant)]
     [ProducesResponseType<Result<List<AcademicYearOptionDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAcademicYears(CancellationToken ct)
+    public async Task<ActionResult> GetAcademicYears(CancellationToken ct)
     {
         var result = await mediator.Send(new GetAllAcademicYearsQuery(), ct);
         return Ok(result);
@@ -75,20 +73,18 @@ public class CodesController(ISender mediator) : ApiController
     [Authorize(Roles = AppRoles.Teacher + "," + AppRoles.Assistant)]
     [ProducesResponseType<Result<List<CodeLessonOptionDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetLessons(CancellationToken ct)
+    public async Task<ActionResult> GetLessons(CancellationToken ct)
     {
         var result = await mediator.Send(new GetCodeLessonOptionsQuery(), ct);
         return Ok(result);
     }
-
-    // ── Student endpoint ───────────────────────────────────────────────────
 
     [HttpPost("redeem")]
     [Authorize(Roles = AppRoles.Student)]
     [ProducesResponseType<Result<RedeemCodeResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Redeem(
+    public async Task<ActionResult> Redeem(
         [FromBody] RedeemCodeCommand command,
         CancellationToken ct)
     {

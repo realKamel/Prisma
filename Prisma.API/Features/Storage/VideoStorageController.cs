@@ -14,31 +14,35 @@ namespace Prisma.API.Features.Storage;
 public class VideoStorageController(IMediator mediator) : ApiController
 {
     [HttpGet("upload-url")]
-    public async Task<IActionResult> GetUploadUrl([FromQuery] int sectionId)
+    public async Task<ActionResult> GetUploadUrl([FromQuery] int sectionId)
     {
         var result = await mediator.Send(new GetUploadUrlQuery(sectionId));
         return Ok(result);
     }
+
     [HttpGet("video-url")]
-    public async Task<IActionResult> GetVideoUrl([FromQuery] string objectKey)
+    public async Task<ActionResult> GetVideoUrl([FromQuery] string objectKey)
     {
         var url = await mediator.Send(new GetVideoUrlQuery(objectKey));
         return Ok(url);
     }
+
     [HttpGet("audio-url")]
-    public async Task<IActionResult> GetAudioUrl([FromQuery] string objectKey)
+    public async Task<ActionResult> GetAudioUrl([FromQuery] string objectKey)
     {
         var url = await mediator.Send(new GetAudioUrlQuery(objectKey));
         return Ok(url);
     }
+
     [HttpDelete("delete")]
-    public async Task<IActionResult> Delete([FromQuery] string objectKey, CancellationToken cancellationToken)
+    public async Task<ActionResult> Delete([FromQuery] string objectKey, CancellationToken cancellationToken)
     {
         await mediator.Send(new DeleteVideoCommand(objectKey), cancellationToken);
         return Ok();
     }
+
     [HttpPost("mux-webhook")]
-    public async Task<IActionResult> Handle([FromBody] JsonElement payload, CancellationToken cancellationToken)
+    public async Task<ActionResult> Handle([FromBody] JsonElement payload, CancellationToken cancellationToken)
     {
         var eventType = payload.GetProperty("type").GetString();
 

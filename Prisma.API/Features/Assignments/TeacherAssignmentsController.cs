@@ -16,13 +16,13 @@ namespace Prisma.API.Features.Assignments;
 public class TeacherAssignmentsController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<IActionResult> GetList(
-       [FromQuery] string? search,
-       [FromQuery] int? lessonId,
-       [FromQuery] string? status,
-       [FromQuery] int page = 1,
-       [FromQuery] int pageSize = 20,
-       CancellationToken ct = default)
+    public async Task<ActionResult> GetList(
+        [FromQuery] string? search,
+        [FromQuery] int? lessonId,
+        [FromQuery] string? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken ct = default)
     {
         var result = await sender.Send(
             new GetAssignmentSubmissionsListQuery(search, lessonId, status, page, pageSize), ct);
@@ -30,7 +30,7 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
     }
 
     [HttpGet("{submissionId:int}")]
-    public async Task<IActionResult> GetDetail(int submissionId, CancellationToken ct)
+    public async Task<ActionResult> GetDetail(int submissionId, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetAssignmentSubmissionDetailQuery(submissionId), ct);
@@ -38,10 +38,10 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
     }
 
     [HttpPost("{submissionId:int}/grade")]
-    public async Task<IActionResult> Grade(
-    int submissionId,
-    [FromBody] GradeSubmissionRequest body,
-    CancellationToken ct)
+    public async Task<ActionResult> Grade(
+        int submissionId,
+        [FromBody] GradeSubmissionRequest body,
+        CancellationToken ct)
     {
         var result = await sender.Send(
             new GradeAssignmentSubmissionCommand(submissionId, body.Score, body.Note), ct);
@@ -49,13 +49,12 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
     }
 
     [HttpPost("{submissionId:int}/release-lock")]
-    public async Task<IActionResult> ReleaseLock(int submissionId, CancellationToken ct)
+    public async Task<ActionResult> ReleaseLock(int submissionId, CancellationToken ct)
     {
         var result = await sender.Send(
             new ReleaseAssignmentGradingLockCommand(submissionId), ct);
         return result.Succeeded ? Ok(result) : BadRequest(result);
     }
-
 }
-public record GradeSubmissionRequest(int Score, string? Note);
 
+public record GradeSubmissionRequest(int Score, string? Note);

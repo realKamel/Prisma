@@ -9,15 +9,20 @@ public sealed class EmbeddingService(
     [FromKeyedServices(AIType.Embedding)] IEmbeddingGenerator<string, Embedding<float>> generator)
     : IEmbeddingService
 {
-    public async Task<ReadOnlyMemory<float>> EmbedAsync(string text, CancellationToken ct)
+    public async Task<ReadOnlyMemory<float>> EmbedAsync(string text, CancellationToken ct = default)
     {
-        var result = await generator.GenerateAsync(text, cancellationToken: ct);
-        return result.Vector;
+        var results = await generator.GenerateAsync(text, cancellationToken: ct);
+        return results.Vector;
     }
 
     public async Task<IReadOnlyList<ReadOnlyMemory<float>>> EmbedBatchAsync(
-        IReadOnlyList<string> texts, CancellationToken ct)
+        IReadOnlyList<string> texts, CancellationToken ct = default)
     {
+        if (texts.Count == 0)
+        {
+            return [];
+        }
+
         var results = await generator.GenerateAsync(texts, cancellationToken: ct);
         return results.Select(r => r.Vector).ToList();
     }

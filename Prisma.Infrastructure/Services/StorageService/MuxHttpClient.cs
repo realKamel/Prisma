@@ -1,10 +1,14 @@
+using Prisma.Application.Abstractions.Services;
+
 namespace Prisma.Infrastructure.Services.StorageService;
 
-public sealed class MuxHttpClient(HttpClient httpClient)
+public sealed class MuxHttpClient(HttpClient httpClient, IVideoStorageService videoStorageService)
+    : IAudioStreamingService
 {
-    public async Task<Stream> StreamAudioToDestinationAsync(string playbackId, string token)
+    public async Task<Stream> StreamAudioAsync(string playbackId)
     {
-        var relativeDownloadPath = $"/{playbackId}/audio.m4a?token={token}";
+        //var relativeDownloadPath = $"/{playbackId}/audio.m4a?token={token}";
+        var relativeDownloadPath = await videoStorageService.GetAudioUrlAsync(playbackId);
 
         var downloadResponse = await httpClient.GetAsync(
             relativeDownloadPath,

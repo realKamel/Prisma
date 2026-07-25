@@ -1,9 +1,10 @@
-﻿using Ardalis.Specification;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
+using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -11,16 +12,18 @@ using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
-namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
+namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
 public class CreateLessonDetailsCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
-    IStorageService storageService)
-    : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
+    IStorageService storageService,
+    IBackgroundJobService backgroundJobService)
+    : IRequestHandler<CreateLessonDetails.CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
-    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetails.CreateLessonDetailsCommand request,
+        CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
@@ -41,14 +44,15 @@ public class CreateLessonDetailsCommandHandler(
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            Outcomes = request.Outcomes ?? new List<string>()
+            Outcomes = request.Outcomes
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)
         {
             var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
-            using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.ImageFile.ContentType, cancellationToken);
+            await using var stream = request.ImageFile.OpenReadStream();
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
+                request.ImageFile.ContentType, cancellationToken);
             lesson.ImageThumbnailUrl = storageKey;
         }
 
@@ -69,8 +73,9 @@ public class CreateLessonDetailsCommandHandler(
         if (request.AssignmentEnabled && request.AssignmentFile != null && request.AssignmentFile.Length > 0)
         {
             var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
-            using var stream = request.AssignmentFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
+            await using var stream = request.AssignmentFile.OpenReadStream();
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
+                request.AssignmentFile.ContentType, cancellationToken);
 
             lesson.Assignment = new Assignment
             {
@@ -100,9 +105,14 @@ public class CreateLessonDetailsCommandHandler(
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         lessonRepository.Add(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        List<int> sectionIds = lesson.Sections.Select(s=>s.Id).ToList();
-        var response = new CreateLessonResponse(lesson.Id, sectionIds); 
+
+        List<int> sectionIds = lesson.Sections.Select(s => s.Id).ToList();
+
+        var response = new CreateLessonResponse(lesson.Id, sectionIds);
+
+        backgroundJobService.Enqueue<ILessonTranscriptAndSummarizationJob>(job =>
+            job.TranscriptAndSummarize(lesson.Id, cancellationToken));
+
         return Result<CreateLessonResponse>.Success(response);
     }
 }
-

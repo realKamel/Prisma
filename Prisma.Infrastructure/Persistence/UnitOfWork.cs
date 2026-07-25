@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Prisma.Domain.Common;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence.Repositories;
@@ -9,12 +8,10 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
 {
     private readonly Dictionary<Type, object> _repositories = [];
 
-    public DbContext DbContext => dbContext;
-
     public IRepository<TEntity, TKey> GetOrCreateRepository<TEntity, TKey>()
         where TEntity : class, IEntity<TKey>
     {
-        if (_repositories.TryGetValue(typeof(TEntity), out object? repository))
+        if (_repositories.TryGetValue(typeof(TEntity), out var repository))
         {
             return (IRepository<TEntity, TKey>)repository;
         }

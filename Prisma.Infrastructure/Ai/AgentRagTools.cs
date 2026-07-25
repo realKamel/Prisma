@@ -1,7 +1,11 @@
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Ai;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Quizzes;
+using Prisma.Domain.Specifications.Students;
 
 namespace Prisma.Infrastructure.Ai;
 
@@ -46,8 +50,27 @@ internal sealed class AgentRagTools(
     }
 
     [Description("Get Student Personal Information Like Name,etc.")]
-    public async Task<string> GetStudentInfo()
+    public async Task<string> GetStudentInfo(CancellationToken ct = default)
     {
-        return await Task.FromResult("");
+        using var scope = serviceScopeFactory.CreateScope();
+        var currentUserServices = scope.ServiceProvider.GetRequiredService<ICurrentUserService>();
+        var userId = currentUserServices.UserId;
+        if (userId is null)
+        {
+            return await Task.FromResult("");
+        }
+
+        var uow = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var studentRepo = uow.GetOrCreateRepository<Student, Guid>();
+        var student = await studentRepo
+            .FirstOrDefaultAsync(new StudentWithAcademicYearDataSpec(userId.Value), ct);
+
+        return $"""
+                Student Data:
+                First Name: {student.FirstName}
+                First Name: {student.FirstName}
+                Days Streak : {student.StreakDays}
+                Academic Year: {student.AcademicYear.Title}
+                """;
     }
 }

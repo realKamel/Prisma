@@ -10,6 +10,8 @@ public class Section : BaseEntity
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
 
+    public string? Transcript { get; set; }
+    public string? TranscriptSummary { get; set; }
     public int SortOrder { get; set; }
 
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();

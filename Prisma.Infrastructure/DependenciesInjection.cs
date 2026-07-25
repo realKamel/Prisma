@@ -1,6 +1,8 @@
 using System.ClientModel;
 using System.Diagnostics.CodeAnalysis;
 using Amazon.S3;
+using Groq.Core.Clients;
+using Groq.Extensions.DependencyInjection;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.Agents.AI.DurableTask;
@@ -11,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenAI;
 using Prisma.Application.Abstractions.Ai;
@@ -25,6 +28,7 @@ using Prisma.Infrastructure.Ai;
 using Prisma.Infrastructure.BackgroundJobs;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.Identity;
+using Prisma.Infrastructure.Localization;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
@@ -34,8 +38,6 @@ using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.PaymentService;
 using Prisma.Infrastructure.Services.StorageService;
-using Groq.Extensions.DependencyInjection;
-using Groq.Core.Clients;
 
 namespace Prisma.Infrastructure;
 
@@ -99,9 +101,13 @@ public static class DependenciesInjection
 
         services.AddBackgroundJobsAndHangfireWithConfig(configuration);
 
-#pragma warning disable MEAI001
         services.AddAiIntegrationServices(configuration);
-#pragma warning restore MEAI001
+
+        services.AddScoped<ISummarizationServices, SummarizationServices>();
+        services.AddScoped<ITextEmbeddingProcessor, TextEmbeddingProcessor>();
+
+        services.AddLocalization();
+        services.AddTransient<IAppLocalizer, AppLocalizer>();
     }
 
     private static void AddBackgroundJobsAndHangfireWithConfig(this IServiceCollection services,
@@ -137,8 +143,8 @@ public static class DependenciesInjection
         // Register job classes (Hangfire needs them for DI)
         //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
         services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
-
-        services.AddHttpClient<MuxHttpClient>(client =>
+        services.AddScoped<ILessonTranscriptAndSummarizationJob, LessonTranscriptAndSummaryJob>();
+        services.AddHttpClient<IAudioStreamingService, MuxHttpClient>(client =>
         {
             client.BaseAddress = new Uri("https://stream.mux.com");
             client.DefaultRequestHeaders.Accept.Clear();
@@ -219,7 +225,6 @@ public static class DependenciesInjection
         services.AddScoped<IIdentityService, IdentityService>();
     }
 
-    [Experimental("MEAI001")]
     private static void AddAiIntegrationServices(this IServiceCollection services, IConfiguration configuration)
     {
         var openAiConfig = configuration.GetSection("OpenAI");
@@ -243,8 +248,8 @@ public static class DependenciesInjection
         services.AddKeyedEmbeddingGenerator(AIType.Embedding,
             openAiClient.GetEmbeddingClient(openAiConfig["EmbeddingModel"]!).AsIEmbeddingGenerator());
 
-        services.AddKeyedSpeechToTextClient(AIType.SpeechToText,
-            openAiClient.GetAudioClient(openAiConfig["SpeechModel"]!).AsISpeechToTextClient());
+        // services.AddKeyedSpeechToTextClient(AIType.SpeechToText,
+        //     openAiClient.GetAudioClient(openAiConfig["SpeechModel"]!).AsISpeechToTextClient());
 
 
         services.AddScoped<IRagQuestionAnswering, RagQuestionAnsweringService>();
@@ -255,6 +260,7 @@ public static class DependenciesInjection
 
         services.AddSingleton<IEmbeddingService, EmbeddingService>();
         services.AddSingleton<IVectorSearchRepository, VectorSearchRepository>();
+
         services.AddSingleton<AgentRagTools>();
 
         // services.AddSingleton<ChatHistoryProvider>(sp =>
@@ -262,10 +268,10 @@ public static class DependenciesInjection
         //         sp.GetRequiredService<IDbContextFactory<AppDbContext>>(),
         //         maxMessagesToLoad: 40));
 
-        services.AddSingleton<GetStudentStatusExecutor>();
-        services.AddSingleton<NarrativeGenerationExecutor>();
-        services.AddSingleton<GetWrittenQuestionExecutor>();
-        services.AddSingleton<GradingQuestionExecutor>();
+        // services.AddSingleton<GetStudentStatusExecutor>();
+        // services.AddSingleton<NarrativeGenerationExecutor>();
+        // services.AddSingleton<GetWrittenQuestionExecutor>();
+        // services.AddSingleton<GradingQuestionExecutor>();
     }
 
     public static void AddAiAgents(this IHostApplicationBuilder app, IConfiguration configuration)
@@ -298,9 +304,12 @@ public static class DependenciesInjection
                     ]
                 );
             })).WithInMemorySessionStore();
+
         app.AddGroqApiServices(options =>
         {
-            options.ApiKey = configuration.GetSection("Groq")["ApiKey"];
+            options.ApiKey = configuration?.GetSection("Groq")["ApiKey"] ??
+                             throw new ArgumentNullException("Groq ApiKey is null");
+
             options.Timeout = TimeSpan.FromSeconds(100);
             options.MaxRetries = 3;
         });

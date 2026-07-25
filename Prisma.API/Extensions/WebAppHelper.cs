@@ -1,9 +1,11 @@
+using System.Globalization;
 using System.Text;
 using Hangfire;
 using HealthChecks.UI.Client;
 using Microsoft.Agents.AI.DevUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Middlewares;
@@ -35,7 +37,7 @@ public static class WebAppHelper
             services.AddScoped<GlobalExceptionHandlingMiddleware>();
 
             //Application Services
-            services.AddApplicationServices();
+            services.AddApplicationServices(configuration);
 
             //Infrastructure Services
             services.AddInfrastructureServices(configuration, hostEnvironment);
@@ -152,14 +154,11 @@ public static class WebAppHelper
                 });
                 options.AddPolicy("CorsPolicy", policy =>
                 {
-                    //policy.WithOrigins(
-                    //        "http://localhost:4200", // Dev Angular
-                    //        "https://localhost:4200", // If Angular also behind proxy
-                    //        "https://prismaedu.netlify.app") // Prod
-                    //    .AllowCredentials()
-                    //    .AllowAnyHeader()
-                    //    .AllowAnyMethod();
-                    policy.AllowAnyOrigin()
+                    policy.WithOrigins(
+                            "http://localhost:4200", "https://localhost:4200", // Dev Angular
+                            "https://prismaedu.netlify.app",
+                            configuration.GetSection("deploymentUrls")["frontendUrl"] ??
+                            throw new InvalidOperationException()) // Prod
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
@@ -244,6 +243,21 @@ public static class WebAppHelper
                 // Map DevUI endpoint to /devui
                 app.MapDevUI();
             }
+        }
+
+        public void UseLocalization()
+        {
+            var supportedCultures = new[]
+            {
+                new CultureInfo("en-US"),
+                new CultureInfo("ar-EG")
+            };
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                SupportedCultures = supportedCultures, // For dates, numbers, currency
+                SupportedUICultures = supportedCultures // For string localizations
+            });
         }
     }
 }

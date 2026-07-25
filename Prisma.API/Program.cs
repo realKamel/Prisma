@@ -67,6 +67,8 @@ public class Program
 
             app.MapHealthChecks();
 
+            app.UseLocalization();
+
             app.MapOpenAiResponses(app.Environment);
 
             app.MapControllers();

@@ -7,10 +7,10 @@ public class HangfireDashboardAuthFilter : IDashboardAuthorizationFilter
 {
     public bool Authorize(DashboardContext context)
     {
-        //var httpContext = context.GetHttpContext();
+        var httpContext = context.GetHttpContext();
 
         // Option 1: Only allow authenticated admins
-        //return httpContext.User.IsInRole(AppRoles.Admin);
+        return httpContext.User.IsInRole(AppRoles.Admin);
 
         // Option 2: For development only
         return true;

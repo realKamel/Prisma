@@ -45,10 +45,9 @@ public class RefreshTokenCommandHandler(
         }
 
         var claims = await userManager.GetClaimsAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
 
-        var userClaims = claims.Select(claim => claim.Value).ToList();
-
-        var newAccessToken = jwtService.GenerateAccessToken(user.Id, user.Email, userClaims);
+        var newAccessToken = jwtService.GenerateAccessToken(user.Id, user.Email, roles, claims);
 
         var newRefreshToken = jwtService.GenerateRefreshToken();
 

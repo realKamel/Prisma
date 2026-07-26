@@ -13,10 +13,10 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
-    <PackageReference Include="Hangfire.Core" Version="1.8.23" />
+    <PackageReference Include="Hangfire.Core" Version="1.8.24" />
     <PackageReference Include="MediatR" Version="14.2.0" />
     <PackageReference Include="Microsoft.Agents.AI.Abstractions" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.6.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.8.1" />
     <PackageReference Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.10" />
     <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="4.6.0" />

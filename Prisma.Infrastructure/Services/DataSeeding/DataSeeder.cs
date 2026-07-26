@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
@@ -19,7 +20,8 @@ public class DataSeeder(
     AppDbContext dbContext,
     ILogger<IDataSeeder> logger,
     RoleManager<Role> roleManager,
-    UserManager<User> userManager)
+    UserManager<User> userManager,
+    IHostEnvironment hostEnvironment)
     : IDataSeeder
 {
     public async Task SeedAppDataAsync()
@@ -36,11 +38,15 @@ public class DataSeeder(
             await using var transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
-                // postgres ignore all FK constraints/triggers for this session
-                await dbContext.Database.ExecuteSqlRawAsync("SET session_replication_role = 'replica';");
+                // Defer foreign key checking until COMMIT instead of using session_replication_role
+                await dbContext.Database.ExecuteSqlRawAsync("SET CONSTRAINTS ALL DEFERRED;");
+
+                var seedFileName = hostEnvironment.IsDevelopment()
+                    ? "seed_app_data.json"
+                    : "seed_prod_data.json";
 
                 var seedPath = Path.Combine(
-                    AppContext.BaseDirectory, "SeedData", "seed_app_data.json");
+                    AppContext.BaseDirectory, "SeedData", seedFileName);
 
                 logger.LogInformation("Try to Seed file : {Path} for Identity", seedPath);
 
@@ -52,9 +58,9 @@ public class DataSeeder(
 
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
-                await using FileStream stream = File.OpenRead(seedPath);
+                await using var stream = File.OpenRead(seedPath);
 
-                using JsonDocument document = await JsonDocument.ParseAsync(stream,
+                using var document = await JsonDocument.ParseAsync(stream,
                     new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
 
                 var root = document.RootElement;
@@ -67,6 +73,10 @@ public class DataSeeder(
                     foreach (var role in roles)
                         await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id, });
                 }
+
+                await SeedDataAsync<AcademicYear>(root, options);
+
+                await dbContext.SaveChangesAsync();
 
                 if (!await userManager.Users.AnyAsync())
                 {
@@ -83,25 +93,27 @@ public class DataSeeder(
                     {
                         await userManager.CreateAsync(user, "P@ssw0rd");
 
-                        if (user is Teacher)
+                        switch (user)
                         {
-                            await userManager.AddToRoleAsync(user, AppRoles.Teacher);
-                            if (user is Teacher teacher)
+                            case Teacher:
                             {
-                                teacher.TeacherLandingSettings = await ReadTeacherSettingJsonFileAsync();
+                                await userManager.AddToRoleAsync(user, AppRoles.Teacher);
+                                if (user is Teacher teacher)
+                                {
+                                    teacher.TeacherLandingSettings = await ReadTeacherSettingJsonFileAsync();
+                                }
+
+                                break;
                             }
-                        }
-                        else if (user is Assistant)
-                        {
-                            await userManager.AddToRoleAsync(user, AppRoles.Assistant);
-                        }
-                        else if (user is Admin)
-                        {
-                            await userManager.AddToRoleAsync(user, AppRoles.Admin);
-                        }
-                        else
-                        {
-                            await userManager.AddToRoleAsync(user, AppRoles.Student);
+                            case Assistant:
+                                await userManager.AddToRoleAsync(user, AppRoles.Assistant);
+                                break;
+                            case Admin:
+                                await userManager.AddToRoleAsync(user, AppRoles.Admin);
+                                break;
+                            default:
+                                await userManager.AddToRoleAsync(user, AppRoles.Student);
+                                break;
                         }
                     }
                 }
@@ -109,9 +121,8 @@ public class DataSeeder(
                 await SeedAppDataAsync(root);
 
                 await dbContext.SaveChangesAsync();
-                // Turn constraints back on before committing
-                await dbContext.Database.ExecuteSqlRawAsync("SET session_replication_role = 'origin';");
 
+                // All circular/deferred foreign keys are validated right here when the transaction commits
                 await transaction.CommitAsync();
             }
             catch (Exception e)
@@ -176,7 +187,7 @@ public class DataSeeder(
 
             // var root = document.RootElement;
 
-            await SeedDataAsync<AcademicYear>(root, options);
+            // await SeedDataAsync<AcademicYear>(root, options);
             await SeedDataAsync<Lesson>(root, options);
             await SeedDataAsync<AcademicYearTeacher>(root, options);
             await SeedDataAsync<AcademicYearLesson>(root, options);

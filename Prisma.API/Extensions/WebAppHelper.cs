@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using Hangfire;
 using HealthChecks.UI.Client;
-using Microsoft.Agents.AI.DevUI;
+// using Microsoft.Agents.AI.DevUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
@@ -83,9 +83,9 @@ public static class WebAppHelper
             //     setup.DisableDatabaseMigrations();
             // }).AddSqliteStorage("Data Source=healthchecks.db");
 
-            services.AddOpenAIResponses();
-            services.AddOpenAIConversations();
-            services.AddDevUI();
+            // services.AddOpenAIResponses();
+            // services.AddOpenAIConversations();
+            // services.AddDevUI();
         }
 
         private void AddJwtAuthentication(IConfiguration configuration,
@@ -192,12 +192,9 @@ public static class WebAppHelper
     {
         public async Task UseDataSeedingAsync()
         {
-            if (app.Environment.IsDevelopment())
-            {
-                using var scope = app.Services.CreateScope();
-                var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-                await services.SeedAppDataAsync();
-            }
+            using var scope = app.Services.CreateScope();
+            var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+            await services.SeedAppDataAsync();
         }
 
         public void UseRecurringJobs()
@@ -241,7 +238,7 @@ public static class WebAppHelper
             if (environment.IsDevelopment())
             {
                 // Map DevUI endpoint to /devui
-                app.MapDevUI();
+                // app.MapDevUI();
             }
         }
 

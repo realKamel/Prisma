@@ -26,9 +26,7 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
-
             builder.AddAiAgents(builder.Configuration);
-
             // builder.AddWorkflows();
 
             var app = builder.Build();
@@ -37,8 +35,10 @@ public class Program
 
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
-            //app.UseForwardedHeaders();
-            //app.UseHttpsRedirection();
+            // Enable forwarded headers if running behind IIS/Reverse Proxy (recommended for MonsterASP)
+            // app.UseForwardedHeaders();
+
+            app.UseHttpsRedirection();
             app.UseSerilogRequestLogging();
 
             if (app.Environment.IsDevelopment())
@@ -53,25 +53,33 @@ public class Program
 
             app.UseRouting();
 
+            // 1. CORS Policy
             app.UseCors("CorsPolicy");
 
+            // 2. Static Files (Serves index.html, JS, CSS from wwwroot)
+            app.UseStaticFiles();
+
             app.UseHangfireUi();
-
+            
             app.UseAuthentication();
-
+            
             app.UseOutputCache();
-
+            
             app.UseAuthorization();
-
+            
             app.UseRecurringJobs();
 
             app.MapHealthChecks();
-
+            
             app.UseLocalization();
 
-            app.MapOpenAiResponses(app.Environment);
+            // app.MapOpenAiResponses(app.Environment);
 
+            // 3. API Controllers
             app.MapControllers();
+
+            // 4. Angular SPA Fallback Route (Must be last)
+            app.MapFallbackToFile("index.html");
 
             await app.RunAsync();
         }

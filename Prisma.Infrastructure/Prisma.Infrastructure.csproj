@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.100.2" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
     <PackageReference Include="Groq.Sdk.Core" Version="2.0.0.11-alpha" />
     <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" Version="2.0.0.11-alpha" />
     <PackageReference Include="Hangfire" Version="1.8.23" />
@@ -44,20 +44,20 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.7.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
     <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.10" />
     <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.78.0" />
     <PackageReference Include="Mux.Csharp.Sdk" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.7.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="OpenAI" Version="2.12.0" />
     <PackageReference Include="PdfPig" Version="0.1.15" />
     <PackageReference Include="Pgvector" Version="0.3.2" />
     <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
-    <PackageReference Include="StackExchange.Redis" Version="3.0.11" />
+    <PackageReference Include="StackExchange.Redis" Version="3.0.17" />
   </ItemGroup>
 
   <ItemGroup>

@@ -35,12 +35,15 @@ public class Program
 
             app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
+
             // Enable forwarded headers if running behind IIS/Reverse Proxy (recommended for MonsterASP)
             // app.UseForwardedHeaders();
-
+            
             app.UseHttpsRedirection();
-            app.UseSerilogRequestLogging();
 
+            app.UseSerilogRequestLogging();
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
@@ -53,24 +56,20 @@ public class Program
 
             app.UseRouting();
 
-            // 1. CORS Policy
             app.UseCors("CorsPolicy");
 
-            // 2. Static Files (Serves index.html, JS, CSS from wwwroot)
-            app.UseStaticFiles();
-
             app.UseHangfireUi();
-            
+
             app.UseAuthentication();
-            
+
             app.UseOutputCache();
-            
+
             app.UseAuthorization();
-            
+
             app.UseRecurringJobs();
 
             app.MapHealthChecks();
-            
+
             app.UseLocalization();
 
             // app.MapOpenAiResponses(app.Environment);

@@ -1,0 +1,30 @@
+{
+  "stats": {
+    "totalEvents": 20,
+    "todayEvents": 7,
+    "activeUsers": 11,
+    "alerts": 5
+  },
+  "events": [
+    { "time": "اليوم، ٩:٤٢",  "user": "أ. فاطمة علي",   "role": "teacher",   "action": "نشر درس \"الكهرباء الثابتة\"",        "status": "ok" },
+    { "time": "اليوم، ٩:١٨",  "user": "محمد أحمد",      "role": "student",   "action": "تسجيل حساب جديد على المنصة",         "status": "ok" },
+    { "time": "اليوم، ٨:٥٥",  "user": "سلمى أحمد",      "role": "assistant", "action": "تسجيل حضور — الفصل الثاني",          "status": "ok" },
+    { "time": "اليوم، ٨:٣٠",  "user": "المدير العام",   "role": "admin",     "action": "تعليق حساب مستخدم مؤقتاً",           "status": "warn" },
+    { "time": "اليوم، ٨:١٢",  "user": "نورا حسن",       "role": "student",   "action": "شراء درس \"الموجات الصوتية\"",        "status": "ok" },
+    { "time": "اليوم، ٧:٤٨",  "user": "النظام",         "role": "system",    "action": "انتهاء صلاحية كود دفع #٩٢٣٤",        "status": "warn" },
+    { "time": "اليوم، ٧:٢٢",  "user": "كريم محمود",     "role": "assistant", "action": "منح وصول درس للطالب خالد حسن",       "status": "ok" },
+    { "time": "أمس، ١١:٥٠",   "user": "أ. فاطمة علي",   "role": "teacher",   "action": "تعديل بيانات درس \"المغناطيسية\"",    "status": "ok" },
+    { "time": "أمس، ١١:٢٣",   "user": "دينا وليد سامي", "role": "student",   "action": "فشل تسجيل دخول (٣ محاولات متتالية)",  "status": "error" },
+    { "time": "أمس، ١٠:٥٥",   "user": "النظام",         "role": "system",    "action": "نسخ احتياطي تلقائي — اكتمل بنجاح",   "status": "ok" },
+    { "time": "أمس، ١٠:٣٠",   "user": "المدير العام",   "role": "admin",     "action": "تفعيل حساب معلم جديد",              "status": "ok" },
+    { "time": "أمس، ١٠:٠٥",   "user": "خالد حسن",       "role": "student",   "action": "تسليم واجب — الكهرباء الساكنة",      "status": "ok" },
+    { "time": "أمس، ٩:٤٠",    "user": "أ. فاطمة علي",   "role": "teacher",   "action": "نشر إعلان جديد للطلاب",             "status": "ok" },
+    { "time": "أمس، ٩:١٥",    "user": "النظام",         "role": "system",    "action": "تحديث قاعدة البيانات — الإصدار ٢.٤", "status": "ok" },
+    { "time": "أمس، ٨:٥٠",    "user": "سامي إبراهيم",   "role": "student",   "action": "طلب استرداد مبلغ درس",               "status": "warn" },
+    { "time": "أمس، ٨:٢٢",    "user": "سلمى أحمد",      "role": "assistant", "action": "تصحيح اختبار — ثانوية أولى",         "status": "ok" },
+    { "time": "أمس، ٨:٠٠",    "user": "المدير العام",   "role": "admin",     "action": "تصدير تقرير مالي شهري",             "status": "ok" },
+    { "time": "قبل يومين",    "user": "النظام",         "role": "system",    "action": "خطأ في بوابة الدفع — Fawry timeout", "status": "error" },
+    { "time": "قبل يومين",    "user": "محمود علي",      "role": "student",   "action": "تجديد درس منتهي الصلاحية",           "status": "ok" },
+    { "time": "قبل يومين",    "user": "أ. فاطمة علي",   "role": "teacher",   "action": "إضافة طالب جديد للمنصة",            "status": "ok" }
+  ]
+}

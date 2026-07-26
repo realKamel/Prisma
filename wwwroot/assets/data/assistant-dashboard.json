@@ -1,0 +1,168 @@
+{
+  "teacher": {
+    "name": "سلمى أحمد",
+    "supervisorName": "أ. فاطمة علي"
+  },
+  "kpis": [
+    {
+      "id": "students",
+      "label": "طلاب نشطين",
+      "value": 143,
+      "unit": "طالب",
+      "delta": "+٧ من الأسبوع الماضي",
+      "trend": "up",
+      "variant": "purple"
+    },
+    {
+      "id": "exams",
+      "label": "الامتحانات",
+      "value": 87,
+      "unit": "امتحان",
+      "delta": "متوسط نسبة النجاح ٨٧٪",
+      "trend": "up",
+      "variant": "mint"
+    },
+    {
+      "id": "homework",
+      "label": "واجبات للتصحيح",
+      "value": 12,
+      "unit": "واجب",
+      "delta": "تحتاج متابعة",
+      "trend": "down",
+      "variant": "star"
+    },
+    {
+      "id": "lessons",
+      "label": "عدد الدروس المتاحة",
+      "value": 5,
+      "unit": "درس",
+      "delta": "+٢ من أمس",
+      "trend": "up",
+      "variant": "coral"
+    }
+  ],
+  "activities": [
+    {
+      "id": 1,
+      "type": "grant",
+      "icon": "bootstrapSendFill",
+      "message": "منح درس \"الكهرباء الساكنة\" لـ خالد حسن",
+      "sub": "فعّال لمدة ٣٠ يوم",
+      "time": "١٠ د"
+    },
+    {
+      "id": 2,
+      "type": "attend",
+      "icon": "bootstrapPersonCheckFill",
+      "message": "تسجيل حضور جلسة الخميس",
+      "sub": "٣٥ حاضر · ٨ غائب · ٢ متأخر",
+      "time": "٣٠ د"
+    },
+    {
+      "id": 3,
+      "type": "grade",
+      "icon": "bootstrapFileEarmarkCheckFill",
+      "message": "تصحيح واجب \"الحركة المتسارعة\"",
+      "sub": "٢٨ طالب · متوسط الدرجات ٧٤٪",
+      "time": "ساعة"
+    },
+    {
+      "id": 4,
+      "type": "view",
+      "icon": "bootstrapEyeFill",
+      "message": "عرض ملف طالب: مصطفى حسين",
+      "sub": "ثانوية ٢ · ٥ دروس مشتراة",
+      "time": "٢ س"
+    },
+    {
+      "id": 5,
+      "type": "report",
+      "icon": "bootstrapEnvelopeFill",
+      "message": "إرسال تقرير تقدم لأولياء الأمور",
+      "sub": "٤٥ طالب · تقرير شهري",
+      "time": "أمس"
+    },
+    {
+      "id": 6,
+      "type": "revoke",
+      "icon": "bootstrapXCircleFill",
+      "message": "إلغاء منح \"الموجات الصوتية\" لـ دينا وليد",
+      "sub": "بناءً على طلب المعلمة",
+      "time": "أمس"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "students",
+      "label": "إدارة الطلاب",
+      "sub": "إضافة · تعديل · حذف · حضور · تصحيح",
+      "status": "on"
+    },
+    {
+      "id": "content",
+      "label": "إدارة المحتوى",
+      "sub": "إنشاء وتعديل فقط · لا حذف · لا تسعير",
+      "status": "restricted"
+    },
+    {
+      "id": "reports",
+      "label": "إرسال التقارير",
+      "sub": "للطلاب وأولياء الأمور",
+      "status": "on"
+    },
+    {
+      "id": "grading",
+      "label": "التصحيح والتقييم",
+      "sub": "كويزات وواجبات وامتحانات",
+      "status": "on"
+    },
+    {
+      "id": "revenue",
+      "label": "عرض الأرباح",
+      "sub": "البيانات المالية",
+      "status": "off"
+    }
+  ],
+  "quickAccess": [
+    {
+      "id": "students",
+      "label": "قائمة الطلاب",
+      "icon": "bootstrapPeopleFill",
+      "route": "/24-assistant-students",
+      "colorVar": "--accent-rgb",
+      "iconColorVar": "--purple-lt"
+    },
+    {
+      "id": "grant",
+      "label": "منح درس لطالب",
+      "icon": "bootstrapSendFill",
+      "route": "/22-assistant-grant",
+      "colorVar": "78,203,141",
+      "iconColorVar": "--mint"
+    },
+    {
+      "id": "attendance",
+      "label": "تسجيل الحضور",
+      "icon": "bootstrapPersonCheckFill",
+      "route": "/27-assistant-attendance",
+      "colorVar": "78,203,141",
+      "iconColorVar": "--mint"
+    },
+    {
+      "id": "content",
+      "label": "إدارة المحتوى",
+      "icon": "bootstrapLayersFill",
+      "route": "/29-assistant-content",
+      "colorVar": "247,201,72",
+      "iconColorVar": "--star"
+    },
+    {
+      "id": "log",
+      "label": "سجل أنشطتي",
+      "icon": "bootstrapJournalText",
+      "route": "/23-assistant-log",
+      "colorVar": "240,106,106",
+      "iconColorVar": "--coral"
+    }
+  ]
+}

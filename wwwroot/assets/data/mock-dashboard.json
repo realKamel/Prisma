@@ -1,0 +1,97 @@
+{
+  "student": {
+    "firstName": "حمدي",
+    "gradeLabel": "ثانوية ٢"
+  },
+  "streak": {
+    "count": 5
+  },
+  "nextLesson": {
+    "id": "lesson-001",
+    "title": "المعادلات التفاضلية والتكاملية",
+    "subject": "رياضيات",
+    "teacherName": "أ. فاطمة علي",
+    "teacherInitial": "ف",
+    "progressPercent": 63,
+    "currentChapter": 4,
+    "totalChapters": 7,
+    "posterUrl": "https://placehold.co/600x400/1a1a2e/a78bfa?text=رياضيات",
+    "playerUrl": "/lessons/lesson-001/player",
+    "detailUrl": "/lessons/lesson-001"
+  },
+  "lessons": [
+    {
+      "id": "lesson-001",
+      "title": "المعادلات التفاضلية والتكاملية",
+      "subject": "رياضيات",
+      "teacherName": "أ. فاطمة علي",
+      "teacherInitial": "ف",
+      "durationLabel": "٦ ساعات",
+      "status": "progress",
+      "posterUrl": "https://placehold.co/400x200/1a1a2e/a78bfa?text=رياضيات",
+      "playerUrl": "/lessons/lesson-001/player"
+    },
+    {
+      "id": "lesson-002",
+      "title": "الميكانيكا وقوانين نيوتن",
+      "subject": "فيزياء",
+      "teacherName": "أ. أحمد سعيد",
+      "teacherInitial": "أ",
+      "durationLabel": "٤ ساعات",
+      "status": "new",
+      "posterUrl": "https://placehold.co/400x200/1a2e1a/4ecb8d?text=فيزياء",
+      "playerUrl": "/lessons/lesson-002/player"
+    },
+    {
+      "id": "lesson-003",
+      "title": "الجدول الدوري والروابط الكيميائية",
+      "subject": "كيمياء",
+      "teacherName": "أ. منى حسن",
+      "teacherInitial": "م",
+      "durationLabel": "٥ ساعات",
+      "status": "done",
+      "posterUrl": "https://placehold.co/400x200/2e1a1a/f06a6a?text=كيمياء",
+      "playerUrl": "/lessons/lesson-003/player"
+    },
+    {
+      "id": "lesson-004",
+      "title": "النحو والصرف — الجملة الاسمية",
+      "subject": "عربي",
+      "teacherName": "أ. خالد محمود",
+      "teacherInitial": "خ",
+      "durationLabel": "٣ ساعات",
+      "status": "warn",
+      "expiresInDays": 3,
+      "posterUrl": "https://placehold.co/400x200/2e2a1a/f7c948?text=عربي",
+      "playerUrl": "/lessons/lesson-004/player"
+    },
+    {
+      "id": "lesson-005",
+      "title": "الجهاز العصبي والحواس",
+      "subject": "أحياء",
+      "teacherName": "أ. سارة إبراهيم",
+      "teacherInitial": "س",
+      "durationLabel": "٤ ساعات",
+      "status": "expired",
+      "posterUrl": "https://placehold.co/400x200/1a1a1a/bfc0d1?text=أحياء",
+      "playerUrl": "/lessons/lesson-005/player"
+    },
+    {
+      "id": "lesson-006",
+      "title": "التفاعلات الكيميائية والمعادلات",
+      "subject": "كيمياء",
+      "teacherName": "أ. منى حسن",
+      "teacherInitial": "م",
+      "durationLabel": "٣ ساعات",
+      "status": "new",
+      "posterUrl": "https://placehold.co/400x200/2e1a1a/f06a6a?text=كيمياء",
+      "playerUrl": "/lessons/lesson-006/player"
+    }
+  ],
+  "stats": {
+    "purchasedLessons": 6,
+    "completedLessons": 1,
+    "studyHours": 14,
+    "topQuizScore": 91
+  }
+}

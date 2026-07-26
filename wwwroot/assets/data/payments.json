@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "lessonName": "الكهرباء الساكنة",
+    "dateLabel": "١٥ يناير ٢٠٢٦",
+    "amount": 50,
+    "method": "fawry",
+    "status": "expired",
+    "icon": "bi-lightning-charge-fill",
+    "posterGradient": "from-[#1a3a4a] to-[#2a6060]",
+    "actionLabel": "جدد الدرس",
+    "actionLink": "07-lesson-detail.html"
+  },
+  {
+    "id": 2,
+    "lessonName": "قوانين نيوتن والحركة",
+    "dateLabel": "٢٢ يناير ٢٠٢٦",
+    "amount": 50,
+    "method": "code",
+    "status": "active",
+    "icon": "bi-magnet-fill",
+    "posterGradient": "from-[#2d1b4e] to-[#4a3080]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  },
+  {
+    "id": 3,
+    "lessonName": "الموجات الصوتية",
+    "dateLabel": "٥ فبراير ٢٠٢٦",
+    "amount": 50,
+    "method": "card",
+    "status": "active",
+    "icon": "bi-soundwave",
+    "posterGradient": "from-[#1a4030] to-[#2d6b50]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  },
+  {
+    "id": 4,
+    "lessonName": "المغناطيسية والكهرومغناطيسية",
+    "dateLabel": "١٨ فبراير ٢٠٢٦",
+    "amount": 50,
+    "method": "fawry",
+    "status": "active",
+    "icon": "bi-gear-fill",
+    "posterGradient": "from-[#3a2a1a] to-[#6b4a2d]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  },
+  {
+    "id": 5,
+    "lessonName": "الطاقة الميكانيكية والحرارية",
+    "dateLabel": "١٠ مارس ٢٠٢٦",
+    "amount": 50,
+    "method": "code",
+    "status": "active",
+    "icon": "bi-atom",
+    "posterGradient": "from-[#1a2a4a] to-[#2d4a7a]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  },
+  {
+    "id": 6,
+    "lessonName": "الضغط والسوائل",
+    "dateLabel": "٢٨ مارس ٢٠٢٦",
+    "amount": 50,
+    "method": "card",
+    "status": "active",
+    "icon": "bi-thermometer-half",
+    "posterGradient": "from-[#3a1a1a] to-[#7a2d2d]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  },
+  {
+    "id": 7,
+    "lessonName": "الثرموديناميكا",
+    "dateLabel": "١٢ أبريل ٢٠٢٦",
+    "amount": 50,
+    "method": "fawry",
+    "status": "active",
+    "icon": "bi-circle-half",
+    "posterGradient": "from-[#1a3a3a] to-[#2d6b6b]",
+    "actionLabel": "ادخل الدرس",
+    "actionLink": "11-lesson-player.html"
+  }
+]

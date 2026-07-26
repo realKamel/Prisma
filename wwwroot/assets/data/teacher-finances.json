@@ -1,0 +1,22 @@
+{
+  "summary": {
+    "totalRevenue": 12750,
+    "monthRevenue": 2850,
+    "monthGrowthPercent": 18,
+    "platformFeeRate": 0.15,
+    "platformFeeAmount": 1912,
+    "netProfit": 10838
+  },
+  "transactions": [
+    { "id": "txn-001", "studentName": "محمد أحمد", "lessonTitle": "الكهرباء الساكنة", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-06" },
+    { "id": "txn-002", "studentName": "نورا حسن", "lessonTitle": "قوانين نيوتن", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-06" },
+    { "id": "txn-003", "studentName": "يوسف محمود", "lessonTitle": "الموجات الصوتية", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-05" },
+    { "id": "txn-004", "studentName": "سارة خالد", "lessonTitle": "الكهرباء الساكنة", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-05" },
+    { "id": "txn-005", "studentName": "عمر فاروق", "lessonTitle": "المغناطيسية", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-04" },
+    { "id": "txn-006", "studentName": "منى سامي", "lessonTitle": "الضغط والسوائل", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-04" },
+    { "id": "txn-007", "studentName": "علي حسين", "lessonTitle": "قوانين نيوتن", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-03" },
+    { "id": "txn-008", "studentName": "دينا وليد", "lessonTitle": "الكهرباء الساكنة", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-03" },
+    { "id": "txn-009", "studentName": "كريم طارق", "lessonTitle": "الثرموديناميكا", "amount": 60, "platformFee": 9, "netAmount": 51, "date": "2026-05-02" },
+    { "id": "txn-010", "studentName": "هنا أيمن", "lessonTitle": "البصريات", "amount": 50, "platformFee": 8, "netAmount": 42, "date": "2026-05-01" }
+  ]
+}

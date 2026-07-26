@@ -1,0 +1,85 @@
+{
+  "success": true,
+  "message": "Payment history retrieved successfully",
+  "errors": null,
+  "data": {
+    "stats": {
+      "totalAmount": 350,
+      "lessonsPurchased": 7,
+      "activeLessons": 6,
+      "expiredLessons": 1
+    },
+    "payments": [
+      {
+        "id": "pay-001",
+        "lessonTitle": "الكهرباء الساكنة",
+        "lessonUrl": "07-lesson-detail.html",
+        "posterVariant": "energy",
+        "paymentDate": "2026-01-15",
+        "amount": 50,
+        "method": "fawry",
+        "status": "expired"
+      },
+      {
+        "id": "pay-002",
+        "lessonTitle": "قوانين نيوتن والحركة",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "magnet",
+        "paymentDate": "2026-01-22",
+        "amount": 50,
+        "method": "code",
+        "status": "paid"
+      },
+      {
+        "id": "pay-003",
+        "lessonTitle": "الموجات الصوتية",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "wave",
+        "paymentDate": "2026-02-05",
+        "amount": 50,
+        "method": "card",
+        "status": "paid"
+      },
+      {
+        "id": "pay-004",
+        "lessonTitle": "المغناطيسية والكهرومغناطيسية",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "gear",
+        "paymentDate": "2026-02-18",
+        "amount": 50,
+        "method": "fawry",
+        "status": "paid"
+      },
+      {
+        "id": "pay-005",
+        "lessonTitle": "الطاقة الميكانيكية والحرارية",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "atom",
+        "paymentDate": "2026-03-10",
+        "amount": 50,
+        "method": "code",
+        "status": "paid"
+      },
+      {
+        "id": "pay-006",
+        "lessonTitle": "الضغط والسوائل",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "thermo",
+        "paymentDate": "2026-03-28",
+        "amount": 50,
+        "method": "card",
+        "status": "paid"
+      },
+      {
+        "id": "pay-007",
+        "lessonTitle": "الثرموديناميكا",
+        "lessonUrl": "11-lesson-player.html",
+        "posterVariant": "optics",
+        "paymentDate": "2026-04-12",
+        "amount": 50,
+        "method": "fawry",
+        "status": "paid"
+      }
+    ]
+  }
+}

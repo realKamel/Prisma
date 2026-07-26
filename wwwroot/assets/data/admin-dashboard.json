@@ -1,0 +1,69 @@
+{
+  "succeeded": true,
+  "message": "Admin dashboard data retrieved successfully",
+  "meta": null,
+  "errors": null,
+  "data": {
+    "pageDateLabel": "إحصائيات المنصة الكاملة ليوم الخميس ١٥ مايو ٢٠٢٦",
+    "kpis": [
+  { "id": "students", "value": 1842, "deltaLabel": "↑ ٤٨ طالب هذا الشهر" },
+  { "id": "revenue", "value": 94500, "deltaLabel": "↑ ٢٣٪ عن الشهر الماضي" },
+  { "id": "lessons-sold", "value": 5240, "deltaLabel": "↑ ١٢٪ عن الشهر الماضي" },
+  { "id": "uptime", "value": 99.9, "deltaLabel": "↑ آخر ٣٠ يوم" }
+],
+    "weeklyTotal": 14350,
+    "revenueWeek": [
+      { "day": "أحد", "amount": 1650, "isToday": false },
+      { "day": "اثنين", "amount": 2100, "isToday": false },
+      { "day": "ثلاثاء", "amount": 1100, "isToday": false },
+      { "day": "أربعاء", "amount": 2800, "isToday": false },
+      { "day": "خميس", "amount": 1450, "isToday": false },
+      { "day": "جمعة", "amount": 2000, "isToday": false },
+      { "day": "سبت", "amount": 3250, "isToday": true }
+    ],
+    "activity": [
+      {
+        "id": "act-001",
+        "type": "enroll",
+        "message": "طالب جديد — محمد أحمد",
+        "subtitle": "تسجيل جديد · ثانوية ٢",
+        "time": "منذ ٣ د"
+      },
+      {
+        "id": "act-002",
+        "type": "payment",
+        "message": "دفعة واردة — ٣٢٥٠ جنيه",
+        "subtitle": "أ. فاطمة علي · فوري",
+        "time": "منذ ١٠ د"
+      },
+      {
+        "id": "act-003",
+        "type": "alert",
+        "message": "تأخير بوابة الدفع",
+        "subtitle": "Fawry API · استجابة بطيئة ١٨٠٠ms",
+        "time": "منذ ٢٢ د"
+      },
+      {
+        "id": "act-004",
+        "type": "enroll",
+        "message": "طالبة جديدة — نورا حسن",
+        "subtitle": "تسجيل جديد · ثانوية ١",
+        "time": "منذ ٤٥ د"
+      },
+      {
+        "id": "act-005",
+        "type": "teacher",
+        "message": "طلب سحب أرباح",
+        "subtitle": "أ. فاطمة علي · ٨٠٦٣ جنيه",
+        "time": "منذ ١ س"
+      },
+      {
+        "id": "act-006",
+        "type": "system",
+        "message": "نسخة احتياطية ناجحة",
+        "subtitle": "DB Backup · قاعدة البيانات كاملة",
+        "time": "منذ ٢ س"
+      }
+    ]
+  }
+}

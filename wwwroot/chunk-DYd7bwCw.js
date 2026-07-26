@@ -1,0 +1,1 @@
+import {K as KE,a4 as fl,Z as Zw,a5 as pl}from'./main-WU2W6IMV.js';var r=class s{static \u0275fac=function(e){return new(e||s)};static \u0275cmp=KE({type:s,selectors:[["app-my-courses"]],decls:2,vars:0,template:function(e,c){e&1&&(fl(0,"p"),Zw(1,"my-courses works!"),pl());},encapsulation:2})};export{r as MyCourses};

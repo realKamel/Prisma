@@ -1,0 +1,1 @@
+var a=(r=>(r[r.MCQ=1]="MCQ",r[r.TrueFalse=2]="TrueFalse",r[r.Written=3]="Written",r))(a||{});export{a};

@@ -1,0 +1,1 @@
+import {K as KE,a4 as fl,Z as Zw,a5 as pl}from'./main-WU2W6IMV.js';var a=class e{static \u0275fac=function(t){return new(t||e)};static \u0275cmp=KE({type:e,selectors:[["app-support"]],decls:2,vars:0,template:function(t,i){t&1&&(fl(0,"p"),Zw(1,"support works!"),pl());},encapsulation:2})};export{a as Support};

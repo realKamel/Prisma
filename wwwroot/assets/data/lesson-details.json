@@ -1,0 +1,102 @@
+[
+  {
+    "id": 1,
+    "title": "الشحنة الكهربائية وقانون كولوم",
+    "category": "فيزياء · الكهرباء الساكنة",
+    "subject": "فيزياء",
+    "parentId": "electrostatics-101",
+    "parentTitle": "الكهرباء الساكنة",
+    "isPurchased": true,
+    "purchaseLabel": "مشتري",
+    "teacher": "أ. فاطمة علي",
+    "teacherInitial": "ف",
+    "expiryLabel": "صلاحية الدرس: ٣٠ يوم",
+    "videoUrl": "https://example.com/videos/coulombs-law.mp4",
+    "videoPoster": "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?q=80&w=1200",
+    "aboutTab": {
+      "description": "في هذا الدرس، سنستكشف مفهوم الشحنة الكهربائية وكيفية تفاعل الجسيمات المشحونة معًا عبر قانون كولوم. سنقوم بحل مسائل عملية تضمن فهمك العميق للقوى الجاذبة والطارحة.",
+      "objectives": [
+        "فهم طبيعة الشحنة الكهربائية وأنواعها.",
+        "تطبيق قانون كولوم لحساب القوة المتبادلة بين شحنتين.",
+        "استنتاج العوامل المؤثرة على القوة الكهربائية المتبادلة."
+      ]
+    },
+    "materials": [
+      { "title": "ملخص قوانين الكهرباء الساكنة.pdf", "size": "2.4 MB", "downloadUrl": "/downloads/summary.pdf" },
+      { "title": "كراسة التمارين الشاملة — قانون كولوم.pdf", "size": "4.1 MB", "downloadUrl": "/downloads/exercises.pdf" }
+    ],
+    "quiz": {
+      "id": "q-101",
+      "questionsCount": 10,
+      "durationMinutes": 15,
+      "passingScore": 70
+    },
+    "assignment": {
+      "id": "a-101",
+      "title": "واجب المحاضرة الأولى: حساب القوى البينية",
+      "dueDate": "ينتهي في ٢٠ يونيو"
+    },
+    "sections": [
+      {
+        "title": "المقدمة والمفاهيم الأساسية",
+        "items": [
+          { "id": "v1", "title": "مفهوم الشحنة الكهربائية تاريخياً", "type": "video", "duration": "12:30", "isActive": false },
+          { "id": "v2", "title": "تكمية الشحنة وقانون حفظ الشحنة", "type": "video", "duration": "15:45", "isActive": false }
+        ]
+      },
+      {
+        "title": "قانون كولوم والتطبيق الرياضي",
+        "items": [
+          { "id": "v3", "title": "شرح قانون كولوم رياضياً", "type": "video", "duration": "22:10", "isActive": true },
+          { "id": "v4", "title": "حل مسألة الشحنات النقطية على استقامة واحدة", "type": "video", "duration": "18:25", "isActive": false }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "حركة الأجسام — قوانين نيوتن",
+    "category": "فيزياء · الميكانيكا الكلاسيكية",
+    "subject": "فيزياء",
+    "parentId": "mechanics-202",
+    "parentTitle": "الميكانيكا وحركة الأجسام",
+    "isPurchased": true,
+    "purchaseLabel": "مشتري",
+    "teacher": "أ. فاطمة علي",
+    "teacherInitial": "ف",
+    "expiryLabel": "صلاحية الدرس: ١٥ يوم",
+    "videoUrl": "https://example.com/videos/newtons-laws.mp4",
+    "videoPoster": "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1200",
+    "aboutTab": {
+      "description": "دراسة عميقة لقوانين الحركة الثلاثة التي وضعها إسحاق نيوتن، والتركيز على كيفية تأثير القوى المختلفة على حركة الكتل الصلبة في بيئات مختلفة.",
+      "objectives": [
+        "التمييز بين قانون نيوتن الأول والثاني والثالث.",
+        "رسم مخطط الجسم الحر بدقة لتحليل القوى المؤثرة.",
+        "حساب العجلة والشد في الحبال على الأسطح المائلة والأفقية."
+      ]
+    },
+    "materials": [
+      { "title": "مذكرة قوانين نيوتن وتطبيقاتها.pdf", "size": "3.8 MB", "type":"pdf", "downloadUrl": "/downloads/newton-summary.pdf" }
+    ],
+    "quiz": {
+      "id": "q-102",
+      "questionsCount": 15,
+      "durationMinutes": 20,
+      "passingScore": 75
+    },
+    "assignment": {
+      "id": "a-102",
+      "title": "واجب الميكانيكا: تحليل السطح المائل والبكرات",
+      "dueDate": "ينتهي في ٢٥ يونيو"
+    },
+    "sections": [
+      {
+        "title": "القصور الذاتي والقانون الأول",
+        "items": [
+          { "id": "v5", "title": "مفهوم القصور الذاتي وتطبيقاته الحياتية", "type": "video", "duration": "10:15", "isActive": true },
+          { "id": "v6", "title": "القانون الثاني: العلاقة بين القوة والكتلة والعجلة", "type": "video", "duration": "25:40", "isActive": false }
+        ]
+      }
+    ]
+  }
+]

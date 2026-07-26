@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Responses.Generic;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
+using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -24,6 +26,7 @@ public class CreateLessonDetailsCommandHandlerTests
     private readonly IRepository<Lesson, int> _lessonRepo;
     private readonly IRepository<AcademicYear, int> _academicYearRepo;
     private readonly CreateLessonDetailsCommandHandler _handler;
+    private readonly IBackgroundJobService _backgroundJobService;
 
     public CreateLessonDetailsCommandHandlerTests()
     {
@@ -32,7 +35,7 @@ public class CreateLessonDetailsCommandHandlerTests
         _storageService = Substitute.For<IStorageService>();
         _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
         _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
-
+        _backgroundJobService = Substitute.For<IBackgroundJobService>();
         var store = Substitute.For<IUserStore<User>>();
         _userManager = Substitute.For<UserManager<User>>(store, null!, null!, null!, null!, null!, null!, null!, null!);
 
@@ -41,7 +44,8 @@ public class CreateLessonDetailsCommandHandlerTests
 
         _currentUserService.UserId.Returns(Guid.NewGuid());
 
-        _handler = new CreateLessonDetailsCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+        _handler = new CreateLessonDetailsCommandHandler(_unitOfWork, _currentUserService, _userManager,
+            _storageService, _backgroundJobService);
     }
 
     private IFormFile CreateMockFile(string fileName, string contentType)
@@ -74,7 +78,7 @@ public class CreateLessonDetailsCommandHandlerTests
                 true,
                 new List<int>(),
                 new List<string>(),
-                null),CancellationToken.None);
+                null), CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
@@ -90,18 +94,18 @@ public class CreateLessonDetailsCommandHandlerTests
 
         // Act
         var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
-                "title",
-                "desc",
-                10,
-                null,
-                new List<ChapterCreateDto>(),
-                false,
-                null,
-                null,
-                true,
-                new List<int>(),
-                new List<string>(),
-                null), CancellationToken.None);
+            "title",
+            "desc",
+            10,
+            null,
+            new List<ChapterCreateDto>(),
+            false,
+            null,
+            null,
+            true,
+            new List<int>(),
+            new List<string>(),
+            null), CancellationToken.None);
 
         // Assert
         await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User not found.");
@@ -113,25 +117,27 @@ public class CreateLessonDetailsCommandHandlerTests
         // Arrange
         var user = new User { Id = Guid.NewGuid() };
         _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
-        _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Student }); // Missing Teacher/Assistant/Admin
+        _userManager.GetRolesAsync(user)
+            .Returns(new List<string> { AppRoles.Student }); // Missing Teacher/Assistant/Admin
 
         // Act
         var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
-                "title",
-                "desc",
-                10,
-                null,
-                new List<ChapterCreateDto>(),
-                false,
-                null,
-                null,
-                true,
-                new List<int>(),
-                new List<string>(),
-                null), CancellationToken.None);
+            "title",
+            "desc",
+            10,
+            null,
+            new List<ChapterCreateDto>(),
+            false,
+            null,
+            null,
+            true,
+            new List<int>(),
+            new List<string>(),
+            null), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("Only teachers and assistants can create lessons.");
+        await act.Should().ThrowAsync<UnauthorizedException>()
+            .WithMessage("Only teachers and assistants can create lessons.");
     }
 
     [Fact]
@@ -144,17 +150,17 @@ public class CreateLessonDetailsCommandHandlerTests
 
         var command = new CreateLessonDetailsCommand
         ("Maths",
-                "desc",
-                10,
-                null,
-                new List<ChapterCreateDto>(),
-                false,
-                null,
-                null,
-                true,
-                new List<int> { 1, 2 },
-                new List<string>(),
-                null);
+            "desc",
+            10,
+            null,
+            new List<ChapterCreateDto>(),
+            false,
+            null,
+            null,
+            true,
+            new List<int> { 1, 2 },
+            new List<string>(),
+            null);
 
         // Simulating DB returning fewer matching years than requested (e.g. invalid IDs)
         _academicYearRepo.ListAsync(Arg.Any<AcademicYearsByIdsSpecification>(), Arg.Any<CancellationToken>())
@@ -186,8 +192,8 @@ public class CreateLessonDetailsCommandHandlerTests
             42,
             new List<ChapterCreateDto>
             {
-                new ChapterCreateDto("Limits Intro", "vid1.mp4" ),
-                new ChapterCreateDto("Derivatives Intro", "vid2.mp4" )
+                new ChapterCreateDto("Limits Intro", "vid1.mp4"),
+                new ChapterCreateDto("Derivatives Intro", "vid2.mp4")
             },
             true,
             mockAssignment,
@@ -226,7 +232,8 @@ public class CreateLessonDetailsCommandHandlerTests
 
         // Thumbnail Assertions
         savedLesson.ImageThumbnailUrl.Should().StartWith("lessons/thumbnails/").And.EndWith(".jpg");
-        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.ImageThumbnailUrl!, Arg.Any<Stream>(), "image/jpeg", Arg.Any<CancellationToken>());
+        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.ImageThumbnailUrl!, Arg.Any<Stream>(),
+            "image/jpeg", Arg.Any<CancellationToken>());
 
         // Chapter Order Assertions
         savedLesson.Sections.Should().HaveCount(2);
@@ -239,7 +246,8 @@ public class CreateLessonDetailsCommandHandlerTests
         savedLesson.Assignment.Should().NotBeNull();
         savedLesson.Assignment!.Title.Should().Be("homework");
         savedLesson.Assignment.ContentURL.Should().StartWith("assignments/").And.EndWith(".pdf");
-        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.Assignment.ContentURL, Arg.Any<Stream>(), "application/pdf", Arg.Any<CancellationToken>());
+        await _storageService.Received(1).UploadFileAsync("prisma", savedLesson.Assignment.ContentURL,
+            Arg.Any<Stream>(), "application/pdf", Arg.Any<CancellationToken>());
 
         // Academic Year Assertions
         savedLesson.AcademicYears.Should().HaveCount(1);

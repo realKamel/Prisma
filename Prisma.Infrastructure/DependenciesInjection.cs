@@ -125,10 +125,7 @@ public static class DependenciesInjection
             // Process all queues
             options.Queues = new[]
             {
-                JobQueues.Default,
-                JobQueues.Reports,
-                JobQueues.VideoProcessing,
-                JobQueues.AuthCleanup,
+                JobQueues.Default, JobQueues.Reports, JobQueues.VideoProcessing, JobQueues.AuthCleanup,
             };
             options.WorkerCount = 5;
             options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
@@ -228,10 +225,7 @@ public static class DependenciesInjection
         //     $"OpenAI Config: {openAiConfig["ApiKey"]}, {openAiConfig["FastChatModel"]},
         // {openAiConfig["ReasoningModel"]}, {openAiConfig["EmbeddingModel"]}, {openAiConfig["SpeechModel"]}");
         // var openAiClient = new OpenAIClient(openAiConfig["ApiKey"]!);
-        var options = new OpenAIClientOptions
-        {
-            Endpoint = new Uri("https://models.github.ai/inference")
-        };
+        var options = new OpenAIClientOptions { Endpoint = new Uri("https://models.github.ai/inference") };
 
         var openAiClient = new OpenAIClient(new ApiKeyCredential(openAiConfig["ApiKey"]!), options);
 
@@ -300,6 +294,12 @@ public static class DependenciesInjection
                     ]
                 );
             })).WithInMemorySessionStore();
+
+        app.AddAIAgent(
+            AIAgentRole.ChatAgent.ReportGeneratorAgent,
+            AIAgentRole.ChatAgent.ReportGeneratorAgentInstructions,
+            AIType.Reasoning
+        );
 
         app.AddGroqApiServices(options =>
         {

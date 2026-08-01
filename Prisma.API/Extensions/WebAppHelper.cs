@@ -145,25 +145,15 @@ public static class WebAppHelper
 
             services.AddCors(options =>
             {
-                options.AddPolicy("Dev", policy =>
-                {
-                    policy.WithOrigins("http://localhost:4200")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials();
-                });
                 options.AddPolicy("CorsPolicy", policy =>
                 {
-                    policy.WithOrigins(
-                            "http://localhost:4200", "https://localhost:4200", // Dev Angular
-                            "https://prismaedu.netlify.app",
-                            configuration.GetSection("deploymentUrls")["frontendUrl"] ??
-                            throw new InvalidOperationException()) // Prod
+                    policy.SetIsOriginAllowed(_ => true) // Dev
                         .AllowCredentials()
                         .AllowAnyHeader()
                         .AllowAnyMethod();
                 });
             });
+
             // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
 
             // services.AddAuthorization(options =>
@@ -179,7 +169,7 @@ public static class WebAppHelper
 
             services.AddAuthorization(options =>
             {
-                foreach (var policy in AppClaims.Policies.All)
+                foreach (string policy in AppClaims.Policies.All)
                 {
                     options.AddPolicy(policy, p =>
                         p.RequireClaim(AppClaims.PermissionsClaim, policy));
@@ -199,16 +189,14 @@ public static class WebAppHelper
 
         public void UseRecurringJobs()
         {
-            using (var scope = app.Services.CreateScope())
-            {
-                var jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+            using IServiceScope scope = app.Services.CreateScope();
+            IBackgroundJobService jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
 
-                //Every Friday at 10:00 PM
-                jobService.AddOrUpdateRecurring<ReportGenerationJob>(
-                    JobQueues.Reports,
-                    x => x.GenerateWeekly(),
-                    Cron.Weekly(DayOfWeek.Friday, 22, 0));
-            }
+            //Every Friday at 10:00 PM
+            jobService.AddOrUpdateRecurring<ReportGenerationJob>(
+                JobQueues.Reports,
+                x => x.GenerateWeekly(),
+                Cron.Weekly(DayOfWeek.Friday, 22, 0));
         }
 
         public void UseHangfireUi()
@@ -221,10 +209,8 @@ public static class WebAppHelper
 
         public void MapHealthChecks()
         {
-            app.MapHealthChecks("/health-json", new HealthCheckOptions
-            {
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-            });
+            app.MapHealthChecks("/health-json",
+                new HealthCheckOptions { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
             app.MapHealthChecksUI(options =>
             {
                 options.UIPath = "/health-ui"; // URL path to open in browser
@@ -244,11 +230,7 @@ public static class WebAppHelper
 
         public void UseLocalization()
         {
-            var supportedCultures = new[]
-            {
-                new CultureInfo("en-US"),
-                new CultureInfo("ar-EG")
-            };
+            var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
             app.UseRequestLocalization(new RequestLocalizationOptions
             {
                 DefaultRequestCulture = new RequestCulture("en-US"),

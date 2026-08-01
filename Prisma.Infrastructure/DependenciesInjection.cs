@@ -300,7 +300,7 @@ public static class DependenciesInjection
             AIAgentRole.ChatAgent.ReportGeneratorAgentInstructions,
             AIType.Reasoning
         );
-
+    
         app.AddGroqApiServices(options =>
         {
             options.ApiKey = configuration?.GetSection("Groq")["ApiKey"] ??

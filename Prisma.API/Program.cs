@@ -26,8 +26,8 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
+
             builder.AddAiAgents(builder.Configuration);
-            // builder.AddWorkflows();
 
             var app = builder.Build();
 
@@ -39,14 +39,17 @@ public class Program
             app.UseStaticFiles();
 
             // Enable forwarded headers if running behind IIS/Reverse Proxy (recommended for MonsterASP)
+
             // app.UseForwardedHeaders();
-            
+
             app.UseHttpsRedirection();
 
             app.UseSerilogRequestLogging();
+
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
+
                 app.UseSwaggerUI((options) =>
                 {
                     options.SwaggerEndpoint("/openapi/v1.json", "Prisma API V1");
@@ -56,7 +59,10 @@ public class Program
 
             app.UseRouting();
 
-            app.UseCors("CorsPolicy");
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseCors("CorsPolicy");
+            }
 
             app.UseHangfireUi();
 
@@ -72,12 +78,8 @@ public class Program
 
             app.UseLocalization();
 
-            // app.MapOpenAiResponses(app.Environment);
-
-            // 3. API Controllers
             app.MapControllers();
 
-            // 4. Angular SPA Fallback Route (Must be last)
             app.MapFallbackToFile("index.html");
 
             await app.RunAsync();

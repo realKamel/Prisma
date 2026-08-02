@@ -2,7 +2,7 @@ namespace Prisma.Domain.Errors;
 
 public static class DomainErrors
 {
-    public static class Common
+    public static class CommonErrors
     {
         public static string Unauthorized(string message = "You are not authenticated.")
             => message;
@@ -20,7 +20,7 @@ public static class DomainErrors
             => message;
     }
 
-    public static class User
+    public static class UserErrors
     {
         public static string NotFound(string userId)
             => $"User with id '{userId}' was not found.";
@@ -35,7 +35,7 @@ public static class DomainErrors
             => $"Unknown role '{role}'.";
     }
 
-    public static class Student
+    public static class StudentErrors
     {
         public static string NotFound(Guid id)
             => $"Student with id '{id}' was not found.";
@@ -50,7 +50,7 @@ public static class DomainErrors
             => $"فشلت عملية تغيير كلمة المرور: {details}";
     }
 
-    public static class Teacher
+    public static class TeacherErrors
     {
         public static string NotFound(Guid id)
             => $"Teacher with id '{id}' was not found.";
@@ -59,19 +59,19 @@ public static class DomainErrors
             => $"Teacher with email '{email}' was not found.";
     }
 
-    public static class Assistant
+    public static class AssistantErrors
     {
         public static string NotFound(Guid id)
             => $"Assistant with id '{id}' was not found.";
     }
 
-    public static class AdminError
+    public static class AdminErrorErrors
     {
         public static string NotFound(Guid id)
             => $"Admin with id '{id}' was not found.";
     }
 
-    public static class Lesson
+    public static class LessonErrors
     {
         public static string NotFound(int id)
             => $"Lesson with id '{id}' was not found.";
@@ -86,31 +86,31 @@ public static class DomainErrors
             => "Cannot toggle status for a drafted lesson.";
     }
 
-    public static class LessonMaterial
+    public static class LessonMaterialErrors
     {
         public static string NotFound(int materialId)
             => $"Lesson material with id '{materialId}' was not found.";
     }
 
-    public static class Enrollment
+    public static class EnrollmentErrors
     {
         public static string NotFound(string studentId, int lessonId)
             => $"Enrollment for student '{studentId}' and lesson '{lessonId}' was not found.";
     }
 
-    public static class Section
+    public static class SectionErrors
     {
         public static string NotFound(int id)
             => $"Section with id '{id}' was not found.";
     }
 
-    public static class SectionProgress
+    public static class SectionProgressErrors
     {
         public static string NotFound(int sectionId)
             => $"Section progress for section '{sectionId}' was not found.";
     }
 
-    public static class Assignment
+    public static class AssignmentErrors
     {
         public static string NotFound(int lessonId)
             => $"Assignment for lesson '{lessonId}' was not found.";
@@ -119,7 +119,7 @@ public static class DomainErrors
             => "لا يوجد واجب لهذا الدرس";
     }
 
-    public static class AssignmentSubmission
+    public static class AssignmentSubmissionErrors
     {
         public static string NotFound(int lessonId)
             => $"Assignment submission for lesson '{lessonId}' was not found.";
@@ -143,7 +143,7 @@ public static class DomainErrors
             => $"الدرجة ({score}) أكبر من الدرجة الكاملة ({max})";
     }
 
-    public static class Quiz
+    public static class QuizErrors
     {
         public static string NotFound(int id)
             => "الاختبار غير موجود";
@@ -161,7 +161,7 @@ public static class DomainErrors
             => "مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة";
     }
 
-    public static class QuizAttempt
+    public static class QuizAttemptErrors
     {
         public static string NotFound
             => "المحاولة غير موجودة";
@@ -200,7 +200,7 @@ public static class DomainErrors
             => $"الخصم ({penalty}) أكبر من درجة الطالب الحالية ({degree})";
     }
 
-    public static class CodeBatch
+    public static class CodeBatchErrors
     {
         public static string NotFound(int id)
             => $"CodeBatch with id '{id}' was not found.";
@@ -212,7 +212,7 @@ public static class DomainErrors
             => "You do not have access to this academic year.";
     }
 
-    public static class GeneratedCode
+    public static class GeneratedCodeErrors
     {
         public static string NotValid
             => "الكود غلط — تأكد إنك كتبته صح";
@@ -227,7 +227,7 @@ public static class DomainErrors
             => "الكود ده مش للسنة الدراسية بتاعتك";
     }
 
-    public static class Authentication
+    public static class AuthenticationErrors
     {
         public static string RegistrationFailed
             => "Registration Failed";
@@ -254,7 +254,7 @@ public static class DomainErrors
             => "Invalid token.";
     }
 
-    public static class ChatSession
+    public static class ChatSessionErrors
     {
         public static string NotFound(Guid id)
             => $"ChatSession with id '{id}' was not found.";
@@ -263,7 +263,7 @@ public static class DomainErrors
             => "Session not found";
     }
 
-    public static class Storage
+    public static class StorageErrors
     {
         public static string NoFilesProvided
             => "No files provided for upload.";

@@ -40,6 +40,6 @@ public class UpdateStudentProfileCommandHandler(
         studentRepository.Update(student);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<bool>.Success(true);
+        return Result<bool>.Success(true, "Success");
     }
 }

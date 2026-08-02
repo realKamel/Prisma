@@ -1,14 +1,13 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Tests.Features.AdminDashboard.Queries;
+namespace Prisma.Application.Tests.Features.Admin.Queries;
 
 public class GetAdminActivitiesQueryHandlerTests
 {
@@ -68,18 +67,18 @@ public class GetAdminActivitiesQueryHandlerTests
         var result = await _sut.Handle(new GetAdminActivitiesQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().HaveCount(2);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(2);
 
         // الدفع أحدث فيجب أن يكون الأول
-        result.Data[0].Type.Should().Be("payment");
-        result.Data[0].Id.Should().Be("act-pay-100");
-        result.Data[0].Details.Should().Be("150 EGP");
+        result.Value[0].Type.Should().Be("payment");
+        result.Value[0].Id.Should().Be("act-pay-100");
+        result.Value[0].Details.Should().Be("150 EGP");
 
         // الـ Enrollment ثانياً
-        result.Data[1].Type.Should().Be("enroll");
-        result.Data[1].Id.Should().Be("act-enr-1");
-        result.Data[1].Details.Should().Be("درس سي شارب أول");
+        result.Value[1].Type.Should().Be("enroll");
+        result.Value[1].Id.Should().Be("act-enr-1");
+        result.Value[1].Details.Should().Be("درس سي شارب أول");
     }
 
     [Fact]
@@ -89,9 +88,7 @@ public class GetAdminActivitiesQueryHandlerTests
         // تصحيح بناء الـ Lists هنا لمنع الـ Type Mismatch
         var fakeEnrollments = Enumerable.Range(1, 5).Select(i => new Enrollment
         {
-            Id = i,
-            CreatedAt = DateTimeOffset.UtcNow.AddHours(-i),
-            Lesson = new() { Title = $"درس {i}" }
+            Id = i, CreatedAt = DateTimeOffset.UtcNow.AddHours(-i), Lesson = new() { Title = $"درس {i}" }
         }).ToList();
 
         var fakePayments = Enumerable.Range(1, 5).Select(i => new Payment
@@ -115,6 +112,6 @@ public class GetAdminActivitiesQueryHandlerTests
         var result = await _sut.Handle(new GetAdminActivitiesQuery(), CancellationToken.None);
 
         // Assert
-        result.Data.Should().HaveCount(6); // الـ Handler يكتفي بـ Take(6) فقط
+        result.Value.Should().HaveCount(6); // الـ Handler يكتفي بـ Take(6) فقط
     }
 }

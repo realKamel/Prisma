@@ -1,14 +1,13 @@
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Queries.GetAdminProfile;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Users;
+using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
+using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
@@ -34,17 +33,21 @@ public class GetAdminProfileQueryHandlerTests
             .Returns(student);
 
         // Act
-        var act = () => _sut.Handle(new GetAdminProfileQuery(student.Id), CancellationToken.None);
+        var result = await _sut.Handle(new GetAdminProfileQuery(student.Id), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
     public async Task Handle_TranslatesEnglishKpiIdsToArabicLabels()
     {
         // Arrange
-        var admin = new Admin { Id = Guid.NewGuid(), FirstName = "أحمد", LastName = "علي" };
+        var admin = new global::Prisma.Domain.Entities.UserAggregate.Admin
+        {
+            Id = Guid.NewGuid(), FirstName = "أحمد", LastName = "علي"
+        };
         _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
             .Returns(admin);
 
@@ -69,12 +72,13 @@ public class GetAdminProfileQueryHandlerTests
         var result = await _sut.Handle(new GetAdminProfileQuery(admin.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Name.Should().Be("أحمد علي");
-        result.Data.Stats.Should().Contain(s => s.Label == "الطلاب" && s.Value.Contains("120"));
-        result.Data.Stats.Should().Contain(s => s.Label == "الإيرادات" && s.Value.Contains("45") && s.Value.Contains("ج.م"));
-        result.Data.Stats.Should().Contain(s => s.Label == "الدروس المباعة" && s.Value.Contains("80"));
-        result.Data.Stats.Should().Contain(s => s.Label == "نسبة التشغيل" && s.Value.Contains("99.9"));
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Name.Should().Be("أحمد علي");
+        result.Value.Stats.Should().Contain(s => s.Label == "الطلاب" && s.Value.Contains("120"));
+        result.Value.Stats.Should()
+            .Contain(s => s.Label == "الإيرادات" && s.Value.Contains("45") && s.Value.Contains("ج.م"));
+        result.Value.Stats.Should().Contain(s => s.Label == "الدروس المباعة" && s.Value.Contains("80"));
+        result.Value.Stats.Should().Contain(s => s.Label == "نسبة التشغيل" && s.Value.Contains("99.9"));
     }
 
     [Fact]
@@ -82,7 +86,10 @@ public class GetAdminProfileQueryHandlerTests
     {
         // Arrange — guards against a future KPI silently disappearing instead
         // of surfacing untranslated (see MapKpi's default arm).
-        var admin = new Admin { Id = Guid.NewGuid(), FirstName = "أحمد", LastName = "علي" };
+        var admin = new global::Prisma.Domain.Entities.UserAggregate.Admin
+        {
+            Id = Guid.NewGuid(), FirstName = "أحمد", LastName = "علي"
+        };
         _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
             .Returns(admin);
 
@@ -101,7 +108,7 @@ public class GetAdminProfileQueryHandlerTests
         var result = await _sut.Handle(new GetAdminProfileQuery(admin.Id), CancellationToken.None);
 
         // Assert
-        result.Data.Stats.Should().ContainSingle();
-        result.Data.Stats.Single().Label.Should().Be("new-metric");
+        result.Value.Stats.Should().ContainSingle();
+        result.Value.Stats.Single().Label.Should().Be("new-metric");
     }
 }

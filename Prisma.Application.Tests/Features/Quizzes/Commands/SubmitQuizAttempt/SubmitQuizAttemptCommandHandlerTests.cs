@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NSubstitute;
@@ -114,8 +114,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("المحاولة غير موجودة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("المحاولة غير موجودة", result.GetResultMessage());
 
         await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>());
@@ -133,8 +133,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("تم تسليم هذا الاختبار من قبل", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("تم تسليم هذا الاختبار من قبل", result.GetResultMessage());
 
         await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>());
@@ -165,10 +165,10 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("graded", result.Data!.Status);
-        Assert.Equal(5m, result.Data.Score);
-        Assert.Equal(5m, result.Data.TotalDegree);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("graded", result.Value!.Status);
+        Assert.Equal(5m, result.Value.Score);
+        Assert.Equal(5m, result.Value.TotalDegree);
         Assert.Equal(QuizAttemptStatus.Graded, attempt.Status);
     }
 
@@ -193,10 +193,10 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("submitted", result.Data!.Status);
-        Assert.Null(result.Data.Score);
-        Assert.Equal(10m, result.Data.TotalDegree); // total degree always returned, even when ungraded
+        Assert.True(result.IsSuccess);
+        Assert.Equal("submitted", result.Value!.Status);
+        Assert.Null(result.Value.Score);
+        Assert.Equal(10m, result.Value.TotalDegree); // total degree always returned, even when ungraded
         Assert.Equal(QuizAttemptStatus.Submitted, attempt.Status);
     }
 
@@ -222,9 +222,9 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("submitted", result.Data!.Status); // held for review, not graded
-        Assert.Null(result.Data.Score); // Status != Graded, so DTO reports null even though Degree was computed internally
+        Assert.True(result.IsSuccess);
+        Assert.Equal("submitted", result.Value!.Status); // held for review, not graded
+        Assert.Null(result.Value.Score); // Status != Graded, so DTO reports null even though Degree was computed internally
         Assert.Equal(QuizAttemptStatus.Submitted, attempt.Status);
     }
 
@@ -249,8 +249,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert - no rejection; treated as a normal (late) submission
-        Assert.True(result.Succeeded);
-        Assert.Equal("graded", result.Data!.Status);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("graded", result.Value!.Status);
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.Equal(42.5m, result.Data!.TotalDegree);
+        Assert.Equal(42.5m, result.Value!.TotalDegree);
     }
 
     #endregion

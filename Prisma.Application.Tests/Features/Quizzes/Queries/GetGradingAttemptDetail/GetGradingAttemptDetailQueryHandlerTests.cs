@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Features.Quizzes.Queries.GetGradingAttemptDetail;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -101,8 +101,8 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("المحاولة غير موجودة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("المحاولة غير موجودة", result.GetResultMessage());
     }
 
     [Fact]
@@ -115,8 +115,8 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الطالب لسه في الاختبار", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الطالب لسه في الاختبار", result.GetResultMessage());
     }
 
     #endregion
@@ -136,7 +136,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!;
+        var dto = result.Value!;
         Assert.Equal("Mona Kamal", dto.StudentName);
         Assert.Equal("Midterm", dto.QuizTitle);
         Assert.Equal(50m, dto.TotalDegree);
@@ -153,8 +153,8 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("submitted", result.Data!.Status);
-        Assert.Null(result.Data.Score);
+        Assert.Equal("submitted", result.Value!.Status);
+        Assert.Null(result.Value.Score);
     }
 
     [Fact]
@@ -167,8 +167,8 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("graded", result.Data!.Status);
-        Assert.Equal(88m, result.Data.Score);
+        Assert.Equal("graded", result.Value!.Status);
+        Assert.Equal(88m, result.Value.Score);
     }
 
     #endregion
@@ -185,7 +185,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Data!.HeldForSecurityReview);
+        Assert.True(result.Value!.HeldForSecurityReview);
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Data!.HeldForSecurityReview);
+        Assert.True(result.Value!.HeldForSecurityReview);
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Data!.HeldForSecurityReview);
+        Assert.False(result.Value!.HeldForSecurityReview);
     }
 
     [Fact]
@@ -227,7 +227,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Data!.HeldForSecurityReview);
+        Assert.True(result.Value!.HeldForSecurityReview);
     }
 
     #endregion
@@ -249,7 +249,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Data!.HeldForManualGrading);
+        Assert.True(result.Value!.HeldForManualGrading);
     }
 
     [Fact]
@@ -267,7 +267,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Data!.HeldForManualGrading);
+        Assert.False(result.Value!.HeldForManualGrading);
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Data!.HeldForManualGrading);
+        Assert.False(result.Value!.HeldForManualGrading);
     }
 
     #endregion
@@ -304,7 +304,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var q = Assert.Single(result.Data!.Questions);
+        var q = Assert.Single(result.Value!.Questions);
         Assert.Equal(50, q.AnswerId);
         Assert.Equal(2, q.Choices!.Count);
         Assert.True(q.Choices.Single(c => c.ChoiceId == 100).IsCorrect);
@@ -335,7 +335,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var q = Assert.Single(result.Data!.Questions);
+        var q = Assert.Single(result.Value!.Questions);
         Assert.Null(q.Choices);
         Assert.Equal("model answer", q.ModelAnswer);
         Assert.Equal("student's response", q.TextAnswer);
@@ -363,7 +363,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var q = Assert.Single(result.Data!.Questions);
+        var q = Assert.Single(result.Value!.Questions);
         Assert.Equal(0, q.AnswerId);
         Assert.Null(q.SelectedChoiceId);
         Assert.Null(q.Score);
@@ -389,7 +389,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(20m, Assert.Single(result.Data!.Questions).Degree);
+        Assert.Equal(20m, Assert.Single(result.Value!.Questions).Degree);
     }
 
     #endregion

@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizDetail;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -91,8 +91,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير موجود", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
     }
 
     #endregion
@@ -114,9 +114,9 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("pending_grading", result.Data!.Status);
-        Assert.Equal(1, result.Data.PendingGradingCount);
-        Assert.Equal(2, result.Data.SubmittedCount);
+        Assert.Equal("pending_grading", result.Value!.Status);
+        Assert.Equal(1, result.Value.PendingGradingCount);
+        Assert.Equal(2, result.Value.SubmittedCount);
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("completed", result.Data!.Status);
-        Assert.Equal(70.0, result.Data.AverageScore);
+        Assert.Equal("completed", result.Value!.Status);
+        Assert.Equal(70.0, result.Value.AverageScore);
     }
 
     [Fact]
@@ -148,8 +148,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", result.Data!.Status);
-        Assert.Null(result.Data.AverageScore);
+        Assert.Equal("active", result.Value!.Status);
+        Assert.Null(result.Value.AverageScore);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Null(result.Data!.AverageScore);
+        Assert.Null(result.Value!.AverageScore);
     }
 
     #endregion
@@ -185,7 +185,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Questions);
+        var dto = Assert.Single(result.Value!.Questions);
         Assert.Equal(2, dto.Choices!.Count);
         Assert.True(dto.Choices.Single(c => c.Text == "4").IsCorrect);
         Assert.False(dto.Choices.Single(c => c.Text == "5").IsCorrect);
@@ -211,7 +211,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Questions);
+        var dto = Assert.Single(result.Value!.Questions);
         Assert.Null(dto.Choices);
         Assert.Equal("The answer is 42", dto.ModelAnswer);
     }
@@ -235,7 +235,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(15m, Assert.Single(result.Data!.Questions).Degree);
+        Assert.Equal(15m, Assert.Single(result.Value!.Questions).Degree);
     }
 
     [Fact]
@@ -255,7 +255,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Questions.Count);
+        Assert.Equal(2, result.Value!.Questions.Count);
     }
 
     #endregion
@@ -274,11 +274,11 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("LessonQuiz", result.Data!.Scope);
-        Assert.Equal(10, result.Data.LessonId);
-        Assert.Equal("Algebra Basics", result.Data.LessonTitle);
-        Assert.Null(result.Data.AcademicYearId);
-        Assert.Null(result.Data.AcademicYearName);
+        Assert.Equal("LessonQuiz", result.Value!.Scope);
+        Assert.Equal(10, result.Value.LessonId);
+        Assert.Equal("Algebra Basics", result.Value.LessonTitle);
+        Assert.Null(result.Value.AcademicYearId);
+        Assert.Null(result.Value.AcademicYearName);
     }
 
     [Fact]
@@ -293,11 +293,11 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("ComprehensiveExam", result.Data!.Scope);
-        Assert.Equal(5, result.Data.AcademicYearId);
-        Assert.Equal("Grade 12", result.Data.AcademicYearName);
-        Assert.Null(result.Data.LessonId);
-        Assert.Null(result.Data.LessonTitle);
+        Assert.Equal("ComprehensiveExam", result.Value!.Scope);
+        Assert.Equal(5, result.Value.AcademicYearId);
+        Assert.Equal("Grade 12", result.Value.AcademicYearName);
+        Assert.Null(result.Value.LessonId);
+        Assert.Null(result.Value.LessonTitle);
     }
 
     [Fact]
@@ -311,8 +311,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(10, result.Data!.LessonId);
-        Assert.Null(result.Data.LessonTitle);
+        Assert.Equal(10, result.Value!.LessonId);
+        Assert.Null(result.Value.LessonTitle);
     }
 
     #endregion
@@ -330,10 +330,10 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(7, result.Data!.QuizId);
-        Assert.Equal("Midterm", result.Data.Title);
-        Assert.Equal(50m, result.Data.TotalDegree);
-        Assert.Equal(45, result.Data.DurationMinutes);
+        Assert.Equal(7, result.Value!.QuizId);
+        Assert.Equal("Midterm", result.Value.Title);
+        Assert.Equal(50m, result.Value.TotalDegree);
+        Assert.Equal(45, result.Value.DurationMinutes);
     }
 
     #endregion

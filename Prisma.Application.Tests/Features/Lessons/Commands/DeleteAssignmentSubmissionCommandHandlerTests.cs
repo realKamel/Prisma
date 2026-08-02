@@ -1,18 +1,12 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
+
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
@@ -26,6 +20,7 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
 
     public DeleteAssignmentSubmissionCommandHandlerTests()
     {
+        _storage.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Assignment, int>().Returns(_assignmentRepo);
         _sut = new DeleteSubmissionCommandHandler(_unitOfWork, _currentUser, _storage);
     }
@@ -36,9 +31,11 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
         _currentUser.UserId.Returns((Guid?)null);
         var command = new DeleteSubmissionCommand(1);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("سجل دخولك اولا");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("سجل دخولك اولا");
     }
 
     [Fact]
@@ -50,9 +47,10 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
 
         var command = new DeleteSubmissionCommand(1);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -67,9 +65,11 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
 
         var command = new DeleteSubmissionCommand(1);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("انتهى الموعد النهائي للتسليم");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("انتهى الموعد النهائي للتسليم");
     }
 
     [Fact]
@@ -82,8 +82,7 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
         var submission = new AssignmentSubmission { StudentId = studentId, FileUrl = "path/to/file.pdf" };
         var assignment = new Assignment
         {
-            DueDate = DateTimeOffset.UtcNow.AddDays(1),
-            Submissions = new List<AssignmentSubmission> { submission }
+            DueDate = DateTimeOffset.UtcNow.AddDays(1), Submissions = new List<AssignmentSubmission> { submission }
         };
 
         _assignmentRepo.FirstOrDefaultAsync(Arg.Any<AssignmentWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
@@ -95,8 +94,8 @@ public class DeleteAssignmentSubmissionCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().Be("تم حذف التسليم بنجاح");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("تم حذف التسليم بنجاح");
 
         // التأكد من استدعاء حذف الملف من الـ Storage
         await _storage.Received(1).DeleteFileAsync("prisma", "path/to/file.pdf", Arg.Any<CancellationToken>());

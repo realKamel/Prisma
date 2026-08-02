@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using NSubstitute;
 using Prisma.Application.Features.TeacherPreferences.Queries.GetAccentColor;
 using Prisma.Domain.Entities.UserAggregate;
@@ -40,8 +40,8 @@ public class GetAccentColorQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal(AccentColor.Purple, result.Data.AccentColor);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccentColor.Purple, result.Value.AccentColor);
 
         await _preferencesRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>());
@@ -65,8 +65,8 @@ public class GetAccentColorQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal(AccentColor.Purple, result.Data.AccentColor);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccentColor.Purple, result.Value.AccentColor);
     }
 
     [Fact]
@@ -91,8 +91,8 @@ public class GetAccentColorQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal(AccentColor.Teal, result.Data.AccentColor);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccentColor.Teal, result.Value.AccentColor);
     }
 
 }

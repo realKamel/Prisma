@@ -2,7 +2,7 @@ using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Ai;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RAG.Commands.AskRagQuestion;
 using Prisma.Application.Features.RAG.Dto;
 using Prisma.Domain.Entities.UserAggregate;
@@ -72,9 +72,9 @@ public class AskRagQuestionCommandHandlerTests
         // Assert
         // 1. Verify stream contents and structure
         receivedChunks.Should().HaveCount(3);
-        receivedChunks[0].Data.Answer.Should().Be("Angular ");
-        receivedChunks[1].Data.Answer.Should().Be("20 ");
-        receivedChunks[2].Data.Answer.Should().Be("is zoneless.");
+        receivedChunks[0].Value.Answer.Should().Be("Angular ");
+        receivedChunks[1].Value.Answer.Should().Be("20 ");
+        receivedChunks[2].Value.Answer.Should().Be("is zoneless.");
 
         // 2. Verify Database Interactions
         // Check that a brand-new session was added since command.SessionId was null

@@ -1,14 +1,13 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -48,10 +47,12 @@ public class GetLessonMaterialQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // غير مسجل دخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]
@@ -66,10 +67,12 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns((User)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User not found.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User not found.");
     }
 
     [Fact]
@@ -87,10 +90,12 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { "Guest" });
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("You are not authorized to view lesson materials.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("You are not authorized to view lesson materials.");
     }
 
     [Fact]
@@ -110,10 +115,11 @@ public class GetLessonMaterialQueryHandlerTests
             .Returns((Lesson)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -159,10 +165,10 @@ public class GetLessonMaterialQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull().And.HaveCount(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull().And.HaveCount(1);
 
-        var firstMaterial = result.Data[0];
+        var firstMaterial = result.Value[0];
         firstMaterial.Id.Should().Be(501);
         firstMaterial.Title.Should().Be("ملخص القاعدة الأولى.pdf");
         firstMaterial.Size.Should().Be("2.5 MB");

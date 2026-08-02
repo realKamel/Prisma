@@ -1,15 +1,13 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
-using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
 using Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
-using Prisma.Domain.Specifications.AuditLogs;
 
-namespace Prisma.Application.Tests.Features.ActivityLogs.Queries;
+namespace Prisma.Application.Tests.Features.Admin.Queries;
 
 public class GetActivityLogsQueryHandlerTests
 {
@@ -37,7 +35,14 @@ public class GetActivityLogsQueryHandlerTests
         var query = new GetActivityLogsQuery(Skip: 0, Take: 2);
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = "system", Action = "UPDATE", TableName = "Lesson", CreatedAt = DateTimeOffset.UtcNow }
+            new()
+            {
+                Id = 1,
+                UserEmail = "system",
+                Action = "UPDATE",
+                TableName = "Lesson",
+                CreatedAt = DateTimeOffset.UtcNow
+            }
         };
 
         _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
@@ -47,10 +52,10 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Events.Should().HaveCount(1);
-        result.Data.Events[0].User.Should().Be("النظام");
-        result.Data.Events[0].Role.Should().Be("system");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Events.Should().HaveCount(1);
+        result.Value.Events[0].User.Should().Be("النظام");
+        result.Value.Events[0].Role.Should().Be("system");
 
         // التأكد أن الـ UserManager لم يتم استدعاؤه لأن المستخدم هو النظام
         await _userManager.DidNotReceive().FindByEmailAsync(Arg.Any<string>());
@@ -66,7 +71,14 @@ public class GetActivityLogsQueryHandlerTests
 
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = userEmail, Action = "INSERT", TableName = "Lesson", CreatedAt = DateTimeOffset.UtcNow }
+            new()
+            {
+                Id = 1,
+                UserEmail = userEmail,
+                Action = "INSERT",
+                TableName = "Lesson",
+                CreatedAt = DateTimeOffset.UtcNow
+            }
         };
 
         _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
@@ -79,8 +91,8 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        var @event = result.Data.Events.First();
+        result.IsSuccess.Should().BeTrue();
+        var @event = result.Value.Events.First();
         @event.User.Should().Be("احمد علي");
         @event.Role.Should().Be("teacher"); // الـ Handler بيعمل ToLower() للـ Role
     }
@@ -93,8 +105,7 @@ public class GetActivityLogsQueryHandlerTests
         var query = new GetActivityLogsQuery(Skip: 0, Take: 1);
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = "system" },
-            new() { Id = 2, UserEmail = "system" } // سجل إضافي
+            new() { Id = 1, UserEmail = "system" }, new() { Id = 2, UserEmail = "system" } // سجل إضافي
         };
 
         _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
@@ -104,8 +115,8 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data.HasMore.Should().BeTrue();
-        result.Data.Events.Should().HaveCount(1); // يجب أن يعيد فقط العدد المطلوب (Take)
+        result.Value.HasMore.Should().BeTrue();
+        result.Value.Events.Should().HaveCount(1); // يجب أن يعيد فقط العدد المطلوب (Take)
     }
 
     [Fact]
@@ -117,8 +128,22 @@ public class GetActivityLogsQueryHandlerTests
 
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = "system", Action = "DELETE", TableName = "Quiz", CreatedAt = today },
-            new() { Id = 2, UserEmail = "system", Action = "UPDATE", TableName = "Lesson", CreatedAt = today }
+            new()
+            {
+                Id = 1,
+                UserEmail = "system",
+                Action = "DELETE",
+                TableName = "Quiz",
+                CreatedAt = today
+            },
+            new()
+            {
+                Id = 2,
+                UserEmail = "system",
+                Action = "UPDATE",
+                TableName = "Lesson",
+                CreatedAt = today
+            }
         };
 
         _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
@@ -128,10 +153,10 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data.Stats.Should().NotBeNull();
-        result.Data.Stats!.TotalEvents.Should().Be(2);
-        result.Data.Stats.TodayEvents.Should().Be(2);
-        result.Data.Stats.Alerts.Should().Be(1); // لأن الأول فيه DELETE
+        result.Value.Stats.Should().NotBeNull();
+        result.Value.Stats!.TotalEvents.Should().Be(2);
+        result.Value.Stats.TodayEvents.Should().Be(2);
+        result.Value.Stats.Alerts.Should().Be(1); // لأن الأول فيه DELETE
     }
 
     [Fact]
@@ -146,7 +171,7 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data.Stats.Should().BeNull();
+        result.Value.Stats.Should().BeNull();
     }
 
     [Fact]
@@ -158,7 +183,14 @@ public class GetActivityLogsQueryHandlerTests
 
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = "system", Action = "DELETE", TableName = "lesson", OldValues = oldValuesJson }
+            new()
+            {
+                Id = 1,
+                UserEmail = "system",
+                Action = "DELETE",
+                TableName = "lesson",
+                OldValues = oldValuesJson
+            }
         };
 
         _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
@@ -168,6 +200,6 @@ public class GetActivityLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data.Events[0].Detail.Should().Be("كورس السي شارب");
+        result.Value.Events[0].Detail.Should().Be("كورس السي شارب");
     }
 }

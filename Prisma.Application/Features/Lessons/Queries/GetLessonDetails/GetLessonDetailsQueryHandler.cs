@@ -30,14 +30,16 @@ public class GetLessonDetailsQueryHandler(
             return Result.NotFound($"Lesson with id '{request.LessonId.ToString()}' was not found");
         }
 
-        int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;
+        int totalMinutes = (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes);
         string formattedTotalDuration = FormatMinutesToHours(totalMinutes);
 
         bool isPrerequisiteCompleted = true;
 
         if (lesson.Prerequisite != null)
         {
-            var prereqLesson = await lessonrepository.FirstOrDefaultAsync(new LessonWithDetailsSpecification(lesson.Prerequisite.Id), cancellationToken);
+            var prereqLesson =
+                await lessonrepository.FirstOrDefaultAsync(new LessonWithDetailsSpecification(lesson.Prerequisite.Id),
+                    cancellationToken);
 
             var enrollment = prereqLesson?.Enrollments?
                 .FirstOrDefault(e => e.StudentId == currentStudentId && e.Status == EnrollmentStatus.Active);
@@ -48,10 +50,12 @@ public class GetLessonDetailsQueryHandler(
         var lessonDto = new LessonDetailsDto
         {
             Id = lesson.Id,
-            Url = lesson.ImageThumbnailUrl != null ?
-                await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,
-            // Url = lesson.ImageThumbnailUrl != null ?
-            //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,            Title = lesson.Title ?? "",
+            Url =
+                lesson.ImageThumbnailUrl != null
+                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
+                        lesson.ImageThumbnailUrl)
+                    : string.Empty,
+            Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",
             StudentsCount = lesson.Enrollments?.Count ?? 0,
@@ -66,7 +70,6 @@ public class GetLessonDetailsQueryHandler(
                 $"{(int)s.Duration.TotalMinutes} د",
                 s.IsPreview
             )).ToList() ?? [],
-
             Outcomes = lesson.Outcomes?.ToList() ?? [],
             Prerequisites = lesson.Prerequisite != null
                 ? [new PrerequisiteDto(lesson.Prerequisite.Title ?? "", isPrerequisiteCompleted)]

@@ -1,12 +1,11 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Commands.CreateCodeBatch;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
-
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
 namespace Prisma.Application.Tests.Features.RedeemCode;
@@ -15,9 +14,16 @@ public class CreateCodeBatchCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AcademicYearLesson, int> _ayLessonRepo = Substitute.For<IRepository<AcademicYearLesson, int>>();
-    private readonly IRepository<AcademicYearTeacher, int> _ayTeacherRepo = Substitute.For<IRepository<AcademicYearTeacher, int>>();
-    private readonly IRepository<RedeemCodeEntity, int> _batchRepo = Substitute.For<IRepository<RedeemCodeEntity, int>>();
+
+    private readonly IRepository<AcademicYearLesson, int> _ayLessonRepo =
+        Substitute.For<IRepository<AcademicYearLesson, int>>();
+
+    private readonly IRepository<AcademicYearTeacher, int> _ayTeacherRepo =
+        Substitute.For<IRepository<AcademicYearTeacher, int>>();
+
+    private readonly IRepository<RedeemCodeEntity, int> _batchRepo =
+        Substitute.For<IRepository<RedeemCodeEntity, int>>();
+
     private readonly CreateCodeBatchCommandHandler _sut;
 
     private readonly Guid _teacherId = Guid.NewGuid();
@@ -41,22 +47,22 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
         _ayLessonRepo.AnyAsync(
-            Arg.Any<AcademicYearLessonExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<AcademicYearLessonExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         _ayTeacherRepo.AnyAsync(
-            Arg.Any<TeacherAcademicYearExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Codes.Should().HaveCount(10);
-        result.Data.Codes.Should().OnlyHaveUniqueItems();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Codes.Should().HaveCount(10);
+        result.Value.Codes.Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -66,21 +72,21 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 5, "PHY");
 
         _ayLessonRepo.AnyAsync(
-            Arg.Any<AcademicYearLessonExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<AcademicYearLessonExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         _ayTeacherRepo.AnyAsync(
-            Arg.Any<TeacherAcademicYearExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Codes.Should().AllSatisfy(c => c.Should().StartWith("PHY-"));
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Codes.Should().AllSatisfy(c => c.Should().StartWith("PHY-"));
     }
 
     [Fact]
@@ -90,16 +96,17 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
         _ayLessonRepo.AnyAsync(
-            Arg.Any<AcademicYearLessonExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<AcademicYearLessonExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(false);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>()
-            .WithMessage("*lesson*academic year*");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("lesson") && e.Contains("academic year"));
     }
 
     [Fact]
@@ -109,20 +116,21 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
         _ayLessonRepo.AnyAsync(
-            Arg.Any<AcademicYearLessonExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<AcademicYearLessonExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         _ayTeacherRepo.AnyAsync(
-            Arg.Any<TeacherAcademicYearExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(false);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<ForbiddenException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Forbidden);
     }
 
     [Fact]
@@ -133,10 +141,11 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 
     [Fact]
@@ -146,13 +155,13 @@ public class CreateCodeBatchCommandHandlerTests
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
         _ayLessonRepo.AnyAsync(
-            Arg.Any<AcademicYearLessonExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<AcademicYearLessonExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         _ayTeacherRepo.AnyAsync(
-            Arg.Any<TeacherAcademicYearExistsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearExistsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(true);
 
         // Act

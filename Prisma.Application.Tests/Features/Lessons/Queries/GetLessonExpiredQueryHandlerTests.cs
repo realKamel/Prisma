@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,13 +6,12 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
@@ -41,10 +40,12 @@ public class GetLessonExpiredQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User is not authenticated");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated");
     }
 
     [Fact]
@@ -59,10 +60,11 @@ public class GetLessonExpiredQueryHandlerTests
             .Returns((Lesson)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -137,27 +139,27 @@ public class GetLessonExpiredQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التأكد من الحقول الأساسية وعمل الـ Mapping
-        result.Data.Id.Should().Be(lessonId);
-        result.Data.Title.Should().Be("درس الكيمياء العضوية");
-        result.Data.Description.Should().Be("مراجعة شاملة بعد انتهاء الوقت المتاح");
-        result.Data.Url.Should().Be("expired-lesson.jpg");
-        result.Data.Price.Should().Be(200.00m);
-        result.Data.ChaptersCount.Should().Be(2);
-        result.Data.MaterialsCount.Should().Be(2);
-        result.Data.ExpiredDate.Should().Be(expectedExpiryDate);
+        result.Value.Id.Should().Be(lessonId);
+        result.Value.Title.Should().Be("درس الكيمياء العضوية");
+        result.Value.Description.Should().Be("مراجعة شاملة بعد انتهاء الوقت المتاح");
+        result.Value.Url.Should().Be("expired-lesson.jpg");
+        result.Value.Price.Should().Be(200.00m);
+        result.Value.ChaptersCount.Should().Be(2);
+        result.Value.MaterialsCount.Should().Be(2);
+        result.Value.ExpiredDate.Should().Be(expectedExpiryDate);
 
         // التأكد من الحسابات الرياضية (CalculateTotalProgress & CalculateDegree)
-        result.Data.totalprogress.Should().Be(75); // (50 + 100) / 2 = 75
-        result.Data.Degree.Should().Be(85.5m);
+        result.Value.totalprogress.Should().Be(75); // (50 + 100) / 2 = 75
+        result.Value.Degree.Should().Be(85.5m);
 
         // التأكد من الـ Chapters وصيغة الوقت الممررة (hh\:mm\:ss)
-        result.Data.Chapters.Should().HaveCount(2);
-        result.Data.Chapters[0].Title.Should().Be("المقدمة");
-        result.Data.Chapters[0].Duration.Should().Be("00:30:00");
-        result.Data.Chapters[1].Duration.Should().Be("01:15:00");
+        result.Value.Chapters.Should().HaveCount(2);
+        result.Value.Chapters[0].Title.Should().Be("المقدمة");
+        result.Value.Chapters[0].Duration.Should().Be("00:30:00");
+        result.Value.Chapters[1].Duration.Should().Be("01:15:00");
     }
 }

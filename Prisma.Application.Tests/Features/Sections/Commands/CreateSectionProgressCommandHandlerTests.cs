@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Sections.Commands.CreateSectionProgress;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Sections;
 using Xunit;
@@ -34,10 +34,12 @@ public class CreateSectionProgressCommandHandlerTests
         var command = new CreateSectionProgressCommand(1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]

@@ -1,4 +1,4 @@
-﻿
+
 
 using FluentAssertions;
 using NSubstitute;
@@ -64,8 +64,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             new ReleaseAssignmentGradingLockCommand(999), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("التسليم غير موجود");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("التسليم غير موجود");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -82,8 +82,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Message.Should().Be("القفل غير موجود بالفعل");
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("القفل غير موجود بالفعل");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -104,8 +104,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("مينفعش تفكي قفل تصحيح شخص تاني");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("مينفعش تفكي قفل تصحيح شخص تاني");
 
         submission.IsBeingGraded.Should().BeTrue();
         submission.GradingByUserId.Should().Be(otherUserId);
@@ -128,8 +128,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Message.Should().Be("تم إلغاء قفل التصحيح");
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("تم إلغاء قفل التصحيح");
 
         submission.IsBeingGraded.Should().BeFalse();
         submission.GradingStartedAt.Should().BeNull();
@@ -156,8 +156,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("مينفعش تفكي قفل تصحيح شخص تاني");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("مينفعش تفكي قفل تصحيح شخص تاني");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }

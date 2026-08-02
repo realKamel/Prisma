@@ -1,11 +1,10 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,10 +36,12 @@ public class ChangePasswordCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // مستخدم غير مسجل دخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -55,10 +56,11 @@ public class ChangePasswordCommandHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns((User)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -87,9 +89,9 @@ public class ChangePasswordCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Contain("Password mismatch.");
-        result.Data.Should().BeFalse();
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Contain("Password mismatch.");
+        result.Value.Should().BeFalse();
     }
 
     [Fact]
@@ -112,10 +114,10 @@ public class ChangePasswordCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
 
         // التعديل الصحيح: هنا نتوقع أن تكون الرسالة "Success" بدلاً من null بناءً على منطق الـ Base Result لديك عند النجاح
-        result.Message.Should().Be("Success");
+        result.GetResultMessage().Should().Be("Success");
     }
 }

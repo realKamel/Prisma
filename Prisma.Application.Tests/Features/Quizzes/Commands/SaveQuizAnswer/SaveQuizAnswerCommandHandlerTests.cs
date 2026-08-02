@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
@@ -82,8 +82,8 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(McqAnswerCommand(), CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("المحاولة غير موجودة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("المحاولة غير موجودة", result.GetResultMessage());
 
         await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
@@ -101,8 +101,8 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(McqAnswerCommand(), CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("لا يمكن تعديل الإجابات بعد التسليم", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("لا يمكن تعديل الإجابات بعد التسليم", result.GetResultMessage());
 
         await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
@@ -120,8 +120,8 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(McqAnswerCommand(), CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات", result.GetResultMessage());
 
         _answerRepository.DidNotReceive().Add(Arg.Any<AttemptAnswer>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -139,7 +139,7 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(McqAnswerCommand(), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
     }
 
     #endregion
@@ -160,8 +160,8 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("تم حفظ الإجابة", result.Message);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("تم حفظ الإجابة", result.GetResultMessage());
 
         _answerRepository.Received(1).Add(Arg.Is<AttemptAnswer>(a =>
             a.QuizAttemptId == attempt.Id &&
@@ -187,7 +187,7 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         _answerRepository.Received(1).Add(Arg.Is<AttemptAnswer>(a =>
             a.QuestionId == 5 &&
@@ -214,7 +214,7 @@ public class SaveQuizAnswerCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Equal(200, existingAnswer.ChoiceId);
 
         _answerRepository.DidNotReceive().Add(Arg.Any<AttemptAnswer>());

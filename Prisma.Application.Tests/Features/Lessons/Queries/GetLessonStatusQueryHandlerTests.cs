@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
@@ -39,10 +38,12 @@ public class GetLessonStatusQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // غير مسجل دخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -57,10 +58,11 @@ public class GetLessonStatusQueryHandlerTests
             .Returns((Lesson)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -86,8 +88,8 @@ public class GetLessonStatusQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Status.Should().Be(LessonCatalogStatus.Available);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(LessonCatalogStatus.Available);
     }
 
     [Fact]
@@ -120,8 +122,8 @@ public class GetLessonStatusQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Status.Should().Be(LessonCatalogStatus.Expired);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(LessonCatalogStatus.Expired);
     }
 
     [Fact]
@@ -161,8 +163,8 @@ public class GetLessonStatusQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Status.Should().Be(LessonCatalogStatus.Locked);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(LessonCatalogStatus.Locked);
     }
 
     [Fact]
@@ -202,7 +204,7 @@ public class GetLessonStatusQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Status.Should().Be(LessonCatalogStatus.Purchased);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(LessonCatalogStatus.Purchased);
     }
 }

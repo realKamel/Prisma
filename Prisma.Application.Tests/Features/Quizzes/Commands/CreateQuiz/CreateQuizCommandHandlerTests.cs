@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -113,8 +113,8 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الحصة غير موجودة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الحصة غير موجودة", result.GetResultMessage());
 
         _questionRepository.DidNotReceive().Add(Arg.Any<Question>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -135,8 +135,8 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الحصة دي عندها اختبار بالفعل", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الحصة دي عندها اختبار بالفعل", result.GetResultMessage());
 
         _questionRepository.DidNotReceive().Add(Arg.Any<Question>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -152,7 +152,7 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         await _lessonRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<LessonByIdSpecification>(), Arg.Any<CancellationToken>());
@@ -223,8 +223,8 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(22.5m, result.Data!.TotalDegree);
-        Assert.Equal(3, result.Data.QuestionsCount);
+        Assert.Equal(22.5m, result.Value!.TotalDegree);
+        Assert.Equal(3, result.Value.QuestionsCount);
     }
 
     #endregion
@@ -309,7 +309,7 @@ public class CreateQuizCommandHandlerTests
         Assert.NotNull(capturedLinks);
         Assert.Equal(2, capturedLinks!.Count);
 
-        Assert.All(capturedLinks, link => Assert.Equal(result.Data!.QuizId, link.LessonQuizId));
+        Assert.All(capturedLinks, link => Assert.Equal(result.Value!.QuizId, link.LessonQuizId));
         Assert.Contains(capturedLinks, l => l.Degree == 5m);
         Assert.Contains(capturedLinks, l => l.Degree == 10m);
 
@@ -336,7 +336,7 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(result.Data!.QuizId, lesson.QuizId);
+        Assert.Equal(result.Value!.QuizId, lesson.QuizId);
     }
 
     #endregion
@@ -360,10 +360,10 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("تم إنشاء الاختبار بنجاح", result.Message);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("تم إنشاء الاختبار بنجاح", result.GetResultMessage());
 
-        var dto = result.Data!;
+        var dto = result.Value!;
         Assert.Equal("Quiz 1", dto.Title);
         Assert.Equal("Description", dto.Description);
         Assert.Equal(30, dto.DurationMinutes);

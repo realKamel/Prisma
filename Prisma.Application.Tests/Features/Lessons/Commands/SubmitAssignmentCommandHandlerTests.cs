@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -7,11 +7,11 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
@@ -40,9 +40,11 @@ public class SubmitAssignmentCommandHandlerTests
 
         var command = new SubmitAssignmentCommand(1, Substitute.For<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("لا يوجد واجب لهذا الدرس");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("لا يوجد واجب لهذا الدرس");
     }
 
     [Fact]
@@ -57,9 +59,11 @@ public class SubmitAssignmentCommandHandlerTests
 
         var command = new SubmitAssignmentCommand(1, Substitute.For<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("غير مصرح لك بتسليم هذا الواجب");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("غير مصرح لك بتسليم هذا الواجب");
     }
 
     [Fact]
@@ -94,8 +98,8 @@ public class SubmitAssignmentCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().Be("تم التسليم بنجاح!");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("تم التسليم بنجاح!");
 
         assignment.Submissions.Should().ContainSingle();
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

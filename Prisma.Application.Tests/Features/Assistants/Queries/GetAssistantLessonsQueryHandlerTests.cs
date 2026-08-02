@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
+using Ardalis.Result;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assistants;
 
@@ -37,11 +37,12 @@ public class GetAssistantLessonsQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
 
         // Act
-        var act = async () => await _handler.Handle(new GetAssistantLessonsQuery(), CancellationToken.None);
+        var result = await _handler.Handle(new GetAssistantLessonsQuery(), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
 
         _unitOfWork.DidNotReceive().GetOrCreateRepository<Lesson, int>();
     }
@@ -74,10 +75,10 @@ public class GetAssistantLessonsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().HaveCount(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(1);
 
-        var dto = result.Data.Single();
+        var dto = result.Value.Single();
         dto.Id.Should().Be(1);
         dto.Title.Should().Be("Algebra Basics");
         dto.Price.Should().Be(99.99m);
@@ -98,8 +99,8 @@ public class GetAssistantLessonsQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantLessonsQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().BeEmpty();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
     }
 
     [Fact]
@@ -128,7 +129,7 @@ public class GetAssistantLessonsQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantLessonsQuery(), CancellationToken.None);
 
         // Assert
-        var dto = result.Data.Single();
+        var dto = result.Value.Single();
         dto.Title.Should().Be(string.Empty);
         dto.StudentsCount.Should().Be(0);
         dto.ChaptersCount.Should().Be(0);
@@ -161,6 +162,6 @@ public class GetAssistantLessonsQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantLessonsQuery(), CancellationToken.None);
 
         // Assert
-        result.Data.Single().LastUpdatedAt.Should().Be(createdAt);
+        result.Value.Single().LastUpdatedAt.Should().Be(createdAt);
     }
 }

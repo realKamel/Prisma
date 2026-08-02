@@ -1,4 +1,4 @@
-﻿using NSubstitute;
+using NSubstitute;
 using Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -35,10 +35,10 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
         var result = await _handler.Handle(new GetLessonsAvailableForQuizQuery(), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal(2, result.Data!.Count);
-        Assert.Contains(result.Data, l => l.LessonId == 1 && l.Title == "Algebra Basics");
-        Assert.Contains(result.Data, l => l.LessonId == 2 && l.Title == "Geometry Intro");
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Count);
+        Assert.Contains(result.Value, l => l.LessonId == 1 && l.Title == "Algebra Basics");
+        Assert.Contains(result.Value, l => l.LessonId == 2 && l.Title == "Geometry Intro");
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
         var result = await _handler.Handle(new GetLessonsAvailableForQuizQuery(), CancellationToken.None);
 
         // Assert
-        Assert.Equal(string.Empty, Assert.Single(result.Data!).Title);
+        Assert.Equal(string.Empty, Assert.Single(result.Value!).Title);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
         var result = await _handler.Handle(new GetLessonsAvailableForQuizQuery(), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Empty(result.Data!);
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!);
     }
 }

@@ -1,11 +1,11 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 
 namespace Prisma.Application.Tests.Features.Authentication.Commands;
@@ -18,10 +18,7 @@ public class LoginCommandHandlerTests
 
     private readonly User _fakeUser = new()
     {
-        Id = Guid.CreateVersion7(),
-        Email = "user@test.com",
-        FirstName = "John",
-        LastName = "Doe",
+        Id = Guid.CreateVersion7(), Email = "user@test.com", FirstName = "John", LastName = "Doe",
     };
 
     public LoginCommandHandlerTests()
@@ -56,12 +53,12 @@ public class LoginCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.AccessToken.Should().Be(AppCookies.AccessToken);
-        result.Data.RefreshToken.Should().Be(AppCookies.RefreshToken);
-        result.Data.Credentials.Id.Should().Be(_fakeUser.Id);
-        result.Data.Credentials.Email.Should().Be(_fakeUser.Email);
-        result.Data.Credentials.Role.Should().Be(AppRoles.Student);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.AccessToken.Should().Be(AppCookies.AccessToken);
+        result.Value.RefreshToken.Should().Be(AppCookies.RefreshToken);
+        result.Value.Credentials.Id.Should().Be(_fakeUser.Id);
+        result.Value.Credentials.Email.Should().Be(_fakeUser.Email);
+        result.Value.Credentials.Role.Should().Be(AppRoles.Student);
     }
 
     [Fact]
@@ -138,7 +135,7 @@ public class LoginCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Data.Credentials.Role.Should().BeNull();
+        result.Value.Credentials.Role.Should().BeNull();
     }
 
     // ── User not found ───────────────────────────────────────────────────────
@@ -153,11 +150,12 @@ public class LoginCommandHandlerTests
             .Returns((User?)null);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>()
-            .WithMessage("*Invalid credentials*");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("Invalid credentials"));
     }
 
     [Fact]
@@ -170,8 +168,7 @@ public class LoginCommandHandlerTests
             .Returns((User?)null);
 
         // Act
-        try { await _sut.Handle(command, CancellationToken.None); }
-        catch { }
+        await _sut.Handle(command, CancellationToken.None);
 
         // Assert
         await _identityService.DidNotReceive()
@@ -192,11 +189,12 @@ public class LoginCommandHandlerTests
             .Returns(false);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>()
-            .WithMessage("*Invalid credentials*");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("Invalid credentials"));
     }
 
     [Fact]
@@ -211,8 +209,7 @@ public class LoginCommandHandlerTests
             .Returns(false);
 
         // Act
-        try { await _sut.Handle(command, CancellationToken.None); }
-        catch { }
+        await _sut.Handle(command, CancellationToken.None);
 
         // Assert
         _jwtTokenService.DidNotReceive()

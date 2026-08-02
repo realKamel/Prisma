@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Features.Storage.Commands.MuxWebhook;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Xunit;
 
@@ -31,10 +31,11 @@ public class MuxWebhookCommandHandlerTests
         var command = new MuxWebhookCommand("asset-123", "playback-456", 1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]

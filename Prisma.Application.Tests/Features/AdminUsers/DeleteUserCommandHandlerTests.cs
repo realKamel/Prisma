@@ -1,12 +1,11 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Commands.DeleteUser;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
@@ -26,11 +25,9 @@ public class DeleteUserCommandHandlerTests
     [Fact]
     public async Task Handle_WhenUserExists_DeletesAndReturnsSuccess()
     {
-        // Arrange — regression test for the bug where the lookup used
-        // IIdentityService.FindByIdAsync (which was returning "not found" for
-        // every id) instead of the repository directly.
+        // Arrange
         var user = new Student { Id = Guid.NewGuid() };
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>())
             .Returns(user);
         _identityService.DeleteAsync(user).Returns(IdentityResult.Success);
 
@@ -38,7 +35,7 @@ public class DeleteUserCommandHandlerTests
         var result = await _sut.Handle(new DeleteUserCommand(user.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.Status.Should().Be(ResultStatus.NoContent);
         await _identityService.Received(1).DeleteAsync(user);
     }
 
@@ -46,14 +43,15 @@ public class DeleteUserCommandHandlerTests
     public async Task Handle_WhenUserDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((User?)null);
 
         // Act
-        var act = () => _sut.Handle(new DeleteUserCommand(Guid.NewGuid()), CancellationToken.None);
+        var result = await _sut.Handle(new DeleteUserCommand(Guid.NewGuid()), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
         await _identityService.DidNotReceive().DeleteAsync(Arg.Any<User>());
     }
 
@@ -61,16 +59,17 @@ public class DeleteUserCommandHandlerTests
     public async Task Handle_WhenIdentityDeleteFails_ThrowsBadRequestException()
     {
         // Arrange
-        var user = new Teacher { Id = Guid.NewGuid() };
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        var user = new Domain.Entities.UserAggregate.Teacher { Id = Guid.NewGuid() };
+        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>())
             .Returns(user);
         _identityService.DeleteAsync(user)
             .Returns(IdentityResult.Failed(new IdentityError { Description = "DB constraint" }));
 
         // Act
-        var act = () => _sut.Handle(new DeleteUserCommand(user.Id), CancellationToken.None);
+        var result = await _sut.Handle(new DeleteUserCommand(user.Id), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
     }
 }

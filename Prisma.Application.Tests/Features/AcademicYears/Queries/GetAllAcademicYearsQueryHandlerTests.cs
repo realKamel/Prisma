@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -48,18 +48,18 @@ public class GetAllAcademicYearsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue(); // التأكد من أن العملية نجحت
-        result.Data.Should().NotBeNull();
-        result.Data.Should().HaveCount(3);
+        result.IsSuccess.Should().BeTrue(); // التأكد من أن العملية نجحت
+        result.Value.Should().NotBeNull();
+        result.Value.Should().HaveCount(3);
 
-        result.Data[0].Id.Should().Be(1);
-        result.Data[0].Name.Should().Be("الصف الأول الإعدادي");
+        result.Value[0].Id.Should().Be(1);
+        result.Value[0].Name.Should().Be("الصف الأول الإعدادي");
 
-        result.Data[1].Id.Should().Be(2);
-        result.Data[1].Name.Should().Be("الصف الثاني الإعدادي");
+        result.Value[1].Id.Should().Be(2);
+        result.Value[1].Name.Should().Be("الصف الثاني الإعدادي");
 
-        result.Data[2].Id.Should().Be(3);
-        result.Data[2].Name.Should().Be("الصف الثالث الإعدادي");
+        result.Value[2].Id.Should().Be(3);
+        result.Value[2].Name.Should().Be("الصف الثالث الإعدادي");
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class GetAllAcademicYearsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().BeEmpty(); // التأكد أن القائمة فارغة تماماً وليست Null
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty(); // التأكد أن القائمة فارغة تماماً وليست Null
     }
 }

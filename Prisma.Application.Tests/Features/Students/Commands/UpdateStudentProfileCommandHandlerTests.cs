@@ -1,13 +1,11 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Students.Commands.UpdateStudentProfileCommand;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -39,10 +37,12 @@ public class UpdateStudentProfileCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -56,10 +56,11 @@ public class UpdateStudentProfileCommandHandlerTests
         _studentRepo.GetByIdAsync(currentUserId, Arg.Any<CancellationToken>()).Returns((Student)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -79,9 +80,9 @@ public class UpdateStudentProfileCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().BeTrue();
-        result.Message.Should().Be("Success"); // يتوافق تماماً مع الـ Base Result الافتراضية عند النجاح لديك
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeTrue();
+        result.GetResultMessage().Should().Be("Success"); // يتوافق تماماً مع الـ Base Result الافتراضية عند النجاح لديك
 
         // التأكد من تطبيق الـ Trim وتحديث البيانات على الكيان الأصلي بنجاح
         fakeStudent.FirstName.Should().Be("احمد");

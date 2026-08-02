@@ -1,13 +1,12 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Tests.Features.AdminDashboard.Queries;
+namespace Prisma.Application.Tests.Features.Admin.Queries;
 
 public class GetAdminStatsQueryHandlerTests
 {
@@ -58,25 +57,26 @@ public class GetAdminStatsQueryHandlerTests
         var result = await _sut.Handle(new GetAdminStatsQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
 
         // التحقق من الـ KPIs
-        var studentsKpi = result.Data.Kpis.First(k => k.Id == "students");
+        var studentsKpi = result.Value.Kpis.First(k => k.Id == "students");
         studentsKpi.Value.Should().Be(2);
         // طالب هذا الشهر (1) - طالب الشهر الماضي (1) / 1 * 100 = 0% زيادة صافية
         studentsKpi.Delta.Should().Be(0);
 
-        var revenueKpi = result.Data.Kpis.First(k => k.Id == "revenue");
+        var revenueKpi = result.Value.Kpis.First(k => k.Id == "revenue");
         revenueKpi.Value.Should().Be(300); // إجمالي الـ 100 + 200
         // دفعة الشهر ده (200) - دفعة الشهر اللي فات (100) / 100 * 100 = 100% زيادة
         revenueKpi.Delta.Should().Be(100);
 
         // التحقق من أسبوع الأرباح (RevenueWeek)
-        result.Data.RevenueWeek.Should().HaveCount(7);
-        var todayRevenue = result.Data.RevenueWeek.First(r => r.IsToday);
+        result.Value.RevenueWeek.Should().HaveCount(7);
+        var todayRevenue = result.Value.RevenueWeek.First(r => r.IsToday);
         todayRevenue.Amount.Should().Be(200); // دفعة اليوم
 
-        result.Data.WeeklyTotal.Should().Be(200); // مجموع الـ 7 أيام الأخيرة (الـ 100 بتاعة الشهر اللي فات بره الأسبوع الحالي)
+        result.Value.WeeklyTotal.Should()
+            .Be(200); // مجموع الـ 7 أيام الأخيرة (الـ 100 بتاعة الشهر اللي فات بره الأسبوع الحالي)
     }
 
     [Fact]
@@ -92,14 +92,14 @@ public class GetAdminStatsQueryHandlerTests
         var result = await _sut.Handle(new GetAdminStatsQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
 
-        var uptimeKpi = result.Data.Kpis.First(k => k.Id == "uptime");
+        var uptimeKpi = result.Value.Kpis.First(k => k.Id == "uptime");
         uptimeKpi.Value.Should().Be(99.9m);
         uptimeKpi.Delta.Should().Be(0);
 
-        result.Data.WeeklyTotal.Should().Be(0);
-        result.Data.RevenueWeek.Should().HaveCount(7);
-        result.Data.RevenueWeek.All(r => r.Amount == 0).Should().BeTrue();
+        result.Value.WeeklyTotal.Should().Be(0);
+        result.Value.RevenueWeek.Should().HaveCount(7);
+        result.Value.RevenueWeek.Should().OnlyContain(r => r.Amount == 0);
     }
 }

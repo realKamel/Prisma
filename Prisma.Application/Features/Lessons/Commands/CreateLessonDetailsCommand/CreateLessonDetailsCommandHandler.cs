@@ -43,7 +43,7 @@ public class CreateLessonDetailsCommandHandler(
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            Outcomes = request.Outcomes
+            Outcomes = request.Outcomes ?? new List<string>()
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)

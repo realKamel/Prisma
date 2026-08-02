@@ -1,9 +1,9 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Queries.GetUserById;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
@@ -44,11 +44,11 @@ public class GetUserByIdQueryHandlerTests
         var result = await _sut.Handle(new GetUserByIdQuery(student.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Role.Should().Be("Student");
-        result.Data.GradeId.Should().Be(2);
-        result.Data.TeacherId.Should().Be(teacherId);
-        result.Data.ParentMobile.Should().Be("01198765432");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Role.Should().Be("Student");
+        result.Value.GradeId.Should().Be(2);
+        result.Value.TeacherId.Should().Be(teacherId);
+        result.Value.ParentMobile.Should().Be("01198765432");
     }
 
     [Fact]
@@ -57,10 +57,7 @@ public class GetUserByIdQueryHandlerTests
         // Arrange
         var assistant = new Assistant
         {
-            Id = Guid.CreateVersion7(),
-            FirstName = "فاطمة",
-            LastName = "أحمد",
-            Email = "f@test.com",
+            Id = Guid.CreateVersion7(), FirstName = "فاطمة", LastName = "أحمد", Email = "f@test.com",
         };
 
         _identityService
@@ -71,10 +68,10 @@ public class GetUserByIdQueryHandlerTests
         var result = await _sut.Handle(new GetUserByIdQuery(assistant.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Role.Should().Be("Assistant");
-        result.Data.TeacherId.Should().BeNull();
-        result.Data.GradeId.Should().BeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Role.Should().Be("Assistant");
+        result.Value.TeacherId.Should().BeNull();
+        result.Value.GradeId.Should().BeNull();
     }
 
     [Fact]
@@ -86,9 +83,10 @@ public class GetUserByIdQueryHandlerTests
             .Returns((User?)null);
 
         // Act
-        var act = () => _sut.Handle(new GetUserByIdQuery(Guid.NewGuid()), CancellationToken.None);
+        var result = await _sut.Handle(new GetUserByIdQuery(Guid.NewGuid()), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 }

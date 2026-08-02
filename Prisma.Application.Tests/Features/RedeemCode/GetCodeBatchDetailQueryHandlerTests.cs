@@ -1,3 +1,4 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
@@ -5,7 +6,6 @@ using Prisma.Application.Features.RedeemCodes.Queries.GetCodeBatchDetail;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
@@ -81,16 +81,16 @@ public class GetCodeBatchDetailQueryHandlerTests
         var result = await _sut.Handle(new GetCodeBatchDetailQuery(1), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Codes.Should().HaveCount(2);
-        result.Data.UsedCodes.Should().Be(1);
-        result.Data.TotalCodes.Should().Be(2);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Codes.Should().HaveCount(2);
+        result.Value.UsedCodes.Should().Be(1);
+        result.Value.TotalCodes.Should().Be(2);
 
-        var usedCode = result.Data.Codes.First(c => c.Code == "ABCD-EFGH");
+        var usedCode = result.Value.Codes.First(c => c.Code == "ABCD-EFGH");
         usedCode.Status.Should().Be("used");
         usedCode.UsedBy.Should().Be("محمد أحمد");
 
-        var availableCode = result.Data.Codes.First(c => c.Code == "IJKL-MNOP");
+        var availableCode = result.Value.Codes.First(c => c.Code == "IJKL-MNOP");
         availableCode.Status.Should().Be("available");
         availableCode.UsedBy.Should().BeEmpty();
     }
@@ -105,10 +105,11 @@ public class GetCodeBatchDetailQueryHandlerTests
             .Returns((RedeemCodeEntity?)null);
 
         // Act
-        var act = () => _sut.Handle(new GetCodeBatchDetailQuery(99), CancellationToken.None);
+        var result = await _sut.Handle(new GetCodeBatchDetailQuery(99), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -118,9 +119,10 @@ public class GetCodeBatchDetailQueryHandlerTests
         _currentUser.UserId.Returns((Guid?)null);
 
         // Act
-        var act = () => _sut.Handle(new GetCodeBatchDetailQuery(1), CancellationToken.None);
+        var result = await _sut.Handle(new GetCodeBatchDetailQuery(1), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 }

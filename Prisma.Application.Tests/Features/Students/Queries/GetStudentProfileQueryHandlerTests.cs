@@ -1,11 +1,10 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Ardalis.Specification;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Students.Queries.GetStudentProfileQuery;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 using System;
@@ -36,11 +35,12 @@ public class GetStudentProfileQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // محاكاة عدم تسجيل الدخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -56,10 +56,11 @@ public class GetStudentProfileQueryHandlerTests
             .Returns((Student)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -91,18 +92,18 @@ public class GetStudentProfileQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التحقق من صحة الـ Mapping لجميع الحقول المرسلة في الـ Dto
-        result.Data.FirstName.Should().Be("أحمد");
-        result.Data.SecondName.Should().Be("محمود");
-        result.Data.ThirdName.Should().Be("علي");
-        result.Data.LastName.Should().Be("سعيد");
-        result.Data.Mobile.Should().Be("01012345678");
-        result.Data.Email.Should().Be("student@prisma.com");
-        result.Data.Grade.Should().Be(3);
-        result.Data.ParentMobile.Should().Be("01112345678");
+        result.Value.FirstName.Should().Be("أحمد");
+        result.Value.SecondName.Should().Be("محمود");
+        result.Value.ThirdName.Should().Be("علي");
+        result.Value.LastName.Should().Be("سعيد");
+        result.Value.Mobile.Should().Be("01012345678");
+        result.Value.Email.Should().Be("student@prisma.com");
+        result.Value.Grade.Should().Be(3);
+        result.Value.ParentMobile.Should().Be("01112345678");
     }
 
     [Fact]
@@ -135,17 +136,17 @@ public class GetStudentProfileQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التحقق من تفعيل معاملات الـ null coalescing (?? string.Empty) داخل الكود الخاص بك
-        result.Data.FirstName.Should().Be(string.Empty);
-        result.Data.SecondName.Should().Be(string.Empty);
-        result.Data.ThirdName.Should().Be(string.Empty);
-        result.Data.LastName.Should().Be(string.Empty);
-        result.Data.Mobile.Should().Be(string.Empty);
-        result.Data.Email.Should().Be(string.Empty);
-        result.Data.Grade.Should().Be(0); // الـ int? يتحول لـ 0
-        result.Data.ParentMobile.Should().Be(string.Empty);
+        result.Value.FirstName.Should().Be(string.Empty);
+        result.Value.SecondName.Should().Be(string.Empty);
+        result.Value.ThirdName.Should().Be(string.Empty);
+        result.Value.LastName.Should().Be(string.Empty);
+        result.Value.Mobile.Should().Be(string.Empty);
+        result.Value.Email.Should().Be(string.Empty);
+        result.Value.Grade.Should().Be(0); // الـ int? يتحول لـ 0
+        result.Value.ParentMobile.Should().Be(string.Empty);
     }
 }

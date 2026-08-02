@@ -1,14 +1,14 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Xunit;
 
@@ -29,6 +29,7 @@ public class DeleteLessonCommandHandlerTests
         var store = Substitute.For<IUserStore<User>>();
         _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
 
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new DeleteLessonCommandHandler(
             _unitOfWork,
@@ -44,9 +45,11 @@ public class DeleteLessonCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
         var command = new DeleteLessonCommand(1);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated to delete a lesson.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated to delete a lesson.");
     }
 
     [Fact]
@@ -64,10 +67,12 @@ public class DeleteLessonCommandHandlerTests
         var command = new DeleteLessonCommand(1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("Only teachers, assistants, and admins can delete lessons");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("Only teachers, assistants, and admins can delete lessons");
     }
 
     [Fact]
@@ -86,10 +91,11 @@ public class DeleteLessonCommandHandlerTests
         var command = new DeleteLessonCommand(1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -112,8 +118,8 @@ public class DeleteLessonCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().Be("Lesson deleted successfully");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Lesson deleted successfully");
 
         _lessonRepo.Received(1).Delete(fakeLesson);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

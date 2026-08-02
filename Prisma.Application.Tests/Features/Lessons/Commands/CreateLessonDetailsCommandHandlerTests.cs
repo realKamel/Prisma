@@ -1,17 +1,16 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -33,6 +32,7 @@ public class CreateLessonDetailsCommandHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _currentUserService = Substitute.For<ICurrentUserService>();
         _storageService = Substitute.For<IStorageService>();
+        _storageService.DefaultBucketName.Returns("prisma");
         _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
         _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
         _backgroundJobService = Substitute.For<IBackgroundJobService>();
@@ -65,7 +65,7 @@ public class CreateLessonDetailsCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
 
         // Act
-        var act = async () => await _handler.Handle(
+        var result = await _handler.Handle(
             new CreateLessonDetailsCommand(
                 "title",
                 "desc",
@@ -81,7 +81,9 @@ public class CreateLessonDetailsCommandHandlerTests
                 null), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]
@@ -93,7 +95,7 @@ public class CreateLessonDetailsCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns((User?)null);
 
         // Act
-        var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
+        var result = await _handler.Handle(new CreateLessonDetailsCommand(
             "title",
             "desc",
             10,
@@ -108,7 +110,9 @@ public class CreateLessonDetailsCommandHandlerTests
             null), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User not found.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User not found.");
     }
 
     [Fact]
@@ -121,7 +125,7 @@ public class CreateLessonDetailsCommandHandlerTests
             .Returns(new List<string> { AppRoles.Student }); // Missing Teacher/Assistant/Admin
 
         // Act
-        var act = async () => await _handler.Handle(new CreateLessonDetailsCommand(
+        var result = await _handler.Handle(new CreateLessonDetailsCommand(
             "title",
             "desc",
             10,
@@ -136,8 +140,9 @@ public class CreateLessonDetailsCommandHandlerTests
             null), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("Only teachers and assistants can create lessons.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("Only teachers and assistants can create lessons.");
     }
 
     [Fact]
@@ -167,10 +172,12 @@ public class CreateLessonDetailsCommandHandlerTests
             .Returns(new List<AcademicYear> { new() { Id = 1 } });
 
         // Act
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("invalid academic year");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("invalid academic year");
     }
 
     [Fact]
@@ -215,8 +222,8 @@ public class CreateLessonDetailsCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
         _lessonRepo.Received(1).Add(Arg.Any<Lesson>());
@@ -285,7 +292,7 @@ public class CreateLessonDetailsCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         savedLesson.Should().NotBeNull();
         savedLesson!.Status.Should().Be(LessonStatus.Drafted);
         savedLesson.Outcomes.Should().BeEmpty();

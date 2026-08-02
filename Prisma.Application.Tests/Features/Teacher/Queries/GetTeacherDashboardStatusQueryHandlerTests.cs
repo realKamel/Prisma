@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
-using Prisma.Application.Common.Constants;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Teachers.Queries.DTOs;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -18,9 +13,9 @@ using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Students;
-using Xunit;
 
-namespace Prisma.Application.Tests.Features.Teachers.Queries;
+
+namespace Prisma.Application.Tests.Features.Teacher.Queries;
 
 public class GetTeacherDashboardStatusQueryHandlerTests
 {
@@ -30,6 +25,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
     private readonly IRepository<AuditLog, int> _auditRepo = Substitute.For<IRepository<AuditLog, int>>();
     private readonly GetTeacherDashboardStatusQueryHandler _sut;
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     public GetTeacherDashboardStatusQueryHandlerTests()
     {
@@ -38,7 +34,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditRepo);
 
-        //_sut = new GetTeacherDashboardStatusQueryHandler(_unitOfWork);
+        _sut = new GetTeacherDashboardStatusQueryHandler(_unitOfWork, _currentUserService);
 
         // Defaults so every test doesn't have to stub every repo call
         _studentRepo.CountAsync(Arg.Any<ActiveStudentSpecification>(), Arg.Any<CancellationToken>()).Returns(0);
@@ -47,7 +43,8 @@ public class GetTeacherDashboardStatusQueryHandlerTests
             .Returns(new List<AuditLogDto>());
         _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithPaymentOrderByCreatedAtDesc>(), Arg.Any<CancellationToken>())
             .Returns(new List<Enrollment>());
-        _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc>(),
+                Arg.Any<CancellationToken>())
             .Returns(new List<Enrollment>());
     }
 
@@ -81,8 +78,8 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Stats.TotalActiveStudents.Should().Be(42);
-        result.Data.Stats.TotalActiveLessons.Should().Be(17);
+        result.Value!.Stats.TotalActiveStudents.Should().Be(42);
+        result.Value.Stats.TotalActiveLessons.Should().Be(17);
     }
 
     [Fact]
@@ -102,8 +99,8 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Stats.TotalEarningsForThisMonth.Should().Be(200m);
-        result.Data.Stats.TotalEarningsAgainstLastMonth.Should().Be(200m); // (200/100)*100
+        result.Value!.Stats.TotalEarningsForThisMonth.Should().Be(200m);
+        result.Value.Stats.TotalEarningsAgainstLastMonth.Should().Be(200m); // (200/100)*100
     }
 
     [Fact]
@@ -122,7 +119,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Stats.TotalEarningsAgainstLastMonth.Should().Be(0);
+        result.Value!.Stats.TotalEarningsAgainstLastMonth.Should().Be(0);
     }
 
     [Fact]
@@ -144,10 +141,10 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.WeekEarnings.TotalEarningsForThisWeek.Should().Be(80m);
-        result.Data.WeekEarnings.Data.Should().ContainSingle();
-        result.Data.WeekEarnings.Data.Single().Earning.Should().Be(80m);
-        result.Data.WeekEarnings.Data.Single().Day.Should().Be(mondayThisWeek.DayOfWeek.ToString());
+        result.Value!.WeekEarnings.TotalEarningsForThisWeek.Should().Be(80m);
+        result.Value.WeekEarnings.Data.Should().ContainSingle();
+        result.Value.WeekEarnings.Data.Single().Earning.Should().Be(80m);
+        result.Value.WeekEarnings.Data.Single().Day.Should().Be(mondayThisWeek.DayOfWeek.ToString());
     }
 
     [Fact]
@@ -155,13 +152,17 @@ public class GetTeacherDashboardStatusQueryHandlerTests
     {
         // Arrange
         var now = DateTimeOffset.UtcNow;
-        var completedThisMonth1 = MakeEnrollment(createdAt: now.AddDays(-10), isCompleted: true, completedAt: now.AddDays(-5));
-        var completedThisMonth2 = MakeEnrollment(createdAt: now.AddDays(-8), isCompleted: true, completedAt: now.AddDays(-3));
-        var completedLastMonth = MakeEnrollment(createdAt: now.AddDays(-45), isCompleted: true, completedAt: now.AddDays(-40));
+        var completedThisMonth1 =
+            MakeEnrollment(createdAt: now.AddDays(-10), isCompleted: true, completedAt: now.AddDays(-5));
+        var completedThisMonth2 =
+            MakeEnrollment(createdAt: now.AddDays(-8), isCompleted: true, completedAt: now.AddDays(-3));
+        var completedLastMonth =
+            MakeEnrollment(createdAt: now.AddDays(-45), isCompleted: true, completedAt: now.AddDays(-40));
         var notCompleted = MakeEnrollment(createdAt: now.AddDays(-10), isCompleted: false);
 
         _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithPaymentOrderByCreatedAtDesc>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { completedThisMonth1, completedThisMonth2, completedLastMonth, notCompleted });
+            .Returns(
+                new List<Enrollment> { completedThisMonth1, completedThisMonth2, completedLastMonth, notCompleted });
 
         var query = new GetTeacherDashboardStatusQuery();
 
@@ -169,8 +170,8 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Stats.TotalCompletedLessonsAgainstThisMonth.Should().Be(2);
-        result.Data.Stats.TotalCompletedLessonsAgainstLastMonthPercentage.Should().Be(200m); // (2/1)*100
+        result.Value!.Stats.TotalCompletedLessonsAgainstThisMonth.Should().Be(2);
+        result.Value.Stats.TotalCompletedLessonsAgainstLastMonthPercentage.Should().Be(200m); // (2/1)*100
     }
 
     [Fact]
@@ -193,7 +194,8 @@ public class GetTeacherDashboardStatusQueryHandlerTests
             MakeEnrollment(lesson: lessonD, paymentAmount: 10m),
         };
 
-        _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo.ListAsync(Arg.Any<EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc>(),
+                Arg.Any<CancellationToken>())
             .Returns(enrollments);
 
         var query = new GetTeacherDashboardStatusQuery();
@@ -202,20 +204,17 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.BestSales.Should().HaveCount(3);
-        result.Data.BestSales[0].LessonId.Should().Be(1);
-        result.Data.BestSales[0].StudentCount.Should().Be(3);
-        result.Data.BestSales[0].Amount.Should().Be(300m);
+        result.Value!.BestSales.Should().HaveCount(3);
+        result.Value.BestSales[0].LessonId.Should().Be(1);
+        result.Value.BestSales[0].StudentCount.Should().Be(3);
+        result.Value.BestSales[0].Amount.Should().Be(300m);
     }
 
     [Fact]
     public async Task Handle_ReturnsAuditLogsFromRepository()
     {
         // Arrange
-        var logs = new List<AuditLogDto>
-        {
-            new(1, "teacher@example.com", "Update", "Lessons", DateTimeOffset.UtcNow)
-        };
+        var logs = new List<AuditLogDto> { new(1, "teacher@example.com", "Update", "Lessons", DateTimeOffset.UtcNow) };
         _auditRepo.ListAsync(Arg.Any<PagedLogsOrderByCreatedAtSpec<AuditLogDto>>(), Arg.Any<CancellationToken>())
             .Returns(logs);
 
@@ -225,7 +224,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Logs.Should().ContainSingle();
-        result.Data.Logs.Single().Action.Should().Be("Update");
+        result.Value!.Logs.Should().ContainSingle();
+        result.Value.Logs.Single().Action.Should().Be("Update");
     }
 }

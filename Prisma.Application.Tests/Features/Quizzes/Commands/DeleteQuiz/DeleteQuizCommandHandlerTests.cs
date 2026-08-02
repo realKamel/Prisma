@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Features.Quizzes.Commands.DeleteQuiz;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -66,8 +66,8 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير موجود", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
 
         _quizRepository.DidNotReceive().Update(Arg.Any<Quiz>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -84,8 +84,8 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة", result.GetResultMessage());
         Assert.False(quiz.IsDeleted);
 
         _quizRepository.DidNotReceive().Update(Arg.Any<Quiz>());
@@ -103,7 +103,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
+        Assert.False(result.IsSuccess);
         Assert.False(quiz.IsDeleted);
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -123,7 +123,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
+        Assert.False(result.IsSuccess);
     }
 
     #endregion
@@ -141,8 +141,8 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("تم حذف الاختبار بنجاح", result.Message);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("تم حذف الاختبار بنجاح", result.GetResultMessage());
         Assert.True(quiz.IsDeleted);
         Assert.NotNull(quiz.DeletedAt);
 
@@ -165,7 +165,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.True(quiz.IsDeleted);
     }
 
@@ -189,7 +189,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Null(lesson.QuizId);
     }
 
@@ -208,7 +208,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.True(quiz.IsDeleted);
     }
 
@@ -223,7 +223,7 @@ public class DeleteQuizCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         await _lessonRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<LessonByIdSpecification>(), Arg.Any<CancellationToken>());
     }

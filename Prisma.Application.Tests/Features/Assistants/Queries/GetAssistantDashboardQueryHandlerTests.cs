@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Ardalis.Specification;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
@@ -133,46 +133,46 @@ public class GetAssistantDashboardQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
 
-        result.Data.Teacher.Name.Should().Be("Sara Ahmed");
-        result.Data.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
+        result.Value.Teacher.Name.Should().Be("Sara Ahmed");
+        result.Value.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
 
-        result.Data.Kpis.Should().HaveCount(4);
+        result.Value.Kpis.Should().HaveCount(4);
 
-        var studentsKpi = result.Data.Kpis.Single(k => k.Id == "students");
+        var studentsKpi = result.Value.Kpis.Single(k => k.Id == "students");
         studentsKpi.Value.Should().Be(50);
         studentsKpi.Delta.Should().Be(10);
         studentsKpi.Trend.Should().Be("up");
         studentsKpi.Variant.Should().Be("purple");
 
-        var quizzesKpi = result.Data.Kpis.Single(k => k.Id == "quizzes");
+        var quizzesKpi = result.Value.Kpis.Single(k => k.Id == "quizzes");
         quizzesKpi.Value.Should().Be(20);
         // pass rate this week = 1/2 = 0.5, last week = 0/2 = 0 -> delta 0.5
         quizzesKpi.Delta.Should().BeApproximately(0.5, 0.0001);
         quizzesKpi.Trend.Should().Be("up");
 
-        var assignmentsKpi = result.Data.Kpis.Single(k => k.Id == "assignments");
+        var assignmentsKpi = result.Value.Kpis.Single(k => k.Id == "assignments");
         assignmentsKpi.Value.Should().Be(7);
         assignmentsKpi.Delta.Should().Be(0);
         assignmentsKpi.Trend.Should().Be("down");
 
-        var lessonsKpi = result.Data.Kpis.Single(k => k.Id == "lessons");
+        var lessonsKpi = result.Value.Kpis.Single(k => k.Id == "lessons");
         lessonsKpi.Value.Should().Be(15);
         lessonsKpi.Delta.Should().Be(3);
         lessonsKpi.Trend.Should().Be("up");
 
-        result.Data.Activities.Should().HaveCount(1);
-        result.Data.Activities[0].Id.Should().Be(1);
-        result.Data.Activities[0].Action.Should().Be("Update");
-        result.Data.Activities[0].TableName.Should().Be("Lessons");
-        result.Data.Activities[0].CreatedAt.Should().Be(logCreatedAt);
+        result.Value.Activities.Should().HaveCount(1);
+        result.Value.Activities[0].Id.Should().Be(1);
+        result.Value.Activities[0].Action.Should().Be("Update");
+        result.Value.Activities[0].TableName.Should().Be("Lessons");
+        result.Value.Activities[0].CreatedAt.Should().Be(logCreatedAt);
 
-        result.Data.Permissions.Should().HaveCount(4);
-        result.Data.Permissions.Single(p => p.Id == "students").Status.Should().Be("on");
-        result.Data.Permissions.Single(p => p.Id == "reports").Status.Should().Be("on");
-        result.Data.Permissions.Single(p => p.Id == "content").Status.Should().Be("off");
-        result.Data.Permissions.Single(p => p.Id == "grading").Status.Should().Be("off");
+        result.Value.Permissions.Should().HaveCount(4);
+        result.Value.Permissions.Single(p => p.Id == "students").Status.Should().Be("on");
+        result.Value.Permissions.Single(p => p.Id == "reports").Status.Should().Be("on");
+        result.Value.Permissions.Single(p => p.Id == "content").Status.Should().Be("off");
+        result.Value.Permissions.Single(p => p.Id == "grading").Status.Should().Be("off");
     }
 
     [Fact]
@@ -185,10 +185,10 @@ public class GetAssistantDashboardQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Teacher.Name.Should().BeEmpty();
-        result.Data.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
-        result.Data.Permissions.Should().OnlyContain(p => p.Status == "off");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Teacher.Name.Should().BeEmpty();
+        result.Value.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
+        result.Value.Permissions.Should().OnlyContain(p => p.Status == "off");
 
         await _userManager.DidNotReceive().GetClaimsAsync(Arg.Any<User>());
     }
@@ -204,7 +204,7 @@ public class GetAssistantDashboardQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
 
         // Assert
-        var studentsKpi = result.Data.Kpis.Single(k => k.Id == "students");
+        var studentsKpi = result.Value.Kpis.Single(k => k.Id == "students");
         studentsKpi.Delta.Should().Be(-15);
         studentsKpi.Trend.Should().Be("down");
     }
@@ -221,7 +221,7 @@ public class GetAssistantDashboardQueryHandlerTests
 
         // Assert
         var result = await act.Should().NotThrowAsync();
-        var quizzesKpi = result.Subject.Data.Kpis.Single(k => k.Id == "quizzes");
+        var quizzesKpi = result.Subject.Value.Kpis.Single(k => k.Id == "quizzes");
         quizzesKpi.Delta.Should().Be(0);
     }
 
@@ -236,7 +236,7 @@ public class GetAssistantDashboardQueryHandlerTests
         var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
 
         // Assert
-        var lessonsKpi = result.Data.Kpis.Single(k => k.Id == "lessons");
+        var lessonsKpi = result.Value.Kpis.Single(k => k.Id == "lessons");
         lessonsKpi.Value.Should().Be(10);
         lessonsKpi.Delta.Should().Be(0);
         lessonsKpi.Trend.Should().Be("down");
@@ -260,7 +260,7 @@ public class GetAssistantDashboardQueryHandlerTests
         var after = DateTimeOffset.UtcNow;
 
         // Assert
-        var activity = result.Data.Activities.Single();
+        var activity = result.Value.Activities.Single();
         activity.CreatedAt.Should().BeOnOrAfter(before).And.BeOnOrBefore(after);
     }
 }

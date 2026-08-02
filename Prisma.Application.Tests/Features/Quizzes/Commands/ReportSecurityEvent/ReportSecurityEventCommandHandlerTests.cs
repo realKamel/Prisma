@@ -1,4 +1,4 @@
-﻿using NSubstitute;
+using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.ReportSecurityEvent;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -62,7 +62,7 @@ public class ReportSecurityEventCommandHandlerTests
             new ReportSecurityEventCommand(1, SecurityEventType.TabSwitch), CancellationToken.None);
 
         // Assert - silent success by design; the frontend fires these fire-and-forget
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -81,7 +81,7 @@ public class ReportSecurityEventCommandHandlerTests
             new ReportSecurityEventCommand(1, SecurityEventType.TabSwitch), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Equal(2, attempt.TabSwitchCount); // untouched
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -103,7 +103,7 @@ public class ReportSecurityEventCommandHandlerTests
             new ReportSecurityEventCommand(1, SecurityEventType.TabSwitch), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Equal(1, attempt.TabSwitchCount);
         Assert.Equal(0, attempt.CopyPasteAttemptCount);
 
@@ -122,7 +122,7 @@ public class ReportSecurityEventCommandHandlerTests
             new ReportSecurityEventCommand(1, SecurityEventType.CopyPasteAttempt), CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Equal(1, attempt.CopyPasteAttemptCount);
         Assert.Equal(0, attempt.TabSwitchCount);
 

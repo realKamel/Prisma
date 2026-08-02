@@ -10,17 +10,25 @@ public class GetAllUsersQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<IRepository<Student, Guid>>();
-    private readonly IRepository<Teacher, Guid> _teacherRepo = Substitute.For<IRepository<Teacher, Guid>>();
+
+    private readonly IRepository<global::Prisma.Domain.Entities.UserAggregate.Teacher, Guid> _teacherRepo =
+        Substitute.For<IRepository<global::Prisma.Domain.Entities.UserAggregate.Teacher, Guid>>();
+
     private readonly IRepository<Assistant, Guid> _assistantRepo = Substitute.For<IRepository<Assistant, Guid>>();
-    private readonly IRepository<Admin, Guid> _adminRepo = Substitute.For<IRepository<Admin, Guid>>();
+
+    private readonly IRepository<Domain.Entities.UserAggregate.Admin, Guid> _adminRepo =
+        Substitute.For<IRepository<Domain.Entities.UserAggregate.Admin, Guid>>();
+
     private readonly GetAllUsersQueryHandler _sut;
 
     public GetAllUsersQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Student, Guid>().Returns(_studentRepo);
-        _unitOfWork.GetOrCreateRepository<Teacher, Guid>().Returns(_teacherRepo);
+        _unitOfWork.GetOrCreateRepository<global::Prisma.Domain.Entities.UserAggregate.Teacher, Guid>()
+            .Returns(_teacherRepo);
         _unitOfWork.GetOrCreateRepository<Assistant, Guid>().Returns(_assistantRepo);
-        _unitOfWork.GetOrCreateRepository<Admin, Guid>().Returns(_adminRepo);
+        _unitOfWork.GetOrCreateRepository<Domain.Entities.UserAggregate.Admin, Guid>()
+            .Returns(_adminRepo);
 
         _sut = new GetAllUsersQueryHandler(_unitOfWork);
     }
@@ -48,7 +56,7 @@ public class GetAllUsersQueryHandlerTests
             IsDeleted = true,
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-5),
         };
-        var teacher = new Teacher
+        var teacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
         {
             Id = Guid.CreateVersion7(),
             FirstName = "سارة",
@@ -58,24 +66,27 @@ public class GetAllUsersQueryHandlerTests
             CreatedAt = DateTimeOffset.UtcNow.AddDays(-1),
         };
 
-        _studentRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Student> { activeStudent, deletedStudent });
-        _teacherRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Teacher> { teacher });
+        _studentRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<Student> { activeStudent, deletedStudent });
+        _teacherRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<global::Prisma.Domain.Entities.UserAggregate.Teacher> { teacher });
         _assistantRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Assistant>());
-        _adminRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Admin>());
+        _adminRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<global::Prisma.Domain.Entities.UserAggregate.Admin>());
 
         // Act
         var result = await _sut.Handle(new GetAllUsersQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().HaveCount(2); // soft-deleted student excluded
-        result.Data.Should().NotContain(u => u.Email == "deleted@test.com");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(2); // soft-deleted student excluded
+        result.Value.Should().NotContain(u => u.Email == "deleted@test.com");
 
-        var teacherDto = result.Data.Single(u => u.Email == "sara@test.com");
+        var teacherDto = result.Value.Single(u => u.Email == "sara@test.com");
         teacherDto.Role.Should().Be("Teacher");
         teacherDto.Active.Should().BeFalse(); // IsBlocked == true
 
-        var studentDto = result.Data.Single(u => u.Email == "ahmed@test.com");
+        var studentDto = result.Value.Single(u => u.Email == "ahmed@test.com");
         studentDto.Role.Should().Be("Student");
         studentDto.Active.Should().BeTrue();
         studentDto.Name.Should().Be("أحمد علي");
@@ -85,18 +96,32 @@ public class GetAllUsersQueryHandlerTests
     public async Task Handle_OrdersUsersByJoinedDateDescending()
     {
         // Arrange
-        var older = new Admin { Id = Guid.CreateVersion7(), FirstName = "قديم", LastName = "مدير", CreatedAt = DateTimeOffset.UtcNow.AddDays(-10) };
-        var newer = new Admin { Id = Guid.CreateVersion7(), FirstName = "جديد", LastName = "مدير", CreatedAt = DateTimeOffset.UtcNow.AddDays(-1) };
+        var older = new global::Prisma.Domain.Entities.UserAggregate.Admin
+        {
+            Id = Guid.CreateVersion7(),
+            FirstName = "قديم",
+            LastName = "مدير",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-10)
+        };
+        var newer = new global::Prisma.Domain.Entities.UserAggregate.Admin
+        {
+            Id = Guid.CreateVersion7(),
+            FirstName = "جديد",
+            LastName = "مدير",
+            CreatedAt = DateTimeOffset.UtcNow.AddDays(-1)
+        };
 
         _studentRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Student>());
-        _teacherRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Teacher>());
+        _teacherRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<global::Prisma.Domain.Entities.UserAggregate.Teacher>());
         _assistantRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Assistant>());
-        _adminRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Admin> { older, newer });
+        _adminRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<global::Prisma.Domain.Entities.UserAggregate.Admin> { older, newer });
 
         // Act
         var result = await _sut.Handle(new GetAllUsersQuery(), CancellationToken.None);
 
         // Assert
-        result.Data.First().Name.Should().Be("جديد مدير");
+        result.Value.First().Name.Should().Be("جديد مدير");
     }
 }

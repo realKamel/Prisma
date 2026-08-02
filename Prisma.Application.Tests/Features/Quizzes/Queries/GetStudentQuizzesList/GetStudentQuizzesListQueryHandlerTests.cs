@@ -1,10 +1,10 @@
-﻿
+
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetStudentQuizzesList;
 
 using Ardalis.Specification;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetStudentQuizzesList;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -95,7 +95,7 @@ public class GetStudentQuizzesListQueryHandlerTests
             .Returns(quizzes.ToList());
 
     private static StudentQuizListItemDto GetSingleItem(Result<StudentQuizzesListResponseDto> result) =>
-        Assert.Single(result.Data!.Items);
+        Assert.Single(result.Value!.Items);
 
     #endregion
 
@@ -275,7 +275,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
 
         // Assert
-        var stats = result.Data!.Stats;
+        var stats = result.Value!.Stats;
         Assert.Equal(4, stats.Total);
         Assert.Equal(3, stats.DoneCount);
         Assert.Equal(1, stats.PendingCount);
@@ -294,7 +294,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
 
         // Assert
-        var stats = result.Data!.Stats;
+        var stats = result.Value!.Stats;
         Assert.Equal(0, stats.AverageScorePercent);
         Assert.Equal(0, stats.BestScorePercent);
     }
@@ -311,7 +311,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
 
         // Assert
-        var stats = result.Data!.Stats;
+        var stats = result.Value!.Stats;
         Assert.Equal(1, stats.DoneCount); // still counted as "done" status
         Assert.Equal(0, stats.AverageScorePercent); // but excluded from the average calc
     }
@@ -330,9 +330,9 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery("done"), CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Stats.Total); // stats computed on full unfiltered set
-        Assert.Single(result.Data.Items); // but returned items are filtered
-        Assert.Equal("done", result.Data.Items.Single().Status);
+        Assert.Equal(2, result.Value!.Stats.Total); // stats computed on full unfiltered set
+        Assert.Single(result.Value.Items); // but returned items are filtered
+        Assert.Equal("done", result.Value.Items.Single().Status);
     }
 
     #endregion
@@ -351,7 +351,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
+        Assert.Equal(2, result.Value!.Items.Count);
     }
 
     [Fact]
@@ -366,7 +366,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery("all"), CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
+        Assert.Equal(2, result.Value!.Items.Count);
     }
 
     [Fact]
@@ -381,7 +381,7 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery("new"), CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal("new", item.Status);
     }
 
@@ -396,8 +396,8 @@ public class GetStudentQuizzesListQueryHandlerTests
         var result = await _handler.Handle(new GetStudentQuizzesListQuery("done"), CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Data!.Items);
-        Assert.Equal(1, result.Data.Stats.Total);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(1, result.Value.Stats.Total);
     }
 
     #endregion

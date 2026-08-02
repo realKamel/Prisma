@@ -1,8 +1,8 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
@@ -11,10 +11,8 @@ using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
-using Xunit;
 
 namespace Prisma.Application.Tests.Features.Students.Queries;
 
@@ -39,10 +37,12 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var query = new GetStudentPaymentHistoryQuery();
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Payments.Should().BeEmpty();
-        result.Data.Stats.LessonsPurchased.Should().Be(0);
+        result.Value!.Payments.Should().BeEmpty();
+        result.Value.Stats.LessonsPurchased.Should().Be(0);
     }
 
     [Fact]
@@ -97,8 +97,8 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Payments.Should().ContainSingle();
-        var dto = result.Data.Payments.Single();
+        result.Value!.Payments.Should().ContainSingle();
+        var dto = result.Value.Payments.Single();
         dto.Method.Should().Be("code");
         dto.Amount.Should().Be(0);
         dto.LessonTitle.Should().Be("Physics 101");
@@ -135,7 +135,7 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!.Payments.Single();
+        var dto = result.Value!.Payments.Single();
         dto.Method.Should().Be("online");
         dto.Amount.Should().Be(250m);
         dto.Id.Should().Be("ref-123");
@@ -163,7 +163,7 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!.Payments.Single();
+        var dto = result.Value!.Payments.Single();
         dto.Method.Should().Be("teacher grant");
         dto.Amount.Should().Be(0);
     }
@@ -191,7 +191,7 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Payments.Single().Status.Should().Be("expired");
+        result.Value!.Payments.Single().Status.Should().Be("expired");
     }
 
     [Fact]
@@ -238,9 +238,9 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Data!.Stats.LessonsPurchased.Should().Be(3);
-        result.Data.Stats.ActiveLessons.Should().Be(2);
-        result.Data.Stats.ExpiredLessons.Should().Be(1);
-        result.Data.Stats.TotalAmount.Should().Be(300m);
+        result.Value!.Stats.LessonsPurchased.Should().Be(3);
+        result.Value.Stats.ActiveLessons.Should().Be(2);
+        result.Value.Stats.ExpiredLessons.Should().Be(1);
+        result.Value.Stats.TotalAmount.Should().Be(300m);
     }
 }

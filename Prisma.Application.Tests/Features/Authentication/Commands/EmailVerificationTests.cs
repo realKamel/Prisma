@@ -1,12 +1,11 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Tests.Features.Authentication.Commands;
 
@@ -44,10 +43,12 @@ public class EmailVerificationTests
         _userManager.FindByEmailAsync(command.Email).Returns((User?)null);
 
         // Act
-        var act = async () => await _requestHandler.Handle(command, CancellationToken.None);
+        var result = await _requestHandler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Something Went Wrong");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Something Went Wrong");
         await _emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, default!);
     }
 
@@ -60,10 +61,12 @@ public class EmailVerificationTests
         _userManager.FindByEmailAsync(command.Email).Returns(user);
 
         // Act
-        var act = async () => await _requestHandler.Handle(command, CancellationToken.None);
+        var result = await _requestHandler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Something Went Wrong");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Something Went Wrong");
         await _emailService.DidNotReceiveWithAnyArgs().SendAsync(default!, default!, default!);
     }
 
@@ -84,8 +87,8 @@ public class EmailVerificationTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Message.Should().Be("Verification email sent successfully.");
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("Verification email sent successfully.");
 
         await _emailService.Received(1).SendAsync(
             command.Email,
@@ -106,10 +109,12 @@ public class EmailVerificationTests
         _userManager.FindByEmailAsync(command.Email).Returns((User?)null);
 
         // Act
-        var act = async () => await _confirmHandler.Handle(command, CancellationToken.None);
+        var result = await _confirmHandler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Something Went Wrong");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Something Went Wrong");
     }
 
     [Fact]
@@ -121,10 +126,12 @@ public class EmailVerificationTests
         _userManager.FindByEmailAsync(command.Email).Returns(user);
 
         // Act
-        var act = async () => await _confirmHandler.Handle(command, CancellationToken.None);
+        var result = await _confirmHandler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Something Went Wrong");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Something Went Wrong");
     }
 
     [Fact]
@@ -139,10 +146,12 @@ public class EmailVerificationTests
             .Returns(IdentityResult.Failed(new IdentityError { Description = "Invalid token." }));
 
         // Act
-        var act = async () => await _confirmHandler.Handle(command, CancellationToken.None);
+        var result = await _confirmHandler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Invalid token.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Invalid token.");
     }
 
     [Fact]
@@ -160,8 +169,8 @@ public class EmailVerificationTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Message.Should().Be("Email Verified successfully.");
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("Email Verified successfully.");
     }
 
     #endregion

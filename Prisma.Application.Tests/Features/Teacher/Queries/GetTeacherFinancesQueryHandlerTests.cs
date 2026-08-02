@@ -1,7 +1,7 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -31,19 +31,19 @@ public class GetTeacherFinancesQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIdIsNull_ReturnsUnauthorizedResult()
     {
         // Arrange
         var query = new GetTeacherFinancesQuery();
         _currentUserService.UserId.Returns((Guid?)null); // محاكاة عدم تسجيل الدخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        // نتوقع القيمة القياسية بناءً على الـ Handler الخاص بك
-        await act.Should().ThrowAsync<System.UnauthorizedAccessException>()
-            .WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -74,10 +74,10 @@ public class GetTeacherFinancesQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull().And.HaveCount(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull().And.HaveCount(1);
 
-        var transaction = result.Data[0];
+        var transaction = result.Value[0];
         transaction.Id.Should().Be("1001");
 
         // التعديل النهائي الصحيح: مطابقة مع القيمة الحقيقية الخارجة من الـ Handler تماماً
@@ -115,10 +115,10 @@ public class GetTeacherFinancesQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull().And.HaveCount(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull().And.HaveCount(1);
 
-        var transaction = result.Data[0];
+        var transaction = result.Value[0];
         transaction.Id.Should().Be("1002");
         transaction.StudentName.Should().Be("طالب غير معروف");
         transaction.LessonTitle.Should().Be("درس غير معروف");

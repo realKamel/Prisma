@@ -1,17 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teacher;
 using Xunit;
@@ -39,11 +38,12 @@ public class GetTeacherLessonsQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // محاكاة عدم تسجيل الدخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -85,11 +85,11 @@ public class GetTeacherLessonsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull().And.HaveCount(2);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull().And.HaveCount(2);
 
         // فحص بيانات الدرس الأول
-        var firstLesson = result.Data[0];
+        var firstLesson = result.Value[0];
         firstLesson.Id.Should().Be(1);
         firstLesson.Name.Should().Be("الكورس المكثف في النحو");
         firstLesson.Price.Should().Be(250.00m);
@@ -97,7 +97,7 @@ public class GetTeacherLessonsQueryHandlerTests
         firstLesson.Status.Should().Be("active");
 
         // فحص بيانات الدرس الثاني
-        var secondLesson = result.Data[1];
+        var secondLesson = result.Value[1];
         secondLesson.Id.Should().Be(2);
         secondLesson.Name.Should().Be("مراجعة ليلة الامتحان");
         secondLesson.Price.Should().Be(150.00m);

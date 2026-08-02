@@ -1,22 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Xunit;
+
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
@@ -35,6 +30,7 @@ public class UpdateLessonDetailsCommandHandlerTests
         var store = Substitute.For<IUserStore<User>>();
         _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
 
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new UpdateLessonDetailsCommandHandler(
             _unitOfWork,
@@ -50,9 +46,11 @@ public class UpdateLessonDetailsCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
         var command = CreateFakeUpdateCommand();
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]
@@ -64,9 +62,11 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand();
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User not found.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User not found.");
     }
 
     [Fact]
@@ -81,10 +81,11 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand();
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("Only teachers, assistants, and admins can modify lesson structures.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("Only teachers, assistants, and admins can modify lesson structures.");
     }
 
     [Fact]
@@ -101,9 +102,10 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand();
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -133,7 +135,7 @@ public class UpdateLessonDetailsCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         lesson.Title.Should().Be("Updated Lesson");
 
         _lessonRepo.Received(1).Update(lesson);
@@ -168,7 +170,8 @@ public class UpdateLessonDetailsCommandHandlerTests
         // Assert
         await _storageService.Received(1).UploadFileAsync(
             "prisma", Arg.Any<string>(), Arg.Any<Stream>(), "image/jpeg", Arg.Any<CancellationToken>());
-        await _storageService.Received(1).DeleteFileAsync("prisma", "lessons/thumbnails/old-image.jpg", Arg.Any<CancellationToken>());
+        await _storageService.Received(1)
+            .DeleteFileAsync("prisma", "lessons/thumbnails/old-image.jpg", Arg.Any<CancellationToken>());
         lesson.ImageThumbnailUrl.Should().NotBe("lessons/thumbnails/old-image.jpg");
     }
 
@@ -195,10 +198,7 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto>
-            {
-                new("Kept Chapter", "kept.mp4")
-            }
+            Chapters = new List<ChapterCommandDto> { new("Kept Chapter", "kept.mp4") }
         };
 
         // Act
@@ -218,9 +218,7 @@ public class UpdateLessonDetailsCommandHandlerTests
         var fakeUser = new User { Id = userId };
         var lesson = new Lesson
         {
-            Id = 1,
-            AcademicYears = new List<AcademicYearLesson>(),
-            Sections = new List<Section>()
+            Id = 1, AcademicYears = new List<AcademicYearLesson>(), Sections = new List<Section>()
         };
 
         _currentUserService.UserId.Returns(userId);
@@ -231,10 +229,7 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto>
-            {
-                new("Brand New Chapter", "new-video.mp4")
-            }
+            Chapters = new List<ChapterCommandDto> { new("Brand New Chapter", "new-video.mp4") }
         };
 
         // Act
@@ -242,7 +237,7 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         // Assert
         lesson.Sections.Should().ContainSingle(s => s.ContentURL == "new-video.mp4");
-        result.Data!.NewSections.Should().ContainSingle(s => s.ChapterIndex == 0);
+        result.Value!.NewSections.Should().ContainSingle(s => s.ChapterIndex == 0);
     }
 
     [Fact]
@@ -272,7 +267,8 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         // Assert
         lesson.Assignment.Should().BeNull();
-        await _storageService.Received(1).DeleteFileAsync("prisma", "assignments/old.pdf", Arg.Any<CancellationToken>());
+        await _storageService.Received(1)
+            .DeleteFileAsync("prisma", "assignments/old.pdf", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -287,8 +283,7 @@ public class UpdateLessonDetailsCommandHandlerTests
             Sections = new List<Section>(),
             AcademicYears = new List<AcademicYearLesson>
             {
-                new() { AcademicYearId = 1, LessonId = 1 },
-                new() { AcademicYearId = 2, LessonId = 1 }
+                new() { AcademicYearId = 1, LessonId = 1 }, new() { AcademicYearId = 2, LessonId = 1 }
             }
         };
 

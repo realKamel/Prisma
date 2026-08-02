@@ -1,21 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
-using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Xunit;
+
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
 
@@ -30,6 +23,7 @@ public class GetLessonPlayerQueryHandlerTests
 
     public GetLessonPlayerQueryHandlerTests()
     {
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
 
         _sut = new GetLessonPlayerQueryHandler(_unitOfWork, _currentUserService, _videoStorageService, _storageService);
@@ -43,11 +37,12 @@ public class GetLessonPlayerQueryHandlerTests
         _currentUserService.UserId.Returns((Guid?)null); // مستخدم غير مسجل دخول
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("User must be authenticated to access lesson player");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated to access lesson player");
     }
 
     [Fact]
@@ -63,10 +58,11 @@ public class GetLessonPlayerQueryHandlerTests
             .Returns((Lesson)null);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -97,15 +93,15 @@ public class GetLessonPlayerQueryHandlerTests
 
         // 2. إعداد بيانات المواد الدراسية الـ Materials
         var fakeMaterials = new List<LessonMaterial>
-{
-    new()
-    {
-        Id = 201,
-        Title = "ملخص الدرس.pdf",
-        DownloadUrl = "materials/summary.pdf",
-        Type = 0 // التعديل هنا: مرر الرقم 0 مباشرةً ليقوم الـ Handler بتحويله إلى "pdf"
-    }
-};
+        {
+            new()
+            {
+                Id = 201,
+                Title = "ملخص الدرس.pdf",
+                DownloadUrl = "materials/summary.pdf",
+                Type = 0 // التعديل هنا: مرر الرقم 0 مباشرةً ليقوم الـ Handler بتحويله إلى "pdf"
+            }
+        };
 
         // 3. إعداد الكويز ومحاولة الطالب
         var fakeQuiz = new Quiz
@@ -146,7 +142,10 @@ public class GetLessonPlayerQueryHandlerTests
             Assignment = fakeAssignment,
             Enrollments = new List<Enrollment>
             {
-                new() { StudentId = currentUserId, ExpiresAt = DateTimeOffset.UtcNow.AddDays(10) } // متبقي 10 أيام صلاحية
+                new()
+                {
+                    StudentId = currentUserId, ExpiresAt = DateTimeOffset.UtcNow.AddDays(10)
+                } // متبقي 10 أيام صلاحية
             }
         };
 
@@ -154,56 +153,59 @@ public class GetLessonPlayerQueryHandlerTests
             .Returns(fakeLesson);
 
         // عمل مَوك للخدمات الخارجية التي تُستدعى داخل الحلقات التكرارية (Loops)
-        _videoStorageService.GetVideoUrlAsync("video-playback-123").Returns(Task.FromResult("https://streaming.com/video1"));
-        _storageService.GetDownloadUrlAsync("prisma", "materials/summary.pdf").Returns(Task.FromResult("https://download.com/summary.pdf"));
-        _storageService.GetDownloadUrlAsync("prisma", "assignments/task1.pdf").Returns(Task.FromResult("https://download.com/task1.pdf"));
+        _videoStorageService.GetVideoUrlAsync("video-playback-123")
+            .Returns(Task.FromResult("https://streaming.com/video1"));
+        _storageService.GetDownloadUrlAsync("prisma", "materials/summary.pdf")
+            .Returns(Task.FromResult("https://download.com/summary.pdf"));
+        _storageService.GetDownloadUrlAsync("prisma", "assignments/task1.pdf")
+            .Returns(Task.FromResult("https://download.com/task1.pdf"));
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التحقق من الحقول الأساسية وثوابت المادة والمعلم
-        result.Data.Id.Should().Be(lessonId);
-        result.Data.Title.Should().Be("الوحدة الأولى: قواعد");
-        result.Data.Subject.Should().Be("لغه انجليزيه");
-        result.Data.Teacher.Should().Be("أ. أحمد مصطفى");
-        result.Data.Category.Should().Be("لغه انجليزيه · الوحدة الأولى: قواعد");
-        result.Data.VideoPoster.Should().Be("poster.jpg");
-        result.Data.ValidityDays.Should().BeGreaterThan(0); // التحقق من حساب الأيام المتبقية
+        result.Value.Id.Should().Be(lessonId);
+        result.Value.Title.Should().Be("الوحدة الأولى: قواعد");
+        result.Value.Subject.Should().Be("لغه انجليزيه");
+        result.Value.Teacher.Should().Be("أ. أحمد مصطفى");
+        result.Value.Category.Should().Be("لغه انجليزيه · الوحدة الأولى: قواعد");
+        result.Value.VideoPoster.Should().Be("poster.jpg");
+        result.Value.ValidityDays.Should().BeGreaterThan(0); // التحقق من حساب الأيام المتبقية
 
         // التحقق من الـ Sections والـ Progress والروابط المرجعة من الـ Video Storage
-        result.Data.Sections.Should().HaveCount(1);
-        result.Data.Sections[0].Id.Should().Be(1); // SortOrder
-        result.Data.Sections[0].SectionId.Should().Be(101);
-        result.Data.Sections[0].Duration.Should().Be("00:45:00");
-        result.Data.Sections[0].IsCompleted.Should().BeTrue();
-        result.Data.Sections[0].Progress.Should().Be(100);
-        result.Data.Sections[0].ContentUrl.Should().Be("https://streaming.com/video1");
-        result.Data.Sections[0].WatchedSeconds.Should().Be(2700);
+        result.Value.Sections.Should().HaveCount(1);
+        result.Value.Sections[0].Id.Should().Be(1); // SortOrder
+        result.Value.Sections[0].SectionId.Should().Be(101);
+        result.Value.Sections[0].Duration.Should().Be("00:45:00");
+        result.Value.Sections[0].IsCompleted.Should().BeTrue();
+        result.Value.Sections[0].Progress.Should().Be(100);
+        result.Value.Sections[0].ContentUrl.Should().Be("https://streaming.com/video1");
+        result.Value.Sections[0].WatchedSeconds.Should().Be(2700);
 
         // التحقق من الـ Materials والتحويل التلقائي لنوع الملف النصي (switch case)
-        result.Data.Materials.Should().HaveCount(1);
-        result.Data.Materials[0].Title.Should().Be("ملخص الدرس.pdf");
-        result.Data.Materials[0].Type.Should().Be("pdf");
-        result.Data.Materials[0].DownloadUrl.Should().Be("https://download.com/summary.pdf");
+        result.Value.Materials.Should().HaveCount(1);
+        result.Value.Materials[0].Title.Should().Be("ملخص الدرس.pdf");
+        result.Value.Materials[0].Type.Should().Be("pdf");
+        result.Value.Materials[0].DownloadUrl.Should().Be("https://download.com/summary.pdf");
 
         // التحقق من أوبجكت الكويز
-        result.Data.Quiz.Should().NotBeNull();
-        result.Data.Quiz!.Id.Should().Be(5);
-        result.Data.Quiz.QuestionsCount.Should().Be(2);
-        result.Data.Quiz.DurationMinutes.Should().Be(20);
-        result.Data.Quiz.PassingScore.Should().Be(100);
-        result.Data.Quiz.IsAttempted.Should().BeTrue();
+        result.Value.Quiz.Should().NotBeNull();
+        result.Value.Quiz!.Id.Should().Be(5);
+        result.Value.Quiz.QuestionsCount.Should().Be(2);
+        result.Value.Quiz.DurationMinutes.Should().Be(20);
+        result.Value.Quiz.PassingScore.Should().Be(100);
+        result.Value.Quiz.IsAttempted.Should().BeTrue();
 
         // التحقق من أوبجكت الواجب وتاريخ الاستحقاق ورابط التحميل
-        result.Data.Assignment.Should().NotBeNull();
-        result.Data.Assignment!.Id.Should().Be(9);
-        result.Data.Assignment.ContentURL.Should().Be("https://download.com/task1.pdf");
-        result.Data.Assignment.FileName.Should().Be("حل الطالب للواجب.pdf");
-        result.Data.Assignment.DueDate.Should().Be(fakeAssignment.DueDate.ToString("yyyy-MM-dd"));
+        result.Value.Assignment.Should().NotBeNull();
+        result.Value.Assignment!.Id.Should().Be(9);
+        result.Value.Assignment.ContentURL.Should().Be("https://download.com/task1.pdf");
+        result.Value.Assignment.FileName.Should().Be("حل الطالب للواجب.pdf");
+        result.Value.Assignment.DueDate.Should().Be(fakeAssignment.DueDate.ToString("yyyy-MM-dd"));
     }
 }

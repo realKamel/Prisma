@@ -1,4 +1,4 @@
-﻿using NSubstitute;
+using NSubstitute;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -103,8 +103,8 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير موجود", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
     }
 
     #endregion
@@ -124,7 +124,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.TotalStudents);
+        Assert.Equal(1, result.Value!.TotalStudents);
         await _studentRepository.DidNotReceive().ListAsync(
             Arg.Any<StudentsByAcademicYearSpecification>(), Arg.Any<CancellationToken>());
     }
@@ -149,7 +149,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.TotalStudents);
+        Assert.Equal(1, result.Value!.TotalStudents);
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.TotalStudents);
+        Assert.Equal(1, result.Value!.TotalStudents);
         await _enrollmentRepository.DidNotReceive().ListAsync(
             Arg.Any<EnrolledStudentsByLessonSpecification>(), Arg.Any<CancellationToken>());
     }
@@ -187,7 +187,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("not_started", dto.AttemptStatus);
         Assert.Equal(0, dto.TabSwitchCount);
         Assert.Equal(0, dto.CopyPasteAttemptCount);
@@ -206,7 +206,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("missed", Assert.Single(result.Data!.Students).AttemptStatus);
+        Assert.Equal("missed", Assert.Single(result.Value!.Students).AttemptStatus);
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("not_started", Assert.Single(result.Data!.Students).AttemptStatus);
+        Assert.Equal("not_started", Assert.Single(result.Value!.Students).AttemptStatus);
     }
 
     #endregion
@@ -243,7 +243,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("in_progress", dto.AttemptStatus);
         Assert.Null(dto.Score);
     }
@@ -267,7 +267,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("submitted", dto.AttemptStatus);
         Assert.Equal(2, dto.PendingWrittenCount);
         Assert.Null(dto.Score); // no score shown until fully graded
@@ -288,7 +288,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("graded", dto.AttemptStatus);
         Assert.Equal(85m, dto.Score);
         Assert.Equal(0, dto.PendingWrittenCount);
@@ -309,7 +309,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal(3, dto.TabSwitchCount);
         Assert.Equal(2, dto.CopyPasteAttemptCount);
     }
@@ -331,7 +331,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("Sara Ali", Assert.Single(result.Data!.Students).StudentName);
+        Assert.Equal("Sara Ali", Assert.Single(result.Value!.Students).StudentName);
     }
 
     [Fact]
@@ -346,9 +346,9 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(9, result.Data!.QuizId);
-        Assert.Equal("Final Exam", result.Data.Title);
-        Assert.Equal(60m, result.Data.TotalDegree);
+        Assert.Equal(9, result.Value!.QuizId);
+        Assert.Equal("Final Exam", result.Value.Title);
+        Assert.Equal(60m, result.Value.TotalDegree);
     }
 
     [Fact]
@@ -364,7 +364,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(75m, Assert.Single(result.Data!.Students).TotalDegree);
+        Assert.Equal(75m, Assert.Single(result.Value!.Students).TotalDegree);
     }
 
     #endregion
@@ -387,9 +387,9 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.TotalStudents); // unfiltered total
-        Assert.Equal(1, result.Data.TotalCount);      // filtered count
-        Assert.Single(result.Data.Students);
+        Assert.Equal(2, result.Value!.TotalStudents); // unfiltered total
+        Assert.Equal(1, result.Value.TotalCount);      // filtered count
+        Assert.Single(result.Value.Students);
     }
 
     #endregion
@@ -412,7 +412,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("Sara Ali", dto.StudentName);
     }
 
@@ -431,8 +431,8 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Data!.Students);
-        Assert.Equal(0, result.Data.TotalCount);
+        Assert.Empty(result.Value!.Students);
+        Assert.Equal(0, result.Value.TotalCount);
     }
 
     #endregion
@@ -457,7 +457,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Students);
+        var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("in_progress", dto.AttemptStatus);
     }
 
@@ -485,10 +485,10 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert - counts reflect only the filtered set (Sara), not both students
-        Assert.Equal(1, result.Data!.SubmittedCount); // graded counts as "submitted" too
-        Assert.Equal(1, result.Data.GradedCount);
-        Assert.Equal(0, result.Data.PendingGradingCount);
-        Assert.Equal(2, result.Data.TotalStudents); // but total students remains unaffected
+        Assert.Equal(1, result.Value!.SubmittedCount); // graded counts as "submitted" too
+        Assert.Equal(1, result.Value.GradedCount);
+        Assert.Equal(0, result.Value.PendingGradingCount);
+        Assert.Equal(2, result.Value.TotalStudents); // but total students remains unaffected
     }
 
     [Fact]
@@ -512,9 +512,9 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.SubmittedCount); // Submitted + Graded
-        Assert.Equal(1, result.Data.PendingGradingCount); // only Submitted
-        Assert.Equal(1, result.Data.GradedCount);
+        Assert.Equal(2, result.Value!.SubmittedCount); // Submitted + Graded
+        Assert.Equal(1, result.Value.PendingGradingCount); // only Submitted
+        Assert.Equal(1, result.Value.GradedCount);
     }
 
     #endregion
@@ -536,10 +536,10 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(10, result.Data!.Students.Count);
-        Assert.Equal(25, result.Data.TotalCount);
-        Assert.Equal(2, result.Data.Page);
-        Assert.Equal(10, result.Data.PageSize);
+        Assert.Equal(10, result.Value!.Students.Count);
+        Assert.Equal(25, result.Value.TotalCount);
+        Assert.Equal(2, result.Value.Page);
+        Assert.Equal(10, result.Value.PageSize);
     }
 
     [Fact]
@@ -554,7 +554,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(100, result.Data!.PageSize);
+        Assert.Equal(100, result.Value!.PageSize);
     }
 
     [Fact]
@@ -569,7 +569,7 @@ public class GetQuizStudentsQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.Page);
+        Assert.Equal(1, result.Value!.Page);
     }
 
     #endregion

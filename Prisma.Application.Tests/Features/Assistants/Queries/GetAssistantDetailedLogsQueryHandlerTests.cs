@@ -1,11 +1,11 @@
-﻿using FluentAssertions;
+using Ardalis.Result;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AuditLogs;
 using System;
@@ -46,11 +46,12 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         var query = new GetAssistantDetailedLogsQuery(Take: 10);
 
         // Act
-        var act = () => _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("User is not authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -101,10 +102,10 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Logs.Should().HaveCount(1);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Logs.Should().HaveCount(1);
 
-        var logItem = result.Data.Logs.First();
+        var logItem = result.Value.Logs.First();
         logItem.Type.Should().Be("grant");
         logItem.Student.Should().Be("محمد علي");
         logItem.Grade.Should().Be("الصف الثالث الإعدادي");
@@ -113,10 +114,10 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         logItem.Date.Should().Be("اليوم");
 
         // التأكد من الـ Meta الإحصائية
-        result.Data.Meta.TotalThisMonth.Should().Be(1);
-        result.Data.Meta.Granted.Should().Be(1);
-        result.Data.Meta.Revoked.Should().Be(0);
-        result.Data.Meta.SuccessRate.Should().Be(100);
+        result.Value.Meta.TotalThisMonth.Should().Be(1);
+        result.Value.Meta.Granted.Should().Be(1);
+        result.Value.Meta.Revoked.Should().Be(0);
+        result.Value.Meta.SuccessRate.Should().Be(100);
     }
 
     [Fact]
@@ -158,8 +159,8 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        var logItem = result.Data.Logs.First();
+        result.IsSuccess.Should().BeTrue();
+        var logItem = result.Value.Logs.First();
         logItem.Type.Should().Be("view");
         logItem.Student.Should().Be("سارة أحمد");
         logItem.Detail.Should().Be("ملف الطالب");
@@ -184,9 +185,9 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Logs.Should().BeEmpty();
-        result.Data.Meta.TotalThisMonth.Should().Be(0);
-        result.Data.Meta.SuccessRate.Should().Be(100); // طبقاً لكود الـ Handler: لو الكاونت 0 بيرجع 100
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Logs.Should().BeEmpty();
+        result.Value.Meta.TotalThisMonth.Should().Be(0);
+        result.Value.Meta.SuccessRate.Should().Be(100); // طبقاً لكود الـ Handler: لو الكاونت 0 بيرجع 100
     }
 }

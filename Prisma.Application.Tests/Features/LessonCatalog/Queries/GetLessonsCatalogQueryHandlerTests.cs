@@ -1,10 +1,11 @@
-﻿using NSubstitute;
+using Ardalis.Result;
+using FluentAssertions;
+using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.LessonCatalog.Queries;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -25,6 +26,7 @@ public class GetLessonsCatalogQueryHandlerTests
 
     public GetLessonsCatalogQueryHandlerTests()
     {
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Student, Guid>().Returns(_studentRepository);
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepository);
 
@@ -33,10 +35,11 @@ public class GetLessonsCatalogQueryHandlerTests
 
     #region Helpers
 
-    private static Teacher CreateTeacher(string firstName = "Ahmed", string lastName = "Mostafa", string subject = "Math") =>
+    private static Domain.Entities.UserAggregate.Teacher CreateTeacher(string firstName = "Ahmed",
+        string lastName = "Mostafa", string subject = "Math") =>
         new() { Id = Guid.NewGuid(), FirstName = firstName, LastName = lastName, Subject = subject };
 
-    private static Student CreateStudent(int? academicYearId, Teacher teacher) =>
+    private static Student CreateStudent(int? academicYearId, Domain.Entities.UserAggregate.Teacher teacher) =>
         new()
         {
             Id = StudentId,
@@ -69,12 +72,7 @@ public class GetLessonsCatalogQueryHandlerTests
         Guid studentId,
         DateTimeOffset? expiresAt = null,
         bool isCompleted = false) =>
-        new()
-        {
-            StudentId = studentId,
-            ExpiresAt = expiresAt,
-            IsCompleted = isCompleted
-        };
+        new() { StudentId = studentId, ExpiresAt = expiresAt, IsCompleted = isCompleted };
 
     private void SetupStudentAndLessons(Student student, ICollection<Lesson> lessons)
     {
@@ -95,9 +93,12 @@ public class GetLessonsCatalogQueryHandlerTests
         // Arrange
         _currentUser.UserId.Returns((Guid?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedException>(
-            () => _handler.Handle(ValidQuery, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
 
         await _studentRepository.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
@@ -109,9 +110,12 @@ public class GetLessonsCatalogQueryHandlerTests
         _currentUser.UserId.Returns(StudentId);
         _studentRepository.GetByIdAsync(StudentId, Arg.Any<CancellationToken>()).Returns((Student?)null);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedException>(
-            () => _handler.Handle(ValidQuery, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
 
         await _lessonRepository.DidNotReceive()
             .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
@@ -127,9 +131,12 @@ public class GetLessonsCatalogQueryHandlerTests
         _currentUser.UserId.Returns(StudentId);
         _studentRepository.GetByIdAsync(StudentId, Arg.Any<CancellationToken>()).Returns(student);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<StudentAcademicYearNotSetException>(
-            () => _handler.Handle(ValidQuery, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
 
         await _lessonRepository.DidNotReceive()
             .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
@@ -153,7 +160,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal("avail", dto.Status);
         Assert.Equal(250m, dto.Price);
         Assert.Null(dto.PrerequisiteLabel);
@@ -176,7 +183,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal("expired", dto.Status);
         Assert.Equal(0m, dto.Price);
         Assert.Equal("انتهت صلاحيتك · انتهت في ١٥ يونيو", dto.ExpiredDate);
@@ -202,7 +209,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!.Single(d => d.Id == lesson.Id);
+        var dto = result.Value!.Single(d => d.Id == lesson.Id);
         Assert.Equal("locked", dto.Status);
         Assert.Equal("تحتاج لإكمال الدرس السابق", dto.PrerequisiteLabel);
         Assert.Equal(0m, dto.Price);
@@ -227,7 +234,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!.Single(d => d.Id == lesson.Id);
+        var dto = result.Value!.Single(d => d.Id == lesson.Id);
         Assert.Equal("purchased", dto.Status);
         Assert.Null(dto.PrerequisiteLabel);
     }
@@ -247,7 +254,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal("purchased", dto.Status);
     }
 
@@ -269,10 +276,11 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal("Mona Kamal", dto.TeacherName);
         Assert.Equal("Physics", dto.Subject);
     }
+
     [Fact]
     public async Task Handle_WhenThumbnailUrlIsNull_ReturnsEmptyImageUrlWithoutCallingStorageService()
     {
@@ -287,7 +295,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal(string.Empty, dto.ImageThumbnailUrl);
 
         _storageService.DidNotReceive().GetDownloadUrlAsync(Arg.Any<string>(), Arg.Any<string>());
@@ -311,7 +319,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal("https://cdn.example.com/prisma/lessons/1/thumb.png", dto.ImageThumbnailUrl);
     }
 
@@ -329,7 +337,7 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal(3, dto.DurationHours); // rounds up, not truncates
     }
 
@@ -347,8 +355,9 @@ public class GetLessonsCatalogQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!);
+        var dto = Assert.Single(result.Value!);
         Assert.Equal(2, dto.DurationHours); // rounds down since below .5
     }
+
     #endregion
 }

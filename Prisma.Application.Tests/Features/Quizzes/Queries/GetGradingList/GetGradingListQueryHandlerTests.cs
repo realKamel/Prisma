@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using NSubstitute;
@@ -87,7 +87,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Data!.Items);
+        Assert.Single(result.Value!.Items);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Data!.Items);
+        Assert.Single(result.Value!.Items);
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Data!.Items);
+        Assert.Single(result.Value!.Items);
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Data!.Items);
-        Assert.Equal(0, result.Data.TotalCount);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(0, result.Value.TotalCount);
     }
 
     #endregion
@@ -156,7 +156,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal("submitted", item.Status);
     }
 
@@ -174,7 +174,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal("graded", item.Status);
     }
 
@@ -192,7 +192,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
+        Assert.Equal(2, result.Value!.Items.Count);
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
+        Assert.Equal(2, result.Value!.Items.Count);
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
+        Assert.Equal(2, result.Value!.Items.Count);
     }
 
     #endregion
@@ -242,7 +242,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("Sara Mohamed Ahmed Ali", Assert.Single(result.Data!.Items).StudentName);
+        Assert.Equal("Sara Mohamed Ahmed Ali", Assert.Single(result.Value!.Items).StudentName);
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert - string.Join with Where(NotNullOrWhiteSpace) skips null parts entirely, no double spaces
-        Assert.Equal("Sara Ali", Assert.Single(result.Data!.Items).StudentName);
+        Assert.Equal("Sara Ali", Assert.Single(result.Value!.Items).StudentName);
     }
 
 
@@ -270,7 +270,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert - Degree may be internally computed but shouldn't surface until Graded
-        Assert.Null(Assert.Single(result.Data!.Items).Score);
+        Assert.Null(Assert.Single(result.Value!.Items).Score);
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("Sara Ahmed Ali", Assert.Single(result.Data!.Items).StudentName);
+        Assert.Equal("Sara Ahmed Ali", Assert.Single(result.Value!.Items).StudentName);
     }
 
     [Fact]
@@ -297,7 +297,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(75m, Assert.Single(result.Data!.Items).Score);
+        Assert.Equal(75m, Assert.Single(result.Value!.Items).Score);
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal(5m, item.PenaltyScore);
         Assert.Equal(60m, item.TotalDegree);
     }
@@ -331,7 +331,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, Assert.Single(result.Data!.Items).PendingWrittenCount);
+        Assert.Equal(2, Assert.Single(result.Value!.Items).PendingWrittenCount);
     }
 
     #endregion
@@ -352,7 +352,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(Assert.Single(result.Data!.Items).HeldForSecurityReview);
+        Assert.True(Assert.Single(result.Value!.Items).HeldForSecurityReview);
     }
 
     [Fact]
@@ -369,7 +369,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(Assert.Single(result.Data!.Items).HeldForSecurityReview);
+        Assert.False(Assert.Single(result.Value!.Items).HeldForSecurityReview);
     }
 
     [Fact]
@@ -388,7 +388,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(Assert.Single(result.Data!.Items).HeldForSecurityReview);
+        Assert.False(Assert.Single(result.Value!.Items).HeldForSecurityReview);
     }
 
     [Fact]
@@ -402,7 +402,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(Assert.Single(result.Data!.Items).HeldForSecurityReview);
+        Assert.False(Assert.Single(result.Value!.Items).HeldForSecurityReview);
     }
 
     #endregion
@@ -422,9 +422,9 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(10, result.Data!.Items.Count);
-        Assert.Equal(11, result.Data.Items.First().AttemptId);
-        Assert.Equal(25, result.Data.TotalCount);
+        Assert.Equal(10, result.Value!.Items.Count);
+        Assert.Equal(11, result.Value.Items.First().AttemptId);
+        Assert.Equal(25, result.Value.TotalCount);
     }
 
     [Fact]
@@ -442,8 +442,8 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Data!.Items); // paged down to 1
-        Assert.Equal(2, result.Data.TotalCount); // but total reflects both submitted attempts
+        Assert.Single(result.Value!.Items); // paged down to 1
+        Assert.Equal(2, result.Value.TotalCount); // but total reflects both submitted attempts
     }
 
     [Fact]
@@ -457,7 +457,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(100, result.Data!.PageSize);
+        Assert.Equal(100, result.Value!.PageSize);
     }
 
     [Fact]
@@ -471,7 +471,7 @@ public class GetGradingListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.Page);
+        Assert.Equal(1, result.Value!.Page);
     }
 
     #endregion

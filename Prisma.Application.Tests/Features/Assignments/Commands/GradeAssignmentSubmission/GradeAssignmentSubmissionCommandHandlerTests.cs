@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
@@ -72,8 +72,8 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(999, 50, "Good"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("التسليم غير موجود");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("التسليم غير موجود");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -90,8 +90,8 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 75, "Too high"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("الدرجة (75) أكبر من الدرجة الكاملة (50)");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("الدرجة (75) أكبر من الدرجة الكاملة (50)");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -112,8 +112,8 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 50, "Good"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("التسليم ده بيتصحح دلوقتي من شخص تاني");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("التسليم ده بيتصحح دلوقتي من شخص تاني");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
         submission.Score.Should().BeNull(); // grading not applied
@@ -134,8 +134,8 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 90, "Great job"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Message.Should().Be("تم حفظ التصحيح بنجاح");
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("تم حفظ التصحيح بنجاح");
 
         submission.Score.Should().Be(90);
         submission.Notes.Should().Be("Great job");
@@ -162,7 +162,7 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 60, null), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         submission.Score.Should().Be(60);
         submission.IsBeingGraded.Should().BeFalse();
         submission.GradingByUserId.Should().BeNull();
@@ -182,7 +182,7 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 40, "Note"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         submission.Score.Should().Be(40);
         submission.Notes.Should().Be("Note");
 
@@ -201,7 +201,7 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 100, "Perfect"), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         submission.Score.Should().Be(100);
     }
 
@@ -217,7 +217,7 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             new GradeAssignmentSubmissionCommand(submission.Id, 50, null), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         submission.Notes.Should().BeNull();
     }
 }

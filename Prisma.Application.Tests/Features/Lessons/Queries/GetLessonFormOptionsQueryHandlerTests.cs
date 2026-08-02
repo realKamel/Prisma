@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using NSubstitute;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonFormOptions;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -57,22 +57,22 @@ public class GetLessonFormOptionsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التحقق من صحة الخيارات الخاصة بالمتطلبات السابقة للدروس (PrerequisitesOptions)
-        result.Data.PrerequisitesOptions.Should().HaveCount(2);
-        result.Data.PrerequisitesOptions[0].Id.Should().Be(10);
-        result.Data.PrerequisitesOptions[0].Name.Should().Be("درس القراءة: الحرية");
-        result.Data.PrerequisitesOptions[1].Id.Should().Be(11);
-        result.Data.PrerequisitesOptions[1].Name.Should().Be("درس النحو: المبتدأ والخبر");
+        result.Value.PrerequisitesOptions.Should().HaveCount(2);
+        result.Value.PrerequisitesOptions[0].Id.Should().Be(10);
+        result.Value.PrerequisitesOptions[0].Name.Should().Be("درس القراءة: الحرية");
+        result.Value.PrerequisitesOptions[1].Id.Should().Be(11);
+        result.Value.PrerequisitesOptions[1].Name.Should().Be("درس النحو: المبتدأ والخبر");
 
         // التحقق من صحة الخيارات الخاصة بالمراحل الدراسية (AllAcademicYearsOptions)
-        result.Data.AllAcademicYearsOptions.Should().HaveCount(2);
-        result.Data.AllAcademicYearsOptions[0].Id.Should().Be(1);
-        result.Data.AllAcademicYearsOptions[0].Name.Should().Be("الصف الأول الإعدادي");
-        result.Data.AllAcademicYearsOptions[1].Id.Should().Be(2);
-        result.Data.AllAcademicYearsOptions[1].Name.Should().Be("الصف الثاني الإعدادي");
+        result.Value.AllAcademicYearsOptions.Should().HaveCount(2);
+        result.Value.AllAcademicYearsOptions[0].Id.Should().Be(1);
+        result.Value.AllAcademicYearsOptions[0].Name.Should().Be("الصف الأول الإعدادي");
+        result.Value.AllAcademicYearsOptions[1].Id.Should().Be(2);
+        result.Value.AllAcademicYearsOptions[1].Name.Should().Be("الصف الثاني الإعدادي");
     }
 
     [Fact]
@@ -90,11 +90,11 @@ public class GetLessonFormOptionsQueryHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
 
         // التأكد من أن القوائم فارغة تماماً وليست Null لضمان عدم حدوث مشاكل في فرونت إند
-        result.Data.PrerequisitesOptions.Should().BeEmpty();
-        result.Data.AllAcademicYearsOptions.Should().BeEmpty();
+        result.Value.PrerequisitesOptions.Should().BeEmpty();
+        result.Value.AllAcademicYearsOptions.Should().BeEmpty();
     }
 }

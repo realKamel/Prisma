@@ -1,10 +1,11 @@
+using Ardalis.Result;
+using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Authentication.Commands.Register;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Tests.Features.Authentication.Commands;
 
@@ -52,7 +53,7 @@ public class RegisterCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         await _identityService.Received(1).FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber);
 
@@ -78,8 +79,11 @@ public class RegisterCommandHandlerTests
             .FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber)
             .Returns(new User());
 
-        // Act & Assert
-        await Assert.ThrowsAsync<BadRequestException>(() => _handler.Handle(ValidCommand, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(ValidCommand, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
 
         await _identityService.DidNotReceive().CreateAsync(Arg.Any<User>(), Arg.Any<string>());
         await _identityService.DidNotReceive().AddToRoleAsync(Arg.Any<User>(), Arg.Any<string>());
@@ -104,8 +108,11 @@ public class RegisterCommandHandlerTests
             .CreateAsync(Arg.Any<Student>(), ValidCommand.Password)
             .Returns(IdentityResult.Failed(identityErrors));
 
-        // Act & Assert
-        await Assert.ThrowsAsync<BadRequestException>(() => _handler.Handle(ValidCommand, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(ValidCommand, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
 
         await _identityService.DidNotReceive().AddToRoleAsync(Arg.Any<User>(), Arg.Any<string>());
     }

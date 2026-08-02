@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,13 +7,12 @@ using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Xunit;
 
@@ -42,9 +41,10 @@ public class ToggleLessonStatusCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
         var command = new ToggleLessonStatusCommand(1);
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 
     [Fact]
@@ -62,10 +62,11 @@ public class ToggleLessonStatusCommandHandlerTests
         var command = new ToggleLessonStatusCommand(1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -84,10 +85,12 @@ public class ToggleLessonStatusCommandHandlerTests
         var command = new ToggleLessonStatusCommand(1);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("Cannot toggle status for a drafted lesson.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("Cannot toggle status for a drafted lesson.");
     }
 
     [Fact]
@@ -109,7 +112,7 @@ public class ToggleLessonStatusCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         lesson.Status.Should().Be(LessonStatus.Active); // تحولت من Hidden إلى Active
 
         _lessonRepo.Received(1).Update(lesson);

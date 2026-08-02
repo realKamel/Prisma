@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -64,7 +64,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Data!.Items).Status);
+        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Data!.Items).Status);
+        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal("pending_grading", item.Status);
         Assert.Equal(1, item.PendingGradingCount);
     }
@@ -116,7 +116,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("completed", Assert.Single(result.Data!.Items).Status);
+        Assert.Equal("completed", Assert.Single(result.Value!.Items).Status);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Data!.Items).Status);
+        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
     }
 
     #endregion
@@ -158,7 +158,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal(3, item.SubmittedCount); // 2 Graded + 1 Submitted
         Assert.Equal(1, item.PendingGradingCount); // only Submitted
     }
@@ -183,7 +183,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(70.0, Assert.Single(result.Data!.Items).AverageScore);
+        Assert.Equal(70.0, Assert.Single(result.Value!.Items).AverageScore);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Null(Assert.Single(result.Data!.Items).AverageScore);
+        Assert.Null(Assert.Single(result.Value!.Items).AverageScore);
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Null(Assert.Single(result.Data!.Items).AverageScore);
+        Assert.Null(Assert.Single(result.Value!.Items).AverageScore);
     }
 
     #endregion
@@ -232,9 +232,9 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Single(result.Data!.Items);
-        Assert.Equal("completed", result.Data.Items.Single().Status);
-        Assert.Equal(1, result.Data.TotalCount); // TotalCount reflects post-filter count
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("completed", result.Value.Items.Single().Status);
+        Assert.Equal(1, result.Value.TotalCount); // TotalCount reflects post-filter count
     }
 
     [Fact]
@@ -247,8 +247,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(2, result.Data!.Items.Count);
-        Assert.Equal(2, result.Data.TotalCount);
+        Assert.Equal(2, result.Value!.Items.Count);
+        Assert.Equal(2, result.Value.TotalCount);
     }
 
     #endregion
@@ -268,11 +268,11 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(10, result.Data!.Items.Count);
-        Assert.Equal(11, result.Data.Items.First().QuizId); // second page starts at item 11
-        Assert.Equal(25, result.Data.TotalCount); // total unaffected by paging
-        Assert.Equal(2, result.Data.Page);
-        Assert.Equal(10, result.Data.PageSize);
+        Assert.Equal(10, result.Value!.Items.Count);
+        Assert.Equal(11, result.Value.Items.First().QuizId); // second page starts at item 11
+        Assert.Equal(25, result.Value.TotalCount); // total unaffected by paging
+        Assert.Equal(2, result.Value.Page);
+        Assert.Equal(10, result.Value.PageSize);
     }
 
     [Fact]
@@ -286,8 +286,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.Page);
-        Assert.Equal(2, result.Data.Items.Count);
+        Assert.Equal(1, result.Value!.Page);
+        Assert.Equal(2, result.Value.Items.Count);
     }
 
     [Fact]
@@ -301,7 +301,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(100, result.Data!.PageSize);
+        Assert.Equal(100, result.Value!.PageSize);
     }
 
     [Fact]
@@ -315,8 +315,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(1, result.Data!.PageSize);
-        Assert.Single(result.Data.Items);
+        Assert.Equal(1, result.Value!.PageSize);
+        Assert.Single(result.Value.Items);
     }
 
     [Fact]
@@ -330,8 +330,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Data!.Items);
-        Assert.Equal(2, result.Data.TotalCount);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(2, result.Value.TotalCount);
     }
 
     #endregion
@@ -348,7 +348,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var item = Assert.Single(result.Data!.Items);
+        var item = Assert.Single(result.Value!.Items);
         Assert.Equal(7, item.QuizId);
         Assert.Equal("Midterm", item.Title);
         Assert.Equal(50m, item.TotalDegree);
@@ -366,7 +366,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert - relies on the implicit Result<T> conversion, not an explicit Success() call
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
     }
 
     #endregion

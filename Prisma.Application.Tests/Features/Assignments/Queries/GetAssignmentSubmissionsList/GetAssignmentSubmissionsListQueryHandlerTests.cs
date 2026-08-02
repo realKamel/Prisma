@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Ardalis.Specification;
@@ -113,9 +113,9 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Items.Should().BeEmpty();
-        result.Data.TotalCount.Should().Be(0);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().BeEmpty();
+        result.Value.TotalCount.Should().Be(0);
 
         await _enrollmentRepository.DidNotReceive()
             .ListAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>());
@@ -143,9 +143,9 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(lessonId: lessonA.Id), CancellationToken.None);
 
         // Assert
-        result.Data.Items.Should().ContainSingle();
-        result.Data.Items[0].AssignmentId.Should().Be(assignmentA.Id);
-        result.Data.Items[0].LessonTitle.Should().Be("Lesson A");
+        result.Value.Items.Should().ContainSingle();
+        result.Value.Items[0].AssignmentId.Should().Be(assignmentA.Id);
+        result.Value.Items[0].LessonTitle.Should().Be("Lesson A");
     }
 
     [Fact]
@@ -162,8 +162,8 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        result.Data.Items.Should().BeEmpty();
-        result.Data.TotalCount.Should().Be(0);
+        result.Value.Items.Should().BeEmpty();
+        result.Value.TotalCount.Should().Be(0);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.Status.Should().Be("not_submitted");
         item.SubmissionId.Should().Be(0);
         item.Score.Should().BeNull();
@@ -212,7 +212,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.Status.Should().Be("pending");
         item.SubmissionId.Should().Be(submission.Id);
         item.IsBeingGraded.Should().BeFalse();
@@ -237,7 +237,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.Status.Should().Be("graded");
         item.Score.Should().Be(85);
     }
@@ -270,7 +270,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.Status.Should().Be("grading");
         item.IsBeingGraded.Should().BeTrue();
         item.GradingByUserName.Should().Be("Jane Grader");
@@ -306,7 +306,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         // Lock expired and no score recorded yet -> falls back to "pending", not "grading"
         item.Status.Should().Be("pending");
         item.IsBeingGraded.Should().BeFalse();
@@ -334,7 +334,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(search: "alice"), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.StudentName.Should().Be("Alice Anderson");
     }
 
@@ -365,7 +365,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(status: "graded"), CancellationToken.None);
 
         // Assert
-        var item = result.Data.Items.Should().ContainSingle().Subject;
+        var item = result.Value.Items.Should().ContainSingle().Subject;
         item.StudentName.Should().Be("Graded Student");
         item.Status.Should().Be("graded");
     }
@@ -397,7 +397,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(status: "all"), CancellationToken.None);
 
         // Assert
-        result.Data.Items.Should().HaveCount(2);
+        result.Value.Items.Should().HaveCount(2);
     }
 
     [Fact]
@@ -421,10 +421,10 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(page: 2, pageSize: 2), CancellationToken.None);
 
         // Assert
-        result.Data.TotalCount.Should().Be(5);
-        result.Data.Page.Should().Be(2);
-        result.Data.PageSize.Should().Be(2);
-        result.Data.Items.Should().HaveCount(2);
+        result.Value.TotalCount.Should().Be(5);
+        result.Value.Page.Should().Be(2);
+        result.Value.PageSize.Should().Be(2);
+        result.Value.Items.Should().HaveCount(2);
     }
 
     [Fact]
@@ -442,7 +442,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(pageSize: 500), CancellationToken.None);
 
         // Assert
-        result.Data.PageSize.Should().Be(100);
+        result.Value.PageSize.Should().Be(100);
     }
 
     [Fact]
@@ -460,6 +460,6 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var result = await _handler.Handle(CreateQuery(page: 0), CancellationToken.None);
 
         // Assert
-        result.Data.Page.Should().Be(1);
+        result.Value.Page.Should().Be(1);
     }
 }

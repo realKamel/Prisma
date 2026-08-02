@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
@@ -8,7 +5,6 @@ using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
-
 
 public class ChangePasswordCommandHandler(
     UserManager<User> _userManager,
@@ -33,6 +29,6 @@ public class ChangePasswordCommandHandler(
             return Result<bool>.Error($"فشلت عملية تغيير كلمة المرور: {errorMessages}");
         }
 
-        return Result<bool>.Success(true);
+        return Result<bool>.Success(true, "Success");
     }
 }

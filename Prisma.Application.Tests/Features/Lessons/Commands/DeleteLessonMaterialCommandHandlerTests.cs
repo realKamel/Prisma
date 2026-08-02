@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
@@ -33,6 +27,7 @@ public class DeleteLessonMaterialCommandHandlerTests
         var store = Substitute.For<IUserStore<User>>();
         _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
 
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new DeleteLessonMaterialCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
     }
@@ -45,10 +40,11 @@ public class DeleteLessonMaterialCommandHandlerTests
         var command = new DeleteLessonMaterialCommand(1, 10);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 
     [Fact]
@@ -68,10 +64,11 @@ public class DeleteLessonMaterialCommandHandlerTests
         var command = new DeleteLessonMaterialCommand(1, 10);
 
         // Act
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -96,8 +93,8 @@ public class DeleteLessonMaterialCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().Be("Material deleted successfully.");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Material deleted successfully.");
 
         // التأكد من حذف الملف من الخدمة السحابية
         await _storageService.Received(1).DeleteFileAsync("prisma", "materials/file.pdf", Arg.Any<CancellationToken>());

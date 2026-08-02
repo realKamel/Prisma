@@ -41,15 +41,17 @@ public class GetLessonsCatalogQueryHandler(
         //     .Select(lesson => await MapLesson(lesson, studentId, lessons))
         //     .ToList();
         var result = (await Task.WhenAll(
-                    lessons.Select(lesson => MapLesson(lesson, studentId, lessons))
+                    lessons.Select(lesson => MapLesson(lesson, student, lessons))
                 )).ToList();
 
         return Result<ICollection<LessonCatalogDto>>.Success(result);
     }
     // private LessonCatalogDto MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
 
-    private async Task<LessonCatalogDto> MapLesson(Lesson lesson, Guid studentId, ICollection<Lesson> allLessons)
+    private async Task<LessonCatalogDto> MapLesson(Lesson lesson, Student student, ICollection<Lesson> allLessons)
     {
+        var studentId = student.Id;
+
         var status = DetermineStatus(lesson, studentId, allLessons);
 
         var enrollment = lesson.Enrollments
@@ -82,9 +84,11 @@ public class GetLessonsCatalogQueryHandler(
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
             ExpiredDate = expiredDateLabel,
-            TeacherName = $"أ. أحمد مصطفي",
-            TeacherInitial = "أم",
-            Subject = "اللغة الانجليزية",
+            TeacherName = student.Teacher != null ? $"{student.Teacher.FirstName} {student.Teacher.LastName}" : "أ. أحمد مصطفي",
+            TeacherInitial = student.Teacher != null
+                ? $"{student.Teacher.FirstName[0]}{student.Teacher.LastName[0]}"
+                : "أم",
+            Subject = student.Teacher?.Subject ?? "اللغة الانجليزية",
             DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl = lesson.ImageThumbnailUrl != null ?
                 await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,

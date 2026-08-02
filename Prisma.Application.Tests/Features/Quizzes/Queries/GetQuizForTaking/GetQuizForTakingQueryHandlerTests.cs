@@ -1,4 +1,4 @@
-﻿
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
@@ -10,7 +10,6 @@ using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetQuizForTaking;
-
 
 public class GetQuizForTakingQueryHandlerTests
 {
@@ -36,7 +35,10 @@ public class GetQuizForTakingQueryHandlerTests
             .FirstOrDefaultAsync(Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>())
             .Returns((QuizAttempt?)null);
 
-        var defaultTeacher = new Teacher { Id = Guid.NewGuid(), FirstName = "Ahmed", LastName = "Mostafa", Subject = "Math" };
+        var defaultTeacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
+        {
+            Id = Guid.NewGuid(), FirstName = "Ahmed", LastName = "Mostafa", Subject = "Math"
+        };
         var defaultStudent = new Student { Id = StudentId, FirstName = "S", LastName = "T", Teacher = defaultTeacher };
 
         _studentRepository
@@ -109,8 +111,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير موجود", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
     }
 
     [Fact]
@@ -124,8 +126,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير متاح حاليًا", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير متاح حاليًا", result.GetResultMessage());
 
         await _attemptRepository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>());
@@ -147,8 +149,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("انتهى موعد هذا الاختبار", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("انتهى موعد هذا الاختبار", result.GetResultMessage());
 
         _attemptRepository.DidNotReceive().Add(Arg.Any<QuizAttempt>());
     }
@@ -165,7 +167,7 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         _attemptRepository.Received(1).Add(Arg.Is<QuizAttempt>(a =>
             a.QuizId == quiz.Id &&
@@ -174,7 +176,7 @@ public class GetQuizForTakingQueryHandlerTests
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
 
-        Assert.Equal(TimeSpan.FromMinutes(30).TotalSeconds, result.Data!.RemainingSeconds, tolerance: 1);
+        Assert.Equal(TimeSpan.FromMinutes(30).TotalSeconds, result.Value!.RemainingSeconds, tolerance: 1);
     }
 
     #endregion
@@ -202,9 +204,9 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal(55, result.Data!.AttemptId);
-        Assert.InRange(result.Data.RemainingSeconds, 19 * 60, 20 * 60 + 5);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(55, result.Value!.AttemptId);
+        Assert.InRange(result.Value.RemainingSeconds, 19 * 60, 20 * 60 + 5);
 
         _attemptRepository.DidNotReceive().Add(Arg.Any<QuizAttempt>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -237,8 +239,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("سبق أن قمت بتسليم هذا الاختبار", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("سبق أن قمت بتسليم هذا الاختبار", result.GetResultMessage());
     }
 
     #endregion
@@ -268,8 +270,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("انتهى وقت هذه المحاولة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("انتهى وقت هذه المحاولة", result.GetResultMessage());
 
         // the old attempt was finalized (no answers => auto-graded with Degree 0)
         Assert.Equal(QuizAttemptStatus.Graded, expiredAttempt.Status);
@@ -303,8 +305,8 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("انتهى وقت هذه المحاولة", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("انتهى وقت هذه المحاولة", result.GetResultMessage());
         Assert.Equal(QuizAttemptStatus.Graded, expiredAttempt.Status);
     }
 
@@ -329,10 +331,7 @@ public class GetQuizForTakingQueryHandlerTests
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow,
             Status = QuizAttemptStatus.InProgress,
-            Answers = new List<AttemptAnswer>
-            {
-                new() { QuestionId = question.Id, ChoiceId = 100 }
-            }
+            Answers = new List<AttemptAnswer> { new() { QuestionId = question.Id, ChoiceId = 100 } }
         };
 
         SetupQuiz(quiz);
@@ -342,7 +341,7 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Questions);
+        var dto = Assert.Single(result.Value!.Questions);
         Assert.Equal(2, dto.Choices!.Count);
         Assert.Equal(100, dto.SelectedChoiceId);
         Assert.Null(dto.SavedTextAnswer);
@@ -365,10 +364,7 @@ public class GetQuizForTakingQueryHandlerTests
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow,
             Status = QuizAttemptStatus.InProgress,
-            Answers = new List<AttemptAnswer>
-            {
-                new() { QuestionId = question.Id, TextAnswer = "my draft answer" }
-            }
+            Answers = new List<AttemptAnswer> { new() { QuestionId = question.Id, TextAnswer = "my draft answer" } }
         };
 
         SetupQuiz(quiz);
@@ -378,9 +374,10 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = Assert.Single(result.Data!.Questions);
-        Assert.Null(dto.Choices);
-        Assert.Equal("my draft answer", dto.SavedTextAnswer);
+        var dto = Assert.Single(result.Value!.Questions);
+
+        dto.Choices.Should().BeNull();
+        dto.SavedTextAnswer.Should().Be("my draft answer");
         Assert.Null(dto.SelectedChoiceId);
     }
 
@@ -388,7 +385,10 @@ public class GetQuizForTakingQueryHandlerTests
     public async Task Handle_MapsTeacherNameFromStudentTeacher()
     {
         // Arrange
-        var teacher = new Teacher { Id = Guid.NewGuid(), FirstName = "Mona", LastName = "Kamal", Subject = "Physics" };
+        var teacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
+        {
+            Id = Guid.NewGuid(), FirstName = "Mona", LastName = "Kamal", Subject = "Physics"
+        };
         var student = new Student { Id = StudentId, FirstName = "S", LastName = "T", Teacher = teacher };
 
         _studentRepository
@@ -403,7 +403,7 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("Mona Kamal", result.Data!.TeacherName);
+        result.Value!.TeacherName.Should().Be("Mona Kamal");
     }
 
     //[Fact]
@@ -419,7 +419,7 @@ public class GetQuizForTakingQueryHandlerTests
     //    var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
     //    // Assert
-    //    Assert.Equal("Algebra Intro", result.Data!.Subject);
+    //    Assert.Equal("Algebra Intro", result.Value!.Subject);
     //}
 
     #endregion

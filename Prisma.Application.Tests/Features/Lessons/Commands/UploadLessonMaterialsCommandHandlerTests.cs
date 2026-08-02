@@ -1,22 +1,16 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Prisma.Domain.Specifications.Lessons;
-using Xunit;
+
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
@@ -34,6 +28,7 @@ public class UploadLessonMaterialsCommandHandlerTests
         var store = Substitute.For<IUserStore<User>>();
         _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
 
+        _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new UploadLessonMaterialsCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
     }
@@ -44,9 +39,11 @@ public class UploadLessonMaterialsCommandHandlerTests
         _currentUserService.UserId.Returns((Guid?)null);
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>().WithMessage("User must be authenticated.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]
@@ -61,10 +58,11 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<UnauthorizedException>()
-            .WithMessage("Only teachers and assistants can upload materials to lessons.");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("Only teachers and assistants can upload materials to lessons.");
     }
 
     [Fact]
@@ -81,9 +79,10 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -101,9 +100,10 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
-        Func<Task> act = async () => await _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
-        await act.Should().ThrowAsync<BadRequestException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
     }
 
     [Fact]
@@ -133,8 +133,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().Be("Materials uploaded and attached to lesson successfully");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be("Materials uploaded and attached to lesson successfully");
 
         lesson.LessonMaterials.Should().ContainSingle();
         var firstMaterial = lesson.LessonMaterials.First();

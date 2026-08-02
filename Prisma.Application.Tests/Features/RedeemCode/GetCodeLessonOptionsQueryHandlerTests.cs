@@ -1,9 +1,9 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Queries.GetCodeLessonOptions;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
@@ -46,10 +46,10 @@ public class GetCodeLessonOptionsQueryHandlerTests
         var result = await _sut.Handle(new GetCodeLessonOptionsQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().HaveCount(3); // duplicate removed
-        result.Data.Should().ContainSingle(l => l.Name == "الكهرباء الساكنة");
-        result.Data.Select(l => l.AcademicYearId).Should().BeEquivalentTo(new[] { 1, 1, 2 });
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().HaveCount(3); // duplicate removed
+        result.Value.Should().ContainSingle(l => l.Name == "الكهرباء الساكنة");
+        result.Value.Select(l => l.AcademicYearId).Should().BeEquivalentTo(new[] { 1, 1, 2 });
     }
 
     [Fact]
@@ -65,8 +65,8 @@ public class GetCodeLessonOptionsQueryHandlerTests
         var result = await _sut.Handle(new GetCodeLessonOptionsQuery(), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Should().BeEmpty();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
     }
 
     [Fact]
@@ -76,9 +76,10 @@ public class GetCodeLessonOptionsQueryHandlerTests
         _currentUser.UserId.Returns((Guid?)null);
 
         // Act
-        var act = () => _sut.Handle(new GetCodeLessonOptionsQuery(), CancellationToken.None);
+        var result = await _sut.Handle(new GetCodeLessonOptionsQuery(), CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<UnauthorizedException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 }

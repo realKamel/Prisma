@@ -1,4 +1,4 @@
-﻿
+
 
 using FluentAssertions;
 using NSubstitute;
@@ -89,8 +89,8 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(999), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("التسليم غير موجود");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("التسليم غير موجود");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -113,8 +113,8 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeFalse();
-        result.Message.Should().Be("التسليم ده بيتصحح دلوقتي من شخص تاني");
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("التسليم ده بيتصحح دلوقتي من شخص تاني");
 
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
         submission.GradingByUserId.Should().Be(otherUserId); // lock not stolen
@@ -138,7 +138,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
 
         submission.IsBeingGraded.Should().BeTrue();
         submission.GradingByUserId.Should().Be(_currentUserId);
@@ -161,7 +161,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
 
         submission.IsBeingGraded.Should().BeTrue();
         submission.GradingByUserId.Should().Be(_currentUserId);
@@ -196,8 +196,8 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        var dto = result.Data;
+        result.IsSuccess.Should().BeTrue();
+        var dto = result.Value;
 
         dto.SubmissionId.Should().Be(42);
         dto.StudentName.Should().Be("Alice Anderson");
@@ -228,7 +228,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Data.IsLateSubmission.Should().BeTrue();
+        result.Value.IsLateSubmission.Should().BeTrue();
     }
 
     [Fact]
@@ -245,7 +245,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
 
         // Assert
-        result.Data.CurrentScore.Should().BeNull();
-        result.Data.CurrentNote.Should().BeNull();
+        result.Value.CurrentScore.Should().BeNull();
+        result.Value.CurrentNote.Should().BeNull();
     }
 }

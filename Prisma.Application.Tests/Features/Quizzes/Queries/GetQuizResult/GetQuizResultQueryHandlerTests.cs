@@ -1,4 +1,4 @@
-﻿using NSubstitute;
+using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizResult;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -104,8 +104,8 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("الاختبار غير موجود", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
     }
 
     [Fact]
@@ -119,8 +119,8 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("لم يتم تسليم هذا الاختبار بعد", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("لم يتم تسليم هذا الاختبار بعد", result.GetResultMessage());
     }
 
     [Fact]
@@ -134,8 +134,8 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("لم يتم تسليم هذا الاختبار بعد", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("لم يتم تسليم هذا الاختبار بعد", result.GetResultMessage());
     }
 
     #endregion
@@ -154,11 +154,11 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("locked", result.Data!.Status);
-        Assert.Equal(quiz.DueDate, result.Data.AvailableAt);
-        Assert.Null(result.Data.Score);
-        Assert.Null(result.Data.Review);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("locked", result.Value!.Status);
+        Assert.Equal(quiz.DueDate, result.Value.AvailableAt);
+        Assert.Null(result.Value.Score);
+        Assert.Null(result.Value.Review);
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("locked", result.Data!.Status);
+        Assert.Equal("locked", result.Value!.Status);
     }
 
     #endregion
@@ -199,7 +199,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!;
+        var dto = result.Value!;
         Assert.Equal("pending", dto.Status);
         Assert.Equal(1, dto.CorrectCount);
         Assert.Equal(1, dto.WrongCount);
@@ -220,7 +220,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("pending", result.Data!.Status);
+        Assert.Equal("pending", result.Value!.Status);
     }
 
     #endregion
@@ -248,7 +248,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var dto = result.Data!;
+        var dto = result.Value!;
         Assert.Equal("done", dto.Status);
         Assert.Equal(5m, dto.Score);
         Assert.Equal(gradedAt, dto.GradedAt);
@@ -279,7 +279,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(0, result.Data!.PendingCount); // hardcoded, doesn't reflect actual answer state
+        Assert.Equal(0, result.Value!.PendingCount); // hardcoded, doesn't reflect actual answer state
     }
 
     #endregion
@@ -307,7 +307,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var reviewItem = Assert.Single(result.Data!.Review!);
+        var reviewItem = Assert.Single(result.Value!.Review!);
         Assert.Equal(2, reviewItem.Choices!.Count);
         Assert.True(reviewItem.Choices.Single(c => c.ChoiceId == 100).IsCorrect);
         Assert.Equal(101, reviewItem.SelectedChoiceId);
@@ -340,7 +340,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var reviewItem = Assert.Single(result.Data!.Review!);
+        var reviewItem = Assert.Single(result.Value!.Review!);
         Assert.Null(reviewItem.Choices);
         Assert.Equal("model answer", reviewItem.CorrectWrittenAnswer);
         Assert.Equal("student's answer", reviewItem.TextAnswer);
@@ -368,7 +368,7 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        var reviewItem = Assert.Single(result.Data!.Review!);
+        var reviewItem = Assert.Single(result.Value!.Review!);
         Assert.Null(reviewItem.SelectedChoiceId);
         Assert.Null(reviewItem.IsCorrect);
         Assert.Null(reviewItem.Score);
@@ -390,8 +390,8 @@ public class GetQuizResultQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal(4, result.Data!.TabSwitchCount);
-        Assert.Equal(2, result.Data.CopyPasteAttemptCount);
+        Assert.Equal(4, result.Value!.TabSwitchCount);
+        Assert.Equal(2, result.Value.CopyPasteAttemptCount);
     }
 
     #endregion

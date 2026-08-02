@@ -1,3 +1,4 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
@@ -5,7 +6,6 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Commands.CreateUser;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
@@ -31,10 +31,11 @@ public class CreateUserCommandHandlerTests
             AppRoles.Student, 1, Guid.NewGuid(), "01198765432");
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<ConflictException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Conflict);
     }
 
     [Fact]
@@ -55,10 +56,10 @@ public class CreateUserCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.Role.Should().Be(AppRoles.Student);
-        result.Data.GradeId.Should().Be(2);
-        result.Data.TeacherId.Should().Be(teacherId);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Role.Should().Be(AppRoles.Student);
+        result.Value.GradeId.Should().Be(2);
+        result.Value.TeacherId.Should().Be(teacherId);
 
         await _identityService.Received(1).CreateAsync(
             Arg.Is<User>(u => u is Student && u.Email == "m@test.com"),
@@ -83,9 +84,9 @@ public class CreateUserCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Data.Role.Should().Be(AppRoles.Teacher);
-        result.Data.GradeId.Should().BeNull();
-        result.Data.TeacherId.Should().BeNull();
+        result.Value.Role.Should().Be(AppRoles.Teacher);
+        result.Value.GradeId.Should().BeNull();
+        result.Value.TeacherId.Should().BeNull();
     }
 
     [Fact]
@@ -102,10 +103,11 @@ public class CreateUserCommandHandlerTests
             AppRoles.Teacher, null, null, null);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
     }
 
     [Fact]
@@ -120,9 +122,10 @@ public class CreateUserCommandHandlerTests
             "SuperAdmin", null, null, null); // not a real role
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
     }
 }

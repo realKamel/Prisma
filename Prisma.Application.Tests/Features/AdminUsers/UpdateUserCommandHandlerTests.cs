@@ -1,10 +1,10 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Commands.UpdateUser;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Users;
 
@@ -21,7 +21,7 @@ public class UpdateUserCommandHandlerTests
     public UpdateUserCommandHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<User, Guid>().Returns(_userRepo);
-        _sut = new UpdateUserCommandHandler( _identityService, _userManager);
+        _sut = new UpdateUserCommandHandler(_identityService, _userManager);
     }
 
     // UserManager<T> is a concrete class with a large constructor, but its
@@ -36,19 +36,19 @@ public class UpdateUserCommandHandlerTests
     [Fact]
     public async Task Handle_WhenUserNotFound_ThrowsNotFoundException()
     {
-        // Arrange — regression test for the FindByIdAsync bug, same root
-        // cause as DeleteUserCommandHandlerTests.
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        // Arrange
+        _identityService.FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((User?)null);
 
         var command = new UpdateUserCommand(
             Guid.NewGuid(), "أ", "ب", "ج", "د", "01012345678", "x@test.com", null, null, null, null);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<NotFoundException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class UpdateUserCommandHandlerTests
         var student = new Student { Id = Guid.NewGuid(), Email = "old@test.com" };
         var otherUser = new Student { Id = Guid.NewGuid(), Email = "new@test.com" };
 
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
             .Returns(student);
         _identityService.FindByEmailAsync("new@test.com").Returns(otherUser);
 
@@ -66,10 +66,11 @@ public class UpdateUserCommandHandlerTests
             student.Id, "أ", "ب", "ج", "د", "01012345678", "new@test.com", null, 1, null, "01198765432");
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<ConflictException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Conflict);
     }
 
     [Fact]
@@ -77,7 +78,7 @@ public class UpdateUserCommandHandlerTests
     {
         // Arrange
         var student = new Student { Id = Guid.NewGuid(), Email = "same@test.com" };
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
             .Returns(student);
         _identityService.UpdateAsync(Arg.Any<User>()).Returns(IdentityResult.Success);
 
@@ -88,7 +89,7 @@ public class UpdateUserCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         await _identityService.DidNotReceive().FindByEmailAsync(Arg.Any<string>());
     }
 
@@ -99,7 +100,7 @@ public class UpdateUserCommandHandlerTests
         var student = new Student { Id = Guid.NewGuid(), Email = "s@test.com", TeacherId = Guid.NewGuid() };
         var newTeacherId = Guid.NewGuid();
 
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
             .Returns(student);
         _identityService.UpdateAsync(Arg.Any<User>()).Returns(IdentityResult.Success);
 
@@ -111,10 +112,10 @@ public class UpdateUserCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
-        result.Data.GradeId.Should().Be(3);
-        result.Data.TeacherId.Should().Be(newTeacherId);
-        result.Data.ParentMobile.Should().Be("01188888888");
+        result.IsSuccess.Should().BeTrue();
+        result.Value.GradeId.Should().Be(3);
+        result.Value.TeacherId.Should().Be(newTeacherId);
+        result.Value.ParentMobile.Should().Be("01188888888");
         student.FirstName.Should().Be("محمد");
     }
 
@@ -123,7 +124,7 @@ public class UpdateUserCommandHandlerTests
     {
         // Arrange
         var student = new Student { Id = Guid.NewGuid(), Email = "s@test.com" };
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
             .Returns(student);
         _identityService.UpdateAsync(Arg.Any<User>())
             .Returns(IdentityResult.Failed(new IdentityError { Description = "concurrency error" }));
@@ -132,10 +133,11 @@ public class UpdateUserCommandHandlerTests
             student.Id, "أ", "ب", "ج", "د", "01012345678", "s@test.com", null, null, null, null);
 
         // Act
-        var act = () => _sut.Handle(command, CancellationToken.None);
+        var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<BadRequestException>();
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
     }
 
     [Fact]
@@ -143,7 +145,7 @@ public class UpdateUserCommandHandlerTests
     {
         // Arrange
         var student = new Student { Id = Guid.NewGuid(), Email = "s@test.com" };
-        _userRepo.FirstOrDefaultAsync(Arg.Any<UserByIdSpecification>(), Arg.Any<CancellationToken>())
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
             .Returns(student);
         _identityService.UpdateAsync(Arg.Any<User>()).Returns(IdentityResult.Success);
         _userManager.RemovePasswordAsync(student).Returns(IdentityResult.Success);
@@ -156,7 +158,7 @@ public class UpdateUserCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        result.Succeeded.Should().BeTrue();
+        result.IsSuccess.Should().BeTrue();
         await _userManager.Received(1).RemovePasswordAsync(student);
         await _userManager.Received(1).AddPasswordAsync(student, "NewPassw0rd!");
     }

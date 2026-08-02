@@ -1,4 +1,4 @@
-﻿
+
 using Ardalis.Specification;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
@@ -39,8 +39,8 @@ public class UpdateAccentColorCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Equal("المستخدم غير مصرح له", result.Message);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("المستخدم غير مصرح له", result.GetResultMessage());
 
         await _repository.DidNotReceive().FirstOrDefaultAsync(
             Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>());
@@ -61,7 +61,7 @@ public class UpdateAccentColorCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
 
         _repository.Received(1).Add(
             Arg.Is<TeacherPreferencesEntity>(p =>
@@ -89,7 +89,7 @@ public class UpdateAccentColorCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        Assert.True(result.IsSuccess);
         Assert.Equal(ValidCommand.AccentColor, existingPreferences.AccentColor);
 
         _repository.Received(1).Update(
@@ -114,9 +114,9 @@ public class UpdateAccentColorCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
-        Assert.Equal("تم حفظ اللون بنجاح", result.Message);
-        Assert.Null(result.Errors);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("تم حفظ اللون بنجاح", result.GetResultMessage());
+        Assert.Empty(result.Errors);
     }
 
 }

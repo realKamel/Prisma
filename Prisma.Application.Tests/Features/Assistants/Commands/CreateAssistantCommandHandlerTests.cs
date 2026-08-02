@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
@@ -6,7 +7,6 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Tests.Features.Assistants.Commands;
 
@@ -55,11 +55,11 @@ public class CreateAssistantCommandHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Data.FirstName.Should().Be(command.FirstName);
-        // result.Data.SecondName.Should().Be(command.LastName);
-        result.Data.Policies.Should().BeEquivalentTo(command.Policies);
-        result.Data.Id.Should().NotBeEmpty();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.FirstName.Should().Be(command.FirstName);
+        // result.Value.SecondName.Should().Be(command.LastName);
+        result.Value.Policies.Should().BeEquivalentTo(command.Policies);
+        result.Value.Id.Should().NotBeEmpty();
 
         await _identityService
             .Received(1)
@@ -109,11 +109,12 @@ public class CreateAssistantCommandHandlerTests
             .Returns(existingUser);
 
         // Act
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        await act.Should().ThrowAsync<ConflictException>()
-            .WithMessage("User already exists");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Conflict);
+        result.Errors.Should().Contain("User already exists");
 
         await _identityService
             .DidNotReceive()
@@ -149,12 +150,13 @@ public class CreateAssistantCommandHandlerTests
             .Returns(IdentityResult.Failed(identityErrors));
 
         // Act
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        var exception = await act.Should().ThrowAsync<BadRequestException>();
-        exception.Which.Message.Should().Contain("DuplicateUserName");
-        exception.Which.Message.Should().Contain("PasswordTooShort");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("DuplicateUserName"));
+        result.Errors.Should().Contain(e => e.Contains("PasswordTooShort"));
 
         await _identityService
             .DidNotReceive()
@@ -190,11 +192,12 @@ public class CreateAssistantCommandHandlerTests
             .Returns(IdentityResult.Failed(claimErrors));
 
         // Act
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        var exception = await act.Should().ThrowAsync<BadRequestException>();
-        exception.Which.Message.Should().Contain("ClaimError");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("ClaimError"));
 
         await _identityService
             .DidNotReceive()
@@ -234,11 +237,12 @@ public class CreateAssistantCommandHandlerTests
             .Returns(IdentityResult.Failed(roleErrors));
 
         // Act
-        var act = async () => await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        var exception = await act.Should().ThrowAsync<BadRequestException>();
-        exception.Which.Message.Should().Contain("RoleError");
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain(e => e.Contains("RoleError"));
     }
 
     [Fact]

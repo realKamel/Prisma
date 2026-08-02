@@ -1,9 +1,9 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 
@@ -15,9 +15,9 @@ public class GradesController(ISender mediator) : ApiController
     [HttpGet("grade-options")]
     [ProducesResponseType<Result<List<AcademicYearOptionDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType<Result<List<AcademicYearOptionDto>>>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> GetGradeOptions(CancellationToken cancellationToken)
+    public async Task<Result<List<AcademicYearOptionDto>>> GetGradeOptions(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
-        return Ok(result);
+        return result;
     }
 }

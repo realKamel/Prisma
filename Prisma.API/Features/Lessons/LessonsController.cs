@@ -1,7 +1,7 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
@@ -22,67 +22,69 @@ namespace Prisma.API.Features.Lessons;
 public class LessonsController(IMediator _mediator) : ApiController
 {
     [HttpGet("details/{LessonId}")]
-    public async Task<ActionResult> GetLessonDetails([FromRoute] string LessonId, CancellationToken cancellationToken)
+    public async Task<Result<LessonDetailsDto>> GetLessonDetails([FromRoute] string LessonId,
+        CancellationToken cancellationToken)
     {
         var query = new GetLessonDetailsQuery(int.Parse(LessonId));
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("watch/{LessonId}")]
-    public async Task<ActionResult> GetLessonPlayerDetails([FromRoute] string LessonId,
+    public async Task<Result<LessonPlayerResult>> GetLessonPlayerDetails([FromRoute] string LessonId,
         CancellationToken cancellationToken)
     {
         var query = new GetLessonPlayerQuery(int.Parse(LessonId));
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("status/{LessonId}")]
-    public async Task<ActionResult> GetLessonStatus([FromRoute] string LessonId, CancellationToken cancellationToken)
+    public async Task<Result<LessonStatusResponse>> GetLessonStatus([FromRoute] string LessonId,
+        CancellationToken cancellationToken)
     {
         var query = new GetLessonStatusQuery(int.Parse(LessonId));
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("options")]
-    public async Task<ActionResult> GetPrepDataForAdd(CancellationToken cancellationToken)
+    public async Task<Result<LessonFormOptionsResponseDto>> GetPrepDataForAdd(CancellationToken cancellationToken)
     {
         var query = new GetLessonFormOptionsQuery();
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("expired-details/{LessonId}")]
-    public async Task<ActionResult> GetExpiredLessonDetails([FromRoute] string LessonId,
+    public async Task<Result<LessonExpiredDto>> GetExpiredLessonDetails([FromRoute] string LessonId,
         CancellationToken cancellationToken)
     {
         var query = new GetLessonExpiredQuery(int.Parse(LessonId));
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("editor/{LessonId}")]
     [ProducesResponseType<Result<LessonEditorResponseDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetLessonEditorDetails([FromRoute] string LessonId,
+    public async Task<Result<LessonEditorResponseDto>> GetLessonEditorDetails([FromRoute] string LessonId,
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetLessonEditorDetailsQuery(int.Parse(LessonId)), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("add")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType<Result<int>>(StatusCodes.Status201Created)]
+    [ProducesResponseType<Result<CreateLessonResponse>>(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> CreateLesson([FromForm] CreateLessonDetailsCommand command,
+    public async Task<Result<CreateLessonResponse>> CreateLesson([FromForm] CreateLessonDetailsCommand command,
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
 
@@ -90,21 +92,21 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> DeleteLesson([FromRoute] string LessonId, CancellationToken cancellationToken)
+    public async Task<Result<string>> DeleteLesson([FromRoute] string LessonId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new DeleteLessonCommand(int.Parse(LessonId)), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
 
     [HttpPut("editor/{LessonId:int}")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<UpdateLessonResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> UpdateLessonEditorDetails(
+    public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(
         [FromRoute] int LessonId,
         [FromForm] UpdateLessonDetailsCommand command,
         CancellationToken cancellationToken)
@@ -113,7 +115,7 @@ public class LessonsController(IMediator _mediator) : ApiController
 
         var result = await _mediator.Send(finalCommand, cancellationToken);
 
-        return Ok(result);
+        return result;
     }
 
     [HttpPatch("toggle-status/{LessonId}")]
@@ -121,11 +123,12 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> ToggleLessonStatus([FromRoute] string LessonId, CancellationToken cancellationToken)
+    public async Task<Result<string>> ToggleLessonStatus([FromRoute] string LessonId,
+        CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new ToggleLessonStatusCommand(int.Parse(LessonId)), cancellationToken);
 
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("upload-materials/{LessonId}")]
@@ -134,7 +137,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> UploadMaterials(
+    public async Task<Result<string>> UploadMaterials(
         [FromRoute] string LessonId,
         [FromForm] UploadMaterialsRequest request,
         CancellationToken cancellationToken)
@@ -142,7 +145,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         var command = new UploadLessonMaterialsCommand(int.Parse(LessonId), request.Files);
 
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpDelete("delete-material/{LessonId:int}/{MaterialId:int}")]
@@ -150,42 +153,43 @@ public class LessonsController(IMediator _mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> DeleteMaterial(
+    public async Task<Result<string>> DeleteMaterial(
         [FromRoute] int LessonId,
         [FromRoute] int MaterialId,
         CancellationToken cancellationToken)
     {
         var command = new DeleteLessonMaterialCommand(LessonId, MaterialId);
         var result = await _mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("materials/{LessonId}")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<Result<List<LessonMaterialDto>>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> GetLessonMaterials([FromRoute] string LessonId, CancellationToken cancellationToken)
+    public async Task<Result<List<LessonMaterialDto>>> GetLessonMaterials([FromRoute] string LessonId,
+        CancellationToken cancellationToken)
     {
         var query = new GetLessonMaterialQuery(int.Parse(LessonId));
         var result = await _mediator.Send(query, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("{lessonId:int}/assignment/submit")]
-    public async Task<ActionResult> SubmitAssignment(
+    public async Task<Result<string>> SubmitAssignment(
         int lessonId,
         IFormFile file, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpDelete("{lessonId:int}/assignment/submission")]
-    public async Task<ActionResult> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
+    public async Task<Result<string>> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
-        return Ok(result);
+        return result;
     }
 }
 

@@ -1,15 +1,18 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.API.Features.TeacherStudents.Requests;
 using Prisma.Application.Common.Constants;
+using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 using Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
 using Prisma.Application.Features.TeacherStudents.Commands.RevokeLesson;
 using Prisma.Application.Features.TeacherStudents.Commands.SendReport;
 using Prisma.Application.Features.TeacherStudents.Commands.UpdateStudent;
+using Prisma.Application.Features.TeacherStudents.Dtos;
 using Prisma.Application.Features.TeacherStudents.Queries.GetAllStudents;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentActivities;
 using Prisma.Application.Features.TeacherStudents.Queries.GetStudentDetails;
@@ -24,63 +27,63 @@ namespace Prisma.API.Features.TeacherStudents;
 public class TeacherStudentsController(IMediator mediator) : ApiController
 {
     [HttpGet]
-    public async Task<ActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<Result<List<StudentListItemDto>>> GetAll(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllStudentsQuery(), cancellationToken);
-        return Ok(result);
+        return Result<List<StudentListItemDto>>.Success(result);
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<Result<StudentListItemDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentDetailsQuery(id), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("{id:guid}/lessons")]
-    public async Task<ActionResult> GetLessons(Guid id, CancellationToken cancellationToken)
+    public async Task<Result<List<StudentLessonDto>>> GetLessons(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentLessonsQuery(id), cancellationToken);
-        return Ok(result);
+        return Result<List<StudentLessonDto>>.Success(result);
     }
 
     [HttpGet("{id:guid}/activities")]
-    public async Task<ActionResult> GetActivities(Guid id, CancellationToken cancellationToken)
+    public async Task<Result<List<StudentActivityDto>>> GetActivities(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentActivitiesQuery(id), cancellationToken);
-        return Ok(result);
+        return Result<List<StudentActivityDto>>.Success(result);
     }
 
     [HttpGet("{id:guid}/stats")]
-    public async Task<ActionResult> GetStats(Guid id, CancellationToken cancellationToken)
+    public async Task<Result<StudentStatsDto>> GetStats(Guid id, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetStudentStatsQuery(id), cancellationToken);
-        return Ok(result);
+        return Result<StudentStatsDto>.Success(result);
     }
 
     [HttpGet("lessons-for-grant")]
-    public async Task<ActionResult> GetLessonsForGrant(CancellationToken cancellationToken)
+    public async Task<Result<List<LessonForGrantDto>>> GetLessonsForGrant(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
-        return Ok(result);
+        return Result<List<LessonForGrantDto>>.Success(result);
     }
 
     [HttpGet("lessons")]
-    public async Task<ActionResult> GetAllLessons(CancellationToken cancellationToken)
+    public async Task<Result<List<LessonForGrantDto>>> GetAllLessons(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetTeacherLessonsForGrantQuery(), cancellationToken);
-        return Ok(result);
+        return Result<List<LessonForGrantDto>>.Success(result);
     }
 
     [HttpGet("academic-years")]
-    public async Task<ActionResult> GetAcademicYears(CancellationToken cancellationToken)
+    public async Task<Result<List<AcademicYearOptionDto>>> GetAcademicYears(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetAllAcademicYearsQuery(), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost]
-    public async Task<ActionResult> Create([FromBody] AddStudentRequest request, CancellationToken cancellationToken)
+    public async Task<Result> Create([FromBody] AddStudentRequest request, CancellationToken cancellationToken)
     {
         var command = new AddStudentCommand(
             request.FirstName,
@@ -94,11 +97,11 @@ public class TeacherStudentsController(IMediator mediator) : ApiController
             request.ParentMobile);
 
         var result = await mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult> Update(Guid id, [FromBody] UpdateStudentRequest request,
+    public async Task<Result> Update(Guid id, [FromBody] UpdateStudentRequest request,
         CancellationToken cancellationToken)
     {
         var command = new UpdateStudentCommand(
@@ -114,11 +117,11 @@ public class TeacherStudentsController(IMediator mediator) : ApiController
             request.ParentMobile);
 
         var result = await mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("grant")]
-    public async Task<ActionResult> GrantLesson([FromBody] GrantLessonRequest request,
+    public async Task<Result> GrantLesson([FromBody] GrantLessonRequest request,
         CancellationToken cancellationToken)
     {
         var command = new GrantLessonCommand(
@@ -128,18 +131,18 @@ public class TeacherStudentsController(IMediator mediator) : ApiController
             request.Note);
 
         var result = await mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpDelete("{studentId:guid}/lessons/{lessonId:int}")]
-    public async Task<ActionResult> RevokeLesson(Guid studentId, int lessonId, CancellationToken cancellationToken)
+    public async Task<Result> RevokeLesson(Guid studentId, int lessonId, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new RevokeLessonCommand(studentId, lessonId), cancellationToken);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("reports/send")]
-    public async Task<ActionResult> SendReport([FromBody] SendReportRequest request,
+    public async Task<Result> SendReport([FromBody] SendReportRequest request,
         CancellationToken cancellationToken)
     {
         var command = new SendReportCommand(
@@ -149,6 +152,6 @@ public class TeacherStudentsController(IMediator mediator) : ApiController
             request.DateTo);
 
         var result = await mediator.Send(command, cancellationToken);
-        return Ok(result);
+        return result;
     }
 }

@@ -2,7 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RAG.Commands.AskRagQuestion;
 using Prisma.Application.Features.RAG.Commands.DeleteSession;
 using Prisma.Application.Features.RAG.Dto;
@@ -14,17 +14,17 @@ namespace Prisma.API.Features.RAG;
 public class RagController(IMediator sender) : ApiController
 {
     [HttpGet]
-    public async Task<ActionResult> GetAllRagSessions(CancellationToken ct)
+    public async Task<Result<List<GetRagSessionQuery>>> GetAllRagSessions(CancellationToken ct)
     {
         var result = await sender.Send(new GetAllSessionsQuery(), ct);
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult> GetRagSession(Guid id, CancellationToken ct)
+    public async Task<Result<GetDetailedRagSessionQueryResponse>> GetRagSession(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new GetDetailedRagSessionQuery(id), ct);
-        return Ok(result);
+        return result;
     }
 
     // [HttpPost]
@@ -72,9 +72,9 @@ public class RagController(IMediator sender) : ApiController
     // }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteRagSession(Guid id, CancellationToken ct)
+    public async Task<Result> DeleteRagSession(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new DeleteSessionCommand(id), ct);
-        return Ok(result);
+        return result;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -16,17 +17,16 @@ public class PaymentsController(IMediator mediator, IOptions<PaymobSettings> opt
     private readonly PaymobSettings _settings = options.Value;
 
     [HttpPost("initiate")]
-    public async Task<ActionResult> Initiate([FromBody] InitiatePaymentCommand command)
+    public async Task<Result<InitiatePaymentResult>> Initiate([FromBody] InitiatePaymentCommand command)
     {
-        var result = await mediator.Send(command);
-        return Ok(result);
+        return await mediator.Send(command);
     }
 
     [HttpPost("webhook")]
-    public async Task<ActionResult> Webhook([FromBody] JsonObject payload, [FromQuery] string hmac)
+    public async Task<Result> Webhook([FromBody] JsonObject payload, [FromQuery] string hmac)
     {
         if (!VerifyHmac(payload, hmac))
-            return Unauthorized();
+            return Result.Unauthorized();
 
         var obj = payload["obj"]?.AsObject();
         var success = obj?["success"]?.GetValue<bool>() ?? false;
@@ -34,7 +34,8 @@ public class PaymentsController(IMediator mediator, IOptions<PaymobSettings> opt
         var transactionId = obj?["id"]?.ToString() ?? "";
 
         await mediator.Send(new HandlePaymentCallbackCommand(orderId, success, transactionId));
-        return Ok();
+
+        return Result.Success();
     }
 
     private bool VerifyHmac(JsonObject payload, string receivedHmac)
@@ -44,25 +45,13 @@ public class PaymentsController(IMediator mediator, IOptions<PaymobSettings> opt
 
         var fields = new[]
         {
-            obj["amount_cents"]?.ToString(),
-            obj["created_at"]?.ToString(),
-            obj["currency"]?.ToString(),
-            obj["error_occured"]?.ToString(),
-            obj["has_parent_transaction"]?.ToString(),
-            obj["id"]?.ToString(),
-            obj["integration_id"]?.ToString(),
-            obj["is_3d_secure"]?.ToString(),
-            obj["is_auth"]?.ToString(),
-            obj["is_capture"]?.ToString(),
-            obj["is_refunded"]?.ToString(),
-            obj["is_standalone_payment"]?.ToString(),
-            obj["is_voided"]?.ToString(),
-            obj["order"]?["id"]?.ToString(),
-            obj["owner"]?.ToString(),
-            obj["pending"]?.ToString(),
-            obj["source_data"]?["pan"]?.ToString(),
-            obj["source_data"]?["sub_type"]?.ToString(),
-            obj["source_data"]?["type"]?.ToString(),
+            obj["amount_cents"]?.ToString(), obj["created_at"]?.ToString(), obj["currency"]?.ToString(),
+            obj["error_occured"]?.ToString(), obj["has_parent_transaction"]?.ToString(), obj["id"]?.ToString(),
+            obj["integration_id"]?.ToString(), obj["is_3d_secure"]?.ToString(), obj["is_auth"]?.ToString(),
+            obj["is_capture"]?.ToString(), obj["is_refunded"]?.ToString(), obj["is_standalone_payment"]?.ToString(),
+            obj["is_voided"]?.ToString(), obj["order"]?["id"]?.ToString(), obj["owner"]?.ToString(),
+            obj["pending"]?.ToString(), obj["source_data"]?["pan"]?.ToString(),
+            obj["source_data"]?["sub_type"]?.ToString(), obj["source_data"]?["type"]?.ToString(),
             obj["success"]?.ToString(),
         };
 

@@ -1,4 +1,5 @@
-﻿using MediatR;
+using Ardalis.Result;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
@@ -6,6 +7,7 @@ using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Quizzes.Commands.ReportSecurityEvent;
 using Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
 using Prisma.Application.Features.Quizzes.Commands.SubmitQuizAttempt;
+using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizResult;
 using Prisma.Application.Features.Quizzes.Queries.GetStudentQuizzesList;
@@ -18,49 +20,49 @@ namespace Prisma.API.Features.Quizzes;
 public class StudentQuizzesController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<ActionResult> GetList([FromQuery] string? filter, CancellationToken ct)
+    public async Task<Result<StudentQuizzesListResponseDto>> GetList([FromQuery] string? filter, CancellationToken ct)
     {
         var result = await sender.Send(new GetStudentQuizzesListQuery(filter), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpGet("{quizId:int}")]
-    public async Task<ActionResult> GetForTaking(int quizId, CancellationToken ct)
+    public async Task<Result<QuizTakingDto>> GetForTaking(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new GetQuizForTakingQuery(quizId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpGet("{quizId:int}/result")]
-    public async Task<ActionResult> GetResult(int quizId, CancellationToken ct)
+    public async Task<Result<QuizResultDto>> GetResult(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new GetQuizResultQuery(quizId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPatch("attempts/{attemptId:int}/answer")]
-    public async Task<ActionResult> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
+    public async Task<Result> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
     {
         var result =
             await sender.Send(new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
                 ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPost("attempts/{attemptId:int}/submit")]
-    public async Task<ActionResult> Submit(int attemptId, CancellationToken ct)
+    public async Task<Result<SubmitQuizResultDto>> Submit(int attemptId, CancellationToken ct)
     {
         var result = await sender.Send(new SubmitQuizAttemptCommand(attemptId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
 
     [HttpPost("attempts/{attemptId:int}/security-event")]
-    public async Task<ActionResult> ReportSecurityEvent(
+    public async Task<Result> ReportSecurityEvent(
         int attemptId, [FromBody] ReportSecurityEventRequest body, CancellationToken ct)
     {
         var result = await sender.Send(new ReportSecurityEventCommand(attemptId, body.EventType), ct);
-        return Ok(result);
+        return result;
     }
 }
 

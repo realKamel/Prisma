@@ -1,4 +1,5 @@
-﻿using MediatR;
+using Ardalis.Result;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ namespace Prisma.API.Features.Quizzes;
 public class GradingController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<ActionResult> GetList(
+    public async Task<Result<GradingListResponseDto>> GetList(
         [FromQuery] QuizScope scope,
         [FromQuery] string? search,
         [FromQuery] string? status,
@@ -29,35 +30,35 @@ public class GradingController(ISender sender) : ApiController
     {
         var result = await sender.Send(
             new GetGradingListQuery(scope, search, status, quizId, page, pageSize), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpGet("{attemptId:int}")]
-    public async Task<ActionResult> GetAttemptDetail(int attemptId, CancellationToken ct)
+    public async Task<Result<GradingAttemptDetailDto>> GetAttemptDetail(int attemptId, CancellationToken ct)
     {
         var result = await sender.Send(new GetGradingAttemptDetailQuery(attemptId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPost("{attemptId:int}/grade")]
-    public async Task<ActionResult> Grade(int attemptId,
+    public async Task<Result<GradeWrittenAnswersResultDto>> Grade(int attemptId,
         [FromBody] GradeWrittenAnswersRequest body,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new GradeWrittenAnswersCommand(attemptId, body.Grades), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPatch("{attemptId:int}/override-score")]
-    public async Task<ActionResult> OverrideScore(
+    public async Task<Result<OverrideScoreResultDto>> OverrideScore(
         int attemptId,
         [FromBody] OverrideScoreRequest body,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new OverrideAttemptScoreCommand(attemptId, body.PenaltyScore), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     public record GradeWrittenAnswersRequest(List<WrittenAnswerGradeDto> Grades);

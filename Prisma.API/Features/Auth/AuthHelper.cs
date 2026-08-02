@@ -1,7 +1,7 @@
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Application.Features.Authentication.Commands.Register;
 
@@ -58,12 +58,6 @@ public static class AuthHelper
 
         responseCookies.Delete(AppCookies.AccessToken, accessTokenOptions);
         responseCookies.Delete(AppCookies.RefreshToken, refreshTokenOptions);
-    }
-
-    public static Result<LoginCredentials> ToResponse(this Result<LoginResponse> loginResponse)
-    {
-        var cred = loginResponse.Data.Credentials;
-        return Result<LoginCredentials>.Success(cred);
     }
 
     public static LoginCommand ToCommand(this LoginRequest loginRequest)

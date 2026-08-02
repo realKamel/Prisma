@@ -1,4 +1,5 @@
-﻿using MediatR;
+using Ardalis.Result;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
@@ -13,10 +14,10 @@ namespace Prisma.API.Features.Teacher;
 public class TeacherPreferencesController(ISender sender) : ApiController
 {
     [HttpPut("accent")]
-    public async Task<ActionResult> UpdateAccentColor(
+    public async Task<Result> UpdateAccentColor(
         [FromBody] UpdateAccentColorCommand command, CancellationToken ct)
     {
         var result = await sender.Send(command, ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 }

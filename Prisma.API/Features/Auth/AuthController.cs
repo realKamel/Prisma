@@ -5,12 +5,11 @@ using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Logout;
 using Prisma.Application.Features.Authentication.Commands.RefreshToken;
-using Prisma.Application.Features.Authentication.Commands.Register;
 using Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
 namespace Prisma.API.Features.Auth;
@@ -18,30 +17,26 @@ namespace Prisma.API.Features.Auth;
 public class AuthController(IMediator mediator, IWebHostEnvironment environment) : ApiController
 {
     [HttpPost("login")]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
+    public async Task<Result<LoginCredentials>> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
     {
         var result = await mediator.Send(request.ToCommand(),
             cancelToken);
-        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken,
+
+        Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken,
             environment.IsDevelopment());
-        return Ok(result.ToResponse());
+
+        return result.Map(r => new LoginCredentials(r.Credentials.Id, r.Credentials.Email, r.Credentials.FirstName,
+            r.Credentials.SecondName, r.Credentials.Role, r.Credentials.Permissions));
     }
 
     [HttpPost("register")]
-    [ProducesResponseType<Result<RegisterCommand>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<Result<RegisterCommand>>(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
+    public async Task<Result> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
     {
-        var result = await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
-        return Ok(result);
+        return await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
     }
 
     [HttpPost("refresh")]
-    public async Task<ActionResult> RefreshToken(CancellationToken cancelToken)
+    public async Task<Result<AuthResponse>> RefreshToken(CancellationToken cancelToken)
     {
         var accessToken = Request.Cookies[AppCookies.AccessToken];
         var refreshToken = Request.Cookies[AppCookies.RefreshToken];
@@ -51,51 +46,51 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
 
         var result = await mediator.Send(command, cancelToken);
 
-        Response.Cookies.SetAuthCookies(result.Data.AccessToken, result.Data.RefreshToken);
+        Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken);
 
-        return Ok();
+        return result;
     }
 
     [HttpPost("logout")]
-    public async Task<ActionResult> Logout(CancellationToken cancelToken)
+    public async Task<Result> Logout(CancellationToken cancelToken)
     {
-        await mediator.Send(new LogoutCommand(Request.Cookies[AppCookies.AccessToken]), cancelToken);
+        var result = await mediator.Send(new LogoutCommand(Request.Cookies[AppCookies.AccessToken]), cancelToken);
 
         Response.Cookies.RemoveCookies(environment.IsDevelopment());
 
-        return Ok();
+        return result;
     }
 
 
     [HttpPost("forgot-password")]
-    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command)
+    public async Task<Result> ForgotPassword([FromBody] ForgotPasswordCommand command)
     {
         var result = await mediator.Send(command);
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("confirm-code")]
-    public async Task<ActionResult> ConfirmCode([FromBody] ConfirmCodeCommand command)
+    public async Task<Result> ConfirmCode([FromBody] ConfirmCodeCommand command)
     {
         var result = await mediator.Send(command);
 
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("reset-password")]
-    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
+    public async Task<Result> ResetPassword([FromBody] ResetPasswordCommand command)
     {
         var result = await mediator.Send(command);
 
-        return Ok(result);
+        return result;
     }
 
     [HttpPost("email-verify")]
-    public async Task<ActionResult> EmailVerify([FromBody] EmailVerificationRequestCommand command)
+    public async Task<Result> EmailVerify([FromBody] EmailVerificationRequestCommand command)
     {
         var result = await mediator.Send(command);
 
-        return Ok(result);
+        return result;
     }
 
     [HttpGet("confirm-email")]
@@ -107,11 +102,8 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
 
     [Authorize]
     [HttpGet("me")]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<Result<LoginCredentials>>(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult> GetUserInfo(CancellationToken cancelToken)
+    public async Task<Result<LoginCredentials>> GetUserInfo(CancellationToken cancelToken)
     {
-        var result = await mediator.Send(new GetUserInfoQuery(), cancelToken);
-        return Ok(result);
+        return await mediator.Send(new GetUserInfoQuery(), cancelToken);
     }
 }

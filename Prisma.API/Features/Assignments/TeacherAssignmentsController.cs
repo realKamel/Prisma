@@ -1,11 +1,12 @@
-﻿using MediatR;
+using Ardalis.Result;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
 using Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
+using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
@@ -16,7 +17,7 @@ namespace Prisma.API.Features.Assignments;
 public class TeacherAssignmentsController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<ActionResult> GetList(
+    public async Task<Result<AssignmentSubmissionsResponseDto>> GetList(
         [FromQuery] string? search,
         [FromQuery] int? lessonId,
         [FromQuery] string? status,
@@ -26,34 +27,34 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
     {
         var result = await sender.Send(
             new GetAssignmentSubmissionsListQuery(search, lessonId, status, page, pageSize), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpGet("{submissionId:int}")]
-    public async Task<ActionResult> GetDetail(int submissionId, CancellationToken ct)
+    public async Task<Result<AssignmentSubmissionDetailDto>> GetDetail(int submissionId, CancellationToken ct)
     {
         var result = await sender.Send(
             new GetAssignmentSubmissionDetailQuery(submissionId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPost("{submissionId:int}/grade")]
-    public async Task<ActionResult> Grade(
+    public async Task<Result> Grade(
         int submissionId,
         [FromBody] GradeSubmissionRequest body,
         CancellationToken ct)
     {
         var result = await sender.Send(
             new GradeAssignmentSubmissionCommand(submissionId, body.Score, body.Note), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 
     [HttpPost("{submissionId:int}/release-lock")]
-    public async Task<ActionResult> ReleaseLock(int submissionId, CancellationToken ct)
+    public async Task<Result> ReleaseLock(int submissionId, CancellationToken ct)
     {
         var result = await sender.Send(
             new ReleaseAssignmentGradingLockCommand(submissionId), ct);
-        return result.Succeeded ? Ok(result) : BadRequest(result);
+        return result;
     }
 }
 

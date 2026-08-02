@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 

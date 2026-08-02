@@ -2,6 +2,7 @@
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 
+namespace Prisma.Domain.Specifications.AuditLogs;
 
 public sealed class EnrollmentWithStudentAndLessonSpec : Specification<Enrollment>
 {

@@ -1,13 +1,12 @@
 ﻿using FluentValidation;
 using Prisma.Application.Common.Validators;
 using Prisma.Application.Common.Validators.ValidationExtensions;
-using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 
 namespace Prisma.Application.Features.Authentication.Commands.EmailVerification;
 
-public class EmailVerificationRequestCommandValidation : AbstractValidator<EmailVerificationRequestCommand>
+public class EmailVerificationRequestCommandValidator : AbstractValidator<EmailVerificationRequestCommand>
 {
-    public EmailVerificationRequestCommandValidation()
+    public EmailVerificationRequestCommandValidator()
     {
         RuleFor(x => x.Email)
             .Email();

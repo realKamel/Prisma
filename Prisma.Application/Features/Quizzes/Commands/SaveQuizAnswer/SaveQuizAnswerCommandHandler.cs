@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
@@ -20,17 +20,17 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             .FirstOrDefaultAsync(new AttemptByIdAndStudentSpecification(request.AttemptId, studentId), ct);
 
         if (attempt is null)
-            return Result.Failure("المحاولة غير موجودة");
+            return Result.Error("المحاولة غير موجودة");
 
         if (attempt.Status != QuizAttemptStatus.InProgress)
-            return Result.Failure("لا يمكن تعديل الإجابات بعد التسليم");
+            return Result.Error("لا يمكن تعديل الإجابات بعد التسليم");
 
         var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>()
         .FirstOrDefaultAsync(new QuizByIdSpecification(attempt.QuizId), ct);
 
         var deadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(5);
         if (DateTimeOffset.UtcNow > deadline)
-            return Result.Failure("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
+            return Result.Error("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
 
         var existing = attempt.Answers.FirstOrDefault(a => a.QuestionId == request.QuestionId);
 
@@ -53,7 +53,7 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         }
 
         await unitOfWork.SaveChangesAsync(ct);
-        return Result.Success("تم حفظ الإجابة");
+        return Result.SuccessWithMessage("تم حفظ الإجابة");
 
     }
 }

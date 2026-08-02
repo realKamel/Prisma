@@ -1,8 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.RevokeLesson;
@@ -22,7 +21,7 @@ public class RevokeLessonCommandHandler(
             cancellationToken);
 
         if (enrollment is null)
-            throw new NotFoundException("Enrollment", $"{request.StudentId}-{request.LessonId}");
+            return Result.NotFound($"Enrollment with id '{request.StudentId}-{request.LessonId}' was not found");
 
         // Soft delete — row stays in DB, access is revoked
         enrollment.IsDeleted = true;
@@ -32,6 +31,6 @@ public class RevokeLessonCommandHandler(
         enrollmentRepo.Update(enrollment);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success("Lesson access revoked successfully.");
+        return Result.SuccessWithMessage("Lesson access revoked successfully.");
     }
 }

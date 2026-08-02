@@ -1,6 +1,6 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -19,15 +19,15 @@ public class OverrideAttemptScoreCommandHandler(IUnitOfWork unitOfWork)
             new AttemptWithQuizSpecification(request.AttemptId), ct);
 
         if (attempt is null)
-            return Result<OverrideScoreResultDto>.Failure("المحاولة غير موجودة");
+            return Result<OverrideScoreResultDto>.Error("المحاولة غير موجودة");
 
         // Can only override score for graded or submitted (held for security review) attempts
         if (attempt.Status == QuizAttemptStatus.InProgress)
-            return Result<OverrideScoreResultDto>.Failure("الطالب لسه في الاختبار");
+            return Result<OverrideScoreResultDto>.Error("الطالب لسه في الاختبار");
 
         // Penalty can't exceed the current degree
         if (request.PenaltyScore > attempt.Degree)
-            return Result<OverrideScoreResultDto>.Failure($"الخصم ({request.PenaltyScore}) أكبر من درجة الطالب الحالية ({attempt.Degree})");
+            return Result<OverrideScoreResultDto>.Error($"الخصم ({request.PenaltyScore}) أكبر من درجة الطالب الحالية ({attempt.Degree})");
 
         // Apply penalty
         attempt.PenaltyScore = request.PenaltyScore;

@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -23,12 +23,12 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             .FirstOrDefaultAsync(new QuizWithQuestionsAndLessonSpecification(request.QuizId), ct);
 
         if (quiz is null)
-            return Result<QuizTakingDto>.Failure("الاختبار غير موجود");
+            return Result<QuizTakingDto>.Error("الاختبار غير موجود");
 
         var now = DateTimeOffset.UtcNow;
 
         if (quiz.AvailableFrom.HasValue && quiz.AvailableFrom > now)
-            return Result<QuizTakingDto>.Failure("الاختبار غير متاح حاليًا");
+            return Result<QuizTakingDto>.Error("الاختبار غير متاح حاليًا");
 
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
 
@@ -41,18 +41,18 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             if (now >= deadline)
             {
                 await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
-                return Result<QuizTakingDto>.Failure("انتهى وقت هذه المحاولة"); 
+                return Result<QuizTakingDto>.Error("انتهى وقت هذه المحاولة"); 
 
             }
         }
 
         if (attempt is not null && attempt.Status != QuizAttemptStatus.InProgress)
-            return Result<QuizTakingDto>.Failure("سبق أن قمت بتسليم هذا الاختبار");
+            return Result<QuizTakingDto>.Error("سبق أن قمت بتسليم هذا الاختبار");
 
         if (attempt is null)
         {
             if (quiz.DueDate.HasValue && quiz.DueDate < now)
-                return Result<QuizTakingDto>.Failure("انتهى موعد هذا الاختبار");
+                return Result<QuizTakingDto>.Error("انتهى موعد هذا الاختبار");
 
             attempt = new QuizAttempt
             {

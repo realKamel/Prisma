@@ -1,12 +1,12 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
+
 public class DeleteSubmissionCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
@@ -16,21 +16,21 @@ public class DeleteSubmissionCommandHandler(
     {
         var studentId = currentUser.UserId;
         if (studentId is null)
-            throw new UnauthorizedException("سجل دخولك اولا");
+            return Result.Unauthorized("سجل دخولك اولا");
 
         var assignmentRepo = unitOfWork.GetOrCreateRepository<Assignment, int>();
         var assignment = await assignmentRepo.FirstOrDefaultAsync(
             new AssignmentWithEnrollmentSpec(request.LessonId), cancellationToken);
 
         if (assignment is null)
-            throw new NotFoundException(nameof(Assignment), request.LessonId);
+            return Result.NotFound($"{nameof(Assignment)} with id '{request.LessonId}' was not found");
 
         if (assignment.DueDate < DateTimeOffset.UtcNow)
-            throw new BadRequestException("انتهى الموعد النهائي للتسليم");
+            return Result.Error("انتهى الموعد النهائي للتسليم");
 
         var submission = assignment.Submissions.FirstOrDefault(s => s.StudentId == studentId);
         if (submission is null)
-            throw new NotFoundException(nameof(AssignmentSubmission), request.LessonId);
+            return Result.NotFound($"{nameof(AssignmentSubmission)} with id '{request.LessonId}' was not found");
 
         try
         {

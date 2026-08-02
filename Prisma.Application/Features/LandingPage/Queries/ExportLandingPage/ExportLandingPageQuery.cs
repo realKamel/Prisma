@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 namespace Prisma.Application.Features.LandingPage.Queries.ExportLandingPage;
 

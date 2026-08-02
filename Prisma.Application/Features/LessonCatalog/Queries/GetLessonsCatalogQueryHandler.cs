@@ -1,10 +1,9 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -20,16 +19,17 @@ public class GetLessonsCatalogQueryHandler(
         CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null)
-            throw new UnauthorizedException();
+            return Result.Unauthorized("Unauthorized");
 
         var studentId = currentUser.UserId.Value;
 
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var student = await studentRepo.GetByIdAsync(studentId, cancellationToken) ?? throw new UnauthorizedException();
-
+        var student = await studentRepo.GetByIdAsync(studentId, cancellationToken);
+        if (student is null)
+            return Result.Unauthorized("Unauthorized");
 
         if (student.AcademicYearId is null)
-            throw new StudentAcademicYearNotSetException(studentId);
+            return Result.Error($"Student {studentId} has no academic year assigned.");
 
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();

@@ -1,8 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Exceptions;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
@@ -16,7 +15,7 @@ public class LoginCommandHandler(
         var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Phone, cancellationToken);
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
-            throw new BadRequestException("Invalid credentials");
+            return Result.Error("Invalid credentials");
 
         var roles = (await identityService.GetRolesAsync(user)).ToList();
 

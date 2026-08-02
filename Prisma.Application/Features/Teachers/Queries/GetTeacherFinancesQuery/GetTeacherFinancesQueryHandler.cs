@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
@@ -9,17 +9,21 @@ using Prisma.Domain.Specifications.Teacher;
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 
 public class GetTeacherFinancesQueryHandler(
-    IUnitOfWork _unitOfWork, ICurrentUserService _currentUserService
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetTeacherFinances.GetTeacherFinancesQuery, Result<List<RawTransactionDto>>>
 {
-    public async Task<Result<List<RawTransactionDto>>> Handle(GetTeacherFinances.GetTeacherFinancesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<RawTransactionDto>>> Handle(GetTeacherFinances.GetTeacherFinancesQuery request,
+        CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
-        if (userId is null)
-            if (userId is null)
-                throw new UnauthorizedAccessException("User is not authenticated.");
+        var userId = currentUserService.UserId;
 
-        var paymentRepository = _unitOfWork.GetOrCreateRepository<Payment, int>();
+        if (userId is null)
+        {
+            return Result.Unauthorized("User is not authenticated.");
+        }
+
+        var paymentRepository = unitOfWork.GetOrCreateRepository<Payment, int>();
 
         var spec = new TeacherFinancesSpecification();
         var payments = await paymentRepository.ListAsync(spec, cancellationToken);
@@ -32,6 +36,6 @@ public class GetTeacherFinancesQueryHandler(
             Date: p.PaidAt?.ToString("yyyy-MM-dd") ?? string.Empty
         )).ToList();
 
-        return Result<List<RawTransactionDto>>.Success(transactionsList);
+        return transactionsList;
     }
 }

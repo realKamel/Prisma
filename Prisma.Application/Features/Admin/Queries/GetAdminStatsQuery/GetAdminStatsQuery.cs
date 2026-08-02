@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using MediatR;
-using Prisma.Application.Common.Responses.Generic;
 
-namespace Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
+using MediatR;
+using Ardalis.Result;
+
+namespace Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 
 public record GetAdminStatsQuery() : IRequest<Result<AdminStatsResponseDto>>;
 
@@ -17,11 +16,11 @@ public record AdminStatsResponseDto(
 public record KpiDto(
     string Id,
     decimal Value,
-    decimal Delta 
+    decimal Delta
 );
 
 public record RevenueWeekDto(
-    DateTimeOffset Date, 
+    DateTimeOffset Date,
     decimal Amount,
     bool IsToday
 );

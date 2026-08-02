@@ -1,3 +1,4 @@
+using Ardalis.Result;
 using MediatR;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.UpdateStudent;
@@ -13,4 +14,4 @@ public record UpdateStudentCommand(
     string? NewPassword,
     int Grade,
     string? ParentMobile
-) : IRequest<bool>;
+) : IRequest<Result>;

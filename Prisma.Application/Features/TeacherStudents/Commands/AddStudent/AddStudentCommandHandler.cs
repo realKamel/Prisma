@@ -2,9 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
@@ -18,12 +17,12 @@ public class AddStudentCommandHandler(
 
     public async Task<Result> Handle(AddStudentCommand request, CancellationToken cancellationToken)
     {
-        var TeacherId = currentUserService.UserId ;
+        var TeacherId = currentUserService.UserId;
 
         var existingUser = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Mobile);
         if (existingUser is not null)
         {
-            throw new BadRequestException("Student with this email or phone already exists.");
+            return Result.Error("Student with this email or phone already exists.");
         }
 
         var student = new Student
@@ -47,11 +46,11 @@ public class AddStudentCommandHandler(
         var result = await identityService.CreateAsync(student, request.Password);
         if (!result.Succeeded)
         {
-            throw new BadRequestException("Failed to create student. Please try again.");
+            return Result.Error("Failed to create student. Please try again.");
         }
 
         await identityService.AddToRoleAsync(student, AppRoles.Student);
 
-        return Result.Success("Student created successfully.");
+        return Result.SuccessWithMessage("Student created successfully.");
     }
 }

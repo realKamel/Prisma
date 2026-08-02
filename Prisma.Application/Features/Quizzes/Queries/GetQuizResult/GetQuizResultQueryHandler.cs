@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -24,14 +24,14 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
 
         
         if (quiz is null)
-            return Result<QuizResultDto>.Failure("الاختبار غير موجود");
+            return Result<QuizResultDto>.Error("الاختبار غير موجود");
 
         var attempt = await unitOfWork.GetOrCreateRepository<QuizAttempt, int>().
             FirstOrDefaultAsync(
     new StudentAttemptWithAnswersSpecification(quiz.Id, studentId), ct);
 
         if (attempt is null || attempt.Status == QuizAttemptStatus.InProgress)
-            return Result<QuizResultDto>.Failure("لم يتم تسليم هذا الاختبار بعد");
+            return Result<QuizResultDto>.Error("لم يتم تسليم هذا الاختبار بعد");
 
         var now = DateTimeOffset.UtcNow;
 

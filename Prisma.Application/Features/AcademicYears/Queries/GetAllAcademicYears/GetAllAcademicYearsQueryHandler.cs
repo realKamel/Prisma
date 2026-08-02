@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;

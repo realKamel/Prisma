@@ -1,12 +1,11 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Students.Commands.UpdateStudentProfileCommand;
@@ -21,13 +20,13 @@ public class UpdateStudentProfileCommandHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var studentRepository = _unitOfWork.GetOrCreateRepository<Student, Guid>();
         var student = await studentRepository.GetByIdAsync(userId.Value, cancellationToken);
 
         if (student == null)
-            throw new NotFoundException("Student", userId.Value);
+            return Result.NotFound($"Student with id '{userId.Value}' was not found");
 
         student.FirstName = request.FirstName.Trim();
         student.SecondName = request.secondName.Trim();
@@ -37,7 +36,7 @@ public class UpdateStudentProfileCommandHandler(
         student.AcademicYearId = request.Grade;
         student.ParentPhoneNumber = request.ParentMobile.Trim();
 
-     
+
         studentRepository.Update(student);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

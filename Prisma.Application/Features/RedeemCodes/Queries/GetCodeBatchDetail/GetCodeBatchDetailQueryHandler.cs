@@ -1,15 +1,14 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
 namespace Prisma.Application.Features.RedeemCodes.Queries.GetCodeBatchDetail;
 
-internal class GetCodeBatchDetailQueryHandler(
+public class GetCodeBatchDetailQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GetCodeBatchDetailQuery, Result<CodeBatchDetailDto>>
@@ -19,7 +18,7 @@ internal class GetCodeBatchDetailQueryHandler(
         CancellationToken ct)
     {
         if (currentUser.UserId is not { } teacherId)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var repo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
 
@@ -30,7 +29,7 @@ internal class GetCodeBatchDetailQueryHandler(
         var batchWithDetails = await repo.FirstOrDefaultAsync(spec, ct);
 
         if (batchWithDetails is null)
-            throw new NotFoundException("Code batch not found.", request.BatchId);
+            return Result.NotFound($"Code batch with id '{request.BatchId}' was not found");
 
         var dto = new CodeBatchDetailDto
         {

@@ -3,7 +3,7 @@ using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Ai;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RAG.Dto;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;

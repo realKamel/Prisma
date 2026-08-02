@@ -1,6 +1,6 @@
 using MediatR;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Authentication.Commands.Logout;
 
-public record LogoutCommand(string? AccessToken) : IRequest;
+public record LogoutCommand(string? AccessToken) : IRequest<Result>;

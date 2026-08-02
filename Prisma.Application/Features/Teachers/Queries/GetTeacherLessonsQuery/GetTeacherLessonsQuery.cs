@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 public record GetTeacherLessonsQuery : IRequest<Result<List<TeacherLessonDto>>>;

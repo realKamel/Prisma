@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Quizzes.Commands.ReportSecurityEvent;

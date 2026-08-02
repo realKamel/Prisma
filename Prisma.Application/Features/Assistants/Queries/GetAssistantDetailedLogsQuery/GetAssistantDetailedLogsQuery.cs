@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
 
 public record GetAssistantDetailedLogsQuery(int Take) : IRequest<Result<GetAssistantDetailedLogsResponseDto>>;
 

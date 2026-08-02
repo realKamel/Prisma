@@ -1,5 +1,5 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Assistants.Dtos;
 
 namespace Prisma.Application.Features.Assistants.Commands.CreateAssistant;

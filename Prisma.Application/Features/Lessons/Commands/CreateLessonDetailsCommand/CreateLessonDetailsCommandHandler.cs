@@ -1,14 +1,13 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -27,15 +26,15 @@ public class CreateLessonDetailsCommandHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
-            throw new UnauthorizedException("User not found.");
+            return Result.Unauthorized("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("Only teachers and assistants can create lessons.");
+            return Result.Unauthorized("Only teachers and assistants can create lessons.");
 
         var lesson = new Lesson
         {
@@ -94,7 +93,7 @@ public class CreateLessonDetailsCommandHandler(
                 new AcademicYearsByIdsSpecification(academicYearIds), cancellationToken);
 
             if (validYears.Count != academicYearIds.Count)
-                throw new BadRequestException("invalid academic year");
+                return Result.Error("invalid academic year");
 
             foreach (var yearId in academicYearIds)
             {

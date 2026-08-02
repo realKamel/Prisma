@@ -1,12 +1,11 @@
-﻿using System.Globalization;
+using System.Globalization;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -22,22 +21,22 @@ public class GetLessonMaterialQueryHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
-            throw new UnauthorizedException("User not found.");
+            return Result.Unauthorized("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Student) && !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("You are not authorized to view lesson materials.");
+            return Result.Unauthorized("You are not authorized to view lesson materials.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonMaterialsSpecification(request.LessonId);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.LessonId);
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
         var materials = new List<LessonMaterialDto>();
 

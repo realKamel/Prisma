@@ -1,7 +1,7 @@
 using MediatR;
+using Ardalis.Result;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Sections;
 
@@ -9,13 +9,13 @@ namespace Prisma.Application.Features.Sections.Commands.CompleteSection;
 
 public class CompleteSectionCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<CompleteSectionCommand>
+    ICurrentUserService currentUserService) : IRequestHandler<CompleteSectionCommand, Result>
 {
-    public async Task Handle(CompleteSectionCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(CompleteSectionCommand request, CancellationToken cancellationToken)
     {
         var studentId = currentUserService.UserId;
         if (studentId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var progressRepo = unitOfWork.GetOrCreateRepository<SectionProgress, int>();
 
@@ -24,12 +24,14 @@ public class CompleteSectionCommandHandler(
             cancellationToken);
 
         if (progress is null)
-            throw new NotFoundException(nameof(SectionProgress), request.SectionId);
+            return Result.NotFound($"SectionProgress with id '{request.SectionId}' was not found");
 
         progress.IsCompleted = true;
         progress.Percentage = 100;
 
         progressRepo.Update(progress);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 }

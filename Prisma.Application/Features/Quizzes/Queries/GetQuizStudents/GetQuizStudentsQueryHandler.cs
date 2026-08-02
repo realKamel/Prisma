@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -21,7 +21,7 @@ public class GetQuizStudentsQueryHandler(IUnitOfWork unitOfWork)
             new QuizWithAttemptsSpecification(request.QuizId), ct);
 
         if (quiz is null)
-            return Result<QuizStudentsResponseDto>.Failure("الاختبار غير موجود");
+            return Result<QuizStudentsResponseDto>.Error("الاختبار غير موجود");
 
         // 2. Build attempt lookup by studentId
         var attemptByStudent = quiz.Attempts.ToDictionary(a => a.StudentId);

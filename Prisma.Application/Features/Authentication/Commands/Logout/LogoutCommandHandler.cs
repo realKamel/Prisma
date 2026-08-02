@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -9,20 +10,20 @@ using Prisma.Domain.Entities.UserAggregate;
 namespace Prisma.Application.Features.Authentication.Commands.Logout;
 
 public class LogoutCommandHandler(IJwtTokenService jwtTokenService, UserManager<User> userManager)
-    : IRequestHandler<LogoutCommand>
+    : IRequestHandler<LogoutCommand, Result>
 {
-    public async Task Handle(LogoutCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(request.AccessToken))
         {
-            return;
+            return Result.Invalid();
         }
 
         var principal = jwtTokenService.GetPrincipalFromExpiredToken(request.AccessToken);
 
         if (principal is null)
         {
-            return;
+            return Result.Invalid();
         }
 
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
@@ -31,14 +32,14 @@ public class LogoutCommandHandler(IJwtTokenService jwtTokenService, UserManager<
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return;
+            return Result.Unauthorized();
         }
 
-        var user = await userManager.FindByEmailAsync(userId);
+        var user = await userManager.FindByIdAsync(userId);
 
         if (user is null)
         {
-            return;
+            return Result.Unauthorized();
         }
 
         user.RefreshToken = null;
@@ -47,5 +48,7 @@ public class LogoutCommandHandler(IJwtTokenService jwtTokenService, UserManager<
         user.IsOnline = false;
 
         await userManager.UpdateAsync(user);
+
+        return Result.Success();
     }
 }

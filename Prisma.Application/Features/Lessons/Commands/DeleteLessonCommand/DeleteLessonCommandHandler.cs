@@ -1,11 +1,10 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -23,33 +22,33 @@ public class DeleteLessonCommandHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User must be authenticated to delete a lesson.");
+            return Result.Unauthorized("User must be authenticated to delete a lesson.");
 
         var user = await _userManager.FindByIdAsync(userId.ToString());
 
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("Only teachers, assistants, and admins can delete lessons");
+        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
+            return Result.Unauthorized("Only teachers, assistants, and admins can delete lessons");
 
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(new LessonWithEnrollmentSpec(request.LessonId), cancellationToken);
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.LessonId);
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
         if (lesson.Enrollments != null)
             lesson.Enrollments.Clear();
-        
-        if(lesson.ImageThumbnailUrl!=null)
-            await storageService.DeleteFileAsync(storageService.DefaultBucketName,lesson.ImageThumbnailUrl);
+
+        if (lesson.ImageThumbnailUrl != null)
+            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl);
 
         if (lesson.Sections != null)
-            foreach(var section in lesson.Sections)
-                if(section.AssetId!=null)
+            foreach (var section in lesson.Sections)
+                if (section.AssetId != null)
                     await videoStorageService.DeleteVideoAsync(section.AssetId);
-                    
+
         lessonRepository.Delete(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return Result<string>.Success("Lesson deleted successfully");

@@ -1,5 +1,5 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 

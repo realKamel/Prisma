@@ -3,10 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Assistants.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Assistants.Commands.UpdatePermissions;
 
@@ -21,7 +20,7 @@ public class UpdatePermissionCommandHandler(IIdentityService service, UserManage
 
         if (assistant is null)
         {
-            throw new NotFoundException(nameof(Assistant), request.Id);
+            return Result.NotFound($"Assistant with id '{request.Id}' was not found");
         }
 
         var permissions = request

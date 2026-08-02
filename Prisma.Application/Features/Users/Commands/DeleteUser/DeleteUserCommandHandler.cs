@@ -1,8 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Users.Commands.DeleteUser;
 
@@ -12,13 +11,18 @@ public class DeleteUserCommandHandler(IIdentityService identityService)
     public async Task<Result> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
         var user = await identityService.FindByIdAsync(request.Id, cancellationToken);
+
         if (user is null)
-            throw new NotFoundException(nameof(User), request.Id);
+        {
+            return Result.NotFound($"User with id '{request.Id}' was not found");
+        }
+
 
         var result = await identityService.DeleteAsync(user);
-        if (!result.Succeeded)
-            throw new BadRequestException(string.Join("\n", result.Errors.Select(e => e.Description)));
 
-        return Result.Success("User deleted successfully.");
+        if (!result.Succeeded)
+            return Result.Error(string.Join("\n", result.Errors.Select(e => e.Description)));
+
+        return Result.NoContent();
     }
 }

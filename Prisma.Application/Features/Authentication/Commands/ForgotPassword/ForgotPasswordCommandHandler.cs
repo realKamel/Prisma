@@ -1,11 +1,9 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
-using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 
@@ -18,7 +16,7 @@ public class ForgotPasswordCommandHandler(
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user is null)
-            return Result.Success("If this email exists, a reset code was sent.");
+            return Result.SuccessWithMessage("If this email exists, a reset code was sent.");
 
         var code = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
@@ -28,7 +26,7 @@ public class ForgotPasswordCommandHandler(
         await _userManager.UpdateAsync(user);
 
         await _emailService.SendAsync(user.Email!, "Reset Password", $"Your code is: {code}");
-        return Result.Success("If this email exists, a reset code was sent.");
+        return Result.SuccessWithMessage("If this email exists, a reset code was sent.");
     }
 }
 
@@ -39,7 +37,7 @@ public class ConfirmCodeCommandHandler(
     public async Task<Result> Handle(ConfirmCodeCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) throw new BadRequestException("Code Invalid");
+        if (user is null) return Result.Error("Code Invalid");
         user.ResetPasswordCodeAttemptCount++;
         await _userManager.UpdateAsync(user);
 
@@ -48,13 +46,13 @@ public class ConfirmCodeCommandHandler(
             user.PasswordResetCode = null;
             user.PasswordResetCodeExpiry = null;
             await _userManager.UpdateAsync(user);
-            throw new BadRequestException("Code Invalid");
+            return Result.Error("Code Invalid");
         }
 
         if (user.PasswordResetCodeExpiry is null || DateTimeOffset.UtcNow >= user.PasswordResetCodeExpiry)
-            throw new BadRequestException("Code Invalid");
+            return Result.Error("Code Invalid");
         if (user.PasswordResetCode is null || user.PasswordResetCode != request.Code)
-            throw new BadRequestException("Code Invalid");
+            return Result.Error("Code Invalid");
 
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiry = null;
@@ -72,14 +70,14 @@ public class ResetPasswordCommandHandler(
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) throw new BadRequestException("something went wrong");
+        if (user is null) return Result.Error("something went wrong");
 
-        if (!user.PasswordResetConfirmed) throw new BadRequestException("something went wrong");
+        if (!user.PasswordResetConfirmed) return Result.Error("something went wrong");
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 
         if (!result.Succeeded)
-            throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            return Result.Error(string.Join(", ", result.Errors.Select(e => e.Description)));
 
         user.PasswordResetConfirmed = false;
 

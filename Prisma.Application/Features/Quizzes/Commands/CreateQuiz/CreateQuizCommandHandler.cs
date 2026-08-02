@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -24,10 +24,10 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
              lesson = await lessonRepo.FirstOrDefaultAsync(new LessonByIdSpecification( request.LessonId!.Value), ct);
 
             if (lesson is null)
-                return Result<TeacherQuizListItemDto>.Failure("الحصة غير موجودة");
+                return Result<TeacherQuizListItemDto>.Error("الحصة غير موجودة");
 
             if (lesson.QuizId.HasValue)
-                return Result<TeacherQuizListItemDto>.Failure("الحصة دي عندها اختبار بالفعل");
+                return Result<TeacherQuizListItemDto>.Error("الحصة دي عندها اختبار بالفعل");
         }
 
         // بناء الأسئلة + الاختيارات

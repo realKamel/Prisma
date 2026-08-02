@@ -1,15 +1,14 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
 namespace Prisma.Application.Features.RedeemCodes.Queries.GetCodeLessonOptions;
 
-internal class GetCodeLessonOptionsQueryHandler(
+public class GetCodeLessonOptionsQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GetCodeLessonOptionsQuery, Result<List<CodeLessonOptionDto>>>
@@ -19,7 +18,7 @@ internal class GetCodeLessonOptionsQueryHandler(
         CancellationToken ct)
     {
         if (currentUser.UserId is not { } teacherId)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var repo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
         var links = await repo.ListAsync(
@@ -32,9 +31,7 @@ internal class GetCodeLessonOptionsQueryHandler(
             .Select(g => g.First())
             .Select(x => new CodeLessonOptionDto
             {
-                Id = x.LessonId,
-                Name = x.Lesson.Title ?? string.Empty,
-                AcademicYearId = x.AcademicYearId,
+                Id = x.LessonId, Name = x.Lesson.Title ?? string.Empty, AcademicYearId = x.AcademicYearId,
             })
             .ToList();
 

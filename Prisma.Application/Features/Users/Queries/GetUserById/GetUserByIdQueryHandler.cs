@@ -1,10 +1,9 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Users.Queries.GetUserById;
 
@@ -15,7 +14,7 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
     {
         var user = await identityService.FindByIdAsync(request.Id, cancellationToken);
         if (user is null)
-            throw new NotFoundException(nameof(User), request.Id);
+            return Result.NotFound($"User with id '{request.Id}' was not found");
 
         var role = user switch
         {

@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teacher;
 
@@ -20,7 +19,7 @@ public class GetTeacherLessonsQueryHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var spec = new TeacherLessonsSpecification();

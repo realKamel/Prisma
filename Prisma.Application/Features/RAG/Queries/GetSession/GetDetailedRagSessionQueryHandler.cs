@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.AI;
 using Prisma.Application.Abstractions.Ai;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
@@ -21,7 +21,7 @@ public class
 
         if (session is null)
         {
-            return Result<GetDetailedRagSessionQueryResponse>.Failure("Session not found");
+            return Result<GetDetailedRagSessionQueryResponse>.Error("Session not found");
         }
 
         var chatMessages =

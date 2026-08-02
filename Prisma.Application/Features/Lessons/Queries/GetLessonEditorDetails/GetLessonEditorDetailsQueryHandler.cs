@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -23,7 +22,7 @@ public class GetLessonEditorDetailsQueryHandler(
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.Id);
+            return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
         var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id);
         var prerequisitesOptions = (await lessonRepository.ListAsync(prerequisiteSpec, cancellationToken))

@@ -1,6 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
@@ -9,9 +8,9 @@ using Prisma.Domain.Specifications.Admin;
 namespace Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 
 public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
-    : IRequestHandler<AdminDashboard.Queries.GetAdminActivities.GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
+    : IRequestHandler<GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
 {
-    public async Task<Result<List<AdminActivityDto>>> Handle(AdminDashboard.Queries.GetAdminActivities.GetAdminActivitiesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<AdminActivityDto>>> Handle(GetAdminActivitiesQuery request, CancellationToken cancellationToken)
     {
         var enrollmentRepo = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
@@ -32,7 +31,7 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
                 Type: "enroll",
                 EntityId: enroll.StudentId?.ToString() ?? string.Empty,
                 Details: enroll.Lesson?.Title ?? string.Empty,
-                MetaInfo: enroll.EnrollmentMethod.ToString(), 
+                MetaInfo: enroll.EnrollmentMethod.ToString(),
                 ActivityDate: enrollDate
             );
 

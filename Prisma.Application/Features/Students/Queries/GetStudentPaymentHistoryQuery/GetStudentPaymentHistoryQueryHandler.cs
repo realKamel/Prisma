@@ -1,14 +1,12 @@
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 
@@ -25,7 +23,7 @@ public class GetStudentPaymentHistoryQueryHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
 

@@ -1,5 +1,5 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 
 namespace Prisma.Application.Features.Users.Queries.GetAllUsers;

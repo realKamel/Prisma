@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 

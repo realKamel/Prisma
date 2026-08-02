@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
-using Prisma.Application.Common.Responses;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -23,13 +23,13 @@ public class GradeWrittenAnswersCommandHandler(IUnitOfWork unitOfWork)
             new AttemptWithAnswersAndQuizSpecification(request.AttemptId), ct);
 
         if (attempt is null)
-            return Result<GradeWrittenAnswersResultDto>.Failure("المحاولة غير موجودة");
+            return Result<GradeWrittenAnswersResultDto>.Error("المحاولة غير موجودة");
 
         if (attempt.Status == QuizAttemptStatus.InProgress)
-            return Result<GradeWrittenAnswersResultDto>.Failure("الطالب لسه في الاختبار");
+            return Result<GradeWrittenAnswersResultDto>.Error("الطالب لسه في الاختبار");
 
         if (attempt.Status == QuizAttemptStatus.Graded)
-            return Result<GradeWrittenAnswersResultDto>.Failure("المحاولة دي متصححة بالفعل");
+            return Result<GradeWrittenAnswersResultDto>.Error("المحاولة دي متصححة بالفعل");
 
         // Build answer lookup for quick access
         var answersById = attempt.Answers.ToDictionary(a => a.Id);
@@ -37,18 +37,18 @@ public class GradeWrittenAnswersCommandHandler(IUnitOfWork unitOfWork)
         foreach (var grade in request.Grades)
         {
             if (!answersById.TryGetValue(grade.AnswerId, out var answer))
-                return Result<GradeWrittenAnswersResultDto>.Failure($"الإجابة رقم {grade.AnswerId} غير موجودة في هذه المحاولة");
+                return Result<GradeWrittenAnswersResultDto>.Error($"الإجابة رقم {grade.AnswerId} غير موجودة في هذه المحاولة");
 
             // Only written answers should be graded manually
             if (answer.ChoiceId.HasValue)
-                return Result<GradeWrittenAnswersResultDto>.Failure($"الإجابة رقم {grade.AnswerId} MCQ ومش محتاجة تصحيح يدوي");
+                return Result<GradeWrittenAnswersResultDto>.Error($"الإجابة رقم {grade.AnswerId} MCQ ومش محتاجة تصحيح يدوي");
 
             // Validate score doesn't exceed question max degree
             var questionLink = attempt.Quiz.Questions
                 .FirstOrDefault(ql => ql.QuestionId == answer.QuestionId);
 
             if (questionLink is not null && grade.Score > questionLink.Degree)
-                return Result<GradeWrittenAnswersResultDto>.Failure($"الدرجة المدخلة أكبر من الدرجة الكاملة للسؤال ({questionLink.Degree})");
+                return Result<GradeWrittenAnswersResultDto>.Error($"الدرجة المدخلة أكبر من الدرجة الكاملة للسؤال ({questionLink.Degree})");
 
             answer.Score = grade.Score;
             answer.IsCorrect = grade.Score > 0;

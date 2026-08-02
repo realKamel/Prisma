@@ -1,8 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 
@@ -21,7 +20,7 @@ public class GetStudentHistoryQueryHandler(ICurrentUserService currentUserServic
 
         if (email is null)
         {
-            throw new UnauthorizedException("Login First");
+            return Result.Unauthorized("Login First");
         }
 
         var repo = unitOfWork.GetOrCreateRepository<Student, Guid>();
@@ -31,7 +30,7 @@ public class GetStudentHistoryQueryHandler(ICurrentUserService currentUserServic
                 cancellationToken);
         if (result is null)
         {
-            throw new NotFoundException("Student", email);
+            return Result.NotFound($"Student with id '{email}' was not found");
         }
 
         var userId = result.Id;

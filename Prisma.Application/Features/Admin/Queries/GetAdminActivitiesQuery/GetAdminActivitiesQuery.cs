@@ -1,17 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
-namespace Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
+namespace Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 
 public record GetAdminActivitiesQuery() : IRequest<Result<List<AdminActivityDto>>>;
 
 public record AdminActivityDto(
     string Id,
-    string Type,         
-    string EntityId,    
-    string Details,     
-    string MetaInfo,    
-    DateTimeOffset ActivityDate 
+    string Type,
+    string EntityId,
+    string Details,
+    string MetaInfo,
+    DateTimeOffset ActivityDate
 );

@@ -1,13 +1,12 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -21,19 +20,20 @@ public class UpdateLessonDetailsCommandHandler(
     IVideoStorageService videoStorageService)
     : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
 {
-    public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request,
+        CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
-            throw new UnauthorizedException("User not found.");
+            return Result.Unauthorized("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("Only teachers, assistants, and admins can modify lesson structures.");
+            return Result.Unauthorized("Only teachers, assistants, and admins can modify lesson structures.");
         var storageKeysToDelete = new List<string>();
         var assetsToDelete = new List<string>();
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
@@ -42,7 +42,7 @@ public class UpdateLessonDetailsCommandHandler(
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.Id);
+            return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
         lesson.Title = request.Title;
         lesson.Description = request.Description;
@@ -60,9 +60,9 @@ public class UpdateLessonDetailsCommandHandler(
             foreach (var s in existingSections.Where(s => !incomingUrls.Contains(s.ContentURL)))
             {
                 lesson.Sections.Remove(s);
-                if(s.AssetId!=null)
+                if (s.AssetId != null)
                     assetsToDelete.Add(s.AssetId);
-            } 
+            }
 
             int order = 1;
             int chapterIndex = 0;
@@ -74,9 +74,7 @@ public class UpdateLessonDetailsCommandHandler(
                 {
                     var newSection = new Section
                     {
-                        Title = ch.Name,
-                        ContentURL = ch.VideoFileName,
-                        SortOrder = order++
+                        Title = ch.Name, ContentURL = ch.VideoFileName, SortOrder = order++
                     };
                     lesson.Sections.Add(newSection);
                     newSections.Add((newSection, chapterIndex));
@@ -86,6 +84,7 @@ public class UpdateLessonDetailsCommandHandler(
                     section.Title = ch.Name;
                     section.SortOrder = order++;
                 }
+
                 chapterIndex++;
             }
         }
@@ -96,7 +95,8 @@ public class UpdateLessonDetailsCommandHandler(
             {
                 var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
                 using var stream = request.AssignmentFile.OpenReadStream();
-                await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.AssignmentFile.ContentType, cancellationToken);
+                await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
+                    request.AssignmentFile.ContentType, cancellationToken);
 
                 if (lesson.Assignment is null)
                 {
@@ -135,7 +135,8 @@ public class UpdateLessonDetailsCommandHandler(
         {
             var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
             using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream, request.ImageFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
+                request.ImageFile.ContentType, cancellationToken);
 
             if (!string.IsNullOrEmpty(lesson.ImageThumbnailUrl))
                 storageKeysToDelete.Add(lesson.ImageThumbnailUrl);
@@ -157,26 +158,24 @@ public class UpdateLessonDetailsCommandHandler(
             var toAdd = incomingYearIds.Except(existingYearIds);
             foreach (var yearId in toAdd)
             {
-                lesson.AcademicYears.Add(new AcademicYearLesson
-                {
-                    AcademicYearId = yearId,
-                    LessonId = lesson.Id
-                });
+                lesson.AcademicYears.Add(new AcademicYearLesson { AcademicYearId = yearId, LessonId = lesson.Id });
             }
         }
+
         lessonRepository.Update(lesson);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         foreach (var asset in assetsToDelete)
         {
             try
             {
-                await videoStorageService.DeleteVideoAsync(asset,cancellationToken);
+                await videoStorageService.DeleteVideoAsync(asset, cancellationToken);
             }
             catch
             {
                 // TODO log
             }
         }
+
         foreach (var key in storageKeysToDelete)
         {
             try
@@ -188,6 +187,7 @@ public class UpdateLessonDetailsCommandHandler(
                 // TODO log
             }
         }
+
         return Result<UpdateLessonResponse>.Success(
             new UpdateLessonResponse(
                 newSections.Select(x => new NewSectionResult(x.Section.Id, x.ChapterIndex)).ToList()));

@@ -1,9 +1,8 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Users;
 
@@ -20,7 +19,7 @@ public class GetTeacherProfileQueryHandler(
         var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.TeacherId), cancellationToken);
 
         if (user is not Teacher teacher)
-            throw new NotFoundException(nameof(Teacher), request.TeacherId);
+            return Result.NotFound($"Teacher with id '{request.TeacherId}' was not found");
 
         var name = string.Join(" ", new[] { teacher.FirstName, teacher.SecondName, teacher.ThirdName, teacher.LastName }
             .Where(p => !string.IsNullOrWhiteSpace(p)));
@@ -29,13 +28,13 @@ public class GetTeacherProfileQueryHandler(
 
         var stats = new List<ProfileStatDto>
         {
-            new("أرباح هذا الشهر", $"{dashboardResult.Data.Stats.TotalEarningsForThisMonth:N0}", "text-[var(--purple-lt)]"),
-            new("الطلاب النشطون", dashboardResult.Data.Stats.TotalActiveStudents.ToString(), "text-[var(--mint)]"),
-            new("الدروس النشطة (عام للمنصة)", dashboardResult.Data.Stats.TotalActiveLessons.ToString(), "text-[var(--star)]"),
-            new("دروس مكتملة هذا الشهر", dashboardResult.Data.Stats.TotalCompletedLessonsAgainstThisMonth.ToString(), "text-[var(--coral)]"),
+            new("أرباح هذا الشهر", $"{dashboardResult.Value.Stats.TotalEarningsForThisMonth:N0}", "text-[var(--purple-lt)]"),
+            new("الطلاب النشطون", dashboardResult.Value.Stats.TotalActiveStudents.ToString(), "text-[var(--mint)]"),
+            new("الدروس النشطة (عام للمنصة)", dashboardResult.Value.Stats.TotalActiveLessons.ToString(), "text-[var(--star)]"),
+            new("دروس مكتملة هذا الشهر", dashboardResult.Value.Stats.TotalCompletedLessonsAgainstThisMonth.ToString(), "text-[var(--coral)]"),
         };
 
-        var activities = dashboardResult.Data.Logs
+        var activities = dashboardResult.Value.Logs
             .Select(l => new ProfileActivityDto(
                 $"{l.Action} — {l.TableName}",
                 l.CreatedAt?.ToString("yyyy-MM-dd hh:mm tt") ?? "—",

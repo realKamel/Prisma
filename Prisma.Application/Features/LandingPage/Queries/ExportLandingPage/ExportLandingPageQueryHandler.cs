@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -7,8 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Exceptions;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.LandingPage.Queries.ExportLandingPage;
 
@@ -25,7 +24,7 @@ public class ExportLandingPageQueryHandler(UserManager<User> _userManager)
 
         if (teacher == null)
         {
-            throw new NotFoundException("Teacher", request.email);
+            return Result.NotFound($"Teacher with id '{request.email}' was not found");
         }
 
         return Result<TeacherLandingSettings>.Success(teacher.TeacherLandingSettings);

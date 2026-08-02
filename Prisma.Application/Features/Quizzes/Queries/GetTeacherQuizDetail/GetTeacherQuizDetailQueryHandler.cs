@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -22,7 +22,7 @@ public class GetTeacherQuizDetailQueryHandler(IUnitOfWork unitOfWork)
             new TeacherQuizDetailSpecification(request.QuizId), ct);
 
         if (quiz is null)
-            return Result<TeacherQuizDetailDto>.Failure("الاختبار غير موجود");
+            return Result<TeacherQuizDetailDto>.Error("الاختبار غير موجود");
 
 
         // Compute attempts stats

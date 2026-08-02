@@ -1,15 +1,14 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
 namespace Prisma.Application.Features.RedeemCodes.Queries.GetTeacherCodeBatches;
 
-internal class GetTeacherCodeBatchesQueryHandler(
+public class GetTeacherCodeBatchesQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GetTeacherCodeBatchesQuery, Result<List<CodeBatchListItemDto>>>
@@ -19,7 +18,7 @@ internal class GetTeacherCodeBatchesQueryHandler(
         CancellationToken ct)
     {
         if (!currentUser.IsAuthenticated)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var repo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
 

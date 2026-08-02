@@ -1,5 +1,5 @@
 using MediatR;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.SendReport;
 

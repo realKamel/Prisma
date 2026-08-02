@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teacher;
 
@@ -15,7 +15,7 @@ public sealed class UpdateAccentColorCommandHandler(
     {
         if (currentUserService.UserId is not { } teacherId)
         {
-            return Result.Failure("المستخدم غير مصرح له");
+            return Result.Error("المستخدم غير مصرح له");
         }
 
         var repository = unitOfWork.GetOrCreateRepository<Prisma.Domain.Entities.TeacherPreferences, Guid>();
@@ -36,6 +36,6 @@ public sealed class UpdateAccentColorCommandHandler(
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result.Success("تم حفظ اللون بنجاح");
+        return Result.SuccessWithMessage("تم حفظ اللون بنجاح");
     }
 }

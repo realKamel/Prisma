@@ -1,12 +1,11 @@
-﻿using MediatR;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -23,25 +22,25 @@ public class UploadLessonMaterialsCommandHandler(
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var user = await _userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
-            throw new UnauthorizedException("User not found.");
+            return Result.Unauthorized("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher)&& !roles.Contains(AppRoles.Assistant)&& !roles.Contains(AppRoles.Admin))
-            throw new UnauthorizedException("Only teachers and assistants can upload materials to lessons.");
+        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
+            return Result.Unauthorized("Only teachers and assistants can upload materials to lessons.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonMaterialsSpecification(request.LessonId);
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.LessonId);
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
         if (request.Files == null || !request.Files.Any())
-            throw new BadRequestException("No files provided for upload.");
+            return Result.Error("No files provided for upload.");
 
         foreach (var file in request.Files)
         {
@@ -50,7 +49,7 @@ public class UploadLessonMaterialsCommandHandler(
                 var filename = $"material/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
                 using var stream = file.OpenReadStream();
 
-                await storageService.UploadFileAsync(storageService.DefaultBucketName,filename ,stream ,file.ContentType, cancellationToken);
+                await storageService.UploadFileAsync(storageService.DefaultBucketName, filename, stream, file.ContentType, cancellationToken);
 
                 string fileSize = file.Length < 1024 * 1024
                     ? $"{Math.Round((double)file.Length / 1024, 1)} KB"

@@ -1,7 +1,6 @@
 using MediatR;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.RAG.Commands.DeleteSession;
@@ -16,7 +15,7 @@ public class DeleteSessionCommandHandler(IUnitOfWork uow) : IRequestHandler<Dele
 
         if (entity is null)
         {
-            throw new NotFoundException("ChatSession", request.Id);
+            return Result.NotFound($"ChatSession with id '{request.Id}' was not found");
         }
 
         repo.Delete(entity);

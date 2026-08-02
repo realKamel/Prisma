@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -20,14 +19,14 @@ public class GetLessonPlayerQueryHandler(
     {
         var studentId = currentUserService.UserId;
         if (studentId == null)
-            throw new UnauthorizedException("User must be authenticated to access lesson player");
+            return Result.Unauthorized("User must be authenticated to access lesson player");
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonPlayerWithDetailsSpecification(request.id);
         var lesson = await lessonRepo.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.id);
+            return Result.NotFound($"Lesson with id '{request.id}' was not found");
 
         var enrollment = lesson.Enrollments?.FirstOrDefault(e => e.StudentId == studentId.Value);
         var quiz = lesson.Quiz;

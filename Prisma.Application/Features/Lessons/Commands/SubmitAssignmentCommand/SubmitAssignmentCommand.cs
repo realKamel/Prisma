@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
 

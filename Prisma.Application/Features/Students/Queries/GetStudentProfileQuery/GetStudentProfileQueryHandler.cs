@@ -1,14 +1,7 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Ardalis.Specification;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.Students.Queries.GetStudentProfileQuery;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 
@@ -19,11 +12,12 @@ public class GetStudentProfileQueryHandler(
     ICurrentUserService _currentUserService
 ) : IRequestHandler<GetStudentProfileQuery, Result<StudentProfileDto>>
 {
-    public async Task<Result<StudentProfileDto>> Handle(GetStudentProfileQuery request, CancellationToken cancellationToken)
+    public async Task<Result<StudentProfileDto>> Handle(GetStudentProfileQuery request,
+        CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var studentRepository = _unitOfWork.GetOrCreateRepository<Student, Guid>();
 
@@ -31,7 +25,7 @@ public class GetStudentProfileQueryHandler(
         var student = await studentRepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (student == null)
-            throw new NotFoundException("Student", userId.Value);
+            return Result.NotFound($"Student with id '{userId.Value}' was not found");
 
 
         var profileDto = new StudentProfileDto(
@@ -41,11 +35,10 @@ public class GetStudentProfileQueryHandler(
             LastName: student.LastName ?? string.Empty,
             Mobile: student.PhoneNumber ?? string.Empty,
             Email: student.Email ?? string.Empty,
-            Grade: student.AcademicYearId ?? 0, 
-            ParentMobile: student.ParentPhoneNumber ?? string.Empty  
+            Grade: student.AcademicYearId ?? 0,
+            ParentMobile: student.ParentPhoneNumber ?? string.Empty
         );
 
         return Result<StudentProfileDto>.Success(profileDto);
     }
 }
-

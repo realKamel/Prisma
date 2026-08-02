@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -20,7 +19,7 @@ public class GetLessonDetailsQueryHandler(
     {
         Guid? currentStudentId = _currentUserService.UserId;
         if (currentStudentId is null)
-            throw new UnauthorizedException("User is not authenticated");
+            return Result.Unauthorized("User is not authenticated");
 
         var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonWithDetailsSpecification(request.LessonId);
@@ -28,7 +27,7 @@ public class GetLessonDetailsQueryHandler(
 
         if (lesson == null)
         {
-            throw new NotFoundException("Lesson", request.LessonId.ToString());
+            return Result.NotFound($"Lesson with id '{request.LessonId.ToString()}' was not found");
         }
 
         int totalMinutes = lesson.Sections != null ? (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes) : 0;

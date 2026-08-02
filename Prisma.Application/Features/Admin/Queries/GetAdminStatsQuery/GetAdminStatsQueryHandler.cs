@@ -1,6 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -9,9 +8,9 @@ using Prisma.Domain.Specifications.Admin;
 namespace Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 
 public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
-    : IRequestHandler<AdminDashboard.Queries.GetAdminStats.GetAdminStatsQuery, Result<AdminStatsResponseDto>>
+    : IRequestHandler<GetAdminStatsQuery, Result<AdminStatsResponseDto>>
 {
-    public async Task<Result<AdminStatsResponseDto>> Handle(AdminDashboard.Queries.GetAdminStats.GetAdminStatsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<AdminStatsResponseDto>> Handle(GetAdminStatsQuery request, CancellationToken cancellationToken)
     {
         var studentRepo = _unitOfWork.GetOrCreateRepository<Student, Guid>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();

@@ -1,13 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
@@ -28,7 +27,7 @@ public class GetAssistantProfileQueryHandler(
         var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.AssistantId), cancellationToken);
 
         if (user is not Assistant assistant)
-            throw new NotFoundException(nameof(Assistant), request.AssistantId);
+            return Result.NotFound($"Assistant with id '{request.AssistantId}' was not found");
 
         var now = DateTimeOffset.UtcNow;
         var weekStart = now.AddDays(-7);

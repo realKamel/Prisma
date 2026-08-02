@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -23,7 +23,7 @@ public class GetAssignmentSubmissionDetailQueryHandler(
             new SubmissionDetailSpecification(request.SubmissionId), ct);
 
         if (submission is null)
-            return Result<AssignmentSubmissionDetailDto>.Failure("التسليم غير موجود");
+            return Result<AssignmentSubmissionDetailDto>.Error("التسليم غير موجود");
 
         // Acquire grading lock
         var now = DateTimeOffset.UtcNow;
@@ -32,7 +32,7 @@ public class GetAssignmentSubmissionDetailQueryHandler(
 
         if (submission.IsBeingGraded && !lockExpired)
         {
-            return Result<AssignmentSubmissionDetailDto>.Failure(
+            return Result<AssignmentSubmissionDetailDto>.Error(
                 "التسليم ده بيتصحح دلوقتي من شخص تاني");
         }
 

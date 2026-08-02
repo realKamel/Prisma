@@ -2,10 +2,9 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Users.Commands.UpdateUser;
 
@@ -18,13 +17,13 @@ public class UpdateUserCommandHandler(
     {
         var user = await identityService.FindByIdAsync(request.Id, cancellationToken);
         if (user is null)
-            throw new NotFoundException(nameof(User), request.Id);
+            return Result.NotFound($"User with id '{request.Id}' was not found");
 
         if (!string.Equals(user.Email, request.Email, StringComparison.OrdinalIgnoreCase))
         {
             var existing = await identityService.FindByEmailAsync(request.Email);
             if (existing is not null && existing.Id != user.Id)
-                throw new ConflictException("This email is already in use by another account.");
+                return Result.Conflict("This email is already in use by another account.");
 
             user.Email = request.Email;
             user.UserName = request.Email;
@@ -32,43 +31,43 @@ public class UpdateUserCommandHandler(
             user.NormalizedUserName = request.Email.ToUpperInvariant();
         }
 
-        user.FirstName   = request.FirstName;
-        user.SecondName  = request.SecondName;
-        user.ThirdName   = request.ThirdName;
-        user.LastName    = request.LastName;
+        user.FirstName = request.FirstName;
+        user.SecondName = request.SecondName;
+        user.ThirdName = request.ThirdName;
+        user.LastName = request.LastName;
         user.PhoneNumber = request.Mobile;
 
         if (user is Student student)
         {
-            student.AcademicYearId    = request.GradeId;
+            student.AcademicYearId = request.GradeId;
             student.ParentPhoneNumber = request.ParentMobile;
-            student.TeacherId         = request.TeacherId;
+            student.TeacherId = request.TeacherId;
         }
         // Assistant→Teacher isn't modeled in the DB — TeacherId is ignored for
         // Assistant updates until that column/FK exists.
 
         var updateResult = await identityService.UpdateAsync(user);
         if (!updateResult.Succeeded)
-            throw new BadRequestException(string.Join("\n", updateResult.Errors.Select(e => e.Description)));
+            return Result.Error(string.Join("\n", updateResult.Errors.Select(e => e.Description)));
 
         if (!string.IsNullOrWhiteSpace(request.NewPassword))
         {
             var removeResult = await userManager.RemovePasswordAsync(user);
             if (!removeResult.Succeeded)
-                throw new BadRequestException("Failed to reset password.");
+                return Result.Error("Failed to reset password.");
 
             var addResult = await userManager.AddPasswordAsync(user, request.NewPassword);
             if (!addResult.Succeeded)
-                throw new BadRequestException(string.Join("\n", addResult.Errors.Select(e => e.Description)));
+                return Result.Error(string.Join("\n", addResult.Errors.Select(e => e.Description)));
         }
 
         var role = user switch
         {
-            Student   => AppRoles.Student,
-            Teacher   => AppRoles.Teacher,
+            Student => AppRoles.Student,
+            Teacher => AppRoles.Teacher,
             Assistant => AppRoles.Assistant,
-            Domain.Entities.UserAggregate.Admin     => AppRoles.Admin,
-            _         => "Unknown",
+            Domain.Entities.UserAggregate.Admin => AppRoles.Admin,
+            _ => "Unknown",
         };
 
         var dto = new UserEditDto(

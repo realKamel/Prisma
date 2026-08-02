@@ -1,10 +1,9 @@
 using MediatR;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
@@ -19,11 +18,11 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
 
         var student = await studentRepo.GetByIdAsync(request.StudentId, cancellationToken);
         if (student is null)
-            throw new NotFoundException("Student", request.StudentId);
+            return Result.NotFound($"Student with id '{request.StudentId}' was not found");
 
         var lesson = await lessonRepo.GetByIdAsync(request.LessonId, cancellationToken);
         if (lesson is null)
-            throw new NotFoundException("Lesson", request.LessonId);
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
         // Find any enrollment including soft-deleted ones (IgnoreQueryFilters in spec)
         var existing = await enrollmentRepo.FirstOrDefaultAsync(
@@ -33,7 +32,7 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
         if (existing is not null)
         {
             if (!existing.IsDeleted)
-                throw new BadRequestException("Student is already enrolled in this lesson.");
+                return Result.Error("Student is already enrolled in this lesson.");
 
             // Student had this lesson before and was revoked — restore it
             existing.IsDeleted = false;
@@ -64,6 +63,6 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return Result.Success("Lesson granted successfully.");
+        return Result.SuccessWithMessage("Lesson granted successfully.");
     }
 }

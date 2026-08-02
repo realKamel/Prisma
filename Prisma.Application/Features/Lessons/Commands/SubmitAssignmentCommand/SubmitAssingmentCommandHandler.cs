@@ -1,43 +1,45 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
 
 public class SubmitAssignmentCommandHandler(
-        IUnitOfWork unitOfWork,
-        IStorageService storage,
-        ICurrentUserService currentUser) : IRequestHandler<SubmitAssignmentCommand, Result<string>>
+    IUnitOfWork unitOfWork,
+    IStorageService storage,
+    ICurrentUserService currentUser) : IRequestHandler<SubmitAssignmentCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(SubmitAssignmentCommand request, CancellationToken cancellationToken)
     {
         var assignmentRepo = unitOfWork.GetOrCreateRepository<Assignment, int>();
-        var assignment = await assignmentRepo.FirstOrDefaultAsync(new AssignmentWithEnrollmentSpec(request.LessonId), cancellationToken);
+        var assignment =
+            await assignmentRepo.FirstOrDefaultAsync(new AssignmentWithEnrollmentSpec(request.LessonId),
+                cancellationToken);
 
         if (assignment is null)
-            throw new BadRequestException("لا يوجد واجب لهذا الدرس");
+            return Result.Error("لا يوجد واجب لهذا الدرس");
 
         var studentId = currentUser.UserId;
         if (studentId is null)
-            throw new BadRequestException("سجل دخولك اولا");
+            return Result.Error("سجل دخولك اولا");
 
         var isEnrolled = assignment.Lesson.Enrollments
             .Any(e => e.StudentId == studentId);
 
         if (!isEnrolled)
-            throw new BadRequestException("غير مصرح لك بتسليم هذا الواجب");
+            return Result.Error("غير مصرح لك بتسليم هذا الواجب");
 
         var alreadySubmitted = assignment.Submissions
-            .Any(s=>s.StudentId == studentId);
+            .Any(s => s.StudentId == studentId);
 
         if (alreadySubmitted)
-            throw new BadRequestException("لقد سلمت هذا الواجب مسبقاً");
+            return Result.Error("لقد سلمت هذا الواجب مسبقاً");
 
-        var objectKey = $"assignments/{assignment.Id}/students/{studentId}/{Guid.NewGuid()}{Path.GetExtension(request.File.FileName)}";
+        var objectKey =
+            $"assignments/{assignment.Id}/students/{studentId}/{Guid.NewGuid()}{Path.GetExtension(request.File.FileName)}";
 
         await using var stream = request.File.OpenReadStream();
         await storage.UploadFileAsync(
@@ -51,7 +53,7 @@ public class SubmitAssignmentCommandHandler(
         var submission = new AssignmentSubmission
         {
             StudentId = studentId.Value,
-            AssignmentId =assignment.Id,
+            AssignmentId = assignment.Id,
             FileUrl = objectKey,
             Title = request.File.FileName,
             SubmittedAt = DateTimeOffset.UtcNow
@@ -63,4 +65,3 @@ public class SubmitAssignmentCommandHandler(
         return Result<string>.Success("تم التسليم بنجاح!");
     }
 }
-

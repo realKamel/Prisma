@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -31,7 +31,7 @@ public class GetExtractionStatusQueryHandler(
         var job = await jobRepo.GetByIdAsync(request.JobId, cancellationToken);
 
         if (job == null)
-            return Result<ExtractionProgressDto>.Failure("لم يتم العثور على المهمة");
+            return Result<ExtractionProgressDto>.Error("لم يتم العثور على المهمة");
 
         // ── Deserialize stored questions ──────────────────────────────────────
         List<ExtractedQuestion> questions;

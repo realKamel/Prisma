@@ -1,12 +1,11 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminActivities;
-using Prisma.Application.Features.AdminDashboard.Queries.GetAdminStats;
+using Ardalis.Result;
+using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Users;
+using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 
 namespace Prisma.Application.Features.Users.Queries.GetAdminProfile;
 
@@ -21,7 +20,7 @@ public class GetAdminProfileQueryHandler(
         var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.AdminId), cancellationToken);
 
         if (user is not Domain.Entities.UserAggregate.Admin admin)
-            throw new NotFoundException(nameof(Admin), request.AdminId);
+            return Result.NotFound($"Admin with id '{request.AdminId}' was not found");
 
         // NOTE: unlike Teacher/Assistant above, this platform-wide scoping is
         // correct BY DESIGN, not a limitation — there is no per-admin concept
@@ -34,11 +33,11 @@ public class GetAdminProfileQueryHandler(
         var name = string.Join(" ", new[] { admin.FirstName, admin.SecondName, admin.ThirdName, admin.LastName }
             .Where(p => !string.IsNullOrWhiteSpace(p)));
 
-        var stats = statsResult.Data.Kpis
+        var stats = statsResult.Value.Kpis
             .Select(MapKpi)
             .ToList();
 
-        var activities = activitiesResult.Data
+        var activities = activitiesResult.Value
             .Select(a =>
                 new ProfileActivityDto(a.Details, a.ActivityDate.ToString("yyyy-MM-dd hh:mm tt"), "bg-[var(--purple)]"))
             .ToList();

@@ -1,13 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -22,15 +21,15 @@ public class GetLessonExpiredQueryHandler(
     {
         Guid? currentStudentId = _currentUserService.UserId;
         if (currentStudentId is null)
-            throw new UnauthorizedException("User is not authenticated");
+            return Result.Unauthorized("User is not authenticated");
 
         var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec= new LessonExpiredSpecification(request.LessonId);
+        var spec = new LessonExpiredSpecification(request.LessonId);
         var lesson = await lessonrepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson == null)
         {
-            throw new NotFoundException("Lesson", request.LessonId.ToString());
+            return Result.NotFound($"Lesson with id '{request.LessonId.ToString()}' was not found");
         }
 
         var lessonExpiredDto = new LessonExpiredDto
@@ -74,7 +73,7 @@ public class GetLessonExpiredQueryHandler(
     public double CalculateTotalProgress(Lesson lesson, Guid studentId)
     {
         var studentProgress = lesson.Sections
-            .SelectMany(s => s.Progresses) 
+            .SelectMany(s => s.Progresses)
             .Where(sp => sp.StudentId == studentId)
             .ToList();
 

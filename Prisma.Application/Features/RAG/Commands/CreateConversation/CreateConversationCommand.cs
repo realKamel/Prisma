@@ -1,5 +1,5 @@
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.RAG.Queries.GetSession;
 
 namespace Prisma.Application.Features.RAG.Commands.CreateConversation;

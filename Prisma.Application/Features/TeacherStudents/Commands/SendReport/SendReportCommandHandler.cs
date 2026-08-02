@@ -1,7 +1,6 @@
 using MediatR;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.SendReport;
@@ -17,7 +16,7 @@ public class SendReportCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<
         {
             var student = await studentRepo.GetByIdAsync(studentId, cancellationToken);
             if (student is null)
-                throw new NotFoundException("Student", studentId);
+                return Result.NotFound($"Student with id '{studentId}' was not found");
 
             var report = new Report
             {
@@ -32,6 +31,6 @@ public class SendReportCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result.Success($"{request.StudentIds.Count} report(s) queued for sending via WhatsApp.");
+        return Result.SuccessWithMessage($"{request.StudentIds.Count} report(s) queued for sending via WhatsApp.");
     }
 }

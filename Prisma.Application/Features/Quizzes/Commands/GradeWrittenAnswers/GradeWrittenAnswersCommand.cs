@@ -1,7 +1,7 @@
-﻿
+
 using MediatR;
-using Prisma.Application.Common.Responses;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 
 namespace Prisma.Application.Features.Quizzes.Commands.GradeWrittenAnswers;

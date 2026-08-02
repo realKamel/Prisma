@@ -2,7 +2,7 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
@@ -11,11 +11,12 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await identityService.FindByEmailOrPhoneAsync(request.Email, request.PhoneNumber);
+        var existingUser =
+            await identityService.FindByEmailOrPhoneAsync(request.Email, request.PhoneNumber, cancellationToken);
 
         if (existingUser is not null)
         {
-            throw new BadRequestException("Registration Failed");
+            return Result.Invalid();
         }
 
         var user = new Student()
@@ -45,11 +46,11 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
                         .ToArray()
                 );
 
-            throw new BadRequestException("Error happen. Try again later.");
+            return Result.Error("Error happen. Try again later.");
         }
 
         await identityService.AddToRoleAsync(user, AppRoles.Student);
 
-        return Result.Success("Registered successfully");
+        return Result.NoContent();
     }
 }

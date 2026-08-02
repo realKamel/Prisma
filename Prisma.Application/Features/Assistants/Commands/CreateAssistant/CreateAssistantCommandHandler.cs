@@ -1,12 +1,10 @@
 using System.Security.Claims;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Assistants.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 
@@ -20,7 +18,7 @@ public class CreateAssistantCommandHandler(IIdentityService identityService) :
 
         if (user is not null)
         {
-            throw new ConflictException("User already exists");
+            return Result.Conflict("User already exists");
         }
 
         var assistant = new Assistant
@@ -47,21 +45,21 @@ public class CreateAssistantCommandHandler(IIdentityService identityService) :
 
         if (!result.Succeeded)
         {
-            throw new BadRequestException(string.Join("\n", result.Errors.Select(e => e.Code)));
+            return Result.Error(string.Join("\n", result.Errors.Select(e => e.Code)));
         }
 
         var claimsResult = await identityService.AddClaimsAsync(assistant, permissions);
 
         if (!claimsResult.Succeeded)
         {
-            throw new BadRequestException(string.Join("\n", claimsResult.Errors.Select(e => e.Code)));
+            return Result.Error(string.Join("\n", claimsResult.Errors.Select(e => e.Code)));
         }
 
         var roleResult = await identityService.AddToRoleAsync(assistant, AppRoles.Assistant);
 
         if (!roleResult.Succeeded)
         {
-            throw new BadRequestException(string.Join("\n", roleResult.Errors.Select(e => e.Code)));
+            return Result.Error(string.Join("\n", roleResult.Errors.Select(e => e.Code)));
         }
 
         return new CreateOrUpdatedAssistantCommandResponse

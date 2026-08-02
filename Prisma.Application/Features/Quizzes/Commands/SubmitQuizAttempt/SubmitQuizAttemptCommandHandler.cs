@@ -1,6 +1,6 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -22,10 +22,10 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
 
 
         if (attempt is null)
-            return Result<SubmitQuizResultDto>.Failure("المحاولة غير موجودة");
+            return Result<SubmitQuizResultDto>.Error("المحاولة غير موجودة");
 
         if (attempt.Status != QuizAttemptStatus.InProgress)
-            return Result<SubmitQuizResultDto>.Failure("تم تسليم هذا الاختبار من قبل");
+            return Result<SubmitQuizResultDto>.Error("تم تسليم هذا الاختبار من قبل");
 
         var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>().
             FirstOrDefaultAsync(new QuizWithQuestionsSpecification(attempt.QuizId), ct);

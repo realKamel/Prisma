@@ -1,8 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
@@ -12,15 +11,15 @@ namespace Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 public class GetActivityLogsQueryHandler(
     IUnitOfWork _unitOfWork,
     UserManager<User> _userManager
-) : IRequestHandler<ActivityLogs.Queries.GetActivityLogs.GetActivityLogsQuery, Result<ActivityLogResponseDto>>
+) : IRequestHandler<GetActivityLogsQuery, Result<ActivityLogResponseDto>>
 {
     public async Task<Result<ActivityLogResponseDto>> Handle(
-        ActivityLogs.Queries.GetActivityLogs.GetActivityLogsQuery request,
+        GetActivityLogsQuery request,
         CancellationToken cancellationToken)
     {
         var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
-       
+
         var spec = new ActivityLogsFilterSpec(request.Skip, request.Take + 1);
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);
 
@@ -65,7 +64,7 @@ public class GetActivityLogsQueryHandler(
 
         ActivityLogStatsDto? statsDto = null;
 
-       
+
         if (request.Skip == 0)
         {
             var todayDate = DateTimeOffset.UtcNow.Date;

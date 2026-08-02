@@ -1,8 +1,6 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
-using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
 
@@ -15,14 +13,14 @@ public class DeleteAssistantCommandHandler(IIdentityService identityService)
 
         if (user is null)
         {
-            throw new NotFoundException(nameof(Assistant), request.ToString());
+            return Result.NotFound($"Assistant with id '{request.AssistantId}' was not found");
         }
 
         var result = await identityService.DeleteAsync(user);
 
         if (!result.Succeeded)
         {
-            throw new BadRequestException(string.Join("\n", result.Errors.Select(e => e.Description)));
+            return Result.Error(string.Join("\n", result.Errors.Select(e => e.Description)));
         }
 
         return Result.Success();

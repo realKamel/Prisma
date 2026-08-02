@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Domain.Enums;
 

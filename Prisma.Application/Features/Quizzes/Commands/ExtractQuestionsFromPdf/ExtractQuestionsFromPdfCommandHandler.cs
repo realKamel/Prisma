@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
@@ -109,7 +109,7 @@ public class ExtractQuestionsFromPdfCommandHandler(
             }
             catch { /* swallow */ }
 
-            return Result<ExtractionJobDto>.Failure($"خطأ: {ex.Message}");
+            return Result<ExtractionJobDto>.Error($"خطأ: {ex.Message}");
         }
     }
 }

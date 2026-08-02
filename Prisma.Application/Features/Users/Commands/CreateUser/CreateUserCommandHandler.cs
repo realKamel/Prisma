@@ -1,10 +1,9 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Users.Commands.CreateUser;
 
@@ -15,7 +14,10 @@ public class CreateUserCommandHandler(IIdentityService identityService)
     {
         var existing = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Mobile, cancellationToken);
         if (existing is not null)
-            throw new ConflictException("A user with this email or phone already exists.");
+            return Result.Conflict("A user with this email or phone already exists.");
+
+        if (request.Role is not (AppRoles.Student or AppRoles.Teacher or AppRoles.Assistant or AppRoles.Admin))
+            return Result.Error($"Unknown role '{request.Role}'.");
 
         User user = request.Role switch
         {
@@ -33,24 +35,23 @@ public class CreateUserCommandHandler(IIdentityService identityService)
             // existing AssistantsController.UpdateAssistantPermissions endpoint.
             AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow },
             AppRoles.Admin => new Domain.Entities.UserAggregate.Admin { Id = Guid.CreateVersion7(), CreatedAt = DateTimeOffset.UtcNow },
-            _ => throw new BadRequestException($"Unknown role '{request.Role}'."),
         };
 
-        user.FirstName   = request.FirstName;
-        user.SecondName  = request.SecondName;
-        user.ThirdName   = request.ThirdName;
-        user.LastName    = request.LastName;
+        user.FirstName = request.FirstName;
+        user.SecondName = request.SecondName;
+        user.ThirdName = request.ThirdName;
+        user.LastName = request.LastName;
         user.PhoneNumber = request.Mobile;
-        user.Email       = request.Email;
-        user.UserName    = request.Email;
+        user.Email = request.Email;
+        user.UserName = request.Email;
 
         var createResult = await identityService.CreateAsync(user, request.Password);
         if (!createResult.Succeeded)
-            throw new BadRequestException(string.Join("\n", createResult.Errors.Select(e => e.Description)));
+            return Result.Error(string.Join("\n", createResult.Errors.Select(e => e.Description)));
 
         var roleResult = await identityService.AddToRoleAsync(user, request.Role);
         if (!roleResult.Succeeded)
-            throw new BadRequestException(string.Join("\n", roleResult.Errors.Select(e => e.Description)));
+            return Result.Error(string.Join("\n", roleResult.Errors.Select(e => e.Description)));
 
         var dto = new UserEditDto(
             user.Id, user.FirstName, user.SecondName, user.ThirdName, user.LastName,

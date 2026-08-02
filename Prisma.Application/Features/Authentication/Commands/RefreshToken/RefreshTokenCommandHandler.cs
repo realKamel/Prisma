@@ -3,9 +3,8 @@ using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.RefreshToken;
 
@@ -18,14 +17,14 @@ public class RefreshTokenCommandHandler(
         // 1. Validate the expired access token and extract claims
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            throw new UnauthorizedException("Please Login");
+            return Result.Unauthorized("Please Login");
         }
 
         var principal = jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
 
         if (principal is null)
         {
-            throw new BadRequestException("Please Login");
+            return Result.Error("Please Login");
         }
 
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -33,7 +32,7 @@ public class RefreshTokenCommandHandler(
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            throw new UnauthorizedException("Please Login");
+            return Result.Unauthorized("Please Login");
         }
 
         var user = await userManager.FindByIdAsync(userId);
@@ -41,7 +40,7 @@ public class RefreshTokenCommandHandler(
         if (user is null || user.RefreshToken != request.RefreshToken ||
             user.RefreshTokenExpiry < DateTimeOffset.UtcNow)
         {
-            throw new UnauthorizedException("Please Login");
+            return Result.Unauthorized("Please Login");
         }
 
         var claims = await userManager.GetClaimsAsync(user);

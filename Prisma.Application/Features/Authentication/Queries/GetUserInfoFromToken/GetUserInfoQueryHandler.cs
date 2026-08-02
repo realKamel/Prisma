@@ -1,8 +1,7 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
-using Prisma.Application.Common.Responses.Generic;
-using Prisma.Domain.Exceptions;
+using Ardalis.Result;
 
 namespace Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
@@ -13,14 +12,14 @@ public class GetUserInfoQueryHandler(ICurrentUserService currentUserService, IId
     {
         if (!currentUserService.IsAuthenticated || currentUserService.Email is null)
         {
-            throw new UnauthorizedException("Login First");
+            return Result.Unauthorized("Login First");
         }
 
         var user = await identityService.FindByEmailAsync(currentUserService.Email);
 
         if (user is null)
         {
-            throw new UnauthorizedException("Login First");
+            return Result.Unauthorized("Login First");
         }
 
         var role = await identityService.GetRolesAsync(user);

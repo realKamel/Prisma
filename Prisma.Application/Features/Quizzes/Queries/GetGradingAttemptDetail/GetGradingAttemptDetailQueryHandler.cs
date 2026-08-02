@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -22,10 +22,10 @@ public class GetGradingAttemptDetailQueryHandler(IUnitOfWork unitOfWork)
             new AttemptDetailForGradingSpecification(request.AttemptId), ct);
 
         if (attempt is null)
-            return Result<GradingAttemptDetailDto>.Failure("المحاولة غير موجودة");
+            return Result<GradingAttemptDetailDto>.Error("المحاولة غير موجودة");
 
         if (attempt.Status == QuizAttemptStatus.InProgress)
-            return Result<GradingAttemptDetailDto>.Failure("الطالب لسه في الاختبار");
+            return Result<GradingAttemptDetailDto>.Error("الطالب لسه في الاختبار");
 
         var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId);
 

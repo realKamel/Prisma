@@ -1,9 +1,8 @@
-﻿using MediatR;
+using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Entities.EnrollmentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 
@@ -19,14 +18,15 @@ public class GetStudentDashboardQueryHandler(
         GetStudentDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = currentUserService.UserId
-            ?? throw new UnauthorizedException("Login First");
+        if (currentUserService.UserId is not { } userId)
+            return Result.Unauthorized("Login First");
 
         var repo = unitOfWork.GetOrCreateRepository<Student, Guid>();
 
         var student = await repo.FirstOrDefaultAsync(
-            new StudentDashboardSpecification(userId), cancellationToken)
-            ?? throw new BadRequestException("Something went wrong");
+            new StudentDashboardSpecification(userId), cancellationToken);
+        if (student is null)
+            return Result.Error("Something went wrong");
 
         const string teacher = "أ. أحمد مصطفى";
         const string subject = "لغه انجليزيه";

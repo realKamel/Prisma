@@ -1,16 +1,15 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 namespace Prisma.Application.Features.RedeemCodes.Commands.CreateCodeBatch;
 
-internal class CreateCodeBatchCommandHandler(
+public class CreateCodeBatchCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<CreateCodeBatchCommand, Result<CreateCodeBatchResponse>>
@@ -22,7 +21,7 @@ internal class CreateCodeBatchCommandHandler(
         CancellationToken ct)
     {
         if (currentUser.UserId is not { } teacherId)
-            throw new UnauthorizedException("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         // Verify lesson belongs to the requested academic year
         var academicYearLessonRepo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
@@ -30,7 +29,7 @@ internal class CreateCodeBatchCommandHandler(
             new AcademicYearLessonExistsSpecification(request.LessonId, request.AcademicYearId), ct);
 
         if (!lessonLinked)
-            throw new BadRequestException("This lesson does not belong to the selected academic year.");
+            return Result.Error("This lesson does not belong to the selected academic year.");
 
         // Verify teacher is linked to the requested academic year
         var teacherAcademicYearRepo = unitOfWork.GetOrCreateRepository<AcademicYearTeacher, int>();
@@ -38,7 +37,7 @@ internal class CreateCodeBatchCommandHandler(
             new TeacherAcademicYearExistsSpecification(teacherId, request.AcademicYearId), ct);
 
         if (!teacherHasAccess)
-            throw new ForbiddenException("You do not have access to this academic year.");
+            return Result.Forbidden("You do not have access to this academic year.");
 
         var prefix = string.IsNullOrWhiteSpace(request.Prefix)
             ? null

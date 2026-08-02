@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Responses;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assignments;
@@ -22,11 +22,11 @@ public class GradeAssignmentSubmissionCommandHandler(
             new SubmissionWithAssignmentSpecification(request.SubmissionId), ct);
 
         if (submission is null)
-            return Result.Failure("التسليم غير موجود");
+            return Result.Error("التسليم غير موجود");
 
         // Validate score doesn't exceed max
         if (request.Score > submission.Assignment.Grade)
-            return Result.Failure(
+            return Result.Error(
                 $"الدرجة ({request.Score}) أكبر من الدرجة الكاملة ({submission.Assignment.Grade})");
 
         // Validate grading lock — only the user who opened the modal can grade
@@ -38,7 +38,7 @@ public class GradeAssignmentSubmissionCommandHandler(
             && !lockExpired
             && submission.GradingByUserId != currentUser.UserId)
         {
-            return Result.Failure("التسليم ده بيتصحح دلوقتي من شخص تاني");
+            return Result.Error("التسليم ده بيتصحح دلوقتي من شخص تاني");
         }
 
         // Apply grading
@@ -52,7 +52,7 @@ public class GradeAssignmentSubmissionCommandHandler(
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result.Success("تم حفظ التصحيح بنجاح");
+        return Result.SuccessWithMessage("تم حفظ التصحيح بنجاح");
 
     }
 }

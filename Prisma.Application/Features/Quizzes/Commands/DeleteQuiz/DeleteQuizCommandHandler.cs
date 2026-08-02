@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Prisma.Application.Common.Responses;
+using MediatR;
+using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -20,10 +20,10 @@ public class DeleteQuizCommandHandler(IUnitOfWork unitOfWork)
             FirstOrDefaultAsync(new QuizByIdForDeleteSpecification(request.QuizId), ct);
 
         if (quiz is null)
-            return Result.Failure("الاختبار غير موجود");
+            return Result.Error("الاختبار غير موجود");
 
         if (quiz.Attempts.Any(a => a.Status != QuizAttemptStatus.InProgress))
-            return Result.Failure(
+            return Result.Error(
                 "مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة");
 
         quiz.IsDeleted = true;
@@ -46,6 +46,6 @@ public class DeleteQuizCommandHandler(IUnitOfWork unitOfWork)
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return Result.Success("تم حذف الاختبار بنجاح");
+        return Result.SuccessWithMessage("تم حذف الاختبار بنجاح");
     }
 }

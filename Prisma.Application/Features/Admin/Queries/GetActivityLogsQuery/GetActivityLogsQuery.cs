@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
 using MediatR;
-using Prisma.Application.Common.Responses.Generic;
+using Ardalis.Result;
 
-namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogs;
+namespace Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 
 public record GetActivityLogsQuery(int Skip = 0, int Take = 20) : IRequest<Result<ActivityLogResponseDto>>;
 

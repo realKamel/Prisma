@@ -1,20 +1,21 @@
 using Prisma.Domain.Entities.LessonAggregate;
 using MediatR;
+using Ardalis.Result;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Sections;
 
 namespace Prisma.Application.Features.Sections.Commands.CreateSectionProgress;
+
 public class CreateSectionProgressCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<CreateSectionProgressCommand>
+    ICurrentUserService currentUserService) : IRequestHandler<CreateSectionProgressCommand, Result>
 {
-    public async Task Handle(CreateSectionProgressCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(CreateSectionProgressCommand request, CancellationToken cancellationToken)
     {
         var studentId = currentUserService.UserId;
         if (studentId is null)
-            throw new UnauthorizedException("User must be authenticated.");
+            return Result.Unauthorized("User must be authenticated.");
 
         var progressRepo = unitOfWork.GetOrCreateRepository<SectionProgress, int>();
 
@@ -22,7 +23,7 @@ public class CreateSectionProgressCommandHandler(
             new SectionProgressByStudentAndSectionSpecification(studentId.Value, request.SectionId),
             cancellationToken);
 
-        if (exists) return;
+        if (exists) return Result.Success();
 
         progressRepo.Add(new SectionProgress
         {
@@ -34,6 +35,8 @@ public class CreateSectionProgressCommandHandler(
         });
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result.Success();
     }
 }
 

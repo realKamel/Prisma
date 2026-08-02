@@ -42,18 +42,12 @@ public static class AuthHelper
     {
         var accessTokenOptions = new CookieOptions
         {
-            Path = "/api",
-            HttpOnly = true,
-            Secure = !isDevelopment,
-            SameSite = SameSiteMode.Lax
+            Path = "/api", HttpOnly = true, Secure = !isDevelopment, SameSite = SameSiteMode.Lax
         };
 
         var refreshTokenOptions = new CookieOptions
         {
-            Path = "/api/v1/auth/refresh",
-            HttpOnly = true,
-            Secure = !isDevelopment,
-            SameSite = SameSiteMode.Lax
+            Path = "/api/v1/auth/refresh", HttpOnly = true, Secure = !isDevelopment, SameSite = SameSiteMode.Lax
         };
 
         responseCookies.Delete(AppCookies.AccessToken, accessTokenOptions);

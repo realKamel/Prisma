@@ -1,5 +1,4 @@
 using Prisma.API.Extensions;
-using Prisma.API.Middlewares;
 using Prisma.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
@@ -33,7 +32,7 @@ public class Program
 
             await app.UseDataSeedingAsync();
 
-            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+            app.UseExceptionHandler();
 
             app.UseDefaultFiles();
             app.UseStaticFiles();

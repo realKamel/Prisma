@@ -1,11 +1,12 @@
 using System.Globalization;
 using System.Text;
+using Ardalis.Result.AspNetCore;
 using Hangfire;
 using HealthChecks.UI.Client;
-// using Microsoft.Agents.AI.DevUI;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Middlewares;
@@ -31,10 +32,21 @@ public static class WebAppHelper
                 .ReadFrom.Configuration(configuration)
                 .ReadFrom.Services(sp)
                 .Enrich.FromLogContext());
-            services.AddControllers();
+
+            services.AddProblemDetails(options =>
+            {
+                options.CustomizeProblemDetails = ctx =>
+                {
+                    ctx.ProblemDetails.Extensions.TryAdd("traceId", ctx.HttpContext.TraceIdentifier);
+                };
+            });
+
+            services.AddControllers(options =>
+                options.AddDefaultResultConvention());
+
             services.AddOpenApi();
 
-            services.AddScoped<GlobalExceptionHandlingMiddleware>();
+            services.AddExceptionHandler<GlobalExceptionHandler>();
 
             //Application Services
             services.AddApplicationServices(configuration);

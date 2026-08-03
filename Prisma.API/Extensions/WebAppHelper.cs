@@ -6,7 +6,6 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Middlewares;
@@ -68,6 +67,12 @@ public static class WebAppHelper
 
                 options.AddPolicy(CachePolicyNames.Long.Name, builder =>
                     builder.Expire(CachePolicyNames.Long.Duration));
+            });
+
+            services.AddStackExchangeRedisOutputCache(options =>
+            {
+                options.Configuration = configuration.GetConnectionString("Valkey");
+                options.InstanceName = "Prisma_OutputCache_";
             });
 
             // Add forwarded headers BEFORE anything else that reads the request scheme

@@ -22,6 +22,10 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
             .WithOne(l => l.Lesson)
             .HasForeignKey<Quiz>(q => q.LessonId);
 
+        builder.HasOne(l => l.Teacher)
+            .WithMany(t => t.Lessons)
+            .HasForeignKey(l => l.TeacherId);
+
         builder.HasOne(l => l.Assignment)
             .WithOne(l => l.Lesson)
             .HasForeignKey<Assignment>(l => l.LessonId);

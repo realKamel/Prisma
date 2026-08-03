@@ -2,6 +2,7 @@ using Prisma.Domain.Common;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
@@ -28,8 +29,8 @@ public class Lesson : BaseEntity
 
     public ICollection<LessonTranscriptChunk> Chunks { get; set; } = [];
 
-    // public Guid TeacherId { get; set; }
-    // public Teacher Teacher { get; set; }
+     public Guid? TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
 
     public ICollection<AcademicYearLesson> AcademicYears { get; set; } = new List<AcademicYearLesson>();
 

@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
-using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -23,13 +18,13 @@ public class GetLessonExpiredQueryHandler(
         if (currentStudentId is null)
             return Result.Unauthorized("User is not authenticated");
 
-        var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonExpiredSpecification(request.LessonId);
-        var lesson = await lessonrepository.FirstOrDefaultAsync(spec, cancellationToken);
+        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var spec = new LessonExpiredSpecification(request.LessonId, currentStudentId.Value);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson == null)
         {
-            return Result.NotFound($"Lesson with id '{request.LessonId.ToString()}' was not found");
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
         }
 
         var lessonExpiredDto = new LessonExpiredDto
@@ -37,48 +32,22 @@ public class GetLessonExpiredQueryHandler(
             Id = lesson.Id,
             Url = lesson.ImageThumbnailUrl ?? string.Empty,
             Title = lesson.Title,
-            Subject = "لغه انجليزيه",
+            Subject = lesson.TeacherSubject ?? string.Empty,
             Description = lesson.Description ?? string.Empty,
-            ChaptersCount = lesson.Sections.Count,
+            ChaptersCount = lesson.ChaptersCount,
             Price = lesson.Price,
-            MaterialsCount = lesson.LessonMaterials.Count,
-            totalprogress = CalculateTotalProgress(lesson, currentStudentId.Value),
-            Degree = CalculateDegree(lesson, currentStudentId.Value),
-            ExpiredDate = lesson.Enrollments.FirstOrDefault(e => e.StudentId == currentStudentId)?.ExpiresAt,
+            MaterialsCount = lesson.MaterialsCount,
+            totalprogress = lesson.TotalProgress,
+            Degree = lesson.Degree,
+            ExpiredDate = lesson.ExpiredDate,
             ValidityDays = 7,
-            Chapters = lesson.Sections?.Select(s => new ChapterDto(
-                  s.Id,
-                  s.Title ?? "",
-                 s.Duration.ToString(@"hh\:mm\:ss")
-              )).ToList() ?? [],
-
-
+            Chapters = lesson.Chapters.Select(s => new ChapterDto(
+                s.Id,
+                s.Title ?? "",
+                s.Duration.ToString(@"hh\:mm\:ss")
+            )).ToList()
         };
+
         return Result<LessonExpiredDto>.Success(lessonExpiredDto);
-
-
-    }
-    public decimal CalculateDegree(Lesson lesson, Guid studentId)
-    {
-        if (lesson.Quiz == null) return 0;
-
-        var attempt = lesson.Quiz.Attempts
-            .FirstOrDefault(qa => qa.StudentId == studentId && qa.Status == QuizAttemptStatus.Graded && qa.QuizId == lesson.Quiz.Id);
-
-        if (attempt == null) return 0;
-
-        return attempt.Degree;
-    }
-
-    public double CalculateTotalProgress(Lesson lesson, Guid studentId)
-    {
-        var studentProgress = lesson.Sections
-            .SelectMany(s => s.Progresses)
-            .Where(sp => sp.StudentId == studentId)
-            .ToList();
-
-        if (!studentProgress.Any()) return 0;
-
-        return studentProgress.Average(sp => sp.Percentage);
     }
 }

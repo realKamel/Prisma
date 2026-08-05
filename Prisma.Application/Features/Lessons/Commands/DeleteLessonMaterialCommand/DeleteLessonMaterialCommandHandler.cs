@@ -31,8 +31,7 @@ public class DeleteLessonMaterialCommandHandler(
             return Result.Unauthorized("Only teachers and assistants can delete materials from lessons.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonMaterialsSpecification(request.LessonId);
-        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
+        var spec = new LessonWithMaterialsForUpdateSpecification(request.LessonId); var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
             return Result.NotFound($"Lesson material with id '{request.MaterialId}' was not found");
 

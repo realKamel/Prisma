@@ -2,7 +2,6 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -22,28 +21,22 @@ public class GetLessonPlayerQueryHandler(
             return Result.Unauthorized("User must be authenticated to access lesson player");
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonPlayerWithDetailsSpecification(request.id);
+        var spec = new LessonPlayerWithDetailsSpecification(request.id, studentId.Value);
         var lesson = await lessonRepo.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
             return Result.NotFound($"Lesson with id '{request.id}' was not found");
 
-        var enrollment = lesson.Enrollments?.FirstOrDefault(e => e.StudentId == studentId.Value);
-        var quiz = lesson.Quiz;
-        var attempt = quiz?.Attempts?.FirstOrDefault(a => a.StudentId == studentId.Value);
+        var teacher = lesson.TeacherName ?? string.Empty;
+        var subject = lesson.Subject ?? string.Empty;
 
-        var assignment = lesson.Assignment;
-        var submission = assignment?.Submissions?.FirstOrDefault(a => a.StudentId == studentId.Value);
-        const string teacher = "أ. أحمد مصطفى";
-        const string subject = "لغه انجليزيه";
-
-        var expiryDays = enrollment?.ExpiresAt is not null
-            ? (int)(enrollment.ExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
+        var expiryDays = lesson.EnrollmentExpiresAt is not null
+            ? (int)(lesson.EnrollmentExpiresAt.Value - DateTimeOffset.UtcNow).TotalDays
             : 0;
+
         var sections = new List<SectionDto>();
-        foreach (var s in lesson.Sections ?? [])
+        foreach (var s in lesson.Sections)
         {
-            var progress = s.Progresses?.FirstOrDefault(p => p.StudentId == studentId.Value);
             var contentUrl = s.PlaybackId != null
                 ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)
                 : null;
@@ -54,15 +47,15 @@ public class GetLessonPlayerQueryHandler(
                 SectionId = s.Id,
                 Title = s.Title ?? string.Empty,
                 Duration = s.Duration.ToString(@"hh\:mm\:ss"),
-                IsCompleted = progress?.IsCompleted ?? false,
+                IsCompleted = s.IsCompleted,
                 ContentUrl = contentUrl,
-                Progress = progress?.IsCompleted == true ? 100 : 0,
-                WatchedSeconds = progress?.WatchedSeconds ?? 0
+                Progress = s.IsCompleted ? 100 : 0,
+                WatchedSeconds = s.WatchedSeconds
             });
         }
 
         var materials = new List<MaterialDto>();
-        foreach (var m in lesson.LessonMaterials ?? [])
+        foreach (var m in lesson.Materials)
         {
             materials.Add(new MaterialDto
             {
@@ -70,7 +63,7 @@ public class GetLessonPlayerQueryHandler(
                 DownloadUrl = m.DownloadUrl != null
                     ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, m.DownloadUrl)
                     : string.Empty,
-                Type = (int)m.Type switch
+                Type = m.Type switch
                 {
                     0 => "pdf",
                     1 => "video",
@@ -91,27 +84,28 @@ public class GetLessonPlayerQueryHandler(
             VideoPoster = lesson.ImageThumbnailUrl ?? string.Empty,
 
             ValidityDays = expiryDays > 0 ? expiryDays : 30,
-            Outcomes = lesson.Outcomes?.ToList() ?? new List<string>(),
+            Outcomes = lesson.Outcomes,
             Materials = materials,
 
-            Quiz = quiz is null ? null : new QuizDto
+            Quiz = lesson.Quiz is null ? null : new QuizDto
             {
-                Id = quiz.Id,
-                QuestionsCount = quiz.Questions?.Count ?? 0,
-                DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
-                PassingScore = (int)quiz.TotalDegree,
-                IsAttempted = attempt != null,
+                Id = lesson.Quiz.Id,
+                QuestionsCount = lesson.Quiz.QuestionsCount,
+                DurationMinutes = (int)lesson.Quiz.TimeInMinutes.TotalMinutes,
+                PassingScore = (int)lesson.Quiz.TotalDegree,
+                IsAttempted = lesson.Quiz.IsAttempted,
             },
 
-            Assignment = assignment is null
+            Assignment = lesson.Assignment is null
                 ? null
                 : new AssignmentDto
                 {
-                    Id = assignment.Id,
-                    ContentURL = assignment.ContentURL != null ?
-                    await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, assignment.ContentURL) : string.Empty,
-                    DueDate = assignment.DueDate.ToString("yyyy-MM-dd"),
-                    FileName = submission != null ? submission.Title! : string.Empty
+                    Id = lesson.Assignment.Id,
+                    ContentURL = lesson.Assignment.ContentURL != null
+                        ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.Assignment.ContentURL)
+                        : string.Empty,
+                    DueDate = lesson.Assignment.DueDate.ToString("yyyy-MM-dd"),
+                    FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },
 
             Sections = sections

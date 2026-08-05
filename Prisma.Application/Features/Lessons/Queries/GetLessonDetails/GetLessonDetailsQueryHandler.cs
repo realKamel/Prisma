@@ -2,7 +2,6 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -21,13 +20,14 @@ public class GetLessonDetailsQueryHandler(
         if (currentStudentId is null)
             return Result.Unauthorized("User is not authenticated");
 
-        var lessonrepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+
         var spec = new LessonWithDetailsSpecification(request.LessonId);
-        var lesson = await lessonrepository.FirstOrDefaultAsync(spec, cancellationToken);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson == null)
         {
-            return Result.NotFound($"Lesson with id '{request.LessonId.ToString()}' was not found");
+            return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
         }
 
         int totalMinutes = (int)lesson.Sections.Sum(s => s.Duration.TotalMinutes);
@@ -35,44 +35,38 @@ public class GetLessonDetailsQueryHandler(
 
         bool isPrerequisiteCompleted = true;
 
-        if (lesson.Prerequisite != null)
+        if (lesson.PrerequisiteId is not null)
         {
-            var prereqLesson =
-                await lessonrepository.FirstOrDefaultAsync(new LessonWithDetailsSpecification(lesson.Prerequisite.Id),
-                    cancellationToken);
+            var prereqSpec = new LessonPrerequisiteCompletionSpecification(
+                lesson.PrerequisiteId.Value, currentStudentId.Value);
 
-            var enrollment = prereqLesson?.Enrollments?
-                .FirstOrDefault(e => e.StudentId == currentStudentId && e.Status == EnrollmentStatus.Active);
-
-            isPrerequisiteCompleted = enrollment?.IsCompleted == true;
+            isPrerequisiteCompleted = await lessonRepository.FirstOrDefaultAsync(prereqSpec, cancellationToken);
         }
 
         var lessonDto = new LessonDetailsDto
         {
             Id = lesson.Id,
-            Url =
-                lesson.ImageThumbnailUrl != null
-                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
-                        lesson.ImageThumbnailUrl)
-                    : string.Empty,
+            Url = lesson.ImageThumbnailUrl != null
+                ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
+                : string.Empty,
             Title = lesson.Title ?? "",
             Price = lesson.Price,
             AboutText = lesson.Description ?? "",
-            StudentsCount = lesson.Enrollments?.Count ?? 0,
-            ChaptersCount = lesson.Sections?.Count ?? 0,
-            Subject = "لغه انجليزيه",
-            Teacher = "أ. أحمد مصطفى",
+            StudentsCount = lesson.EnrollmentsCount,
+            ChaptersCount = lesson.Sections.Count,
+            Subject = lesson.TeacherSubject,
+            Teacher = lesson.TeacherName,
             Duration = formattedTotalDuration,
             ValidityDays = 7,
-            Chapters = lesson.Sections?.Select(s => new ChapterDto(
+            Chapters = lesson.Sections.Select(s => new ChapterDto(
                 s.Id,
                 s.Title ?? "",
                 $"{(int)s.Duration.TotalMinutes} د",
                 s.IsPreview
-            )).ToList() ?? [],
-            Outcomes = lesson.Outcomes?.ToList() ?? [],
-            Prerequisites = lesson.Prerequisite != null
-                ? [new PrerequisiteDto(lesson.Prerequisite.Title ?? "", isPrerequisiteCompleted)]
+            )).ToList(),
+            Outcomes = lesson.Outcomes,
+            Prerequisites = lesson.PrerequisiteId is not null
+                ? [new PrerequisiteDto(lesson.PrerequisiteTitle ?? "", isPrerequisiteCompleted)]
                 : []
         };
 

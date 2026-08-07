@@ -29,8 +29,8 @@ public class Lesson : BaseEntity
 
     public ICollection<LessonTranscriptChunk> Chunks { get; set; } = [];
 
-    public Guid TeacherId { get; set; }
-    public Teacher Teacher { get; set; }
+     public Guid? TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
 
     public ICollection<AcademicYearLesson> AcademicYears { get; set; } = new List<AcademicYearLesson>();
 

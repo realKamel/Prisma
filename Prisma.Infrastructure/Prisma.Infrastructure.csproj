@@ -20,7 +20,7 @@
     <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
     <PackageReference Include="Groq.Sdk.Core" Version="2.0.0.11-alpha" />
     <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" Version="2.0.0.11-alpha" />
-    <PackageReference Include="Hangfire" Version="1.8.23" />
+    <PackageReference Include="Hangfire" Version="1.8.24" />
     <PackageReference Include="Hangfire.Core" Version="1.8.24" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
     <PackageReference Include="MailKit" Version="4.17.0" />

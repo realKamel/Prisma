@@ -1,11 +1,12 @@
 using NSubstitute;
+using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStudents;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetQuizStudents;
 
@@ -31,64 +32,75 @@ public class GetQuizStudentsQueryHandlerTests
 
     #region Helpers
 
-    private static Student CreateStudent(string firstName = "Sara", string lastName = "Ali") =>
-        new() { Id = Guid.NewGuid(), FirstName = firstName, LastName = lastName };
+    private static StudentListProjection CreateStudent(
+    string firstName = "Sara",
+    string lastName = "Ali")
+    => new()
+    {
+        Id = Guid.NewGuid(),
+        FirstName = firstName,
+        LastName = lastName
+    };
+    private static QuizAttemptProjection CreateAttempt(
+    Guid studentId,
+    QuizAttemptStatus status,
+    decimal degree = 0m,
+    DateTimeOffset? submittedAt = null,
+    int tabSwitchCount = 0,
+    int copyPasteCount = 0,
+    int pendingWrittenCount = 0)
+    => new()
+    {
+        StudentId = studentId,
+        Status = status,
+        Degree = degree,
+        SubmittedAt = submittedAt,
+        TabSwitchCount = tabSwitchCount,
+        CopyPasteAttemptCount = copyPasteCount,
+        PendingWrittenCount = pendingWrittenCount
+    };
 
-    private static QuizAttempt CreateAttempt(
-        Guid studentId,
-        QuizAttemptStatus status,
-        decimal degree = 0m,
-        DateTimeOffset? submittedAt = null,
-        int tabSwitchCount = 0,
-        int copyPasteCount = 0,
-        List<AttemptAnswer>? answers = null) =>
-        new()
-        {
-            StudentId = studentId,
-            Status = status,
-            Degree = degree,
-            SubmittedAt = submittedAt,
-            TabSwitchCount = tabSwitchCount,
-            CopyPasteAttemptCount = copyPasteCount,
-            Answers = answers ?? new List<AttemptAnswer>()
-        };
+    private static QuizStudentsProjection CreateQuiz(
+    int id = 1,
+    string title = "Quiz",
+    decimal totalDegree = 100m,
+    QuizScope scope = QuizScope.ComprehensiveExam,
+    int? lessonId = null,
+    int? academicYearId = 5,
+    DateTimeOffset? dueDate = null,
+    List<QuizAttemptProjection>? attempts = null)
+    => new()
+    {
+        Id = id,
+        Title = title,
+        TotalDegree = totalDegree,
+        Scope = scope,
+        LessonId = lessonId,
+        AcademicYearId = academicYearId,
+        DueDate = dueDate,
+        Attempts = attempts ?? new()
+    };
 
-    private static Quiz CreateQuiz(
-        int id = 1,
-        string title = "Quiz",
-        decimal totalDegree = 100m,
-        QuizScope scope = QuizScope.ComprehensiveExam,
-        int? lessonId = null,
-        int? academicYearId = 5,
-        DateTimeOffset? dueDate = null,
-        List<QuizAttempt>? attempts = null) =>
-        new()
-        {
-            Id = id,
-            Title = title,
-            TotalDegree = totalDegree,
-            Scope = scope,
-            LessonId = lessonId,
-            AcademicYearId = academicYearId,
-            DueDate = dueDate,
-            Attempts = attempts ?? new List<QuizAttempt>()
-        };
+    private void SetupQuiz(QuizStudentsProjection? quiz) =>
+    _quizRepository
+        .FirstOrDefaultAsync(
+            Arg.Any<QuizWithAttemptsSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(quiz);
 
-    private void SetupQuiz(Quiz? quiz) =>
-        _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizWithAttemptsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(quiz);
+    private void SetupComprehensiveStudents(params StudentListProjection[] students) =>
+    _studentRepository
+        .ListAsync(
+            Arg.Any<StudentsByAcademicYearSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(students.ToList());
 
-    private void SetupComprehensiveStudents(params Student[] students) =>
-        _studentRepository
-            .ListAsync(Arg.Any<StudentsByAcademicYearSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(students.ToList());
-
-    private void SetupLessonEnrollments(params Student[] students) =>
-        _enrollmentRepository
-            .ListAsync(Arg.Any<EnrolledStudentsByLessonSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(students.Select(s => new Enrollment { Student = s, StudentId = s.Id }).ToList());
-
+    private void SetupLessonEnrollments(params StudentListProjection[] students) =>
+    _enrollmentRepository
+        .ListAsync(
+            Arg.Any<EnrolledStudentsByLessonSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(students.ToList());
     #endregion
 
     #region Guards
@@ -129,28 +141,6 @@ public class GetQuizStudentsQueryHandlerTests
             Arg.Any<StudentsByAcademicYearSpecification>(), Arg.Any<CancellationToken>());
     }
 
-    [Fact]
-    public async Task Handle_WhenLessonQuizScope_ExcludesEnrollmentsWithNullStudent()
-    {
-        // Arrange - defensive null-Student enrollment shouldn't crash or count
-        var student = CreateStudent();
-        var quiz = CreateQuiz(scope: QuizScope.LessonQuiz, lessonId: 10, academicYearId: null);
-        SetupQuiz(quiz);
-
-        _enrollmentRepository
-            .ListAsync(Arg.Any<EnrolledStudentsByLessonSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment>
-            {
-                new() { Student = student, StudentId = student.Id },
-                new() { Student = null, StudentId = Guid.NewGuid() }
-            });
-
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(1, result.Value!.TotalStudents);
-    }
 
     [Fact]
     public async Task Handle_WhenComprehensiveExamScope_LoadsStudentsFromAcademicYear()
@@ -253,13 +243,14 @@ public class GetQuizStudentsQueryHandlerTests
     {
         // Arrange
         var student = CreateStudent();
-        var attempt = CreateAttempt(student.Id, QuizAttemptStatus.Submitted, answers:
-        [
-            new AttemptAnswer { QuestionId = 1, Score = null },  // pending
-            new AttemptAnswer { QuestionId = 2, Score = null },  // pending
-            new AttemptAnswer { QuestionId = 3, Score = 5m }     // already graded (e.g. MCQ)
-        ]);
+
+        var attempt = CreateAttempt(
+            student.Id,
+            QuizAttemptStatus.Submitted,
+            pendingWrittenCount: 2);
+
         var quiz = CreateQuiz(attempts: [attempt]);
+
         SetupQuiz(quiz);
         SetupComprehensiveStudents(student);
 
@@ -270,9 +261,8 @@ public class GetQuizStudentsQueryHandlerTests
         var dto = Assert.Single(result.Value!.Students);
         Assert.Equal("submitted", dto.AttemptStatus);
         Assert.Equal(2, dto.PendingWrittenCount);
-        Assert.Null(dto.Score); // no score shown until fully graded
+        Assert.Null(dto.Score);
     }
-
     [Fact]
     public async Task Handle_WhenAttemptGraded_ReturnsGradedStatusWithScoreAndNoPendingCount()
     {

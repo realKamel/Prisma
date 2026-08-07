@@ -17,7 +17,6 @@ public class GetQuizForTakingQueryHandlerTests
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
     private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
-    private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<IRepository<Student, Guid>>();
     private readonly GetQuizForTakingQueryHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -29,21 +28,12 @@ public class GetQuizForTakingQueryHandlerTests
 
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
         _unitOfWork.GetOrCreateRepository<QuizAttempt, int>().Returns(_attemptRepository);
-        _unitOfWork.GetOrCreateRepository<Student, Guid>().Returns(_studentRepository);
 
         _attemptRepository
             .FirstOrDefaultAsync(Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>())
             .Returns((QuizAttempt?)null);
 
-        var defaultTeacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
-        {
-            Id = Guid.NewGuid(), FirstName = "Ahmed", LastName = "Mostafa", Subject = "Math"
-        };
-        var defaultStudent = new Student { Id = StudentId, FirstName = "S", LastName = "T", Teacher = defaultTeacher };
-
-        _studentRepository
-            .GetByIdAsync(Arg.Is(StudentId), Arg.Any<CancellationToken>())
-            .Returns(defaultStudent);
+        
 
         _handler = new GetQuizForTakingQueryHandler(_unitOfWork, _currentUser);
     }
@@ -63,15 +53,35 @@ public class GetQuizForTakingQueryHandlerTests
             }
         };
 
+    private static Lesson CreateLesson(
+        string firstName = "Ahmed",
+        string lastName = "Mostafa",
+        string subject = "Math"
+        )
+    {
+        return new Lesson
+        {
+            Id = 1,
+            Title = "Lesson",
+            Teacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
+            {
+                Id = Guid.NewGuid(),
+                FirstName = firstName,
+                LastName = lastName,
+                Subject = subject
+            }
+        };
+    }
+
     private static Quiz CreateQuiz(
-        int id = 1,
-        int durationMinutes = 30,
-        DateTimeOffset? availableFrom = null,
-        DateTimeOffset? dueDate = null,
-        QuizScope scope = QuizScope.ComprehensiveExam,
-        int? lessonId = null,
-        Lesson? lesson = null,
-        List<QuestionLessonQuiz>? questions = null)
+    int id = 1,
+    int durationMinutes = 30,
+    DateTimeOffset? availableFrom = null,
+    DateTimeOffset? dueDate = null,
+    QuizScope scope = QuizScope.ComprehensiveExam,
+    int? lessonId = null,
+    Lesson? lesson = null,
+    List<QuestionLessonQuiz>? questions = null)
     {
         return new Quiz
         {
@@ -82,14 +92,14 @@ public class GetQuizForTakingQueryHandlerTests
             DueDate = dueDate,
             Scope = scope,
             LessonId = lessonId,
-            Lesson = lesson,
+            Lesson = lesson ?? CreateLesson(), 
             Questions = questions ?? new List<QuestionLessonQuiz>()
         };
     }
 
     private void SetupQuiz(Quiz? quiz) =>
         _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizWithQuestionsAndLessonSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(Arg.Any<QuizForTakingSpecification>(), Arg.Any<CancellationToken>())
             .Returns(quiz);
 
     private void SetupExistingAttempt(QuizAttempt? attempt) =>
@@ -382,20 +392,22 @@ public class GetQuizForTakingQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_MapsTeacherNameFromStudentTeacher()
+    public async Task Handle_MapsTeacherNameFromLessonTeacher()
     {
         // Arrange
         var teacher = new global::Prisma.Domain.Entities.UserAggregate.Teacher
         {
-            Id = Guid.NewGuid(), FirstName = "Mona", LastName = "Kamal", Subject = "Physics"
+            Id = Guid.NewGuid(),
+            FirstName = "Mona",
+            LastName = "Kamal",
+            Subject = "Physics"
         };
-        var student = new Student { Id = StudentId, FirstName = "S", LastName = "T", Teacher = teacher };
 
-        _studentRepository
-            .GetByIdAsync(Arg.Is(StudentId), Arg.Any<CancellationToken>())
-            .Returns(student);
 
-        var quiz = CreateQuiz(dueDate: null);
+        var quiz = CreateQuiz(
+            lesson: CreateLesson("Mona", "Kamal", "Physics"),
+            dueDate: null);
+
         SetupQuiz(quiz);
         SetupExistingAttempt(null);
 
@@ -403,24 +415,9 @@ public class GetQuizForTakingQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
+        result.IsSuccess.Should().BeTrue();
         result.Value!.TeacherName.Should().Be("Mona Kamal");
     }
-
-    //[Fact]
-    //public async Task Handle_SubjectComesFromLessonTitleNotTeacher()
-    //{
-    //    // Arrange
-    //    var lesson = new Lesson { Id = 1, Title = "Algebra Intro" };
-    //    var quiz = CreateQuiz(scope: QuizScope.LessonQuiz, lessonId: 1, lesson: lesson, dueDate: null);
-    //    SetupQuiz(quiz);
-    //    SetupExistingAttempt(null);
-
-    //    // Act
-    //    var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-    //    // Assert
-    //    Assert.Equal("Algebra Intro", result.Value!.Subject);
-    //}
 
     #endregion
 }

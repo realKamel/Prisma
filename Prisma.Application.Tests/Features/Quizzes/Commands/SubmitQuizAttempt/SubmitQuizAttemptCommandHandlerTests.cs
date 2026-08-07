@@ -92,7 +92,7 @@ public class SubmitQuizAttemptCommandHandlerTests
 
     private void SetupAttempt(QuizAttempt? attempt) =>
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<AttemptByIdAndStudentSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(Arg.Any<AttemptForFinalizationSpecification>(), Arg.Any<CancellationToken>())
             .Returns(attempt);
 
     private void SetupQuiz(Quiz? quiz) =>
@@ -249,8 +249,12 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert - no rejection; treated as a normal (late) submission
-        Assert.True(result.IsSuccess);
-        Assert.Equal("graded", result.Value!.Status);
+        Assert.False(result.IsSuccess);
+        Assert.Equal(
+            "انتهى وقت الاختبار وتم تسليمه تلقائيًا",
+            result.GetResultMessage());
+
+        Assert.Equal(QuizAttemptStatus.Graded, attempt.Status);
     }
 
     [Fact]
@@ -268,6 +272,20 @@ public class SubmitQuizAttemptCommandHandlerTests
 
         // Assert
         Assert.Equal(42.5m, result.Value!.TotalDegree);
+    }
+
+    [Fact]
+    public async Task Handle_WhenQuizNotFound_ReturnsFailure()
+    {
+        var attempt = CreateAttempt();
+
+        SetupAttempt(attempt);
+        SetupQuiz(null);
+
+        var result = await _handler.Handle(ValidCommand, CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
     }
 
     #endregion

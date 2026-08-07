@@ -12,7 +12,7 @@ using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
+using Prisma.Application.Features.Quizzes.Specifications;
 
 public class GetStudentQuizzesListQueryHandlerTests
 {
@@ -48,51 +48,47 @@ public class GetStudentQuizzesListQueryHandlerTests
 
     #region Helpers
 
-    private static QuizAttempt CreateAttempt(
-        QuizAttemptStatus status,
-        decimal degree = 0m,
-        DateTimeOffset? submittedAt = null) =>
-        new()
-        {
-            StudentId = StudentId,
-            Status = status,
-            Degree = degree,
-            SubmittedAt = submittedAt ?? Now.AddMinutes(-5)
-        };
-
-    private static Quiz CreateQuiz(
-        int id = 1,
-        string title = "Quiz",
-        decimal totalDegree = 100m,
-        DateTimeOffset? availableFrom = null,
-        DateTimeOffset? dueDate = null,
-        int durationMinutes = 30,
-        int questionsCount = 5,
-        QuizAttempt? attempt = null)
+    private static AttemptProjection CreateAttempt(
+    QuizAttemptStatus status,
+    decimal degree = 0m,
+    DateTimeOffset? submittedAt = null) =>
+    new()
     {
-        var quiz = new Quiz
+        Id = 1,
+        Status = status,
+        Degree = degree,
+        SubmittedAt = submittedAt ?? Now.AddMinutes(-5)
+    };
+
+    private static StudentQuizzesListProjection CreateQuiz(
+    int id = 1,
+    string title = "Quiz",
+    decimal totalDegree = 100m,
+    DateTimeOffset? availableFrom = null,
+    DateTimeOffset? dueDate = null,
+    int durationMinutes = 30,
+    int questionsCount = 5,
+    AttemptProjection? attempt = null)
+    {
+        return new StudentQuizzesListProjection
         {
             Id = id,
             Title = title,
             TotalDegree = totalDegree,
             AvailableFrom = availableFrom,
             DueDate = dueDate,
-            TimeInMinutes = TimeSpan.FromMinutes(durationMinutes),
-            Questions = Enumerable.Range(1, questionsCount)
-                .Select(_ => new QuestionLessonQuiz())
-                .ToList()
+            DurationMinutes = durationMinutes,
+            QuestionsCount = questionsCount,
+            Attempt = attempt
         };
-
-        if (attempt is not null)
-            quiz.Attempts.Add(attempt);
-
-        return quiz;
     }
 
-    private void SetupQuizzes(params Quiz[] quizzes) =>
-        _quizRepository
-            .ListAsync(Arg.Any<StudentQuizzesSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(quizzes.ToList());
+    private void SetupQuizzes(params StudentQuizzesListProjection[] quizzes) =>
+    _quizRepository
+        .ListAsync(
+            Arg.Any<StudentQuizzesSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(quizzes.ToList());
 
     private static StudentQuizListItemDto GetSingleItem(Result<StudentQuizzesListResponseDto> result) =>
         Assert.Single(result.Value!.Items);

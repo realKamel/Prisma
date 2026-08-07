@@ -68,6 +68,14 @@ public class SaveQuizAnswerCommandHandlerTests
     private static SaveQuizAnswerCommand WrittenAnswerCommand(int attemptId = 1, int questionId = 1, string text = "my answer") =>
         new(attemptId, questionId, null, text);
 
+
+    private void SetupExistingAnswer(AttemptAnswer? answer) =>
+    _answerRepository
+        .FirstOrDefaultAsync(
+            Arg.Any<AttemptAnswerByAttemptAndQuestionSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(answer);
+
     #endregion
 
     #region Guards
@@ -203,10 +211,17 @@ public class SaveQuizAnswerCommandHandlerTests
     public async Task Handle_WhenAnswerAlreadyExistsForQuestion_UpdatesInPlaceWithoutAddingNew()
     {
         // Arrange
-        var existingAnswer = new AttemptAnswer { QuestionId = 5, ChoiceId = 100, TextAnswer = null };
-        var attempt = CreateAttempt(answers: [existingAnswer]);
+        var attempt = CreateAttempt();
+        var existingAnswer = new AttemptAnswer
+        {
+            QuizAttemptId = attempt.Id,
+            QuestionId = 5,
+            ChoiceId = 100
+        };
+
         SetupAttempt(attempt);
         SetupQuiz(CreateQuiz());
+        SetupExistingAnswer(existingAnswer);
 
         var command = McqAnswerCommand(questionId: 5, choiceId: 200); // student changed their choice
 
@@ -224,10 +239,18 @@ public class SaveQuizAnswerCommandHandlerTests
     public async Task Handle_WhenSwitchingFromChoiceToTextAnswer_OverwritesBothFieldsOnExisting()
     {
         // Arrange - existing answer had a choice, new submission replaces it with text
-        var existingAnswer = new AttemptAnswer { QuestionId = 5, ChoiceId = 100, TextAnswer = null };
-        var attempt = CreateAttempt(answers: [existingAnswer]);
+        var attempt = CreateAttempt();
+
+        var existingAnswer = new AttemptAnswer
+        {
+            QuizAttemptId = attempt.Id,
+            QuestionId = 5,
+            ChoiceId = 100
+        };
+
         SetupAttempt(attempt);
         SetupQuiz(CreateQuiz());
+        SetupExistingAnswer(existingAnswer);
 
         var command = new SaveQuizAnswerCommand(attempt.Id, 5, null, "changed my mind, here's text");
 
@@ -237,26 +260,6 @@ public class SaveQuizAnswerCommandHandlerTests
         // Assert
         Assert.Null(existingAnswer.ChoiceId);
         Assert.Equal("changed my mind, here's text", existingAnswer.TextAnswer);
-    }
-
-    [Fact]
-    public async Task Handle_WhenMultipleQuestionsAnswered_OnlyMatchingQuestionIsUpdated()
-    {
-        // Arrange
-        var answerForQ1 = new AttemptAnswer { QuestionId = 1, ChoiceId = 10 };
-        var answerForQ2 = new AttemptAnswer { QuestionId = 2, ChoiceId = 20 };
-        var attempt = CreateAttempt(answers: [answerForQ1, answerForQ2]);
-        SetupAttempt(attempt);
-        SetupQuiz(CreateQuiz());
-
-        var command = McqAnswerCommand(questionId: 2, choiceId: 99);
-
-        // Act
-        await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(10, answerForQ1.ChoiceId); // untouched
-        Assert.Equal(99, answerForQ2.ChoiceId); // updated
     }
 
     #endregion

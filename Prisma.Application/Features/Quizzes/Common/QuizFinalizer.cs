@@ -10,11 +10,79 @@ public static class QuizFinalizer
 {
     public static async Task FinalizeAttempt(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct)
     {
+
+        var (totalScore, hasPendingWritten) = CalculateScore(attempt, quiz);
+
+        var hasSecurityViolation = attempt.TabSwitchCount > 0 || attempt.CopyPasteAttemptCount > 0;
+
+
+        if (hasPendingWritten)
+        {
+            attempt.Status = QuizAttemptStatus.Submitted;
+        }
+        else if (hasSecurityViolation)
+        {
+            // Auto-graded but held for security review
+            // Save the computed score so teacher can apply penalty on top of it
+            attempt.Degree = totalScore;
+            attempt.Status = QuizAttemptStatus.Submitted;
+        }
+        else
+        {
+            attempt.Degree = totalScore;
+            attempt.Status = QuizAttemptStatus.Graded;
+
+            await CompleteLessonIfNeeded(
+                attempt.StudentId,
+                quiz,
+                unitOfWork,
+                ct);
+        }
+
+        attempt.SubmittedAt = DateTimeOffset.UtcNow;
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public static async Task FinalizeAfterManualGrading(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct)
+    {
+        // Check if all written answers are graded
+        if (attempt.Answers.Any(a => a.Score is null))
+            return;
+
+
+        attempt.Degree = attempt.Answers.Sum(a => a.Score ?? 0);
+
+        var hasSecurityViolation =
+            attempt.TabSwitchCount > 0 ||
+            attempt.CopyPasteAttemptCount > 0;
+
+        if (hasSecurityViolation)
+        {
+            // Keep as Submitted — teacher still needs to review and apply penalty
+            attempt.Status = QuizAttemptStatus.Submitted;
+        }
+        else
+        {
+            // No security issues — fully graded
+            attempt.Status = QuizAttemptStatus.Graded;
+
+            await CompleteLessonIfNeeded(
+                attempt.StudentId,
+                quiz,
+                unitOfWork,
+                ct);
+        }
+
+        await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    private static (decimal TotalScore, bool HasPendingWritten) CalculateScore(
+        QuizAttempt attempt,
+        Quiz quiz)
+    {
         var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId);
         decimal totalScore = 0;
-        var hasPendingWritten = false;
-        var totalSecurityEvents = attempt.TabSwitchCount + attempt.CopyPasteAttemptCount;
-        var hasSecurityViolation = totalSecurityEvents > 0;
+        bool hasPendingWritten = false;
 
         foreach (var ql in quiz.Questions)
         {
@@ -25,7 +93,7 @@ public static class QuizFinalizer
             {
                 if (answer is null)
                 {
-                    
+
                     continue;
                 }
 
@@ -42,62 +110,33 @@ public static class QuizFinalizer
                     totalScore += answer.Score.Value;
             }
         }
+        return (totalScore, hasPendingWritten);
 
-        if (hasPendingWritten)
-        {
-            attempt.Status = QuizAttemptStatus.Submitted;
-        }
-        else if (hasSecurityViolation)
-        {
-            // Auto-graded but held for security review
-            // Save the computed score so teacher can apply penalty on top of it
-            attempt.Degree = totalScore;
-            attempt.Status = QuizAttemptStatus.Submitted;
-        }
-        else{
-            attempt.Degree = totalScore;
-            attempt.Status = QuizAttemptStatus.Graded;
 
-            if (quiz.Scope == QuizScope.LessonQuiz && quiz.LessonId.HasValue)
-                await MarkEnrollmentCompleted(attempt.StudentId, quiz.LessonId.Value, unitOfWork, ct);
-        }
-
-        attempt.SubmittedAt = DateTimeOffset.UtcNow;
-        await unitOfWork.SaveChangesAsync(ct);
     }
 
-    public static async Task FinalizeAfterManualGrading(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct)
+    private static async Task CompleteLessonIfNeeded(
+        Guid studentId,
+        Quiz quiz,
+        IUnitOfWork unitOfWork,
+        CancellationToken ct)
     {
-        // Check if all written answers are graded
-        var stillPending = attempt.Answers.Any(a => a.Score is null);
-        if (stillPending) return;
+        if (quiz.Scope != QuizScope.LessonQuiz || !quiz.LessonId.HasValue)
+            return;
 
-        attempt.Degree = attempt.Answers.Sum(a => a.Score ?? 0);
-
-        var totalSecurityEvents = attempt.TabSwitchCount + attempt.CopyPasteAttemptCount;
-        var hasSecurityViolation = totalSecurityEvents > 0;
-
-        if (hasSecurityViolation)
-        {
-            // Keep as Submitted — teacher still needs to review and apply penalty
-            attempt.Status = QuizAttemptStatus.Submitted;
-        }
-        else
-        {
-            // No security issues — fully graded
-            attempt.Status = QuizAttemptStatus.Graded;
-            if (quiz.Scope == QuizScope.LessonQuiz && quiz.LessonId.HasValue)
-                await MarkEnrollmentCompleted(attempt.StudentId, quiz.LessonId.Value, unitOfWork, ct);
-        }
-
-        await unitOfWork.SaveChangesAsync(ct);
+        await MarkEnrollmentCompleted(
+            studentId,
+            quiz.LessonId.Value,
+            unitOfWork,
+            ct);
     }
+
 
     private static async Task MarkEnrollmentCompleted(Guid studentId, int lessonId, IUnitOfWork unitOfWork, CancellationToken ct)
     {
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var enrollment = await enrollmentRepo.FirstOrDefaultAsync(
-        new StudentLessonEnrollmentSpecification(studentId, lessonId),ct);
+        new StudentLessonEnrollmentSpecification(studentId, lessonId), ct);
 
         if (enrollment is { IsCompleted: false })
         {

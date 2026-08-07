@@ -33,6 +33,10 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
         if (attempt is null || attempt.Status == QuizAttemptStatus.InProgress)
             return Result<QuizResultDto>.Error("لم يتم تسليم هذا الاختبار بعد");
 
+        var correctCount = attempt.Answers.Count(a => a.IsCorrect == true);
+        var wrongCount = attempt.Answers.Count(a => a.IsCorrect == false);
+        var pendingCount = attempt.Answers.Count(a => a.Score == null);
+
         var now = DateTimeOffset.UtcNow;
 
         var dueDatePassed = !quiz.DueDate.HasValue || now >= quiz.DueDate.Value;
@@ -60,9 +64,9 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
                 Title = quiz.Title ?? string.Empty,
                 Status = "pending",
                 TotalDegree = quiz.TotalDegree,
-                CorrectCount = attempt.Answers.Count(a => a.IsCorrect == true),
-                WrongCount = attempt.Answers.Count(a => a.IsCorrect == false),
-                PendingCount = attempt.Answers.Count(a => a.Score == null),
+                CorrectCount = correctCount,
+                WrongCount = wrongCount,
+                PendingCount = pendingCount,
                 Review = null,
                 TabSwitchCount = attempt.TabSwitchCount,
                 CopyPasteAttemptCount = attempt.CopyPasteAttemptCount
@@ -71,7 +75,7 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
         }
 
 
-        var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId);
+        var answersByQuestion = attempt.Answers.ToDictionary(a => a.QuestionId, a => a);
 
         var review = quiz.Questions.Select(ql =>
         {
@@ -111,9 +115,9 @@ public class GetQuizResultQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServi
             Status = "done",
             Score = attempt.Degree,
             TotalDegree = quiz.TotalDegree,
-            CorrectCount = attempt.Answers.Count(a => a.IsCorrect == true),
-            WrongCount = attempt.Answers.Count(a => a.IsCorrect == false),
-            PendingCount = 0,
+            CorrectCount = correctCount,
+            WrongCount = wrongCount,
+            PendingCount = pendingCount,
             GradedAt = attempt.UpdatedAt,
             Review = review,
             TabSwitchCount = attempt.TabSwitchCount,

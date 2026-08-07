@@ -1,11 +1,10 @@
 
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Application.Features.Quizzes.Dtos;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.QuizAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 
@@ -16,50 +15,46 @@ public class GetTeacherQuizzesListQueryHandler(IUnitOfWork unitOfWork)
     {
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
 
-        var quizzes = await quizRepo.
-            ListAsync(new TeacherQuizzesSpecification(request.Scope, request.Search), ct);
+        var quizzes = await quizRepo.ListAsync(
+                new TeacherQuizzesListSpecification(request.Scope, request.Search), ct);
 
         var items = quizzes.Select(q =>
         {
-            var gradedAttempts = q.Attempts
-                .Where(a => a.Status == QuizAttemptStatus.Graded)
-                .ToList();
 
-            var pendingGradingCount = q.Attempts
-                .Count(a => a.Status == QuizAttemptStatus.Submitted);
+            double? averageScore = null;
 
-            var submittedCount = q.Attempts
-                .Count(a => a.Status == QuizAttemptStatus.Submitted
-                         || a.Status == QuizAttemptStatus.Graded);
-
-            double? averageScore = gradedAttempts.Count > 0 && q.TotalDegree > 0
-                ? Math.Round(gradedAttempts.Average(a => (double)(a.Degree / q.TotalDegree * 100)), 1)
-                : null;
+            if (q.AverageDegree.HasValue && q.TotalDegree > 0)
+            {
+                averageScore = Math.Round(
+                    (double)(q.AverageDegree.Value / q.TotalDegree * 100),
+                    1);
+            }
 
             // Compute status:
             // - "completed"      => all attempts are Graded (and at least one exists)
             // - "pending_grading"=> at least one attempt is Submitted (needs manual grading)
             // - "active"         => no Submitted attempts (either no attempts yet, or all Graded/InProgress)
+
             string status;
-            if (pendingGradingCount > 0)
+            if (q.PendingGradingCount > 0)
                 status = "pending_grading";
-            else if (q.Attempts.Any() && q.Attempts.All(a => a.Status == QuizAttemptStatus.Graded))
+            else if (q.HasAttempts && !q.HasUngradedAttempts)
                 status = "completed";
             else
                 status = "active";
 
             return new TeacherQuizListItemDto
             {
-                QuizId = q.Id,
+                QuizId = q.QuizId,
                 Title = q.Title ?? string.Empty,
                 Description = q.Description,
                 DurationMinutes = (int)q.TimeInMinutes.TotalMinutes,
-                QuestionsCount = q.Questions.Count,
+                QuestionsCount = q.QuestionsCount,
                 TotalDegree = q.TotalDegree,
                 AvailableFrom = q.AvailableFrom,
                 DueDate = q.DueDate,
-                SubmittedCount = submittedCount,
-                PendingGradingCount = pendingGradingCount,
+                SubmittedCount = q.SubmittedCount,
+                PendingGradingCount = q.PendingGradingCount,
                 AverageScore = averageScore,
                 Status = status
             };

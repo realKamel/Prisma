@@ -1,6 +1,8 @@
 
 using NSubstitute;
+using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizDetail;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
@@ -14,6 +16,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
+    private readonly IRepository<QuestionLessonQuiz, int> _questionLessonRepository =
+    Substitute.For<IRepository<QuestionLessonQuiz, int>>();
     private readonly GetTeacherQuizDetailQueryHandler _handler;
 
     private static readonly GetTeacherQuizDetailQuery ValidQuery = new(QuizId: 1);
@@ -21,6 +25,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public GetTeacherQuizDetailQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
+        _unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>().Returns(_questionLessonRepository);
         _handler = new GetTeacherQuizDetailQueryHandler(_unitOfWork);
     }
 
@@ -45,38 +50,53 @@ public class GetTeacherQuizDetailQueryHandlerTests
     private static QuizAttempt CreateAttempt(QuizAttemptStatus status, decimal degree = 0m) =>
         new() { Status = status, Degree = degree, StartedAt = DateTimeOffset.UtcNow.AddDays(-1) };
 
-    private static Quiz CreateQuiz(
-        int id = 1,
-        string title = "Quiz",
-        decimal totalDegree = 100m,
-        int durationMinutes = 30,
-        QuizScope scope = QuizScope.ComprehensiveExam,
-        int? lessonId = null,
-        Lesson? lesson = null,
-        int? academicYearId = null,
-        AcademicYear? academicYear = null,
-        List<QuestionLessonQuiz>? questions = null,
-        List<QuizAttempt>? attempts = null) =>
-        new()
-        {
-            Id = id,
-            Title = title,
-            TotalDegree = totalDegree,
-            TimeInMinutes = TimeSpan.FromMinutes(durationMinutes),
-            Scope = scope,
-            LessonId = lessonId,
-            Lesson = lesson,
-            AcademicYearId = academicYearId,
-            AcademicYear = academicYear,
-            Questions = questions ?? new List<QuestionLessonQuiz>(),
-            Attempts = attempts ?? new List<QuizAttempt>()
-        };
+    private static TeacherQuizDetailProjection CreateQuiz(
+    int id = 1,
+    string title = "Quiz",
+    decimal totalDegree = 100m,
+    int durationMinutes = 30,
+    QuizScope scope = QuizScope.ComprehensiveExam,
+    int? lessonId = null,
+    string? lessonTitle = null,
+    int? academicYearId = null,
+    string? academicYearName = null,
+    int submittedCount = 0,
+    int pendingGradingCount = 0,
+    decimal? averageDegree = null,
+    bool hasAttempts = false,
+    bool hasUngradedAttempts = false)
+    => new()
+    {
+        QuizId = id,
+        Title = title,
+        Scope = scope,
+        LessonId = lessonId,
+        LessonTitle = lessonTitle,
+        AcademicYearId = academicYearId,
+        AcademicYearName = academicYearName,
+        TimeInMinutes = TimeSpan.FromMinutes(durationMinutes),
+        TotalDegree = totalDegree,
 
-    private void SetupQuiz(Quiz? quiz) =>
-        _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<TeacherQuizDetailSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(quiz);
+        SubmittedCount = submittedCount,
+        PendingGradingCount = pendingGradingCount,
+        AverageDegree = averageDegree,
+        HasAttempts = hasAttempts,
+        HasUngradedAttempts = hasUngradedAttempts
+    };
 
+    private void SetupQuiz(TeacherQuizDetailProjection? quiz) =>
+    _quizRepository
+        .FirstOrDefaultAsync(
+            Arg.Any<TeacherQuizDetailSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(quiz);
+
+    private void SetupQuestions(params QuestionLessonQuiz[] questions) =>
+    _questionLessonRepository
+        .ListAsync(
+            Arg.Any<TeacherQuizQuestionsSpecification>(),
+            Arg.Any<CancellationToken>())
+        .Returns(questions.ToList());
     #endregion
 
     #region Guards
@@ -103,12 +123,14 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public async Task Handle_WhenAtLeastOneSubmittedAttempt_ReturnsPendingGradingStatus()
     {
         // Arrange
-        var quiz = CreateQuiz(attempts:
-        [
-            CreateAttempt(QuizAttemptStatus.Graded, degree: 80m),
-            CreateAttempt(QuizAttemptStatus.Submitted)
-        ]);
+        var quiz = CreateQuiz(
+            submittedCount: 2,
+            pendingGradingCount: 1,
+            hasAttempts: true,
+            hasUngradedAttempts: true);
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -118,17 +140,20 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.Equal(1, result.Value.PendingGradingCount);
         Assert.Equal(2, result.Value.SubmittedCount);
     }
-
     [Fact]
     public async Task Handle_WhenAllAttemptsGraded_ReturnsCompletedStatusWithAverageScore()
     {
         // Arrange
-        var quiz = CreateQuiz(totalDegree: 100m, attempts:
-        [
-            CreateAttempt(QuizAttemptStatus.Graded, degree: 80m),
-            CreateAttempt(QuizAttemptStatus.Graded, degree: 60m)
-        ]);
+        var quiz = CreateQuiz(
+            totalDegree: 100m,
+            submittedCount: 2,
+            pendingGradingCount: 0,
+            averageDegree: 70m,
+            hasAttempts: true,
+            hasUngradedAttempts: false);
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -143,6 +168,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
     {
         // Arrange
         SetupQuiz(CreateQuiz());
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -156,8 +182,16 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public async Task Handle_WhenTotalDegreeIsZero_ReturnsNullAverageScoreEvenWithGradedAttempts()
     {
         // Arrange
-        var quiz = CreateQuiz(totalDegree: 0m, attempts: [CreateAttempt(QuizAttemptStatus.Graded)]);
+        var quiz = CreateQuiz(
+            totalDegree: 0m,
+            submittedCount: 1,
+            pendingGradingCount: 0,
+            averageDegree: null,
+            hasAttempts: true,
+            hasUngradedAttempts: false);
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -173,13 +207,18 @@ public class GetTeacherQuizDetailQueryHandlerTests
     [Fact]
     public async Task Handle_WhenQuestionIsMcq_MapsChoicesIncludingIsCorrectFlag()
     {
-        // Arrange - unlike the student-facing DTO, the teacher view should expose IsCorrect
+        // Arrange
         var question = CreateMcqQuestion(id: 1);
-        var quiz = CreateQuiz(questions:
-        [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 5m }
-        ]);
-        SetupQuiz(quiz);
+
+        SetupQuiz(CreateQuiz());
+
+        SetupQuestions(
+            new QuestionLessonQuiz
+            {
+                QuestionId = 1,
+                Question = question,
+                Degree = 5m
+            });
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -191,7 +230,6 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.False(dto.Choices.Single(c => c.Text == "5").IsCorrect);
         Assert.Null(dto.ModelAnswer);
     }
-
     #endregion
 
     #region Questions mapping - Written
@@ -201,11 +239,16 @@ public class GetTeacherQuizDetailQueryHandlerTests
     {
         // Arrange
         var question = CreateWrittenQuestion(id: 1, modelAnswer: "The answer is 42");
-        var quiz = CreateQuiz(questions:
-        [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 10m }
-        ]);
-        SetupQuiz(quiz);
+
+        SetupQuiz(CreateQuiz());
+
+        SetupQuestions(
+            new QuestionLessonQuiz
+            {
+                QuestionId = 1,
+                Question = question,
+                Degree = 10m
+            });
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -215,7 +258,6 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.Null(dto.Choices);
         Assert.Equal("The answer is 42", dto.ModelAnswer);
     }
-
     #endregion
 
     #region Questions mapping - general
@@ -225,11 +267,11 @@ public class GetTeacherQuizDetailQueryHandlerTests
     {
         // Arrange - Degree lives on QuestionLessonQuiz, not on the Question entity
         var question = CreateWrittenQuestion(id: 1);
-        var quiz = CreateQuiz(questions:
+        SetupQuestions(
         [
             new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 15m }
         ]);
-        SetupQuiz(quiz);
+        SetupQuiz(CreateQuiz());
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -244,12 +286,12 @@ public class GetTeacherQuizDetailQueryHandlerTests
         // Arrange
         var mcq = CreateMcqQuestion(id: 1);
         var written = CreateWrittenQuestion(id: 2);
-        var quiz = CreateQuiz(questions:
+        SetupQuestions(
         [
             new QuestionLessonQuiz { QuestionId = 1, Question = mcq, Degree = 5m },
             new QuestionLessonQuiz { QuestionId = 2, Question = written, Degree = 10m }
         ]);
-        SetupQuiz(quiz);
+        SetupQuiz(CreateQuiz());
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -266,9 +308,13 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public async Task Handle_WhenLessonQuizScope_MapsScopeStringAndLessonTitle()
     {
         // Arrange
-        var lesson = new Lesson { Id = 10, Title = "Algebra Basics" };
-        var quiz = CreateQuiz(scope: QuizScope.LessonQuiz, lessonId: 10, lesson: lesson);
+        var quiz = CreateQuiz(
+            scope: QuizScope.LessonQuiz,
+            lessonId: 10,
+            lessonTitle: "Algebra Basics");
+
         SetupQuiz(quiz);
+        SetupQuestions(); // no questions needed for this test
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -285,9 +331,13 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public async Task Handle_WhenComprehensiveExamScope_MapsScopeStringAndAcademicYearName()
     {
         // Arrange
-        var academicYear = new AcademicYear { Id = 5, Title = "Grade 12" };
-        var quiz = CreateQuiz(scope: QuizScope.ComprehensiveExam, academicYearId: 5, academicYear: academicYear);
+        var quiz = CreateQuiz(
+            scope: QuizScope.ComprehensiveExam,
+            academicYearId: 5,
+            academicYearName: "Grade 12");
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -300,12 +350,18 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.Null(result.Value.LessonTitle);
     }
 
+
     [Fact]
     public async Task Handle_WhenLessonNavigationNotLoaded_LessonTitleIsNullWithoutThrowing()
     {
-        // Arrange - LessonId set but Lesson navigation not populated (e.g. spec didn't include it)
-        var quiz = CreateQuiz(scope: QuizScope.LessonQuiz, lessonId: 10, lesson: null);
+        // Arrange
+        var quiz = CreateQuiz(
+            scope: QuizScope.LessonQuiz,
+            lessonId: 10,
+            lessonTitle: null);
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -314,7 +370,6 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.Equal(10, result.Value!.LessonId);
         Assert.Null(result.Value.LessonTitle);
     }
-
     #endregion
 
     #region General mapping
@@ -323,8 +378,14 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public async Task Handle_MapsBasicQuizFieldsCorrectly()
     {
         // Arrange
-        var quiz = CreateQuiz(id: 7, title: "Midterm", totalDegree: 50m, durationMinutes: 45);
+        var quiz = CreateQuiz(
+            id: 7,
+            title: "Midterm",
+            totalDegree: 50m,
+            durationMinutes: 45);
+
         SetupQuiz(quiz);
+        SetupQuestions();
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -335,6 +396,5 @@ public class GetTeacherQuizDetailQueryHandlerTests
         Assert.Equal(50m, result.Value.TotalDegree);
         Assert.Equal(45, result.Value.DurationMinutes);
     }
-
     #endregion
 }

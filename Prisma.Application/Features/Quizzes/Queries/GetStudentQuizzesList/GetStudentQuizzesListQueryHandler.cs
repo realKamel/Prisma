@@ -8,6 +8,7 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
+using Prisma.Application.Features.Quizzes.Specifications;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetStudentQuizzesList;
 
@@ -32,23 +33,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
 
         var now = DateTimeOffset.UtcNow;
 
-        var raw = 
-            quizzes.Select(q => new
-            {
-                q.Id,
-                q.Title,
-                q.TotalDegree,
-                q.AvailableFrom,
-                q.DueDate,
-                DurationMinutes = (int)q.TimeInMinutes.TotalMinutes,
-                QuestionsCount = q.Questions.Count,
-                Attempt = q.Attempts
-                    .Select(a => new { a.Id, a.Status, a.SubmittedAt, a.Degree })
-                    .FirstOrDefault()
-                
-            });
-
-        var items = raw.Select(q =>
+        var items = quizzes.Select(q =>
         {
             string status;
             decimal? score = null;
@@ -88,7 +73,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
                 Score = score,
                 TotalDegree = q.TotalDegree,
                 QuestionsCount = q.QuestionsCount,
-                DurationMinutes = q.DurationMinutes
+                DurationMinutes = q.DurationMinutes,
             };
         }).ToList();
 
@@ -119,6 +104,4 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
         });
     }
 
-
-    
 }

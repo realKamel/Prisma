@@ -16,7 +16,7 @@ public class OverrideAttemptScoreCommandHandler(IUnitOfWork unitOfWork)
     {
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         var attempt = await attemptRepo.FirstOrDefaultAsync(
-            new AttemptWithQuizSpecification(request.AttemptId), ct);
+            new AttemptByIdSpecification(request.AttemptId), ct);
 
         if (attempt is null)
             return Result<OverrideScoreResultDto>.Error("المحاولة غير موجودة");

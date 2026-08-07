@@ -17,10 +17,10 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
     public async Task<Result<QuizTakingDto>> Handle(GetQuizForTakingQuery request, CancellationToken ct)
     {
         var studentId = currentUser.UserId!.Value;
-        
+
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
         var quiz = await quizRepo
-            .FirstOrDefaultAsync(new QuizWithQuestionsAndLessonSpecification(request.QuizId), ct);
+            .FirstOrDefaultAsync(new QuizForTakingSpecification(request.QuizId), ct);
 
         if (quiz is null)
             return Result<QuizTakingDto>.Error("الاختبار غير موجود");
@@ -38,10 +38,11 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         if (attempt is not null && attempt.Status == QuizAttemptStatus.InProgress)
         {
             var deadline = attempt.StartedAt + quiz.TimeInMinutes;
-            if (now >= deadline)
+            var hardDeadline = deadline + TimeSpan.FromSeconds(10);
+            if (now >= hardDeadline)
             {
                 await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
-                return Result<QuizTakingDto>.Error("انتهى وقت هذه المحاولة"); 
+                return Result<QuizTakingDto>.Error("انتهى وقت هذه المحاولة");
 
             }
         }
@@ -67,18 +68,17 @@ public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserSe
 
         var savedAnswers = attempt.Answers.ToDictionary(a => a.QuestionId);
 
-        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var student = await studentRepo.GetByIdAsync(studentId, ct);
-
         var dto = new QuizTakingDto
         {
             AttemptId = attempt.Id,
             QuizId = quiz.Id,
             Title = quiz.Title ?? string.Empty,
-            TeacherName = student?.Teacher is not null
-            ? $"{student.Teacher.FirstName} {student.Teacher.LastName}"
-            : "أ. أحمد مصطفي",
-            Subject = "اللغة الانجليزية",
+            TeacherName =
+            quiz.Lesson?.Teacher is not null
+                ? $"{quiz.Lesson.Teacher.FirstName} {quiz.Lesson.Teacher.LastName}"
+                : string.Empty,
+
+            Subject = quiz.Lesson?.Teacher?.Subject ?? string.Empty,
             Instructions = quiz.Description ?? "لا يوجد تعليمات لهذا الإختبار",
             DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
             RemainingSeconds = Math.Max(0, (int)((attempt.StartedAt + quiz.TimeInMinutes - now).TotalSeconds)),

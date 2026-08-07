@@ -3,7 +3,7 @@ using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
+using Prisma.Application.Features.Quizzes.Specifications;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
 
@@ -13,14 +13,10 @@ public class GetLessonsAvailableForQuizQueryHandler(IUnitOfWork unitOfWork)
     public async Task<Result<List<LessonOptionDto>>> Handle(GetLessonsAvailableForQuizQuery request, CancellationToken ct)
     {
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var lessons = await lessonRepo.ListAsync(new LessonsAvailableForQuizSpecification(), ct);
 
-        var result = lessons.Select(l => new LessonOptionDto
-        {
-            LessonId = l.Id,
-            Title = l.Title ?? string.Empty
-        }).ToList();
+        var lessons = await lessonRepo.ListAsync(
+            new LessonsAvailableForQuizSpecification(), ct);
 
-        return Result<List<LessonOptionDto>>.Success(result);
+        return Result<List<LessonOptionDto>>.Success(lessons);
     }
 }

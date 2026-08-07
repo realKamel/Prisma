@@ -1,6 +1,7 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
@@ -28,15 +29,20 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>()
         .FirstOrDefaultAsync(new QuizByIdSpecification(attempt.QuizId), ct);
 
-        var deadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(5);
+        var deadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
         if (DateTimeOffset.UtcNow > deadline)
             return Result.Error("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
 
-        var existing = attempt.Answers.FirstOrDefault(a => a.QuestionId == request.QuestionId);
+        var answerRepo = unitOfWork.GetOrCreateRepository<AttemptAnswer, int>();
+
+        var existing = await answerRepo.FirstOrDefaultAsync(
+            new AttemptAnswerByAttemptAndQuestionSpecification(
+                attempt.Id,
+                request.QuestionId),
+                ct);
 
         if (existing is null)
         {
-            var answerRepo = unitOfWork.GetOrCreateRepository<AttemptAnswer, int>();
             answerRepo.Add(new AttemptAnswer
             {
                 QuizAttemptId = attempt.Id,

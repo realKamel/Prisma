@@ -17,23 +17,29 @@ public class DeleteQuizCommandHandler(IUnitOfWork unitOfWork)
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
 
         var quiz = await quizRepo.
-            FirstOrDefaultAsync(new QuizByIdForDeleteSpecification(request.QuizId), ct);
+            FirstOrDefaultAsync(new QuizByIdSpecification(request.QuizId), ct);
 
         if (quiz is null)
             return Result.Error("الاختبار غير موجود");
 
-        if (quiz.Attempts.Any(a => a.Status != QuizAttemptStatus.InProgress))
-            return Result.Error(
-                "مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة");
+        var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
+
+        var hasSubmittedAttempts = await attemptRepo.AnyAsync(
+            new SubmittedAttemptsForQuizSpecification(request.QuizId), ct);
+
+        if (hasSubmittedAttempts)
+        {
+            return Result.Error("مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة");
+        }
 
         quiz.IsDeleted = true;
         quiz.DeletedAt = DateTimeOffset.UtcNow;
 
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         // Unlink from lesson (one-to-one) before soft delete
         if (quiz.Scope == QuizScope.LessonQuiz && quiz.LessonId.HasValue)
         {
-            var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
             var lesson = await lessonRepo.FirstOrDefaultAsync(
                 new LessonByIdSpecification(quiz.LessonId.Value), ct);
 
@@ -42,7 +48,7 @@ public class DeleteQuizCommandHandler(IUnitOfWork unitOfWork)
         }
 
         
-        quizRepo.Update(quiz);
+        //quizRepo.Update(quiz);
 
         await unitOfWork.SaveChangesAsync(ct);
 

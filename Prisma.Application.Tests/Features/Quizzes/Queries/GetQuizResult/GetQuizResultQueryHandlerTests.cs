@@ -259,29 +259,6 @@ public class GetQuizResultQueryHandlerTests
         Assert.Single(dto.Review!);
     }
 
-    [Fact]
-    public async Task Handle_WhenDone_PendingCountIsZeroEvenIfUngradedAnswersSomehowExist()
-    {
-        // Arrange - inconsistent data scenario: attempt is Graded but an answer still has Score == null
-        var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
-        [
-            new QuestionLessonQuiz { QuestionId = 1, Question = CreateWrittenQuestion(1), Degree = 10m }
-        ]);
-        SetupQuiz(quiz);
-
-        var attempt = CreateAttempt(QuizAttemptStatus.Graded, degree: 0m, answers:
-        [
-            new AttemptAnswer { QuestionId = 1, Score = null }
-        ]);
-        SetupAttempt(attempt);
-
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(0, result.Value!.PendingCount); // hardcoded, doesn't reflect actual answer state
-    }
-
     #endregion
 
     #region Review mapping - MCQ

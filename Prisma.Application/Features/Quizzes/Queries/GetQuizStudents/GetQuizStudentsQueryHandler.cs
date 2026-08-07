@@ -1,12 +1,12 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Application.Features.Quizzes.Dtos;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetQuizStudents;
 
@@ -27,25 +27,21 @@ public class GetQuizStudentsQueryHandler(IUnitOfWork unitOfWork)
         var attemptByStudent = quiz.Attempts.ToDictionary(a => a.StudentId);
 
         // 3. Get all enrolled students based on scope
-        List<Student> enrolledStudents;
+        List<StudentListProjection> enrolledStudents;
 
         if (quiz.Scope == QuizScope.LessonQuiz && quiz.LessonId.HasValue)
         {
             var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
-            var enrollments = await enrollmentRepo.ListAsync(
+            enrolledStudents = await enrollmentRepo.ListAsync(
                 new EnrolledStudentsByLessonSpecification(quiz.LessonId.Value), ct);
-            enrolledStudents = enrollments
-                .Where(e => e.Student != null)
-                .Select(e => e.Student!)
-                .ToList();
         }
         else
         {
             // ComprehensiveExam — get all students in the academic year
             var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
-            var students = await studentRepo.ListAsync(
-                new StudentsByAcademicYearSpecification(quiz.AcademicYearId!.Value), ct);
-            enrolledStudents = students;
+            enrolledStudents = await studentRepo.ListAsync(
+               new StudentsByAcademicYearSpecification(quiz.AcademicYearId!.Value), ct);
+
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -80,8 +76,7 @@ public class GetQuizStudentsQueryHandler(IUnitOfWork unitOfWork)
                     case QuizAttemptStatus.Submitted:
                         status = "submitted";
                         // Count written answers that still need grading
-                        pendingWrittenCount = attempt.Answers
-                            .Count(a => a.Score == null);
+                        pendingWrittenCount = attempt.PendingWrittenCount;
                         break;
 
                     case QuizAttemptStatus.Graded:

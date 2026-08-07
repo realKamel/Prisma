@@ -18,7 +18,7 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
         var studentId = currentUser.UserId!.Value;
 
         var attempt = await unitOfWork.GetOrCreateRepository<QuizAttempt, int>()
-            .FirstOrDefaultAsync(new AttemptByIdAndStudentSpecification(request.AttemptId, studentId), ct);
+            .FirstOrDefaultAsync(new AttemptForFinalizationSpecification(request.AttemptId, studentId), ct);
 
 
         if (attempt is null)
@@ -30,18 +30,21 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
         var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>().
             FirstOrDefaultAsync(new QuizWithQuestionsSpecification(attempt.QuizId), ct);
 
+        if (quiz is null)
+            return Result<SubmitQuizResultDto>.Error("الاختبار غير موجود");
 
+        var now = DateTimeOffset.UtcNow;
 
-        // سماحية 10 ثواني لتأخير الشبكة — مش رفض صارم لو الطالب ضغط submit في آخر لحظة
-        var hardDeadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(10);
-        if (DateTimeOffset.UtcNow > hardDeadline)
-        {
-            // اتأخر كتير — يتعامل معه كـ auto-submit بالإجابات المتاحة، مش رفض
-            // (ده نفس سلوك QuizFinalizer أصلاً، فمفيش داعي نرفض هنا)
-        }
-
+        var deadline = attempt.StartedAt + quiz!.TimeInMinutes;
+        var hardDeadline = deadline + TimeSpan.FromSeconds(10);
+        var isLate = now > hardDeadline;
 
         await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
+
+        if (isLate)
+        {
+            return Result<SubmitQuizResultDto>.Error("انتهى وقت الاختبار وتم تسليمه تلقائيًا");
+        }
 
         return Result<SubmitQuizResultDto>.Success(new SubmitQuizResultDto
         {

@@ -1,8 +1,9 @@
 using NSubstitute;
+using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
 
@@ -18,7 +19,7 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
         _handler = new GetLessonsAvailableForQuizQueryHandler(_unitOfWork);
     }
 
-    private void SetupLessons(params Lesson[] lessons) =>
+    private void SetupLessons(params LessonOptionDto[] lessons) =>
         _lessonRepository
             .ListAsync(Arg.Any<LessonsAvailableForQuizSpecification>(), Arg.Any<CancellationToken>())
             .Returns(lessons.ToList());
@@ -28,8 +29,16 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
     {
         // Arrange
         SetupLessons(
-            new Lesson { Id = 1, Title = "Algebra Basics" },
-            new Lesson { Id = 2, Title = "Geometry Intro" });
+    new LessonOptionDto
+    {
+        LessonId = 1,
+        Title = "Algebra Basics"
+    },
+    new LessonOptionDto
+    {
+        LessonId = 2,
+        Title = "Geometry Intro"
+    });
 
         // Act
         var result = await _handler.Handle(new GetLessonsAvailableForQuizQuery(), CancellationToken.None);
@@ -41,18 +50,6 @@ public class GetLessonsAvailableForQuizQueryHandlerTests
         Assert.Contains(result.Value, l => l.LessonId == 2 && l.Title == "Geometry Intro");
     }
 
-    [Fact]
-    public async Task Handle_WhenLessonTitleIsNull_MapsToEmptyString()
-    {
-        // Arrange
-        SetupLessons(new Lesson { Id = 1, Title = null });
-
-        // Act
-        var result = await _handler.Handle(new GetLessonsAvailableForQuizQuery(), CancellationToken.None);
-
-        // Assert
-        Assert.Equal(string.Empty, Assert.Single(result.Value!).Title);
-    }
 
     [Fact]
     public async Task Handle_WhenNoLessonsAvailable_ReturnsEmptyList()

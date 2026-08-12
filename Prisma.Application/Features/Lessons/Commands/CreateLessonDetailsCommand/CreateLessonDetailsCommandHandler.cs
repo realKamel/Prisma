@@ -1,9 +1,9 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -25,12 +25,18 @@ public class CreateLessonDetailsCommandHandler(
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
+
         if (userId is null)
-            return Result.Unauthorized("User must be authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+
         if (user is null)
-            return Result.Unauthorized("User not found.");
+        {
+            return Result.Unauthorized();
+        }
 
         var roles = await _userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
@@ -109,8 +115,8 @@ public class CreateLessonDetailsCommandHandler(
 
         var response = new CreateLessonResponse(lesson.Id, sectionIds);
 
-        backgroundJobService.Enqueue<ILessonTranscriptAndSummarizationJob>(job =>
-            job.TranscriptAndSummarize(lesson.Id, cancellationToken));
+        //backgroundJobService.Enqueue<ILessonTranscriptAndSummarizationJob>(job =>
+        //    job.TranscriptAndSummarize(lesson.Id, cancellationToken));
 
         return Result<CreateLessonResponse>.Success(response);
     }

@@ -207,7 +207,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         name: "FK_Users_Users_Assistant_TeacherId",
                         column: x => x.Assistant_TeacherId,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Users_Users_TeacherId",
                         column: x => x.TeacherId,

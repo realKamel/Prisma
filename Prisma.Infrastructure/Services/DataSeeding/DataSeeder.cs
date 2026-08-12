@@ -1,18 +1,14 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
-using Prisma.Domain.Entities;
-using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Infrastructure.Persistence;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Prisma.Infrastructure.Services.DataSeeding;
 
@@ -21,15 +17,21 @@ public class DataSeeder(
     ILogger<IDataSeeder> logger,
     RoleManager<Role> roleManager,
     UserManager<User> userManager,
-    IHostEnvironment hostEnvironment)
+    IHostEnvironment hostEnvironment,
+    IConfiguration configuration)
     : IDataSeeder
 {
     public async Task SeedAppDataAsync()
     {
         if ((await dbContext.Database.GetPendingMigrationsAsync()).Any())
         {
-            //throw new Exception("There is Pending Migrations");
-            logger.LogInformation("Applying New Migration to Database");
+            if (!hostEnvironment.IsDevelopment())
+            {
+                throw new Exception("There is Pending Migrations");
+            }
+
+            logger.LogInformation("Applying New Migration to Database Only (In DEV)");
+
             await dbContext.Database.MigrateAsync();
         }
 
@@ -41,9 +43,7 @@ public class DataSeeder(
                 // Defer foreign key checking until COMMIT instead of using session_replication_role
                 await dbContext.Database.ExecuteSqlRawAsync("SET CONSTRAINTS ALL DEFERRED;");
 
-                var seedFileName = hostEnvironment.IsDevelopment()
-                    ? "seed_app_data.json"
-                    : "seed_prod_data.json";
+                var seedFileName = "seed_app_data.json";
 
                 var seedPath = Path.Combine(
                     AppContext.BaseDirectory, "SeedData", seedFileName);
@@ -65,60 +65,36 @@ public class DataSeeder(
 
                 var root = document.RootElement;
 
-
                 if (!await roleManager.Roles.AnyAsync())
                 {
                     var roles = SeedData<Role>(root, options);
 
                     foreach (var role in roles)
+                    {
                         await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id, });
+                    }
                 }
 
-                await SeedDataAsync<AcademicYear>(root, options);
+                var academicYears = SeedData<AcademicYear>(root, options);
+
+                dbContext.Set<AcademicYear>().AddRange(academicYears);
 
                 await dbContext.SaveChangesAsync();
 
-                if (!await userManager.Users.AnyAsync())
+                var admin = new User
                 {
-                    List<User> users = [];
-                    var settings = new JsonSerializerSettings();
-                    settings.Converters.Add(new UserHierarchyConverter());
-                    logger.LogInformation("Seeding Check: {name}", nameof(User));
-                    if (root.TryGetProperty(nameof(User), out JsonElement output))
-                    {
-                        users = JsonConvert.DeserializeObject<List<User>>(output.GetRawText(), settings) ?? [];
-                    }
+                    FirstName = "Admin",
+                    LastName = "Prisma",
+                    UserName = configuration.GetSection("IdentitySeed")["AdminEmail"],
+                    Email = configuration.GetSection("IdentitySeed")["AdminEmail"],
+                    PhoneNumber = configuration.GetSection("IdentitySeed")["AdminPhone"],
+                };
 
-                    foreach (var user in users)
-                    {
-                        await userManager.CreateAsync(user, "P@ssw0rd");
+                await userManager.CreateAsync(admin,
+                    configuration.GetSection("IdentitySeed")["AdminPassword"] ??
+                    throw new Exception("Identity data is empty"));
 
-                        switch (user)
-                        {
-                            case Teacher:
-                            {
-                                await userManager.AddToRoleAsync(user, AppRoles.Teacher);
-                                if (user is Teacher teacher)
-                                {
-                                    teacher.TeacherLandingSettings = await ReadTeacherSettingJsonFileAsync();
-                                }
-
-                                break;
-                            }
-                            case Assistant:
-                                await userManager.AddToRoleAsync(user, AppRoles.Assistant);
-                                break;
-                            case Admin:
-                                await userManager.AddToRoleAsync(user, AppRoles.Admin);
-                                break;
-                            default:
-                                await userManager.AddToRoleAsync(user, AppRoles.Student);
-                                break;
-                        }
-                    }
-                }
-
-                await SeedAppDataAsync(root);
+                await userManager.AddToRoleAsync(admin, AppRoles.Admin);
 
                 await dbContext.SaveChangesAsync();
 
@@ -133,108 +109,23 @@ public class DataSeeder(
                 throw;
             }
         }
-    }
 
-    public async Task SeedTeacherSettingAsync()
-    {
-        var migrations = await dbContext.Database.GetPendingMigrationsAsync();
-
-        if (migrations.Any())
+        if (hostEnvironment.IsDevelopment())
         {
-            throw new Exception("There is Pending Migrations");
+            await using var transaction2 = await dbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                await SeedLoadTestUsersAsync();
+                await transaction2.CommitAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                await transaction2.RollbackAsync();
+                throw;
+            }
         }
-
-        if (await userManager.Users.OfType<Teacher>().AnyAsync())
-        {
-            return;
-        }
-
-        var teacher = new Teacher()
-        {
-            Id = Guid.CreateVersion7(),
-            FirstName = "Ahmed",
-            LastName = "Mostafa",
-            Subject = "English",
-            PhoneNumber = "01010101010",
-            UserName = "ahmed@gmail.com",
-            Email = "ahmed@gmail.com"
-        };
-
-        try
-        {
-            // teacher.TeacherLandingSettings = await ReadJsonFileAsync();
-        }
-        catch (Exception e)
-        {
-            logger.LogError(e, "An error occured while seeding from json file");
-            throw;
-        }
-
-        await userManager.CreateAsync(teacher, "AhmedP@ssword");
-        await userManager.AddToRoleAsync(teacher, AppRoles.Teacher);
-        dbContext.Set<TeacherPreferences>().Add(TeacherPreferences.CreateDefault(teacher.Id));
-        await dbContext.SaveChangesAsync();
-    }
-
-    public async Task SeedAppDataAsync(JsonElement root)
-    {
-        try
-        {
-            var questionSettings = new JsonSerializerSettings();
-
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            questionSettings.Converters.Add(new QuestionConverter());
-
-            // var root = document.RootElement;
-
-            // await SeedDataAsync<AcademicYear>(root, options);
-            await SeedDataAsync<Lesson>(root, options);
-            await SeedDataAsync<AcademicYearTeacher>(root, options);
-            await SeedDataAsync<AcademicYearLesson>(root, options);
-            await SeedDataAsync<Section>(root, options);
-            await SeedDataAsync<Assignment>(root, options);
-            await SeedDataAsync<Enrollment>(root, options);
-            await SeedDataAsync<Question>(root, options, questionSettings);
-            await SeedDataAsync<Quiz>(root, options);
-            await SeedDataAsync<Choice>(root, options);
-            await SeedDataAsync<QuestionLessonQuiz>(root, options);
-            await SeedDataAsync<QuizAttempt>(root, options);
-            await SeedDataAsync<AttemptAnswer>(root, options);
-            await SeedDataAsync<Report>(root, options);
-            await SeedDataAsync<SectionProgress>(root, options);
-            await SeedDataAsync<AssignmentSubmission>(root, options);
-            await SeedDataAsync<RedeemCode>(root, options);
-            await SeedDataAsync<GeneratedCode>(root, options);
-            await SeedDataAsync<TeacherPreferences>(root, options);
-
-            await SeedDataAsync<Payment>(root, options);
-        }
-        catch (Exception e)
-        {
-            logger.LogError("An error occured while seeding from json file {e}", e.Message);
-            throw;
-        }
-    }
-
-    private async Task<TeacherLandingSettings?> ReadTeacherSettingJsonFileAsync(CancellationToken ct = default)
-    {
-        var seedPath = Path.Combine(
-            AppContext.BaseDirectory, "SeedData", "TeacherSettingDataSeed.json");
-
-        Console.WriteLine(seedPath);
-
-        if (!File.Exists(seedPath))
-        {
-            logger.LogWarning("Seed file not found: {Path}", seedPath);
-            return null;
-        }
-
-        await using var stream = File.OpenRead(seedPath);
-
-        var entities = JsonSerializer.Deserialize<TeacherLandingSettings>(stream,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        return entities;
     }
 
     private List<TEntity> SeedData<TEntity>(JsonElement root, JsonSerializerOptions options,
@@ -256,28 +147,54 @@ public class DataSeeder(
         return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
     }
 
-    private async Task SeedDataAsync<TEntity>(JsonElement root, JsonSerializerOptions options,
-        JsonSerializerSettings? serializerSettings = null)
-        where TEntity : class
+    private async Task SeedLoadTestUsersAsync(int count = 1000)
     {
-        logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
+        bool isSeeded = await dbContext
+            .Users
+            .AnyAsync(u => u.Email != null && u.Email.StartsWith("user_"));
 
-        if (root.TryGetProperty(typeof(TEntity).Name, out JsonElement output) &&
-            !await dbContext.Set<TEntity>().AnyAsync())
+        if (isSeeded)
         {
-            List<TEntity> entities;
-            if (serializerSettings is null)
-            {
-                entities = JsonConvert
-                    .DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
-            }
-            else
-            {
-                entities = JsonConvert
-                    .DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
-            }
-
-            dbContext.Set<TEntity>().AddRange(entities);
+            return;
         }
+
+        var passwordHasher = new PasswordHasher<User>();
+
+        string hashedPassword = passwordHasher.HashPassword(null!, "P@ssw0rd");
+
+        var users = new List<User>(count);
+
+        for (int i = 1; i <= count; i++)
+        {
+            var email = $"user_{i}@test.com";
+
+            users.Add(new User
+            {
+                Id = Guid.NewGuid(),
+                FirstName = "TestUser",
+                LastName = $"Num_{i}",
+                UserName = email,
+                NormalizedUserName = email.ToUpperInvariant(),
+                Email = email,
+                NormalizedEmail = email.ToUpperInvariant(),
+                EmailConfirmed = true,
+                PhoneNumberConfirmed = false, // Satisfies PostgreSQL NOT NULL constraint
+                TwoFactorEnabled = false, // Satisfies PostgreSQL NOT NULL constraint
+                IsBlocked = false,
+                PasswordResetConfirmed = false,
+                ResetPasswordCodeAttemptCount = 0,
+                IsDeleted = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
+                LockoutEnabled = true,
+                AccessFailedCount = 0,
+                IsOnline = false,
+                PasswordHash = hashedPassword // Reuses pre-computed hash
+            });
+        }
+
+        await dbContext.Users.AddRangeAsync(users);
+        await dbContext.SaveChangesAsync();
     }
 }

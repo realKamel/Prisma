@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260809164621_AssistantTeacherRelation")]
+    partial class AssistantTeacherRelation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,6 +95,21 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -1682,43 +1700,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.UserRole", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId", "UserId")
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    b.ToTable("UserRole", (string)null);
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.MCQQuestion", b =>
                 {
                     b.HasBaseType("Prisma.Domain.Entities.QuizAggregate.Question");
@@ -1914,6 +1895,21 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -2280,25 +2276,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Teacher");
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.UserRole", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.User", "User")
-                        .WithMany("Roles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Assistant", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
@@ -2397,16 +2374,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Answers");
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
-                {
-                    b.Navigation("Users");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.User", b =>
                 {
                     b.Navigation("Claims");
-
-                    b.Navigation("Roles");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.MCQQuestion", b =>

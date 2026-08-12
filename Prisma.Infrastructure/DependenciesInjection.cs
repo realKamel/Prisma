@@ -188,6 +188,7 @@ public static class DependenciesInjection
             client.BaseAddress = new Uri("https://stream.mux.com");
             client.DefaultRequestHeaders.Accept.Clear();
         });
+        services.AddScoped<ILogoutUserJob, CleanUpAuth>();
     }
 
     private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
@@ -217,7 +218,7 @@ public static class DependenciesInjection
                 return;
             }
 
-            options.EnableSensitiveDataLogging();
+            //options.EnableSensitiveDataLogging();
             options.EnableDetailedErrors();
         });
         services.AddIdentityCore<User>(options =>

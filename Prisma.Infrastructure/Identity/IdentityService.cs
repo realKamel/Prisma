@@ -35,6 +35,8 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     {
         return await userManager
             .Users
+            .Include(u => u.Roles)
+            .ThenInclude(x => x.Role)
             .Where(u => (userId == u.Id && !u.IsDeleted))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -50,11 +52,21 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     public async Task<User?> FindByEmailOrPhoneAsync(string? email, string? phone,
         CancellationToken cancellationToken)
     {
-        var normalizedEmail = email?.ToUpper();
+
+        if (string.IsNullOrWhiteSpace(email) && string.IsNullOrWhiteSpace(phone))
+        {
+            return null;
+        }
+
         return await userManager.Users
+            .AsSplitQuery()
             .Where(u => !u.IsDeleted)
+            .Include(u => u.Claims)
+            .Include(c => c.Roles)
+                .ThenInclude(x => x.Role)
             .FirstOrDefaultAsync(u =>
-                    u.NormalizedEmail == normalizedEmail || u.PhoneNumber == phone,
+                (!string.IsNullOrWhiteSpace(email) && u.NormalizedEmail == email.ToUpper()) ||
+                (!string.IsNullOrWhiteSpace(phone) && u.PhoneNumber == phone),
                 cancellationToken: cancellationToken);
     }
 

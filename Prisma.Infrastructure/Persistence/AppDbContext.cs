@@ -1,11 +1,13 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence;
 
-public class AppDbContext(DbContextOptions options)
-    : IdentityDbContext<User, Role, Guid>(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<User, Role, Guid, IdentityUserClaim<Guid>, UserRole, IdentityUserLogin<Guid>,
+        IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

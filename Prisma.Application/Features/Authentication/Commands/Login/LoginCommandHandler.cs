@@ -1,7 +1,8 @@
+using System.Security.Claims;
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
-using Ardalis.Result;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
@@ -15,22 +16,29 @@ public class LoginCommandHandler(
         var user = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Phone, cancellationToken);
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
-            return Result.Error("Invalid credentials");
+        {
+            return Result.Error("Invalid Credentials");
+        }
 
-        var roles = (await identityService.GetRolesAsync(user)).ToList();
+        var roles = user.Roles
+            .Select(x => x.Role.Name)
+            .ToList();
 
-        var permissions = await identityService.GetClaimsAsync(user);
-        var permissionList = permissions.Select(permission => permission.Value).ToArray();
-        var accessToken = jwtTokenService
-            .GenerateAccessToken(user.Id, user.Email, roles, permissions);
+        var permissions = user.Claims
+            .Select(c => new Claim(c.ClaimType, c.ClaimValue))
+            .ToList();
+
+        var permissionList = permissions.Select(c => c.Value).ToArray();
+
+        var accessToken = jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles, permissions);
 
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
-        user.RefreshToken = refreshToken;
 
-        user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
+        //TODO: this must be set from configuration 
+        user.UpdateRefreshToken(refreshToken, DateTimeOffset.UtcNow.AddDays(7));
 
-        user.IsOnline = true;
+        user.MarkAsOnline();
 
         await identityService.UpdateAsync(user);
 
@@ -41,7 +49,7 @@ public class LoginCommandHandler(
                 user.Email,
                 user.FirstName,
                 user.SecondName,
-                roles.Count == 0 ? null : roles[0],
+                Role: roles.FirstOrDefault(),
                 permissionList)
         );
     }

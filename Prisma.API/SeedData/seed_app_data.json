@@ -100,7 +100,7 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
-      "Name": "Admin",
+      "Name": "admin",
       "NormalizedName": "ADMIN",
       "ConcurrencyStamp": "bdeb50e2-a251-498c-abe9-b93d9f360fd9"
     },
@@ -114,7 +114,7 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
-      "Name": "Teacher",
+      "Name": "teacher",
       "NormalizedName": "TEACHER",
       "ConcurrencyStamp": "92e1d227-9ce9-4cf2-b6a8-b3ef7484e9ea"
     },
@@ -128,7 +128,7 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
-      "Name": "Student",
+      "Name": "student",
       "NormalizedName": "STUDENT",
       "ConcurrencyStamp": "9c96261b-5de7-4e3d-9f72-7e75b92825ce"
     },
@@ -142,7 +142,7 @@
       "UpdatedBy": null,
       "DeletedBy": null,
       "IsDeleted": false,
-      "Name": "Assistant",
+      "Name": "assistant",
       "NormalizedName": "ASSISTANT",
       "ConcurrencyStamp": "eea20830-10fd-440a-a0d4-57409dbd289f"
     }

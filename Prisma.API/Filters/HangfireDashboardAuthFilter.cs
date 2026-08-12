@@ -9,10 +9,16 @@ public class HangfireDashboardAuthFilter : IDashboardAuthorizationFilter
     {
         var httpContext = context.GetHttpContext();
 
-        // Option 1: Only allow authenticated admins
-        return httpContext.User.IsInRole(AppRoles.Admin);
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
 
-        // Option 2: For development only
-        return true;
+        // Allow unrestricted access in local Development environment
+        if (env.IsDevelopment())
+        {
+            return true;
+        }
+
+        // Production 
+        return httpContext.User.Identity?.IsAuthenticated == true
+               && httpContext.User.IsInRole(AppRoles.Admin);
     }
 }

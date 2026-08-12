@@ -2,8 +2,8 @@ namespace Prisma.Application.Common.Constants;
 
 public static class AppRoles
 {
-    public const string Student = "Student";
-    public const string Admin = "Admin";
-    public const string Teacher = "Teacher";
-    public const string Assistant = "Assistant";
+    public const string Student = "student";
+    public const string Admin = "admin";
+    public const string Teacher = "teacher";
+    public const string Assistant = "assistant";
 }

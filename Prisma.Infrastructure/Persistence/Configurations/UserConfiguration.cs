@@ -10,6 +10,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("Users");
 
+        builder.HasQueryFilter(u => !u.IsDeleted);
+
         builder
             .HasMany(x => x.Claims)
             .WithOne()
@@ -17,15 +19,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder
             .HasIndex(u => u.NormalizedEmail)
-            .HasDatabaseName("EmailIndex");
+            .IsUnique()
+            .HasDatabaseName("EmailIndex")
+            .HasFilter("\"IsDeleted\" = false");
 
         builder
-            .HasIndex("NormalizedUserName")
+            .HasIndex(u => u.NormalizedUserName)
             .IsUnique()
-            .HasFilter("\"IsDeleted\" = false")
-            .HasDatabaseName("UserNameIndex");
+            .HasDatabaseName("UserNameIndex")
+            .HasFilter("\"IsDeleted\" = false");
 
-        builder.HasIndex(x => x.PhoneNumber)
+        builder
+            .HasIndex(x => x.PhoneNumber)
+            .IsUnique()
             .HasFilter("\"IsDeleted\" = false");
     }
 }

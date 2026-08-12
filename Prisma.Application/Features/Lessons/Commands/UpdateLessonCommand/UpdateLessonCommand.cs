@@ -1,8 +1,8 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Ardalis.Result;
 
-namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonDetails;
+namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
 public record UpdateLessonDetailsCommand(
     int Id,
@@ -15,7 +15,7 @@ public record UpdateLessonDetailsCommand(
     IFormFile? AssignmentFile,
     DateTimeOffset? AssignmentDueDate,
     bool IsPublished,
-    List<int> AcademicYearIds ,
+    List<int> AcademicYearIds,
     List<string> Outcomes,
     IFormFile? ImageFile
 ) : IRequest<Result<UpdateLessonResponse>>;

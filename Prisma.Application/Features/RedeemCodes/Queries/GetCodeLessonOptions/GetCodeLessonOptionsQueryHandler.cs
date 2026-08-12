@@ -17,10 +17,15 @@ public class GetCodeLessonOptionsQueryHandler(
         GetCodeLessonOptionsQuery request,
         CancellationToken ct)
     {
-        if (currentUser.UserId is not { } teacherId)
-            return Result.Unauthorized("User is not authenticated.");
+        if (!currentUser.UserId.HasValue)
+        {
+            return Result.Unauthorized();
+        }
+
+        var teacherId = currentUser.UserId.Value;
 
         var repo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
+
         var links = await repo.ListAsync(
             new TeacherAcademicYearLessonsSpecification(teacherId), ct);
 

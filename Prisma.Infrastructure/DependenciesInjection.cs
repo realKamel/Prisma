@@ -5,9 +5,11 @@ using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.Agents.AI.Hosting;
 using Microsoft.Agents.AI.Workflows;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -34,6 +36,11 @@ using Prisma.Infrastructure.Services.DataSeeding;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.PaymentService;
 using Prisma.Infrastructure.Services.StorageService;
+using StackExchange.Redis;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
+using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
+using Role = Prisma.Domain.Entities.UserAggregate.Role;
 
 namespace Prisma.Infrastructure;
 
@@ -85,15 +92,11 @@ public static class DependenciesInjection
 
         // services.AddHostedService<StorageBucketPolicyInitializer>();
 
-        //services.AddStackExchangeRedisCache(option =>
-        //{
-        //    option.Configuration = configuration.GetConnectionString("Redis");
-        //});
-
-        //services.AddDataProtection()
-        //    .PersistKeysToStackExchangeRedis(
-        //        ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")),
-        //        "DataProtection-Keys");
+        services.AddDataProtection()
+            .PersistKeysToStackExchangeRedis(
+                ConnectionMultiplexer.Connect(configuration.GetConnectionString("Valkey") ??
+                                              throw new ArgumentException("Bad Connection string for Valkey")),
+                "DataProtection-Keys");
 
         services.AddBackgroundJobsAndHangfireWithConfig(configuration);
 
@@ -104,6 +107,49 @@ public static class DependenciesInjection
 
         services.AddLocalization();
         services.AddTransient<IAppLocalizer, AppLocalizer>();
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = configuration.GetConnectionString("Valkey");
+        });
+
+        services.AddFusionCache()
+            .WithOptions(options =>
+            {
+                options.CacheName = "prisma_";
+            })
+            .WithDefaultEntryOptions(options =>
+            {
+                // General Cache Duration
+                options.Duration = TimeSpan.FromMinutes(10);
+
+                // A. Fail-Safe: If DB crashes under load, we serve stale exam data
+                // up to 6 (will change) hours instead of throwing an HTTP 500 error to students.
+                options.IsFailSafeEnabled = true;
+                options.FailSafeMaxDuration = TimeSpan.FromHours(24);
+                options.FailSafeThrottleDuration = TimeSpan.FromSeconds(30);
+
+                // B. Soft Timeout: If DB takes longer than 150ms during a rush,
+                // abort waiting and instantly entry from the cached payload.
+                options.FactorySoftTimeout = TimeSpan.FromMilliseconds(150);
+
+                // C. Hard Timeout: Never allow a DB call to block an API thread 
+                // for longer than 2 seconds.
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(2);
+
+                // Dynamic Jittering: random extra seconds to expiration times.
+                // Prevents thousands of cache entries from expiring simultaneously.
+                options.JitterMaxDuration = TimeSpan.FromSeconds(30);
+            })
+            // Serializer for L2 Valkey Cache
+            .WithSerializer(new FusionCacheSystemTextJsonSerializer())
+            .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
+            // Backplane: Syncs all API nodes so no server returns old data
+            .WithBackplane(new RedisBackplane(new RedisBackplaneOptions
+            {
+                Configuration = configuration.GetConnectionString("Valkey")
+            }))
+            .AsHybridCache();
     }
 
     private static void AddBackgroundJobsAndHangfireWithConfig(this IServiceCollection services,
@@ -142,6 +188,7 @@ public static class DependenciesInjection
             client.BaseAddress = new Uri("https://stream.mux.com");
             client.DefaultRequestHeaders.Accept.Clear();
         });
+        services.AddScoped<ILogoutUserJob, CleanUpAuth>();
     }
 
     private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
@@ -171,7 +218,7 @@ public static class DependenciesInjection
                 return;
             }
 
-            options.EnableSensitiveDataLogging();
+            //options.EnableSensitiveDataLogging();
             options.EnableDetailedErrors();
         });
         services.AddIdentityCore<User>(options =>
@@ -300,7 +347,7 @@ public static class DependenciesInjection
             AIAgentRole.ChatAgent.ReportGeneratorAgentInstructions,
             AIType.Reasoning
         );
-    
+
         app.AddGroqApiServices(options =>
         {
             options.ApiKey = configuration?.GetSection("Groq")["ApiKey"] ??

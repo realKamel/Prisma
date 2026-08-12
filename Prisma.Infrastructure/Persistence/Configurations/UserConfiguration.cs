@@ -10,12 +10,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("Users");
 
-
         builder
             .HasMany(x => x.Claims)
             .WithOne()
             .HasForeignKey(x => x.UserId);
-
 
         builder
             .HasIndex(u => u.NormalizedEmail)

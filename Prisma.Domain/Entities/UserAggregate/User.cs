@@ -29,4 +29,21 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public bool IsDeleted { get; set; }
 
     public ICollection<IdentityUserClaim<Guid>> Claims { get; } = new List<IdentityUserClaim<Guid>>();
+
+    public ICollection<UserRole> Roles { get; set; } = [];
+
+    public void MarkAsOnline() => IsOnline = true;
+    public void UpdateOnlineStatus(bool status) => IsOnline = status;
+
+    public void UpdateRefreshToken(string token, DateTimeOffset? dateTime)
+    {
+        RefreshToken = token;
+        RefreshTokenExpiry = dateTime;
+    }
+
+    public void ClearRefreshTokens()
+    {
+        RefreshToken = null;
+        RefreshTokenExpiry = null;
+    }
 }

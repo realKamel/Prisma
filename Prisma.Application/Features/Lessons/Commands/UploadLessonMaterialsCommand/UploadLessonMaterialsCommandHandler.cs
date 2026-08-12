@@ -33,8 +33,7 @@ public class UploadLessonMaterialsCommandHandler(
             return Result.Unauthorized("Only teachers and assistants can upload materials to lessons.");
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonMaterialsSpecification(request.LessonId);
-
+        var spec = new LessonWithMaterialsForUpdateSpecification(request.LessonId);
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");

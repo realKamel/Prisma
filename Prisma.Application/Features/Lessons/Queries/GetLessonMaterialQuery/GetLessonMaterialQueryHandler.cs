@@ -34,22 +34,17 @@ public class GetLessonMaterialQueryHandler(
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonMaterialsSpecification(request.LessonId);
 
-        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
-        if (lesson is null)
+        var lessonMaterials = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
+        if (lessonMaterials is null)
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
-        var materials = new List<LessonMaterialDto>();
-
-        foreach (var material in lesson.LessonMaterials)
-        {
-            materials.Add(new LessonMaterialDto(
-                material.Id,
-                material.Title,
-                material.Size,
-                material.Type.ToString(),
-                material.CreatedAt?.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG")) ?? string.Empty
-            ));
-        }
+        var materials = lessonMaterials.Select(material => new LessonMaterialDto(
+            material.Id,
+            material.Title,
+            material.Size,
+            material.Type,
+            material.CreatedAt?.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG")) ?? string.Empty
+        )).ToList();
 
         return Result<List<LessonMaterialDto>>.Success(materials);
     }

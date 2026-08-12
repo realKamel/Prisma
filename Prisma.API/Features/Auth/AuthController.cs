@@ -1,3 +1,4 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -5,7 +6,6 @@ using Prisma.API.Common;
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
-using Ardalis.Result;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Logout;
@@ -21,6 +21,11 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     {
         var result = await mediator.Send(request.ToCommand(),
             cancelToken);
+
+        if (!result.IsSuccess)
+        {
+            return Result.Error(new ErrorList(result.Errors));
+        }
 
         Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken,
             environment.IsDevelopment());
@@ -45,6 +50,11 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
             RefreshTokenCommand(accessToken, refreshToken);
 
         var result = await mediator.Send(command, cancelToken);
+
+        if (!result.IsSuccess)
+        {
+            return Result.Error(new ErrorList(result.Errors));
+        }
 
         Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken);
 

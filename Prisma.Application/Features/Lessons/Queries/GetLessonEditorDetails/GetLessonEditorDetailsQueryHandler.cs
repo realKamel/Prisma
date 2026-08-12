@@ -34,15 +34,9 @@ public class GetLessonEditorDetailsQueryHandler(
             .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
             .ToList();
 
-        var existingAcademicYearIds = lesson.AcademicYears
-            .Select(ay => ay.AcademicYearId)
-            .ToList();
-
-        var thumbnail = lesson.ImageThumbnailUrl != null ?
-        await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
-        : string.Empty;
-        // var thumbnail = lesson.ImageThumbnailUrl != null ?
-        //     storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty;
+        var thumbnail = lesson.ImageThumbnailUrl != null
+            ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl)
+            : string.Empty;
 
         var response = new LessonEditorResponseDto(
             lesson.Id,
@@ -51,12 +45,12 @@ public class GetLessonEditorDetailsQueryHandler(
             lesson.Price,
             lesson.PrerequisiteId,
             lesson.Sections.OrderBy(s => s.SortOrder).Select(s => new ChapterResponseDto(s.Title, s.ContentURL)).ToList(),
-            lesson.Assignment != null,
-            lesson.Assignment?.DueDate,
-            lesson.Assignment?.Title,
+            lesson.HasAssignment,
+            lesson.AssignmentDueDate,
+            lesson.AssignmentTitle,
             thumbnail,
-            lesson.Outcomes?.ToList() ?? new List<string>(),
-            existingAcademicYearIds,
+            lesson.Outcomes,
+            lesson.AcademicYearIds,
             prerequisitesOptions,
             allAcademicYearsOptions
         );

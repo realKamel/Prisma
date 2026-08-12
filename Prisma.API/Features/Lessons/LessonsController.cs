@@ -1,7 +1,7 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
@@ -66,7 +66,6 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpGet("editor/{LessonId}")]
-    [ProducesResponseType<Result<LessonEditorResponseDto>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<Result<LessonEditorResponseDto>> GetLessonEditorDetails([FromRoute] string LessonId,
         CancellationToken cancellationToken)
@@ -87,25 +86,14 @@ public class LessonsController(IMediator _mediator) : ApiController
         return result;
     }
 
-
-    [HttpDelete("{LessonId}")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<Result<string>> DeleteLesson([FromRoute] string LessonId, CancellationToken cancellationToken)
+    [HttpDelete("{id:int}")]
+    public async Task<Result<string>> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteLessonCommand(int.Parse(LessonId)), cancellationToken);
-        return result;
+        return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
     }
-
 
     [HttpPut("editor/{LessonId:int}")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType<Result<UpdateLessonResponse>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(
         [FromRoute] int LessonId,
         [FromForm] UpdateLessonDetailsCommand command,
@@ -119,7 +107,6 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpPatch("toggle-status/{LessonId}")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -133,7 +120,6 @@ public class LessonsController(IMediator _mediator) : ApiController
 
     [HttpPost("upload-materials/{LessonId}")]
     [Consumes("multipart/form-data")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

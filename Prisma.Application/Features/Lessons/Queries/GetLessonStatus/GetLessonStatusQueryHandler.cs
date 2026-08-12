@@ -21,27 +21,20 @@ public class GetLessonStatusQueryHandler(
             return Result.Unauthorized("User is not authenticated.");
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonStatusSpecification(request.id);
+        var spec = new LessonStatusSpecification(request.id, userId.Value);
         var lesson = await lessonRepo.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
-            return Result.NotFound($"Lesson with id '{request.id.ToString()}' was not found");
+            return Result.NotFound($"Lesson with id '{request.id}' was not found");
 
-        var enrollment = lesson.Enrollments.FirstOrDefault(e => e.StudentId == userId);
-
-        if (enrollment is null)
+        if (!lesson.HasEnrollment)
             return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Available });
 
-        if (enrollment.ExpiresAt.HasValue && enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow)
+        if (lesson.EnrollmentExpiresAt.HasValue && lesson.EnrollmentExpiresAt.Value < DateTimeOffset.UtcNow)
             return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Expired });
 
-        if (lesson.Prerequisite is not null)
-        {
-            var prereqEnrollment = lesson.Prerequisite.Enrollments.FirstOrDefault(e => e.StudentId == userId);
-
-            if (prereqEnrollment is { IsCompleted: false })
-                return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Locked });
-        }
+        if (lesson.HasPrerequisite && !lesson.IsPrerequisiteCompleted)
+            return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Locked });
 
         return Result<LessonStatusResponse>.Success(new LessonStatusResponse { Status = LessonCatalogStatus.Purchased });
     }

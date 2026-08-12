@@ -7,8 +7,6 @@ namespace Prisma.Infrastructure.Persistence.Interceptors;
 
 public class AuditInterceptor(ICurrentUserService currentUserService) : SaveChangesInterceptor
 {
-    private readonly ICurrentUserService _currentUserService = currentUserService;
-
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
@@ -31,7 +29,7 @@ public class AuditInterceptor(ICurrentUserService currentUserService) : SaveChan
         if (context is null) return;
 
         var now = DateTimeOffset.UtcNow;
-        var userId = _currentUserService.UserId ?? Guid.Empty; // means system
+        var userId = currentUserService.UserId ?? Guid.Empty; // means system
 
         var entries = context.ChangeTracker
             .Entries<IAuditable>();

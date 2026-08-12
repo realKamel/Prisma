@@ -11,8 +11,8 @@ public class Student : User
 
     public string? ParentPhoneNumber { get; set; }
 
-    public Guid? TeacherId { get; set; }
-    public Teacher? Teacher { get; set; }
+    //public Guid? TeacherId { get; set; }
+    //public Teacher? Teacher { get; set; }
 
     public int? AcademicYearId { get; set; }
     public AcademicYear? AcademicYear { get; set; }
@@ -28,4 +28,5 @@ public class Student : User
     public ICollection<AttemptAnswer> AttemptAnswers { get; set; } = new List<AttemptAnswer>();
     public ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
     public ICollection<Report> Reports { get; set; } = new List<Report>();
+    public ICollection<TeacherStudent> TeacherStudents { get; set; } = new List<TeacherStudent>();
 }

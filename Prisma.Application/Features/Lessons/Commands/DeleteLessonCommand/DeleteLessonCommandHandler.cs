@@ -1,10 +1,8 @@
+using Ardalis.Result;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -13,44 +11,63 @@ namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 public class DeleteLessonCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
-    UserManager<User> _userManager,
+    IIdentityService identityService,
     IStorageService storageService,
     IVideoStorageService videoStorageService)
-    : IRequestHandler<DeleteLessonCommand, Result<string>>
+    : IRequestHandler<DeleteLessonCommand, Result>
 {
-    public async Task<Result<string>> Handle(DeleteLessonCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(DeleteLessonCommand request, CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
+
         if (userId is null)
-            return Result.Unauthorized("User must be authenticated to delete a lesson.");
+        {
+            return Result.Unauthorized();
+        }
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
 
-
-        var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            return Result.Unauthorized("Only teachers, assistants, and admins can delete lessons");
-
+        if (user is null || !user.Roles.Any(r => IsInRole(r.Role.Name)))
+        {
+            return Result.Unauthorized();
+        }
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lesson = await lessonRepository.FirstOrDefaultAsync(new LessonWithEnrollmentSpec(request.LessonId), cancellationToken);
+
         if (lesson is null)
+        {
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
+        }
 
         if (lesson.Enrollments != null)
+        {
             lesson.Enrollments.Clear();
+        }
 
         if (lesson.ImageThumbnailUrl != null)
-            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl);
+        {
+            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl, cancellationToken);
+        }
 
-        if (lesson.Sections != null)
-            foreach (var section in lesson.Sections)
-                if (section.AssetId != null)
-                    await videoStorageService.DeleteVideoAsync(section.AssetId);
+        foreach (var section in lesson.Sections)
+            if (section.AssetId != null)
+                await videoStorageService.DeleteVideoAsync(section.AssetId, cancellationToken);
 
         lessonRepository.Delete(lesson);
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        return Result<string>.Success("Lesson deleted successfully");
+
+        return Result.NoContent();
+    }
+
+    private static bool IsInRole(string? role)
+    {
+        if (role is null)
+        {
+            return false;
+        }
+        return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
     }
 }

@@ -87,15 +87,10 @@ public class LessonsController(IMediator _mediator) : ApiController
         return result;
     }
 
-
-    [HttpDelete("{LessonId}")]
-    [ProducesResponseType<Result<string>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<Result<string>> DeleteLesson([FromRoute] string LessonId, CancellationToken cancellationToken)
+    [HttpDelete("{id:int}")]
+    public async Task<Result<string>> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteLessonCommand(int.Parse(LessonId)), cancellationToken);
-        return result;
+        return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
     }
 
 

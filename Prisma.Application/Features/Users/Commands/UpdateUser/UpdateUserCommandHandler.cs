@@ -41,7 +41,6 @@ public class UpdateUserCommandHandler(
         {
             student.AcademicYearId = request.GradeId;
             student.ParentPhoneNumber = request.ParentMobile;
-            student.TeacherId = request.TeacherId;
         }
         // Assistant→Teacher isn't modeled in the DB — TeacherId is ignored for
         // Assistant updates until that column/FK exists.
@@ -74,7 +73,7 @@ public class UpdateUserCommandHandler(
             user.Id, user.FirstName, user.SecondName, user.ThirdName, user.LastName,
             user.PhoneNumber, user.Email, role,
             (user as Student)?.AcademicYearId,
-            (user as Student)?.TeacherId,
+            (user as Student)?.TeacherStudents?.Select(ts => ts.TeacherId).ToList() ?? [],
             (user as Student)?.ParentPhoneNumber);
 
         return Result<UserEditDto>.Success(dto, "User updated successfully.");

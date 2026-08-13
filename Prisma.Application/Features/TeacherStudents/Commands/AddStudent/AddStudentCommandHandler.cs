@@ -37,11 +37,17 @@ public class AddStudentCommandHandler(
             PhoneNumber = request.Mobile,
             AcademicYearId = request.Grade,
             ParentPhoneNumber = request.ParentMobile,
-            TeacherId = TeacherId,
             CreatedAt = DateTimeOffset.UtcNow,
             IsBlocked = false,
             IsOnline = false
         };
+        if (TeacherId.HasValue) {
+            student.TeacherStudents.Add(new TeacherStudent
+            {
+                TeacherId = TeacherId.Value,
+            });
+        }
+        
 
         var result = await identityService.CreateAsync(student, request.Password);
         if (!result.Succeeded)

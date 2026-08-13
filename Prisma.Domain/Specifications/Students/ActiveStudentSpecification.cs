@@ -12,6 +12,10 @@ public class ActiveStudentSpecification : Specification<Student>
 
     public ActiveStudentSpecification(Guid teacherId)
     {
-        Query.Where(s => s.IsOnline && s.TeacherId == teacherId).AsNoTracking();
+        Query
+            .Where(s => s.IsOnline
+               && s.TeacherStudents.Any(ts => ts.TeacherId == teacherId
+               && !ts.IsKicked))
+            .AsNoTracking();
     }
 }

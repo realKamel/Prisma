@@ -59,10 +59,12 @@ public class GetTeacherDashboardStatusQueryHandler(
         var logs = (await auditRepo.ListAsync(logsSpec, cancellationToken)).ToArray();
 
         var sixtyDayEnrollments = await enrollmentRepo.ListAsync(
-            new EnrollmentWithPaymentOrderByCreatedAtDesc(e =>
-                e.CreatedAt >= now.AddDays(-60)
-                && (teacherId == null || e.Student.TeacherId == teacherId)),
-            cancellationToken);
+    new EnrollmentWithPaymentOrderByCreatedAtDesc(e =>
+        e.CreatedAt >= now.AddDays(-60)
+        && (teacherId == null 
+        || e.Student.TeacherStudents
+        .Any(ts => ts.TeacherId == teacherId && !ts.IsKicked))),
+    cancellationToken);
 
         var thisMonthEarning = sixtyDayEnrollments
             .Where(e => e.CreatedAt >= now.AddDays(-30))
@@ -100,7 +102,7 @@ public class GetTeacherDashboardStatusQueryHandler(
         var bestSalesEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithLessonAndPaymentOrderByCreatedAtDesc(e =>
                 e.Lesson.Status == LessonStatus.Active
-                && (teacherId == null || e.Student.TeacherId == teacherId)),
+                && (teacherId == null || e.Student.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked))),
             cancellationToken);
 
         var bestSales = bestSalesEnrollments

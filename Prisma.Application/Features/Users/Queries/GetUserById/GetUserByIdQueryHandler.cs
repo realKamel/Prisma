@@ -37,7 +37,7 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
             user.Email,
             role,
             (user as Student)?.AcademicYearId,
-            (user as Student)?.TeacherId,
+            (user as Student)?.TeacherStudents.Select(ts => ts.TeacherId).ToList(),
             (user as Student)?.ParentPhoneNumber);
 
         return Result<UserEditDto>.Success(dto);

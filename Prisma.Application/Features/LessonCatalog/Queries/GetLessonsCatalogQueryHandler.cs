@@ -84,11 +84,11 @@ public class GetLessonsCatalogQueryHandler(
                 ? "تحتاج لإكمال الدرس السابق"
                 : null,
             ExpiredDate = expiredDateLabel,
-            TeacherName = student.Teacher != null ? $"{student.Teacher.FirstName} {student.Teacher.LastName}" : "أ. أحمد مصطفي",
-            TeacherInitial = student.Teacher != null
-                ? $"{student.Teacher.FirstName[0]}{student.Teacher.LastName[0]}"
+            TeacherName = lesson.Teacher != null ? $"{lesson.Teacher.FirstName} {lesson.Teacher.LastName}" : "أ. أحمد مصطفي",
+            TeacherInitial = lesson.Teacher != null
+                ? $"{lesson.Teacher.FirstName[0]}{lesson.Teacher.LastName[0]}"
                 : "أم",
-            Subject = student.Teacher?.Subject ?? "اللغة الانجليزية",
+            Subject = lesson.Teacher?.Subject ?? "اللغة الانجليزية",
             DurationHours = (int)Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl = lesson.ImageThumbnailUrl != null ?
                 await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,

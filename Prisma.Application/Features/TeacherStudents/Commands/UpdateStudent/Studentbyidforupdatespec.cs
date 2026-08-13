@@ -7,6 +7,7 @@ public class StudentByIdForUpdateSpec : Specification<Student>
 {
     public StudentByIdForUpdateSpec(Guid studentId, Guid teacherId)
     {
-        Query.Where(s => s.Id == studentId && s.TeacherId == teacherId);
+        Query.Where(s => s.Id == studentId &&
+        s.TeacherStudents.Any(ts => ts.TeacherId == teacherId&& !ts.IsKicked));
     }
 }

@@ -11,7 +11,7 @@ public class CreateAssistantCommandValidator : AbstractValidator<CreateAssistant
     {
         RuleFor(command => command.FirstName)
             .SetValidator(new PersonNameValidator());
-        RuleFor(command => command.LastName)
+        RuleFor(command => command.SecondName)
             .SetValidator(new PersonNameValidator());
         RuleFor(c => c.PhoneNumber)
             .EgyptianPhoneNumber();

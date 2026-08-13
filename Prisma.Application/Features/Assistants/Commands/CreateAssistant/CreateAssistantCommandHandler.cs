@@ -1,8 +1,8 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Assistants.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
 
@@ -25,7 +25,7 @@ public class CreateAssistantCommandHandler(IIdentityService identityService) :
         {
             Id = Guid.CreateVersion7(),
             FirstName = request.FirstName,
-            LastName = request.LastName,
+            SecondName = request.SecondName,
             UserName = request.Email,
             PhoneNumber = request.PhoneNumber,
             Email = request.Email,

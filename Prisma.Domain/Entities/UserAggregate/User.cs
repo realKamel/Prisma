@@ -6,9 +6,9 @@ namespace Prisma.Domain.Entities.UserAggregate;
 public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
 {
     public string FirstName { get; set; }
-    public string? SecondName { get; set; }
+    public string SecondName { get; set; }
     public string? ThirdName { get; set; }
-    public string LastName { get; set; }
+    public string? LastName { get; set; }
 
     public bool IsBlocked { get; set; }
     public bool IsOnline { get; set; }

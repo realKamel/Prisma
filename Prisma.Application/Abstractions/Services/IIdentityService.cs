@@ -21,4 +21,9 @@ public interface IIdentityService
     Task<IdentityResult> AddClaimsAsync(User user, IEnumerable<Claim> claims);
     Task<IdentityResult> RemoveClaimsAsync(User user, IEnumerable<Claim> claims);
     Task<string> GenerateEmailConfirmationTokenAsync(User user);
+    Task<IdentityResult> SetPhoneNumberAsync(User user, string phoneNumber);
+    Task<IdentityResult> SetUserNameAsync(User user, string userName);
+    Task<IdentityResult> SetEmailAsync(User user, string email);
+    Task<string> GeneratePasswordResetTokenAsync(User user);
+    Task<IdentityResult> ResetPasswordAsync(User user, string Token, string newPassword);
 }

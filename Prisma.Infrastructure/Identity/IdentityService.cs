@@ -86,4 +86,22 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     {
         return await userManager.GenerateEmailConfirmationTokenAsync(user);
     }
+
+    public async Task<IdentityResult> SetPhoneNumberAsync(User user, string phoneNumber)
+    {
+        return await userManager.SetPhoneNumberAsync(user, phoneNumber);
+    }
+    public async Task<IdentityResult> SetUserNameAsync(User user, string userName)
+    {
+        return await userManager.SetUserNameAsync(user, userName);
+    }
+    public async Task<IdentityResult> SetEmailAsync(User user, string email)
+    {
+        return await userManager.SetEmailAsync(user, email);
+    }
+    public async Task<string> GeneratePasswordResetTokenAsync(User user) => await userManager.GeneratePasswordResetTokenAsync(user);
+    public async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
+    {
+        return await userManager.ResetPasswordAsync(user, token, newPassword);
+    }
 }

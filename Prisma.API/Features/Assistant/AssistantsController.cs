@@ -7,6 +7,7 @@ using Prisma.API.Common;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 using Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
+using Prisma.Application.Features.Assistants.Commands.UpdateAssistantDetails;
 using Prisma.Application.Features.Assistants.Commands.UpdatePermissions;
 using Prisma.Application.Features.Assistants.Dtos;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
@@ -46,6 +47,13 @@ public class AssistantsController(ISender mediator) : ApiController
         CancellationToken cancellationToken)
     {
         return await mediator.Send(new UpdatePermissionCommand(id, permissions), cancellationToken);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<Result<UpdateAssistantDetailsCommandResponse>> UpdateAssistantDetails([FromRoute] Guid id, UpdateAssistantDetailsCommand UpdateAssistantDetails, CancellationToken cancellationToken)
+    {
+        var command = UpdateAssistantDetails with { Id = id };
+        return await mediator.Send(command, cancellationToken);
     }
 
     [HttpGet("lessons")]

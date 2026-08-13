@@ -29,12 +29,12 @@ public class Lesson : BaseEntity
 
     public ICollection<LessonTranscriptChunk> Chunks { get; set; } = [];
 
-     public Guid? TeacherId { get; set; }
+    public Guid? TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
 
-    public ICollection<AcademicYearLesson> AcademicYears { get; set; } = new List<AcademicYearLesson>();
+    public ICollection<AcademicYearLesson> AcademicYears { get; set; } = [];
 
-    public ICollection<Section> Sections { get; set; } = new List<Section>();
+    public ICollection<Section> Sections { get; set; } = [];
 
     // public ICollection<Assignment> Assignments { get; set; } = new List<Assignment>();
     public int? AssignmentId { get; set; }
@@ -44,12 +44,12 @@ public class Lesson : BaseEntity
     public int? QuizId { get; set; }
     public Quiz? Quiz { get; set; }
 
-    public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
-    public ICollection<RedeemCode> RedeemCodes { get; set; } = new List<RedeemCode>();
-    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
-    public ICollection<LessonMaterial> LessonMaterials { get; set; } = new List<LessonMaterial>();
+    public ICollection<Enrollment> Enrollments { get; set; } = [];
+    public ICollection<RedeemCode> RedeemCodes { get; set; } = [];
+    public ICollection<Payment> Payments { get; set; } = [];
+    public ICollection<LessonMaterial> LessonMaterials { get; set; } = [];
 
-    public ICollection<string> Outcomes { get; set; } = new List<string>();
+    public ICollection<string> Outcomes { get; set; } = [];
 
     //self-relation
     public int? PrerequisiteId { get; set; }

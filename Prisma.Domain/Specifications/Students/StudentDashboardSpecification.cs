@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Specifications.Students;
@@ -12,12 +12,13 @@ public class StudentDashboardSpecification : Specification<Student>
             .Include(s => s.AcademicYear)
             .Include(s => s.Enrollments)
                 .ThenInclude(e => e.Lesson)
+                .ThenInclude(e => e.Teacher)
             .Include(s => s.Enrollments)
                 .ThenInclude(e => e.Lesson)
                 .ThenInclude(l => l.Sections)
                 .ThenInclude(s => s.Progresses)
             .Include(s => s.QuizAttempts)
-            .AsSplitQuery()                        
+            .AsSplitQuery()
             .AsNoTracking();
     }
 }

@@ -2,6 +2,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -12,7 +13,7 @@ namespace Prisma.Application.Tests.Features.Admin.Queries;
 public class GetActivityLogsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly UserManager<User> _userManager;
+    private readonly IIdentityService _userManager = Substitute.For<IIdentityService>();
     private readonly IRepository<AuditLog, int> _auditLogRepository = Substitute.For<IRepository<AuditLog, int>>();
     private readonly GetActivityLogsQueryHandler _sut;
 
@@ -22,8 +23,6 @@ public class GetActivityLogsQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditLogRepository);
 
         // عمل Mock للـ UserManager لأننا بنحتاجه كـ Dependency في الـ Handler
-        var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null!, null!, null!, null!, null!, null!, null!, null!);
 
         _sut = new GetActivityLogsQueryHandler(_unitOfWork, _userManager);
     }

@@ -31,30 +31,29 @@ public class GetAdminActivitiesQueryHandlerTests
         var baseTime = DateTimeOffset.UtcNow;
         var studentId = Guid.CreateVersion7();
 
-        var fakeEnrollments = new List<Enrollment>
+        var fakeEnrollments = new List<EnrollmentActivityProjection>
         {
-            new()
-            {
-                Id = 1,
-                StudentId = studentId,
-                EnrollmentMethod = EnrollmentMethod.OnlinePayment, // تأكدي إنه مطابق للـ Enum عندك
-                CreatedAt = baseTime.AddMinutes(-10),
-                Lesson = new() { Title = "درس سي شارب أول" }
-            }
+            new EnrollmentActivityProjection(
+                1,
+                studentId,
+                "درس سي شارب أول",
+                EnrollmentMethod.OnlinePayment, // تأكدي إنه مطابق للـ Enum عندك
+                baseTime.AddMinutes(-10)
+            )
         };
 
-        var fakePayments = new List<Payment>
+        var fakePayments = new List<PaymentActivityProjection>
         {
-            new()
-            {
-                Id = 100,
-                StudentId = studentId,
-                Amount = 150,
-                Currency = "EGP",
-                Provider = "Fawry",
-                ProviderRef = "REF123",
-                PaidAt = baseTime.AddMinutes(-5) // أحدث من الـ Enrollment
-            }
+            new PaymentActivityProjection(
+                100,
+                studentId,
+                150,
+                "EGP",
+                "Fawry",
+                "REF123",
+                baseTime.AddMinutes(-5),
+                baseTime.AddMinutes(-5)
+            )
         };
 
         _enrollmentRepo.ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
@@ -86,21 +85,26 @@ public class GetAdminActivitiesQueryHandlerTests
     {
         // Arrange
         // تصحيح بناء الـ Lists هنا لمنع الـ Type Mismatch
-        var fakeEnrollments = Enumerable.Range(1, 5).Select(i => new Enrollment
-        {
-            Id = i, CreatedAt = DateTimeOffset.UtcNow.AddHours(-i), Lesson = new() { Title = $"درس {i}" }
-        }).ToList();
+        var fakeEnrollments = Enumerable.Range(1, 5).Select(i => new EnrollmentActivityProjection
+        (
+            i,
+            Guid.CreateVersion7(),
+            $"درس {i}",
+            EnrollmentMethod.OnlinePayment,
+            DateTimeOffset.UtcNow.AddHours(-i)
+        )).ToList();
 
-        var fakePayments = Enumerable.Range(1, 5).Select(i => new Payment
-        {
-            Id = i,
-            StudentId = Guid.CreateVersion7(),
-            PaidAt = DateTimeOffset.UtcNow.AddHours(-i),
-            Amount = 100,
-            Currency = "EGP",
-            Provider = "Fawry",
-            ProviderRef = $"REF{i}"
-        }).ToList();
+        var fakePayments = Enumerable.Range(1, 5).Select(i => new PaymentActivityProjection
+        (
+            i,
+            Guid.CreateVersion7(),
+            100,
+            "EGP",
+            "Fawry",
+            $"REF{i}",
+            DateTimeOffset.UtcNow.AddHours(-i),
+            DateTimeOffset.UtcNow.AddHours(-i)
+        )).ToList();
 
         _enrollmentRepo.ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeEnrollments);

@@ -5,12 +5,13 @@ using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
+using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
 
 public class GetActivityLogsQueryHandler(
     IUnitOfWork _unitOfWork,
-    UserManager<User> _userManager
+    IIdentityService _userManager
 ) : IRequestHandler<GetActivityLogsQuery, Result<ActivityLogResponseDto>>
 {
     public async Task<Result<ActivityLogResponseDto>> Handle(

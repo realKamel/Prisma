@@ -17,8 +17,7 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
 
         var rawActivities = new List<(DateTimeOffset TimeStamp, AdminActivityDto Activity)>();
 
-        var enrollSpec = new AdminLatestEnrollmentsSpec();
-        var latestEnrollments = await enrollmentRepo.ListAsync(enrollSpec, cancellationToken);
+        var latestEnrollments = await enrollmentRepo.ListAsync(new AdminLatestEnrollmentsSpec(), cancellationToken);
 
         foreach (var enroll in latestEnrollments)
         {
@@ -30,7 +29,7 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
                 Id: $"act-enr-{enroll.Id}",
                 Type: "enroll",
                 EntityId: enroll.StudentId?.ToString() ?? string.Empty,
-                Details: enroll.Lesson?.Title ?? string.Empty,
+                Details: enroll.LessonTitle ?? string.Empty,
                 MetaInfo: enroll.EnrollmentMethod.ToString(),
                 ActivityDate: enrollDate
             );
@@ -38,15 +37,12 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
             rawActivities.Add((enrollDate, activityDto));
         }
 
-        var paySpec = new AdminSuccessfulPaymentsSpec();
-        var successfulPayments = await paymentRepo.ListAsync(paySpec, cancellationToken);
-        var latestPayments = successfulPayments.OrderByDescending(p => p.PaidAt).Take(5);
+        var latestPayments = await paymentRepo.ListAsync(new AdminSuccessfulPaymentsSpec(), cancellationToken);
 
         foreach (var pay in latestPayments)
         {
-            if (pay == null) continue;
+            var timeStamp = pay.PaidAt ?? pay.CreatedAt ?? DateTimeOffset.UtcNow;
 
-            DateTimeOffset timeStamp = pay.PaidAt ?? pay.CreatedAt ?? DateTimeOffset.UtcNow;
             var activityDto = new AdminActivityDto(
                 Id: $"act-pay-{pay.Id}",
                 Type: "payment",

@@ -42,12 +42,30 @@ public class GetAdminStatsQueryHandlerTests
         _studentRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(fakeStudents);
 
         // 2. إعداد المدفوعات ناجحة
-        var fakePayments = new List<Payment>
+        var fakePayments = new List<PaymentActivityProjection>
         {
             // دفعة الشهر الماضي
-            new() { Id = 1, Amount = 100, PaidAt = startOfLastMonth.AddDays(5) },
+            new PaymentActivityProjection(
+                1,
+                Guid.CreateVersion7(),
+                100,
+                "EGP",
+                "Fawry",
+                "REF1",
+                startOfLastMonth.AddDays(5),
+                startOfLastMonth.AddDays(5)
+            ),
             // دفعة اليوم (الشهر الحالي)
-            new() { Id = 2, Amount = 200, PaidAt = now.Date.AddHours(10) }
+            new PaymentActivityProjection(
+                2,
+                Guid.CreateVersion7(),
+                200,
+                "EGP",
+                "Fawry",
+                "REF2",
+                now.Date.AddHours(10),
+                now.Date.AddHours(10)
+            )
         };
 
         _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
@@ -86,7 +104,7 @@ public class GetAdminStatsQueryHandlerTests
         _studentRepo.CountAsync(Arg.Any<CancellationToken>()).Returns(0);
         _studentRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Student>());
         _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Payment>());
+            .Returns(new List<PaymentActivityProjection>());
 
         // Act
         var result = await _sut.Handle(new GetAdminStatsQuery(), CancellationToken.None);

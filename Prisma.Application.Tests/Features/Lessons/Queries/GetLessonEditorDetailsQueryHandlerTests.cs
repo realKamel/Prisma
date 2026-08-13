@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
@@ -7,7 +6,6 @@ using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
 
@@ -28,22 +26,19 @@ public class GetLessonEditorDetailsQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AcademicYear, int>().Returns(_academicYearRepo);
 
-        // إعداد الـ Configuration للـ Storage Section
-        var configSection = Substitute.For<IConfigurationSection>();
-        configSection["BucketName"].Returns("prisma-bucket");
         _storageService.DefaultBucketName.Returns("prisma-bucket");
 
         _sut = new GetLessonEditorDetailsQueryHandler(_unitOfWork, _storageService);
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonEditorDetailsQuery(1);
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<GetLessonEditorDetailsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((LessonEditorDetailsProjection?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -60,8 +55,8 @@ public class GetLessonEditorDetailsQueryHandlerTests
         var lessonId = 1;
         var query = new GetLessonEditorDetailsQuery(lessonId);
 
-        // 1. بناء بيانات الدرس الوهمية
-        var fakeLesson = new Lesson
+        // 1. بناء بيانات الدرس الوهمية (كـ projection مش entity كاملة)
+        var fakeProjection = new LessonEditorDetailsProjection
         {
             Id = lessonId,
             Title = "درس النحو: الفاعل",
@@ -70,7 +65,7 @@ public class GetLessonEditorDetailsQueryHandlerTests
             PrerequisiteId = 5,
             ImageThumbnailUrl = "lesson-thumb.jpg",
             Outcomes = new List<string> { "أن يتعرف الطالب على الفاعل", "أن يعرب الفاعل إعراباً صحيحاً" },
-            Sections = new List<Section>
+            Sections = new List<EditorSectionProjection>
             {
                 new() { Title = "فيديو الشرح", ContentURL = "video1.mp4", SortOrder = 1 },
                 new()
@@ -78,11 +73,10 @@ public class GetLessonEditorDetailsQueryHandlerTests
                     Title = "مقدمة الدرس", ContentURL = "intro.mp4", SortOrder = 0
                 } // الترتيب الصغير يظهر أولاً بالـ OrderBy
             },
-            Assignment = new Assignment { Title = "واجب درس الفاعل.pdf", DueDate = DateTimeOffset.UtcNow.AddDays(3) },
-            AcademicYears = new List<AcademicYearLesson>
-            {
-                new() { AcademicYearId = 2 } // الصف الثاني الإعدادي كمثال
-            }
+            HasAssignment = true,
+            AssignmentTitle = "واجب درس الفاعل.pdf",
+            AssignmentDueDate = DateTimeOffset.UtcNow.AddDays(3),
+            AcademicYearIds = new List<int> { 2 } // الصف الثاني الإعدادي كمثال
         };
 
         // 2. بناء الـ Prerequisites الوهمية
@@ -96,7 +90,7 @@ public class GetLessonEditorDetailsQueryHandlerTests
 
         // إعداد الـ Mocks للـ Repositories بناءً على الـ Specifications والتوقيعات المستخدمة
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<GetLessonEditorDetailsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         _lessonRepo.ListAsync(Arg.Any<LessonPrerequisiteOptionsSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakePrerequisitesOptions);
@@ -133,7 +127,7 @@ public class GetLessonEditorDetailsQueryHandlerTests
         // التأكد من بيانات الـ Assignment
         result.Value.AssignmentEnabled.Should().BeTrue();
         result.Value.AssignmentFileName.Should().Be("واجب درس الفاعل.pdf");
-        result.Value.AssignmentDueDate.Should().Be(fakeLesson.Assignment.DueDate);
+        result.Value.AssignmentDueDate.Should().Be(fakeProjection.AssignmentDueDate);
 
         // التأكد من الـ Outcomes
         result.Value.Outcomes.Should().HaveCount(2).And.Contain("أن يتعرف الطالب على الفاعل");
@@ -147,5 +141,42 @@ public class GetLessonEditorDetailsQueryHandlerTests
 
         result.Value.AllAcademicYearsOptions.Should().HaveCount(2);
         result.Value.AllAcademicYearsOptions[0].Name.Should().Be("الصف الأول الإعدادي");
+    }
+
+    [Fact]
+    public async Task Handle_WhenLessonHasNoAssignment_ReturnsAssignmentDisabled()
+    {
+        // Arrange
+        var lessonId = 2;
+        var query = new GetLessonEditorDetailsQuery(lessonId);
+
+        var fakeProjection = new LessonEditorDetailsProjection
+        {
+            Id = lessonId,
+            Title = "درس بدون واجب",
+            HasAssignment = false,
+            AssignmentTitle = null,
+            AssignmentDueDate = null,
+            Sections = new List<EditorSectionProjection>()
+        };
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<GetLessonEditorDetailsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(fakeProjection);
+
+        _lessonRepo.ListAsync(Arg.Any<LessonPrerequisiteOptionsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(new List<Lesson>());
+
+        _academicYearRepo.ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<AcademicYear>());
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.AssignmentEnabled.Should().BeFalse();
+        result.Value.AssignmentFileName.Should().BeNull();
+        result.Value.AssignmentDueDate.Should().BeNull();
+        result.Value.ImageUrl.Should().Be(string.Empty);
     }
 }

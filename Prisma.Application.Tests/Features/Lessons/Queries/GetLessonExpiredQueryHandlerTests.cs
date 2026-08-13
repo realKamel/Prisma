@@ -1,17 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
-using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.QuizAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
@@ -33,7 +25,7 @@ public class GetLessonExpiredQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIsNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonExpiredQuery(1);
@@ -49,7 +41,7 @@ public class GetLessonExpiredQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonExpiredQuery(1);
@@ -57,7 +49,7 @@ public class GetLessonExpiredQueryHandlerTests
         _currentUserService.UserId.Returns(currentUserId);
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonExpiredSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((LessonExpiredProjection?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -68,7 +60,7 @@ public class GetLessonExpiredQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonExists_ReturnsMappedLessonExpiredDtoWithCorrectCalculations()
+    public async Task Handle_WhenLessonExists_ReturnsMappedLessonExpiredDto()
     {
         // Arrange
         var lessonId = 1;
@@ -78,61 +70,30 @@ public class GetLessonExpiredQueryHandlerTests
 
         var expectedExpiryDate = DateTimeOffset.UtcNow.AddDays(-1); // منتهي الصلاحية كمثال
 
-        // بناء بيانات التقدم للسكاشن (السكشن الأول %50 والثاني %100 -> المتوسط المتوقع %75)
-        var sections = new List<Section>
-        {
-            new()
-            {
-                Id = 101,
-                Title = "المقدمة",
-                Duration = new TimeSpan(0, 30, 0), // 30 دقيقة
-                Progresses = new List<SectionProgress>
-                {
-                    new() { StudentId = currentUserId, Percentage = 50 }
-                }
-            },
-            new()
-            {
-                Id = 102,
-                Title = "الدرس الرئيسي",
-                Duration = new TimeSpan(1, 15, 0), // ساعة و 15 دقيقة
-                Progresses = new List<SectionProgress>
-                {
-                    new() { StudentId = currentUserId, Percentage = 100 }
-                }
-            }
-        };
-
-        // بناء بيانات الكويز والدرجة
-        var quizId = 5;
-        var fakeQuiz = new Quiz
-        {
-            Id = quizId,
-            Attempts = new List<QuizAttempt>
-            {
-                new() { QuizId = quizId, StudentId = currentUserId, Status = QuizAttemptStatus.Graded, Degree = 85.5m },
-                new() { QuizId = quizId, StudentId = Guid.NewGuid(), Status = QuizAttemptStatus.Graded, Degree = 100m } // طالب آخر لا يهمنا
-            }
-        };
-
-        var fakeLesson = new Lesson
+        // NOTE: التقدم (progress) ودرجة الكويز بقوا محسوبين جوه الـ Specification نفسها
+        // (LessonExpiredProjection.TotalProgress / Degree)، فالتيست بيحط القيم الناتجة
+        // مباشرة بدل ما يبني Sections/Progresses/QuizAttempts كاملة.
+        var fakeProjection = new LessonExpiredProjection
         {
             Id = lessonId,
             Title = "درس الكيمياء العضوية",
             Description = "مراجعة شاملة بعد انتهاء الوقت المتاح",
             ImageThumbnailUrl = "expired-lesson.jpg",
             Price = 200.00m,
-            Sections = sections,
-            Quiz = fakeQuiz,
-            LessonMaterials = new List<LessonMaterial> { new(), new() }, // مادتين تعليميتين
-            Enrollments = new List<Enrollment>
+            ChaptersCount = 2,
+            MaterialsCount = 2,
+            ExpiredDate = expectedExpiryDate,
+            TotalProgress = 75, // (50 + 100) / 2 = 75
+            Degree = 85.5m,
+            Chapters = new List<ExpiredChapterProjection>
             {
-                new() { StudentId = currentUserId, ExpiresAt = expectedExpiryDate }
+                new() { Id = 101, Title = "المقدمة", Duration = new TimeSpan(0, 30, 0) },
+                new() { Id = 102, Title = "الدرس الرئيسي", Duration = new TimeSpan(1, 15, 0) }
             }
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonExpiredSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -152,8 +113,7 @@ public class GetLessonExpiredQueryHandlerTests
         result.Value.MaterialsCount.Should().Be(2);
         result.Value.ExpiredDate.Should().Be(expectedExpiryDate);
 
-        // التأكد من الحسابات الرياضية (CalculateTotalProgress & CalculateDegree)
-        result.Value.totalprogress.Should().Be(75); // (50 + 100) / 2 = 75
+        result.Value.totalprogress.Should().Be(75);
         result.Value.Degree.Should().Be(85.5m);
 
         // التأكد من الـ Chapters وصيغة الوقت الممررة (hh\:mm\:ss)

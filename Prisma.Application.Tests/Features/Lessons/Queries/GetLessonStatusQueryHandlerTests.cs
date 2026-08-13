@@ -1,14 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
-using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
@@ -31,7 +25,7 @@ public class GetLessonStatusQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIsNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonStatusQuery(1);
@@ -47,7 +41,7 @@ public class GetLessonStatusQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonStatusQuery(1);
@@ -55,7 +49,7 @@ public class GetLessonStatusQueryHandlerTests
         _currentUserService.UserId.Returns(currentUserId);
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((LessonStatusProjection?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -74,14 +68,14 @@ public class GetLessonStatusQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        var fakeLesson = new Lesson
+        var fakeProjection = new LessonStatusProjection
         {
             Id = lessonId,
-            Enrollments = new List<Enrollment>() // قائمة تسجيلات فارغة (الطالب لم يشتريه بعد)
+            HasEnrollment = false // الطالب لم يشتريه بعد
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -101,21 +95,15 @@ public class GetLessonStatusQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        var fakeLesson = new Lesson
+        var fakeProjection = new LessonStatusProjection
         {
             Id = lessonId,
-            Enrollments = new List<Enrollment>
-            {
-                new()
-                {
-                    StudentId = currentUserId,
-                    ExpiresAt = DateTimeOffset.UtcNow.AddDays(-1) // منتهي الصلاحية منذ يوم
-                }
-            }
+            HasEnrollment = true,
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(-1) // منتهي الصلاحية منذ يوم
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -135,28 +123,17 @@ public class GetLessonStatusQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        // تجهيز الدرس المتطلب وبداخله تسجيل الطالب غير المكتمل
-        var fakePrerequisiteLesson = new Lesson
-        {
-            Id = 99,
-            Enrollments = new List<Enrollment>
-            {
-                new() { StudentId = currentUserId, IsCompleted = false } // لم يكتمل بعد!
-            }
-        };
-
-        var fakeLesson = new Lesson
+        var fakeProjection = new LessonStatusProjection
         {
             Id = lessonId,
-            Prerequisite = fakePrerequisiteLesson,
-            Enrollments = new List<Enrollment>
-            {
-                new() { StudentId = currentUserId, ExpiresAt = DateTimeOffset.UtcNow.AddDays(5) } // مسجل وصالح
-            }
+            HasEnrollment = true,
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5), // مسجل وصالح
+            HasPrerequisite = true,
+            IsPrerequisiteCompleted = false // لم يكتمل بعد!
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -176,34 +153,51 @@ public class GetLessonStatusQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        // حالة نجاح: متطلب سابق مكتمل
-        var fakePrerequisiteLesson = new Lesson
-        {
-            Id = 99,
-            Enrollments = new List<Enrollment>
-            {
-                new() { StudentId = currentUserId, IsCompleted = true } // مكتمل بنجاح
-            }
-        };
-
-        var fakeLesson = new Lesson
+        var fakeProjection = new LessonStatusProjection
         {
             Id = lessonId,
-            Prerequisite = fakePrerequisiteLesson,
-            Enrollments = new List<Enrollment>
-            {
-                new() { StudentId = currentUserId, ExpiresAt = DateTimeOffset.UtcNow.AddDays(5) } // التسجيل صالح وممتد
-            }
+            HasEnrollment = true,
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5), // التسجيل صالح وممتد
+            HasPrerequisite = true,
+            IsPrerequisiteCompleted = true // مكتمل بنجاح
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Status.Should().Be(LessonCatalogStatus.Purchased);
+    }
+
+    [Fact]
+    public async Task Handle_WhenEnrollmentValidAndNoPrerequisite_ReturnsPurchasedStatus()
+    {
+        // Arrange
+        var lessonId = 1;
+        var query = new GetLessonStatusQuery(lessonId);
+        var currentUserId = Guid.NewGuid();
+        _currentUserService.UserId.Returns(currentUserId);
+
+        var fakeProjection = new LessonStatusProjection
+        {
+            Id = lessonId,
+            HasEnrollment = true,
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5),
+            HasPrerequisite = false // مفيش متطلب سابق أصلاً
+        };
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(fakeProjection);
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Status.Should().Be(LessonCatalogStatus.Purchased);
     }

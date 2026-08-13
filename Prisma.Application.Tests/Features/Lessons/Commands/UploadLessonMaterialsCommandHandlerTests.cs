@@ -11,7 +11,6 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
-
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
 public class UploadLessonMaterialsCommandHandlerTests
@@ -34,7 +33,7 @@ public class UploadLessonMaterialsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIdIsNull_ReturnsUnauthorized()
     {
         _currentUserService.UserId.Returns((Guid?)null);
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
@@ -47,7 +46,23 @@ public class UploadLessonMaterialsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserLacksRole_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserNotFound_ReturnsUnauthorized()
+    {
+        var userId = Guid.NewGuid();
+        _currentUserService.UserId.Returns(userId);
+        _userManager.FindByIdAsync(userId.ToString()).Returns((User?)null);
+
+        var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        result.Errors.Should().Contain("User not found.");
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserLacksRole_ReturnsUnauthorized()
     {
         var userId = Guid.NewGuid();
         var fakeUser = new User { Id = userId };
@@ -66,7 +81,7 @@ public class UploadLessonMaterialsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         var userId = Guid.NewGuid();
         var fakeUser = new User { Id = userId };
@@ -74,7 +89,9 @@ public class UploadLessonMaterialsCommandHandlerTests
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+
+        // ?? ??????? ???????? Specification ?????? ??????? ?? ????????
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns((Lesson?)null);
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
@@ -86,7 +103,7 @@ public class UploadLessonMaterialsCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenNoFilesProvided_ThrowsBadRequestException()
+    public async Task Handle_WhenNoFilesProvided_ReturnsError()
     {
         var userId = Guid.NewGuid();
         var fakeUser = new User { Id = userId };
@@ -95,7 +112,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns(lesson);
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
@@ -104,6 +122,7 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Error);
+        result.Errors.Should().Contain("No files provided for upload.");
     }
 
     [Fact]
@@ -118,7 +137,7 @@ public class UploadLessonMaterialsCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns(lesson);
 
         var mockFile = Substitute.For<IFormFile>();
@@ -158,7 +177,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns(lesson);
 
         var emptyFile = Substitute.For<IFormFile>();

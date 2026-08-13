@@ -39,15 +39,27 @@ public class GetLessonsCatalogQueryHandlerTests
         string lastName = "Mostafa", string subject = "Math") =>
         new() { Id = Guid.NewGuid(), FirstName = firstName, LastName = lastName, Subject = subject };
 
-    private static Student CreateStudent(int? academicYearId, Domain.Entities.UserAggregate.Teacher teacher) =>
-        new()
+    private static Student CreateStudent(int? academicYearId, params Domain.Entities.UserAggregate.Teacher[] teachers)
+    {
+        var student = new Student
         {
             Id = StudentId,
             FirstName = "Sara",
             LastName = "Ali",
-            AcademicYearId = academicYearId,
-            Teacher = teacher
+            AcademicYearId = academicYearId
         };
+
+        foreach (var teacher in teachers)
+        {
+            student.TeacherStudents.Add(new TeacherStudent
+            {
+                StudentId = student.Id,
+                TeacherId = teacher.Id,
+            });
+        }
+
+        return student;
+    }
 
     private static Lesson CreateLesson(
         int id,
@@ -199,7 +211,6 @@ public class GetLessonsCatalogQueryHandlerTests
         var prerequisiteLesson = CreateLesson(id: 1, price: 100m);
         var lesson = CreateLesson(id: 2, price: 300m, prerequisiteId: prerequisiteLesson.Id);
 
-        // student enrolled in current lesson (active) and in the prerequisite but hasn't completed it
         lesson.Enrollments.Add(CreateEnrollment(StudentId));
         prerequisiteLesson.Enrollments.Add(CreateEnrollment(StudentId, isCompleted: false));
 
@@ -338,7 +349,7 @@ public class GetLessonsCatalogQueryHandlerTests
 
         // Assert
         var dto = Assert.Single(result.Value!);
-        Assert.Equal(3, dto.DurationHours); // rounds up, not truncates
+        Assert.Equal(3, dto.DurationHours);
     }
 
     [Fact]
@@ -356,7 +367,7 @@ public class GetLessonsCatalogQueryHandlerTests
 
         // Assert
         var dto = Assert.Single(result.Value!);
-        Assert.Equal(2, dto.DurationHours); // rounds down since below .5
+        Assert.Equal(2, dto.DurationHours);
     }
 
     #endregion

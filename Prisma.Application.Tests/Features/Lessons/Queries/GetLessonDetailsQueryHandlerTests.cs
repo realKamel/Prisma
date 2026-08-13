@@ -3,12 +3,9 @@ using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
-using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
 
@@ -29,11 +26,11 @@ public class GetLessonDetailsQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIsNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonDetailsQuery(1);
-        _currentUserService.UserId.Returns((Guid?)null); // مستخدم غير مسجل
+        _currentUserService.UserId.Returns((Guid?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -45,16 +42,15 @@ public class GetLessonDetailsQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonDetailsQuery(1);
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        // إرجاع null محاكاةً لعدم وجود الدرس
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithDetailsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((LessonDetailsProjection?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -62,6 +58,7 @@ public class GetLessonDetailsQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.NotFound);
+        result.Errors.Should().Contain("Lesson with id '1' was not found");
     }
 
     [Fact]
@@ -73,9 +70,7 @@ public class GetLessonDetailsQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        // بناء بيانات وهمية للدرس مع السيكشن والـ Prerequisite
-        var fakePrerequisite = new Lesson { Id = 10, Title = "الدرس التمهيدي" };
-        var fakeLesson = new Lesson
+        var fakeProjection = new LessonDetailsProjection
         {
             Id = lessonId,
             Title = "درس القراءة الأول",
@@ -83,8 +78,12 @@ public class GetLessonDetailsQueryHandlerTests
             Description = "شرح مفصل لدرس القراءة",
             ImageThumbnailUrl = "thumb.png",
             Outcomes = new List<string> { "أن يستخرج الطالب الأفكار العامة", "أن يثري حصيلته اللغوية" },
-            Prerequisite = fakePrerequisite,
-            Sections = new List<Section>
+            PrerequisiteId = 10,
+            PrerequisiteTitle = "الدرس التمهيدي",
+            TeacherSubject = "اللغة العربية",
+            TeacherName = "أحمد محمد",
+            EnrollmentsCount = 1,
+            Sections = new List<SectionProjection>
             {
                 new() { Id = 101, Title = "المقدمة", Duration = TimeSpan.FromMinutes(15), IsPreview = true },
                 new()
@@ -94,19 +93,18 @@ public class GetLessonDetailsQueryHandlerTests
                     Duration = TimeSpan.FromMinutes(50),
                     IsPreview = false
                 }
-            },
-            Enrollments = new List<Enrollment>
-            {
-                new() { StudentId = currentUserId, Status = EnrollmentStatus.Active }
             }
         };
 
-        // الـ Mock للـ Repository ليرجع الدرس الأساسي
-        _lessonRepo.FirstOrDefaultAsync(Arg.Is<LessonWithDetailsSpecification>(s => s != null),
-                Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+        // محاكاة جلب الدرس الأساسي (كـ projection مش entity كاملة)
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(fakeProjection);
 
-        // الـ Mock الخاص بالـ Storage Service
+        // محاكاة استعلام التحقق من اكتمال المتطلب السابق (Prerequisite) بناءً على السبيسفيكيشن الخاص به
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPrerequisiteCompletionSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        // محاكاة رابط الصورة من خدمة التخزين
         _storageService.GetDownloadUrlAsync("prisma", "thumb.png").Returns("https://cdn.prisma.com/thumb.png");
 
         // Act
@@ -117,26 +115,67 @@ public class GetLessonDetailsQueryHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBeNull();
 
-        // التأكد من صحة البيانات المرجعة وعمل الـ Mapping
         result.Value.Id.Should().Be(lessonId);
         result.Value.Title.Should().Be("درس القراءة الأول");
         result.Value.Price.Should().Be(150.00m);
         result.Value.AboutText.Should().Be("شرح مفصل لدرس القراءة");
         result.Value.Url.Should().Be("https://cdn.prisma.com/thumb.png");
+        result.Value.Subject.Should().Be("اللغة العربية");
+        result.Value.Teacher.Should().Be("أحمد محمد");
+        result.Value.ValidityDays.Should().Be(7);
 
-        // حسابات الوقت (15 + 50 = 65 دقيقة -> 1 ساعة و 5 دقيقة)
+        // التحقق من حسابات المدة الزمنية (65 دقيقة -> ساعة و 5 دقيقة)
         result.Value.Duration.Should().Be("1 ساعة و 5 دقيقة");
         result.Value.ChaptersCount.Should().Be(2);
         result.Value.StudentsCount.Should().Be(1);
 
-        // التأكد من تفاصيل الشباتر
+        // التحقق من تفاصيل الفصول (Chapters)
         result.Value.Chapters.Should().HaveCount(2);
         result.Value.Chapters[0].Title.Should().Be("المقدمة");
+        result.Value.Chapters[0].Duration.Should().Be("15 د");
         result.Value.Chapters[0].IsPreview.Should().BeTrue();
 
-        // التأكد من الـ Outcomes والـ Prerequisites
+        // التحقق من النتائج التعليمية والمتطلبات السابقة
         result.Value.Outcomes.Should().Contain("أن يستخرج الطالب الأفكار العامة");
         result.Value.Prerequisites.Should().HaveCount(1);
         result.Value.Prerequisites[0].Title.Should().Be("الدرس التمهيدي");
+        result.Value.Prerequisites[0].IsDone.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_WhenLessonHasNoSectionsOrPrerequisite_ReturnsZeroDurationAndEmptyPrerequisites()
+    {
+        // Arrange
+        var lessonId = 2;
+        var query = new GetLessonDetailsQuery(lessonId);
+        var currentUserId = Guid.NewGuid();
+        _currentUserService.UserId.Returns(currentUserId);
+
+        var fakeProjection = new LessonDetailsProjection
+        {
+            Id = lessonId,
+            Title = "درس بدون فصول",
+            TeacherName = "أحمد محمد",
+            TeacherSubject = "اللغة العربية",
+            Sections = new List<SectionProjection>(),
+            PrerequisiteId = null
+        };
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(fakeProjection);
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Duration.Should().Be("٠ دقيقة");
+        result.Value.ChaptersCount.Should().Be(0);
+        result.Value.Prerequisites.Should().BeEmpty();
+        result.Value.Url.Should().Be(string.Empty);
+
+        // ما فيش داعي نستدعي سبيسفيكيشن اكتمال المتطلب لو مفيش PrerequisiteId
+        await _lessonRepo.DidNotReceive().FirstOrDefaultAsync(
+            Arg.Any<LessonPrerequisiteCompletionSpecification>(), Arg.Any<CancellationToken>());
     }
 }

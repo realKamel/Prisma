@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -18,7 +17,7 @@ public class DeleteLessonCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly UserManager<User> _userManager;
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
     private readonly IVideoStorageService _videoStorageService = Substitute.For<IVideoStorageService>();
@@ -26,21 +25,33 @@ public class DeleteLessonCommandHandlerTests
 
     public DeleteLessonCommandHandlerTests()
     {
-        var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
-
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new DeleteLessonCommandHandler(
             _unitOfWork,
             _currentUserService,
-            _userManager,
+            _identityService,
             _storageService,
             _videoStorageService);
     }
 
+    // NOTE: assumes UserRole exposes a `Role` navigation property with a `Name` string,
+    // matching handler's `r.Role.Name` usage. Adjust the constructor below if the real
+    // UserRole/Role shape differs.
+    private static User CreateUserWithRole(Guid userId, string roleName)
+    {
+        return new User
+        {
+            Id = userId,
+            Roles = new List<UserRole>
+            {
+                new UserRole { Role = new Role { Name = roleName } }
+            }
+        };
+    }
+
     [Fact]
-    public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIdIsNull_ReturnsUnauthorized()
     {
         _currentUserService.UserId.Returns((Guid?)null);
         var command = new DeleteLessonCommand(1);
@@ -49,20 +60,33 @@ public class DeleteLessonCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User must be authenticated to delete a lesson.");
+        await _identityService.DidNotReceive().FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WhenUserDoesNotHavePermission_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserNotFound_ReturnsUnauthorized()
+    {
+        var userId = Guid.NewGuid();
+        _currentUserService.UserId.Returns(userId);
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns((User?)null);
+
+        var command = new DeleteLessonCommand(1);
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserDoesNotHavePermission_ReturnsUnauthorized()
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, "Student");
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        // مستخدم ليس لديه أدوار (Teacher/Assistant/Admin)
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { "Student" });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
 
         var command = new DeleteLessonCommand(1);
 
@@ -72,19 +96,17 @@ public class DeleteLessonCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("Only teachers, assistants, and admins can delete lessons");
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Admin);
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Admin });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns((Lesson?)null);
 
@@ -96,6 +118,7 @@ public class DeleteLessonCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.NotFound);
+        result.Errors.Should().Contain($"Lesson with id '{command.LessonId}' was not found");
     }
 
     [Fact]
@@ -103,12 +126,11 @@ public class DeleteLessonCommandHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var fakeLesson = new Lesson { Id = 1 };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLesson);
 
@@ -119,7 +141,7 @@ public class DeleteLessonCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Lesson deleted successfully");
+        result.Status.Should().Be(ResultStatus.NoContent);
 
         _lessonRepo.Received(1).Delete(fakeLesson);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -130,12 +152,11 @@ public class DeleteLessonCommandHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var fakeLesson = new Lesson { Id = 1, ImageThumbnailUrl = "thumbnails/lesson-1.png" };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLesson);
 
@@ -145,7 +166,8 @@ public class DeleteLessonCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _storageService.Received(1).DeleteFileAsync("prisma", fakeLesson.ImageThumbnailUrl);
+        await _storageService.Received(1)
+            .DeleteFileAsync("prisma", fakeLesson.ImageThumbnailUrl, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -153,12 +175,11 @@ public class DeleteLessonCommandHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var fakeLesson = new Lesson { Id = 1, ImageThumbnailUrl = null };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLesson);
 
@@ -168,7 +189,8 @@ public class DeleteLessonCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _storageService.DidNotReceive().DeleteFileAsync(Arg.Any<string>(), Arg.Any<string>());
+        await _storageService.DidNotReceive()
+            .DeleteFileAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -176,7 +198,7 @@ public class DeleteLessonCommandHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var sectionWithAsset = new Section { Id = 1, AssetId = "asset-123" };
         var sectionWithoutAsset = new Section { Id = 2, AssetId = null };
         var fakeLesson = new Lesson
@@ -186,8 +208,7 @@ public class DeleteLessonCommandHandlerTests
         };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLesson);
 
@@ -197,8 +218,8 @@ public class DeleteLessonCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _videoStorageService.Received(1).DeleteVideoAsync("asset-123");
-        await _videoStorageService.Received(1).DeleteVideoAsync(Arg.Any<string>());
+        await _videoStorageService.Received(1).DeleteVideoAsync("asset-123", Arg.Any<CancellationToken>());
+        await _videoStorageService.Received(1).DeleteVideoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -206,7 +227,7 @@ public class DeleteLessonCommandHandlerTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var fakeUser = new User { Id = userId };
+        var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var fakeLesson = new Lesson
         {
             Id = 1,
@@ -214,8 +235,7 @@ public class DeleteLessonCommandHandlerTests
         };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLesson);
 

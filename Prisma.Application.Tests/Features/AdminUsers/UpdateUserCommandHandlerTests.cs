@@ -97,7 +97,7 @@ public class UpdateUserCommandHandlerTests
     public async Task Handle_WhenUpdatingStudent_UpdatesStudentSpecificFields()
     {
         // Arrange
-        var student = new Student { Id = Guid.NewGuid(), Email = "s@test.com", TeacherId = Guid.NewGuid() };
+        var student = new Student { Id = Guid.NewGuid(), Email = "s@test.com", TeacherStudents = { new TeacherStudent { TeacherId = Guid.NewGuid() } } };
         var newTeacherId = Guid.NewGuid();
 
         _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
@@ -114,7 +114,7 @@ public class UpdateUserCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.GradeId.Should().Be(3);
-        result.Value.TeacherId.Should().Be(newTeacherId);
+        result.Value.TeacherIds.Should().Contain(newTeacherId);
         result.Value.ParentMobile.Should().Be("01188888888");
         student.FirstName.Should().Be("محمد");
     }

@@ -7,7 +7,6 @@ using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -24,7 +23,6 @@ public class GetLessonMaterialQueryHandlerTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IStorageService _storageService = Substitute.For<IStorageService>();
 
     // عمل Mock للـ UserManager يحتاج تمرير IUserStore كمعامل أساسي في الـ Constructor لـ NSubstitute
     private readonly UserManager<User> _userManager = Substitute.For<UserManager<User>>(
@@ -40,7 +38,7 @@ public class GetLessonMaterialQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIdIsNull_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonMaterialQuery(1);
@@ -56,7 +54,7 @@ public class GetLessonMaterialQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserDoesNotExistInDatabase_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserDoesNotExistInDatabase_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonMaterialQuery(1);
@@ -64,7 +62,7 @@ public class GetLessonMaterialQueryHandlerTests
         _currentUserService.UserId.Returns(currentUserId);
 
         // محاكاة عدم العثور على أوبجكت المستخدم
-        _userManager.FindByIdAsync(currentUserId.ToString()).Returns((User)null);
+        _userManager.FindByIdAsync(currentUserId.ToString()).Returns((User?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -76,7 +74,7 @@ public class GetLessonMaterialQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserDoesNotHaveRequiredRole_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserDoesNotHaveRequiredRole_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonMaterialQuery(1);
@@ -99,7 +97,7 @@ public class GetLessonMaterialQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonMaterialQuery(1);
@@ -110,9 +108,9 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Student }); // صلاحية طالب
 
-        // محاكاة عدم وجود الدرس في قاعدة البيانات
+        // محاكاة عدم وجود الدرس في قاعدة البيانات (FirstOrDefaultAsync بترجع null للـ List نفسها)
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((List<LessonMaterialProjection>?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -135,30 +133,22 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Student });
 
-        // تجهيز مادتين دراسيتين وهميتين وتحديد الـ CreatedAt
+        // تجهيز مادة دراسية وهمية (كـ projection مباشرة، من غير DownloadUrl لأن الهاندلر بقى مبيستخدمش storage service)
         var baseDateTime = new DateTimeOffset(2026, 5, 10, 12, 0, 0, TimeSpan.Zero); // الساعة 12 بالتوقيت العالمي
-        var fakeLesson = new Lesson
+        var fakeMaterials = new List<LessonMaterialProjection>
         {
-            Id = lessonId,
-            LessonMaterials = new List<LessonMaterial>
+            new()
             {
-                new()
-                {
-                    Id = 501,
-                    Title = "ملخص القاعدة الأولى.pdf",
-                    Size = "2.5 MB",
-                    Type = LessonMaterialType.PDF, // بافتراض وجود هذا الـ Enum لديك
-                    DownloadUrl = "materials/pdf1.pdf",
-                    CreatedAt = baseDateTime
-                }
+                Id = 501,
+                Title = "ملخص القاعدة الأولى.pdf",
+                Size = "2.5 MB",
+                Type = "PDF",
+                CreatedAt = baseDateTime
             }
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
-
-        // عمل Mock للـ Storage Service لترجع رابط وهمي عند استدعائها
-        _storageService.GetDownloadUrlAsync("prisma", "materials/pdf1.pdf").Returns(Task.FromResult("https://download.prisma.com/pdf1.pdf"));
+            .Returns(fakeMaterials);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -172,10 +162,33 @@ public class GetLessonMaterialQueryHandlerTests
         firstMaterial.Id.Should().Be(501);
         firstMaterial.Title.Should().Be("ملخص القاعدة الأولى.pdf");
         firstMaterial.Size.Should().Be("2.5 MB");
-        firstMaterial.Type.Should().Be(LessonMaterialType.PDF.ToString());
+        firstMaterial.Type.Should().Be("PDF");
 
         // التحقق من صحة صياغة التاريخ وإضافة الـ 3 ساعات (12:00 + 3 ساعات = 15:00) بالتنسيق العربي
         var expectedDateString = baseDateTime.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG"));
         firstMaterial.Date.Should().Be(expectedDateString);
+    }
+
+    [Fact]
+    public async Task Handle_WhenLessonHasNoMaterials_ReturnsEmptyList()
+    {
+        // Arrange
+        var query = new GetLessonMaterialQuery(1);
+        var currentUserId = Guid.NewGuid();
+        var fakeUser = new User { Id = currentUserId };
+
+        _currentUserService.UserId.Returns(currentUserId);
+        _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
+        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(new List<LessonMaterialProjection>());
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
     }
 }

@@ -6,17 +6,20 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Commands.CreateUser;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class CreateUserCommandHandlerTests
 {
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+
     private readonly CreateUserCommandHandler _sut;
 
     public CreateUserCommandHandlerTests()
     {
-        _sut = new CreateUserCommandHandler(_identityService);
+        _sut = new CreateUserCommandHandler(_identityService,_unitOfWork);
     }
 
     [Fact]
@@ -59,7 +62,7 @@ public class CreateUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be(AppRoles.Student);
         result.Value.GradeId.Should().Be(2);
-        result.Value.TeacherId.Should().Be(teacherId);
+        result.Value.TeacherIds.Should().Contain(teacherId);
 
         await _identityService.Received(1).CreateAsync(
             Arg.Is<User>(u => u is Student && u.Email == "m@test.com"),
@@ -86,7 +89,7 @@ public class CreateUserCommandHandlerTests
         // Assert
         result.Value.Role.Should().Be(AppRoles.Teacher);
         result.Value.GradeId.Should().BeNull();
-        result.Value.TeacherId.Should().BeNull();
+        result.Value.TeacherIds.Should().BeNull();
     }
 
     [Fact]

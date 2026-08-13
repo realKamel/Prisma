@@ -3,12 +3,9 @@ using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
-using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
 
@@ -30,7 +27,7 @@ public class GetLessonPlayerQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserIsNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
         var query = new GetLessonPlayerQuery(1);
@@ -46,7 +43,7 @@ public class GetLessonPlayerQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonDoesNotExist_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var query = new GetLessonPlayerQuery(1);
@@ -55,7 +52,7 @@ public class GetLessonPlayerQueryHandlerTests
 
         // محاكاة إرجاع null عند البحث عن الدرس
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((Lesson)null);
+            .Returns((LessonPlayerProjection?)null);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
@@ -74,83 +71,69 @@ public class GetLessonPlayerQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        // 1. إعداد بيانات الـ Sections والـ Progress
-        var fakeSections = new List<Section>
+        // 1. إعداد بيانات الـ Sections والـ Progress (كـ projection مباشرة، الحساب حصل جوه السبيسفيكيشن)
+        var fakeSections = new List<PlayerSectionProjection>
         {
             new()
             {
                 Id = 101,
+                SortOrder = 1,
                 Title = "شرح قاعدة المضارع البسيط",
                 Duration = new TimeSpan(0, 45, 0),
-                SortOrder = 1,
                 PlaybackId = "video-playback-123",
-                Progresses = new List<SectionProgress>
-                {
-                    new() { StudentId = currentUserId, IsCompleted = true, WatchedSeconds = 2700 }
-                }
+                IsCompleted = true,
+                WatchedSeconds = 2700
             }
         };
 
-        // 2. إعداد بيانات المواد الدراسية الـ Materials
-        var fakeMaterials = new List<LessonMaterial>
+        // 2. إعداد بيانات المواد الدراسية الـ Materials (Type رقم مباشرة زي ما بترجعه الـ projection)
+        var fakeMaterials = new List<PlayerMaterialProjection>
         {
             new()
             {
-                Id = 201,
                 Title = "ملخص الدرس.pdf",
                 DownloadUrl = "materials/summary.pdf",
-                Type = 0 // التعديل هنا: مرر الرقم 0 مباشرةً ليقوم الـ Handler بتحويله إلى "pdf"
+                Type = 0 // الهاندلر بيحولها لـ "pdf"
             }
         };
 
-        // 3. إعداد الكويز ومحاولة الطالب
-        var fakeQuiz = new Quiz
+        // 3. إعداد الكويز
+        var fakeQuiz = new PlayerQuizProjection
         {
             Id = 5,
+            QuestionsCount = 2,
             TimeInMinutes = TimeSpan.FromMinutes(20),
             TotalDegree = 100,
-            Questions = new List<QuestionLessonQuiz> { new(), new() }, // سؤالين
-            Attempts = new List<QuizAttempt>
-            {
-                new() { StudentId = currentUserId } // الطالب قام بمحاولة حل الكويز سابقاً
-            }
+            IsAttempted = true
         };
 
-        // 4. إعداد الواجب وتطبيق الإرسال
-        var fakeAssignment = new Assignment
+        // 4. إعداد الواجب
+        var fakeAssignment = new PlayerAssignmentProjection
         {
             Id = 9,
             ContentURL = "assignments/task1.pdf",
             DueDate = DateTimeOffset.UtcNow.AddDays(5),
-            Submissions = new List<AssignmentSubmission>
-            {
-                new() { StudentId = currentUserId, Title = "حل الطالب للواجب.pdf" }
-            }
+            SubmissionTitle = "حل الطالب للواجب.pdf"
         };
 
-        // 5. تجميع بيانات الدرس والـ Enrollment
-        var fakeLesson = new Lesson
+        // 5. تجميع بيانات الدرس (projection كامل بدل Lesson entity)
+        var fakeProjection = new LessonPlayerProjection
         {
             Id = lessonId,
             Title = "الوحدة الأولى: قواعد",
             Description = "شرح تفصيلي لقواعد الوحدة الأولى",
             ImageThumbnailUrl = "poster.jpg",
-            Price = 150.00m,
+            Subject = "لغه انجليزيه",
+            TeacherName = "أ. أحمد مصطفى",
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(10), // متبقي 10 أيام صلاحية
             Sections = fakeSections,
-            LessonMaterials = fakeMaterials,
+            Materials = fakeMaterials,
             Quiz = fakeQuiz,
-            Assignment = fakeAssignment,
-            Enrollments = new List<Enrollment>
-            {
-                new()
-                {
-                    StudentId = currentUserId, ExpiresAt = DateTimeOffset.UtcNow.AddDays(10)
-                } // متبقي 10 أيام صلاحية
-            }
+            Assignment = fakeAssignment
         };
 
         _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(fakeLesson);
+            .Returns(fakeProjection);
 
         // عمل مَوك للخدمات الخارجية التي تُستدعى داخل الحلقات التكرارية (Loops)
         _videoStorageService.GetVideoUrlAsync("video-playback-123")
@@ -187,7 +170,7 @@ public class GetLessonPlayerQueryHandlerTests
         result.Value.Sections[0].ContentUrl.Should().Be("https://streaming.com/video1");
         result.Value.Sections[0].WatchedSeconds.Should().Be(2700);
 
-        // التحقق من الـ Materials والتحويل التلقائي لنوع الملف النصي (switch case)
+        // التحقق من الـ Materials والتحويل التلقائي لنوع الملف من الرقم للنص (switch case)
         result.Value.Materials.Should().HaveCount(1);
         result.Value.Materials[0].Title.Should().Be("ملخص الدرس.pdf");
         result.Value.Materials[0].Type.Should().Be("pdf");
@@ -207,5 +190,38 @@ public class GetLessonPlayerQueryHandlerTests
         result.Value.Assignment.ContentURL.Should().Be("https://download.com/task1.pdf");
         result.Value.Assignment.FileName.Should().Be("حل الطالب للواجب.pdf");
         result.Value.Assignment.DueDate.Should().Be(fakeAssignment.DueDate.ToString("yyyy-MM-dd"));
+    }
+
+    [Fact]
+    public async Task Handle_WhenEnrollmentExpiresAtIsNullOrInPast_FallsBackToThirtyDayValidity()
+    {
+        // Arrange
+        var lessonId = 2;
+        var query = new GetLessonPlayerQuery(lessonId);
+        var currentUserId = Guid.NewGuid();
+        _currentUserService.UserId.Returns(currentUserId);
+
+        var fakeProjection = new LessonPlayerProjection
+        {
+            Id = lessonId,
+            Title = "درس بدون اشتراك فعال",
+            Subject = "لغه انجليزيه",
+            TeacherName = "أ. أحمد مصطفى",
+            EnrollmentExpiresAt = null,
+            Sections = new List<PlayerSectionProjection>(),
+            Materials = new List<PlayerMaterialProjection>()
+        };
+
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(fakeProjection);
+
+        // Act
+        var result = await _sut.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.ValidityDays.Should().Be(30);
+        result.Value.Quiz.Should().BeNull();
+        result.Value.Assignment.Should().BeNull();
     }
 }

@@ -32,9 +32,13 @@ public class GetUserByIdQueryHandlerTests
             Email = "m@test.com",
             PhoneNumber = "01012345678",
             AcademicYearId = 2,
-            TeacherId = teacherId,
             ParentPhoneNumber = "01198765432",
         };
+
+        student.TeacherStudents.Add(new TeacherStudent
+        {
+            TeacherId = teacherId
+        });
 
         _identityService
             .FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
@@ -47,7 +51,7 @@ public class GetUserByIdQueryHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be("Student");
         result.Value.GradeId.Should().Be(2);
-        result.Value.TeacherId.Should().Be(teacherId);
+        result.Value.TeacherIds.Should().Contain(teacherId);
         result.Value.ParentMobile.Should().Be("01198765432");
     }
 
@@ -57,7 +61,10 @@ public class GetUserByIdQueryHandlerTests
         // Arrange
         var assistant = new Assistant
         {
-            Id = Guid.CreateVersion7(), FirstName = "فاطمة", LastName = "أحمد", Email = "f@test.com",
+            Id = Guid.CreateVersion7(),
+            FirstName = "فاطمة",
+            LastName = "أحمد",
+            Email = "f@test.com",
         };
 
         _identityService
@@ -70,7 +77,7 @@ public class GetUserByIdQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be("Assistant");
-        result.Value.TeacherId.Should().BeNull();
+        result.Value.TeacherIds.Should().BeNull();
         result.Value.GradeId.Should().BeNull();
     }
 

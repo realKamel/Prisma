@@ -33,7 +33,7 @@ public class DeleteLessonMaterialCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenUserNotAuthorized_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserNotAuthorized_ReturnsUnauthorizedResult()
     {
         // Arrange
         _currentUserService.UserId.Returns((Guid?)null);
@@ -48,7 +48,7 @@ public class DeleteLessonMaterialCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonMaterialNotFound_ThrowsNotFoundException()
+    public async Task Handle_WhenLessonNotFound_ReturnsNotFoundResult()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -58,7 +58,8 @@ public class DeleteLessonMaterialCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        // Fixed: Use LessonWithMaterialsForUpdateSpecification instead of LessonMaterialsSpecification
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns((Lesson?)null);
 
         var command = new DeleteLessonMaterialCommand(1, 10);
@@ -84,7 +85,7 @@ public class DeleteLessonMaterialCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
             .Returns(lesson);
 
         var command = new DeleteLessonMaterialCommand(1, 10);

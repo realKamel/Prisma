@@ -49,5 +49,6 @@
 
     <ItemGroup>
         <Folder Include="Extensions\Ai\" />
+        <Folder Include="wwwroot\" />
     </ItemGroup>
 </Project>

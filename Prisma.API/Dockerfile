@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
+#EXPOSE 8081
 
 
 # This stage is used to build the service project
@@ -18,7 +18,6 @@ COPY ["Prisma.Domain/Prisma.Domain.csproj", "Prisma.Domain/"]
 COPY ["Prisma.Infrastructure/Prisma.Infrastructure.csproj", "Prisma.Infrastructure/"]
 RUN dotnet restore "./Prisma.API/Prisma.API.csproj"
 COPY . .
-RUN apt-get update && apt-get install -y libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
 WORKDIR "/src/Prisma.API"
 RUN dotnet build "./Prisma.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 

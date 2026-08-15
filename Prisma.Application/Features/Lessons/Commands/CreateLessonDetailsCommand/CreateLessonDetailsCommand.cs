@@ -16,7 +16,8 @@ public record CreateLessonDetailsCommand(
     bool IsPublished,
     List<int> AcademicYearIds ,
     List<string> Outcomes,
-    IFormFile? ImageFile
+    IFormFile? ImageFile,
+    Guid? TeacherId
 ) : IRequest<Result<CreateLessonResponse>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName);

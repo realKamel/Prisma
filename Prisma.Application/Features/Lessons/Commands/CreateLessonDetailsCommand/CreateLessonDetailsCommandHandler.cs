@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -16,7 +15,7 @@ namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsComman
 public class CreateLessonDetailsCommandHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService,
-    UserManager<User> _userManager,
+    IIdentityService _userManager,
     IStorageService storageService,
     IBackgroundJobService backgroundJobService)
     : IRequestHandler<CreateLessonDetails.CreateLessonDetailsCommand, Result<CreateLessonResponse>>
@@ -31,8 +30,7 @@ public class CreateLessonDetailsCommandHandler(
             return Result.Unauthorized();
         }
 
-        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
-
+        var user = await _userManager.FindByIdAsync(userId.Value);
         if (user is null)
         {
             return Result.Unauthorized();
@@ -42,6 +40,34 @@ public class CreateLessonDetailsCommandHandler(
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
             return Result.Unauthorized("Only teachers and assistants can create lessons.");
 
+        Guid? teacherId;
+
+        if (roles.Contains(AppRoles.Teacher))
+        {
+            teacherId = user.Id;
+        }
+        else if (roles.Contains(AppRoles.Assistant))
+        {
+            if (user is not Assistant assistant)
+                return Result.Error("Assistant record is missing teacher assignment.");
+
+            if (assistant.TeacherId is null)
+                return Result.Error("This assistant is not assigned to a teacher.");
+
+            teacherId = assistant.TeacherId;
+        }
+        else // Admin
+        {
+            if (request.TeacherId is null)
+                return Result.Error("Admin-created lessons require an explicit teacher.");
+
+            var teacherExists = await _userManager.FindByIdAsync(request.TeacherId.Value) is Teacher;
+            if (!teacherExists)
+                return Result.Error("Specified teacher does not exist.");
+
+            teacherId = request.TeacherId;
+        }
+
         var lesson = new Lesson
         {
             Title = request.Title,
@@ -49,7 +75,8 @@ public class CreateLessonDetailsCommandHandler(
             Price = request.Price,
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            Outcomes = request.Outcomes ?? new List<string>()
+            Outcomes = request.Outcomes ?? new List<string>(),
+            TeacherId = teacherId
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)

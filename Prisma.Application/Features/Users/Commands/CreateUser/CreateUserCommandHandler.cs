@@ -34,7 +34,7 @@ public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfW
             // NOTE: unlike CreateAssistantCommand, this generic path doesn't set
             // Policies claims — an admin can grant permissions afterward via the
             // existing AssistantsController.UpdateAssistantPermissions endpoint.
-            AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7() },
+            AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7(), TeacherId = request.TeacherId },
             AppRoles.Admin => new Domain.Entities.UserAggregate.Admin { Id = Guid.CreateVersion7() },
         };
 

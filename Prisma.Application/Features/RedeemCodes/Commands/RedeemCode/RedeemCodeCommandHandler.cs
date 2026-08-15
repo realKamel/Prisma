@@ -1,14 +1,14 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Features.TeacherStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
-using Prisma.Application.Features.TeacherStudents;
-
+using Prisma.Domain.Specifications.Teacher;
 // Alias to avoid collision with Prisma.Application.Features.RedeemCodes namespace
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
@@ -46,10 +46,14 @@ public class RedeemCodeCommandHandler(
         if (generatedCode.RedeemedByStudentId is not null)
             return Result.Error("الكود ده اتستخدم قبل كده — لو في مشكلة تواصل مع المدرسة");
 
-        // ── 4. Load the batch to check lesson + academic year ──
+        // ── 4. Load the batch projection (lesson id, academic year, teacher id — nothing else) ──
         var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
         var batch = await batchRepo.FirstOrDefaultAsync(
-            new CodeBatchWithLessonSpecification(generatedCode.BatchId), ct);
+            new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(generatedCode.BatchId, b => new CodeBatchLessonInfo(
+                b.LessonId,
+                b.AcademicYearId,
+                b.Lesson!.TeacherId
+            )), ct);
         if (batch is null)
             return Result.NotFound($"CodeBatch with id '{generatedCode.BatchId}' was not found");
 
@@ -72,7 +76,6 @@ public class RedeemCodeCommandHandler(
         // ── 8. Mark the code as redeemed ──
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
-        // unitOfWork.DbContext.Entry(generatedCode).State = EntityState.Modified;
 
         // ── 9. Create or restore enrollment ──
         var expiresAt = DateTimeOffset.UtcNow.AddDays(30);
@@ -88,7 +91,6 @@ public class RedeemCodeCommandHandler(
             existing.ExpiresAt = expiresAt;
             existing.UpdatedAt = DateTimeOffset.UtcNow;
             existing.GeneratedCodeId = generatedCode.Id;
-            // unitOfWork.DbContext.Entry(existing).State = EntityState.Modified;
             enrollment = existing;
         }
         else
@@ -106,8 +108,27 @@ public class RedeemCodeCommandHandler(
             enrollmentRepo.Add(enrollment);
         }
 
+        // ── 10. Ensure teacher-student pairing exists ──
+        var teacherStudentRepo = unitOfWork.GetOrCreateRepository<TeacherStudent, int>();
+        var pairExists = await teacherStudentRepo.AnyAsync(
+            new TeacherStudentPairSpec(batch.TeacherId.Value, studentId), ct);
+
+        if (!pairExists)
+        {
+            teacherStudentRepo.Add(new TeacherStudent
+            {
+                TeacherId = batch.TeacherId.Value,
+                StudentId = studentId
+            });
+        }
+
         await unitOfWork.SaveChangesAsync(ct);
 
         return new RedeemCodeResponse { EnrollmentId = enrollment.Id, ExpiresAt = expiresAt, };
     }
 }
+public sealed record CodeBatchLessonInfo(
+    int LessonId,
+    int? AcademicYearId,
+    Guid? TeacherId
+);

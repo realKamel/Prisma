@@ -20,7 +20,7 @@ public class CreateLessonDetailsCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
-    private readonly UserManager<User> _userManager;
+    private readonly IIdentityService _userManager;
     private readonly IStorageService _storageService;
     private readonly IRepository<Lesson, int> _lessonRepo;
     private readonly IRepository<AcademicYear, int> _academicYearRepo;
@@ -37,7 +37,7 @@ public class CreateLessonDetailsCommandHandlerTests
         _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
         _backgroundJobService = Substitute.For<IBackgroundJobService>();
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null!, null!, null!, null!, null!, null!, null!, null!);
+        _userManager = Substitute.For<IIdentityService>();
 
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AcademicYear, int>().Returns(_academicYearRepo);
@@ -78,6 +78,7 @@ public class CreateLessonDetailsCommandHandlerTests
                 true,
                 new List<int>(),
                 new List<string>(),
+                null,
                 null), CancellationToken.None);
 
         // Assert
@@ -92,7 +93,7 @@ public class CreateLessonDetailsCommandHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns((User?)null);
+        _userManager.FindByIdAsync(userId).Returns((User?)null);
 
         // Act
         var result = await _handler.Handle(new CreateLessonDetailsCommand(
@@ -107,6 +108,7 @@ public class CreateLessonDetailsCommandHandlerTests
             true,
             new List<int>(),
             new List<string>(),
+            null,
             null), CancellationToken.None);
 
         // Assert
@@ -120,7 +122,7 @@ public class CreateLessonDetailsCommandHandlerTests
     {
         // Arrange
         var user = new User { Id = Guid.NewGuid() };
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.FindByIdAsync(Arg.Any<Guid>()).Returns(user);
         _userManager.GetRolesAsync(user)
             .Returns(new List<string> { AppRoles.Student }); // Missing Teacher/Assistant/Admin
 
@@ -137,7 +139,8 @@ public class CreateLessonDetailsCommandHandlerTests
             true,
             new List<int>(),
             new List<string>(),
-            null), CancellationToken.None);
+            null,
+            null), CancellationToken.None); 
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -150,7 +153,7 @@ public class CreateLessonDetailsCommandHandlerTests
     {
         // Arrange
         var user = new User { Id = Guid.NewGuid() };
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.FindByIdAsync(Arg.Any<Guid>()).Returns(user);
         _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Teacher });
 
         var command = new CreateLessonDetailsCommand
@@ -165,6 +168,7 @@ public class CreateLessonDetailsCommandHandlerTests
             true,
             new List<int> { 1, 2 },
             new List<string>(),
+            null,
             null);
 
         // Simulating DB returning fewer matching years than requested (e.g. invalid IDs)
@@ -185,7 +189,7 @@ public class CreateLessonDetailsCommandHandlerTests
     {
         // Arrange
         var user = new User { Id = Guid.NewGuid() };
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.FindByIdAsync(Arg.Any<Guid>()).Returns(user);
         _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Assistant });
 
         var mockImage = CreateMockFile("thumbnail.jpg", "image/jpeg");
@@ -208,7 +212,8 @@ public class CreateLessonDetailsCommandHandlerTests
             true,
             new List<int> { 10 },
             new List<string> { "Learn Limits", "Learn Derivatives" },
-            mockImage
+            mockImage,
+            null
         );
 
         _academicYearRepo.ListAsync(Arg.Any<AcademicYearsByIdsSpecification>(), Arg.Any<CancellationToken>())
@@ -266,7 +271,7 @@ public class CreateLessonDetailsCommandHandlerTests
     {
         // Arrange
         var user = new User { Id = Guid.NewGuid() };
-        _userManager.FindByIdAsync(Arg.Any<string>()).Returns(user);
+        _userManager.FindByIdAsync(Arg.Any<Guid>()).Returns(user);
         _userManager.GetRolesAsync(user).Returns(new List<string> { AppRoles.Admin });
         var command = new CreateLessonDetailsCommand
         (
@@ -279,6 +284,7 @@ public class CreateLessonDetailsCommandHandlerTests
             null,
             null,
             false,
+            null,
             null,
             null,
             null

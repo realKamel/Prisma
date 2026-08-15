@@ -2,6 +2,7 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
@@ -33,29 +34,38 @@ public class DeleteLessonCommandHandler(
         }
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
-        var lesson = await lessonRepository.FirstOrDefaultAsync(new LessonWithEnrollmentSpec(request.LessonId), cancellationToken);
+        var lessonInfo = await lessonRepository.FirstOrDefaultAsync(
+            new LessonWithProjectionSpec<LessonDeletionInfo>(request.LessonId, l => new LessonDeletionInfo(
+                l.Id,
+                l.ImageThumbnailUrl,
+                l.Enrollments.Select(e => e.Id).ToList(),
+                l.Sections.Select(s => s.AssetId).ToList()
+            )),
+            cancellationToken);
 
-        if (lesson is null)
+        if (lessonInfo is null)
         {
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
         }
 
-        if (lesson.Enrollments != null)
+        foreach (var enrollmentId in lessonInfo.EnrollmentIds)
         {
-            lesson.Enrollments.Clear();
+            var stub = new Enrollment { Id = enrollmentId };
+            enrollmentRepository.Delete(stub);
         }
 
-        if (lesson.ImageThumbnailUrl != null)
+        if (lessonInfo.ImageThumbnailUrl != null)
         {
-            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lesson.ImageThumbnailUrl, cancellationToken);
+            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lessonInfo.ImageThumbnailUrl, cancellationToken);
         }
 
-        foreach (var section in lesson.Sections)
-            if (section.AssetId != null)
-                await videoStorageService.DeleteVideoAsync(section.AssetId, cancellationToken);
+        foreach (var assetId in lessonInfo.SectionAssetIds.Where(a => a != null))
+            await videoStorageService.DeleteVideoAsync(assetId!, cancellationToken);
 
-        lessonRepository.Delete(lesson);
+        var lessonStub = new Lesson { Id = lessonInfo.Id };
+        lessonRepository.Delete(lessonStub);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -70,4 +80,10 @@ public class DeleteLessonCommandHandler(
         }
         return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
     }
+    public sealed record LessonDeletionInfo(
+        int Id,
+        string? ImageThumbnailUrl,
+        List<int> EnrollmentIds,
+        List<string?> SectionAssetIds
+    );
 }

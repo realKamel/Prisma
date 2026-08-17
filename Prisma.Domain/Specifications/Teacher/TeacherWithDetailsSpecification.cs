@@ -8,6 +8,6 @@ public class TeacherWithDetailsSpecification : Specification<TeacherEntity>
     public TeacherWithDetailsSpecification()
     {
         Query.Include(t => t.TeacherStudents)
-             .Include(t => t.Lessons);
+            .Include(t => t.Lessons);
     }
 }

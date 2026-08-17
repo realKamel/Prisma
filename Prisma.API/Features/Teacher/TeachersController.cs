@@ -47,54 +47,35 @@ public class TeachersController(ISender mediator) : ApiController
         return result;
     }
 
-    [HttpGet("stats")]
-    [ProducesResponseType<Result<TeacherStatsDto>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<Result<TeacherStatsDto>> GetTeacherStats(CancellationToken token)
-    {
-        var result = await mediator.Send(new GetTeacherStatsQuery(), token);
-        return result;
-    }
-
     [HttpGet]
-    [ProducesResponseType<Result<List<TeacherDto>>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<Result<List<TeacherDto>>> GetTeachers(CancellationToken token)
+    [ProducesResponseType(typeof(Result<List<TeacherDto>>), StatusCodes.Status200OK)]
+    public async Task<Result<List<TeacherDto>>> GetTeachers()
     {
-        var result = await mediator.Send(new Application.Features.Teachers.Queries.GetTeachers.GetTeachersQuery(), token);
+        var result = await mediator.Send(new GetTeachersQuery());
         return result;
     }
 
-  
+    [HttpGet("stats")]
+    [ProducesResponseType(typeof(Result<TeacherStatsDto>), StatusCodes.Status200OK)]
+    public async Task<Result<TeacherStatsDto>> GetTeacherStats()
+    {
+        var result = await mediator.Send(new GetTeacherStatsQuery());
+        return result;
+    }
+
     [HttpPut("{id:guid}/activate")]
-    [ProducesResponseType<Result<bool>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<Result<bool>> ActivateTeacher(Guid id, CancellationToken token)
+    [ProducesResponseType(typeof(Result<bool>), StatusCodes.Status200OK)]
+    public async Task<Result<bool>> ActivateTeacher(Guid id)
     {
-        var result = await mediator.Send(new ActivateTeacherCommand(id), token);
+        var result = await mediator.Send(new ActivateTeacherCommand(id));
         return result;
     }
 
-  
     [HttpPut("{id:guid}/suspend")]
-    [ProducesResponseType<Result<bool>>(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    [Authorize(Roles = AppRoles.Admin)]
-    public async Task<Result<bool>> SuspendTeacher(
-        Guid id,
-        [FromBody] SuspendTeacherRequest request,
-        CancellationToken token)
+    [ProducesResponseType(typeof(Result<bool>), StatusCodes.Status200OK)]
+    public async Task<Result<bool>> SuspendTeacher(Guid id, [FromBody] SuspendTeacherRequest request)
     {
-        var result = await mediator.Send(new SuspendTeacherCommand(id, request.Reason), token);
+        var result = await mediator.Send(new SuspendTeacherCommand(id, request.Reason));
         return result;
     }
 }

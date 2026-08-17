@@ -3,6 +3,8 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
+using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
@@ -19,6 +21,25 @@ public class LoginCommandHandler(
         {
             return Result.Error("Invalid Credentials");
         }
+
+        if (user is Teacher teacher)
+        {
+            var suspensionError = CheckTeacherSuspension(teacher);
+            if (suspensionError is not null)
+                return suspensionError;
+        }
+
+        if (user is Assistant assistant)
+        {
+            var teacherOfAssistant = await identityService.FindByIdAsync(assistant.TeacherId.Value, cancellationToken);
+            if (teacherOfAssistant is Teacher parentTeacher)
+            {
+                var suspensionError = CheckTeacherSuspension(parentTeacher);
+                if (suspensionError is not null)
+                    return suspensionError;
+            }
+        }
+
 
         var roles = user.Roles
             .Select(x => x.Role.Name)
@@ -53,4 +74,16 @@ public class LoginCommandHandler(
                 permissionList)
         );
     }
+    private static Result CheckTeacherSuspension(Teacher teacher)
+    {
+        if (teacher.Status != TeacherStatus.Suspended)
+            return null;
+
+        var message = string.IsNullOrEmpty(teacher.SuspensionReason)
+            ? "تم إيقاف حسابك، برجاء التواصل مع الدعم الفني"
+            : $"تم إيقاف حسابك: {teacher.SuspensionReason}";
+
+        return Result.Error(message);
+    }
 }
+

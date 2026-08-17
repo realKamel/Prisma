@@ -15,7 +15,8 @@ public class Program
             .Enrich.WithExceptionDetails(
                 new DestructuringOptionsBuilder()
                     .WithDefaultDestructurers()
-                    .WithRootName("Exception"))
+                    .WithRootName("Exception")
+            )
             .CreateBootstrapLogger();
 
         try
@@ -32,16 +33,10 @@ public class Program
 
             await app.UseDataSeedingAsync();
 
+            // Enable forwarded headers if running behind IIS/Reverse Proxy
+            app.UseForwardedHeaders();
+
             app.UseExceptionHandler();
-
-            app.UseDefaultFiles();
-            app.UseStaticFiles();
-
-            // Enable forwarded headers if running behind IIS/Reverse Proxy (recommended for MonsterASP)
-
-            // app.UseForwardedHeaders();
-
-            app.UseHttpsRedirection();
 
             app.UseSerilogRequestLogging();
 
@@ -49,11 +44,13 @@ public class Program
             {
                 app.MapOpenApi();
 
-                app.UseSwaggerUI((options) =>
-                {
-                    options.SwaggerEndpoint("/openapi/v1.json", "Prisma API V1");
-                    options.RoutePrefix = "swagger";
-                });
+                app.UseSwaggerUI(
+                    (options) =>
+                    {
+                        options.SwaggerEndpoint("/openapi/v1.json", "Prisma API V1");
+                        options.RoutePrefix = "swagger";
+                    }
+                );
             }
 
             app.UseRouting();
@@ -78,8 +75,6 @@ public class Program
             app.UseLocalization();
 
             app.MapControllers();
-
-            app.MapFallbackToFile("index.html");
 
             await app.RunAsync();
         }

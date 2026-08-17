@@ -1,88 +1,118 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Application.Common.DTOs;
+using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Students;
+using Prisma.Domain.Specifications.Enrollments;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 
-public class GetStudentHistoryQueryHandler(ICurrentUserService currentUserService, IUnitOfWork unitOfWork)
-    : IRequestHandler<GetStudentHistoryQuery, Result<GetStudentHistoryResponse>>
+internal class GetStudentHistoryQueryHandler(
+    ICurrentUserService currentUserService,
+    IUnitOfWork unitOfWork
+) : IRequestHandler<GetPaginatedStudentHistoryQuery, Result<PaginatedList<HistoryDto>>>
 {
-    public async Task<Result<GetStudentHistoryResponse>> Handle(GetStudentHistoryQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<PaginatedList<HistoryDto>>> Handle(
+        GetPaginatedStudentHistoryQuery request,
+        CancellationToken cancellationToken
+    )
     {
-        //TODO: i should make it dynamic
-        var email = currentUserService.Email;
-        // email = "student2@prisma.edu.eg";
-        // email = "mmm@gmail.com";
+        var userId = currentUserService.UserId;
 
-        if (email is null)
+        if (userId is null)
         {
-            return Result.Unauthorized("Login First");
+            return Result.Unauthorized();
         }
 
-        var repo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var repo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
-        var result = await repo
-            .FirstOrDefaultAsync(new StudentWithEnrollmentHistorySpecification(email),
-                cancellationToken);
-        if (result is null)
+        var totalCount = await repo.CountAsync(
+            new EnrollmentByStudentSpecification(userId.Value),
+            cancellationToken
+        );
+
+        if (totalCount == 0)
         {
-            return Result.NotFound($"Student with id '{email}' was not found");
+            return new PaginatedList<HistoryDto>(
+                [],
+                0,
+                request.PaginationParams.PageNumber,
+                request.PaginationParams.PageSize
+            );
         }
 
-        var userId = result.Id;
+        var rawData = await repo.ListAsync(
+            new PaginatedEnrollmentHistorySpecification<EnrollmentHistoryDto>(
+                userId.Value,
+                request.PaginationParams.PageNumber,
+                request.PaginationParams.PageSize,
+                e => new EnrollmentHistoryDto(
+                    e.Lesson != null ? e.Lesson.PublicId : Guid.Empty,
+                    e.Lesson != null ? (e.Lesson.ImageThumbnailUrl ?? string.Empty) : string.Empty,
+                    e.Lesson != null ? (e.Lesson.Title ?? string.Empty) : string.Empty,
+                    e.Status.ToString(),
+                    e.Lesson != null && e.Lesson.Teacher != null
+                        ? $"{e.Lesson.Teacher.FirstName} {e.Lesson.Teacher.SecondName}"
+                        : string.Empty,
+                    e.Lesson != null && e.Lesson.Teacher != null
+                        ? (e.Lesson.Teacher.Subject ?? string.Empty)
+                        : string.Empty,
+                    e.CreatedAt,
+                    e.CompletedAt,
+                    e.ExpiresAt,
+                    e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.TotalDegree : 0,
+                    e.IsCompleted,
+                    e.Lesson != null ? e.Lesson.Sections.Count : 0,
+                    e.Lesson != null
+                        ? e.Lesson.Sections.SelectMany(sec => sec.Progresses)
+                            .Where(p => p.StudentId == userId.Value)
+                            .Sum(p => (double?)p.Percentage) ?? 0
+                        : 0
+                )
+            ),
+            cancellationToken: cancellationToken
+        );
 
-        if (result.Enrollments.Count == 0)
+        var result = rawData
+            .Select(raw => new HistoryDto(
+                raw.PublicId,
+                raw.ImageThumbnailUrl,
+                raw.Title,
+                raw.Status,
+                raw.TeacherName,
+                raw.Subject,
+                raw.CreatedAt,
+                raw.CompletedAt,
+                raw.ExpiresAt,
+                raw.TotalDegree,
+                CalculateProgressPercentage(raw.IsCompleted, raw.SectionsCount, raw.TotalProgress)
+            ))
+            .ToList();
+        return new PaginatedList<HistoryDto>(
+            result,
+            totalCount,
+            request.PaginationParams.PageNumber,
+            request.PaginationParams.PageSize
+        );
+    }
+
+    private static double CalculateProgressPercentage(
+        bool isCompleted,
+        int sectionsCount,
+        double totalProgress
+    )
+    {
+        if (isCompleted)
         {
-            return new GetStudentHistoryResponse(new Status(0, 0, 0, 0), []);
+            return 100;
         }
 
-        var totalPurchasedCount = result.Enrollments.Count;
-
-        var totalHours = result.Enrollments.Aggregate(TimeSpan.Zero,
-            (current, enrollment) => current.Add(enrollment.Lesson?.Duration ?? TimeSpan.Zero));
-
-        var totalCompletedLesson = result.Enrollments.Count(e => e.IsCompleted);
-
-        var avgQuizDegree = result.Enrollments.Average(e => e.Lesson?.Quiz?.TotalDegree ?? 0);
-
-        var status = new Status(totalPurchasedCount, totalCompletedLesson, (int)totalHours.TotalHours,
-            (int)avgQuizDegree);
-
-        List<History> history = new(result.Enrollments.Count);
-
-        foreach (var item in result.Enrollments)
+        if (sectionsCount == 0)
         {
-            var totalSections = item.Lesson?.Sections.Count ?? 1;
-
-            var completedSections = item.Lesson?
-                .Sections
-                .Select(s => s.Progresses
-                    .Where(p => p.StudentId == userId)
-                    .Select(p => p.Percentage)
-                    .FirstOrDefault()
-                ) // 0 if no progress row yet
-                .Sum();
-
-            var lessonProgress = item.IsCompleted ? 100 :
-                completedSections == 0 ? 0 : (completedSections / totalSections) ?? 0;
-
-            var entry = new History(item.LessonId ?? 0,
-                item.Lesson?.ImageThumbnailUrl,
-                item.Lesson?.Title ?? "",
-                item.Status.ToString(),
-                item.CreatedAt,
-                item.CompletedAt,
-                item.ExpiresAt,
-                item.Lesson?.Quiz?.TotalDegree ?? 0,
-                lessonProgress);
-
-            history.Add(entry);
+            return 0;
         }
 
-        return new GetStudentHistoryResponse(status, history);
+        return totalProgress / sectionsCount;
     }
 }

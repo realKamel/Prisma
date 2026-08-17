@@ -40,6 +40,10 @@ public class LessonConfiguration : IEntityTypeConfiguration<Lesson>
             .HasForeignKey(e => e.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasIndex(x => x.PublicId)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

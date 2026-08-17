@@ -20,6 +20,7 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Repositories;
 using Prisma.Infrastructure.AgenticWorkflows.ReportGeneratorWorkflow;
 using Prisma.Infrastructure.AgenticWorkflows.WrittenQuestionGradingWorkflow;
 using Prisma.Infrastructure.Ai;
@@ -46,8 +47,11 @@ namespace Prisma.Infrastructure;
 
 public static class DependenciesInjection
 {
-    public static void AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment environment)
+    public static void AddInfrastructureServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment
+    )
     {
         services.AddPersistenceConfig(configuration, environment);
 
@@ -59,7 +63,6 @@ public static class DependenciesInjection
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
-        // services.AddScoped<IFileService, FileService>();
 
         services.Configure<PaymobSettings>(configuration.GetSection("PaymobSettings"));
 
@@ -76,7 +79,7 @@ public static class DependenciesInjection
             var config = new AmazonS3Config
             {
                 ServiceURL = storageConfig["ServiceUrl"],
-                ForcePathStyle = bool.Parse(storageConfig["ForcePathStyle"]!)
+                ForcePathStyle = bool.Parse(storageConfig["ForcePathStyle"]!),
             };
 
             return new AmazonS3Client(
@@ -92,11 +95,15 @@ public static class DependenciesInjection
 
         // services.AddHostedService<StorageBucketPolicyInitializer>();
 
-        services.AddDataProtection()
+        services
+            .AddDataProtection()
             .PersistKeysToStackExchangeRedis(
-                ConnectionMultiplexer.Connect(configuration.GetConnectionString("Valkey") ??
-                                              throw new ArgumentException("Bad Connection string for Valkey")),
-                "DataProtection-Keys");
+                ConnectionMultiplexer.Connect(
+                    configuration.GetConnectionString("Valkey")
+                        ?? throw new ArgumentException("Bad Connection string for Valkey")
+                ),
+                "DataProtection-Keys"
+            );
 
         services.AddBackgroundJobsAndHangfireWithConfig(configuration);
 
@@ -113,7 +120,8 @@ public static class DependenciesInjection
             options.Configuration = configuration.GetConnectionString("Valkey");
         });
 
-        services.AddFusionCache()
+        services
+            .AddFusionCache()
             .WithOptions(options =>
             {
                 options.CacheName = "prisma_";
@@ -133,7 +141,7 @@ public static class DependenciesInjection
                 // abort waiting and instantly entry from the cached payload.
                 options.FactorySoftTimeout = TimeSpan.FromMilliseconds(150);
 
-                // C. Hard Timeout: Never allow a DB call to block an API thread 
+                // C. Hard Timeout: Never allow a DB call to block an API thread
                 // for longer than 2 seconds.
                 options.FactoryHardTimeout = TimeSpan.FromSeconds(2);
 
@@ -145,35 +153,48 @@ public static class DependenciesInjection
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
             // Backplane: Syncs all API nodes so no server returns old data
-            .WithBackplane(new RedisBackplane(new RedisBackplaneOptions
-            {
-                Configuration = configuration.GetConnectionString("Valkey")
-            }))
+            .WithBackplane(
+                new RedisBackplane(
+                    new RedisBackplaneOptions
+                    {
+                        Configuration = configuration.GetConnectionString("Valkey"),
+                    }
+                )
+            )
             .AsHybridCache();
     }
 
-    private static void AddBackgroundJobsAndHangfireWithConfig(this IServiceCollection services,
-        IConfiguration configuration)
+    private static void AddBackgroundJobsAndHangfireWithConfig(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
-        services.AddHangfire(config => config
-            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-            .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(options =>
-            {
-                options.UseNpgsqlConnection(configuration.GetConnectionString("DefaultSqlConnection"));
-            }));
+        services.AddHangfire(config =>
+            config
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(options =>
+                {
+                    options.UseNpgsqlConnection(
+                        configuration.GetConnectionString("DefaultSqlConnection")
+                    );
+                })
+        );
 
         // Start background job server (required for processing)
         services.AddHangfireServer(options =>
         {
             options.ServerName = $"prisma-api-{Environment.MachineName}";
             // Process all queues
-            options.Queues = new[]
-            {
-                JobQueues.Default, JobQueues.Reports, JobQueues.VideoProcessing, JobQueues.AuthCleanup,
-            };
-            options.WorkerCount = 5;
+            options.Queues =
+            [
+                JobQueues.Default,
+                JobQueues.Reports,
+                JobQueues.VideoProcessing,
+                JobQueues.AuthCleanup,
+            ];
+            options.WorkerCount = 3;
             options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
         });
 
@@ -191,37 +212,47 @@ public static class DependenciesInjection
         services.AddScoped<ILogoutUserJob, CleanUpAuth>();
     }
 
-    private static void AddPersistenceConfig(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment environment)
+    private static void AddPersistenceConfig(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment
+    )
     {
         // services.AddDbContextFactory<AppDbContext>(options =>
         //     options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"),
         //         npgSqlOptions => npgSqlOptions.UseVector()));
 
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-        {
-            options.UseNpgsql(configuration.GetConnectionString("DefaultSqlConnection"), npgSqlOptions =>
+        services.AddDbContext<AppDbContext>(
+            (serviceProvider, options) =>
             {
-                // npgsqlOptions.EnableRetryOnFailure(
-                //     maxRetryCount: 5,
-                //     maxRetryDelay: TimeSpan.FromSeconds(10),
-                //     errorCodesToAdd: null);
-                npgSqlOptions.UseVector();
-            });
+                options.UseNpgsql(
+                    configuration.GetConnectionString("DefaultSqlConnection"),
+                    npgSqlOptions =>
+                    {
+                        // npgsqlOptions.EnableRetryOnFailure(
+                        //     maxRetryCount: 5,
+                        //     maxRetryDelay: TimeSpan.FromSeconds(10),
+                        //     errorCodesToAdd: null);
+                        npgSqlOptions.UseVector();
+                    }
+                );
 
-            options.AddInterceptors(
-                serviceProvider.GetRequiredService<AuditInterceptor>(),
-                serviceProvider.GetRequiredService<AuditLogInterceptor>());
+                options.AddInterceptors(
+                    serviceProvider.GetRequiredService<AuditInterceptor>(),
+                    serviceProvider.GetRequiredService<AuditLogInterceptor>()
+                );
 
-            if (!environment.IsDevelopment())
-            {
-                return;
+                if (!environment.IsDevelopment())
+                {
+                    return;
+                }
+
+                //options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
             }
-
-            //options.EnableSensitiveDataLogging();
-            options.EnableDetailedErrors();
-        });
-        services.AddIdentityCore<User>(options =>
+        );
+        services
+            .AddIdentityCore<User>(options =>
             {
                 //options.User.RequireUniqueEmail = true;
                 if (environment.IsDevelopment())
@@ -255,9 +286,15 @@ public static class DependenciesInjection
         services.AddScoped<AuditLogInterceptor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
+
+        //Custom Repositories
+        services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
     }
 
-    private static void AddIdentityWithConfig(this IServiceCollection services, IConfiguration configuration)
+    private static void AddIdentityWithConfig(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         services.AddHttpContextAccessor();
         services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
@@ -265,29 +302,40 @@ public static class DependenciesInjection
         services.AddScoped<IIdentityService, IdentityService>();
     }
 
-    private static void AddAiIntegrationServices(this IServiceCollection services, IConfiguration configuration)
+    private static void AddAiIntegrationServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
         var openAiConfig = configuration.GetSection("OpenAI");
         // Console.WriteLine(
         //     $"OpenAI Config: {openAiConfig["ApiKey"]}, {openAiConfig["FastChatModel"]},
         // {openAiConfig["ReasoningModel"]}, {openAiConfig["EmbeddingModel"]}, {openAiConfig["SpeechModel"]}");
         // var openAiClient = new OpenAIClient(openAiConfig["ApiKey"]!);
-        var options = new OpenAIClientOptions { Endpoint = new Uri("https://models.github.ai/inference") };
+        var options = new OpenAIClientOptions
+        {
+            Endpoint = new Uri("https://models.github.ai/inference"),
+        };
 
         var openAiClient = new OpenAIClient(new ApiKeyCredential(openAiConfig["ApiKey"]!), options);
 
-        services.AddKeyedChatClient(AIType.FastChat,
-            openAiClient.GetChatClient(openAiConfig["FastChatModel"]!).AsIChatClient());
+        services.AddKeyedChatClient(
+            AIType.FastChat,
+            openAiClient.GetChatClient(openAiConfig["FastChatModel"]!).AsIChatClient()
+        );
 
-        services.AddKeyedChatClient(AIType.Reasoning,
-            openAiClient.GetChatClient(openAiConfig["ReasoningModel"]!).AsIChatClient());
+        services.AddKeyedChatClient(
+            AIType.Reasoning,
+            openAiClient.GetChatClient(openAiConfig["ReasoningModel"]!).AsIChatClient()
+        );
 
-        services.AddKeyedEmbeddingGenerator(AIType.Embedding,
-            openAiClient.GetEmbeddingClient(openAiConfig["EmbeddingModel"]!).AsIEmbeddingGenerator());
+        services.AddKeyedEmbeddingGenerator(
+            AIType.Embedding,
+            openAiClient.GetEmbeddingClient(openAiConfig["EmbeddingModel"]!).AsIEmbeddingGenerator()
+        );
 
         // services.AddKeyedSpeechToTextClient(AIType.SpeechToText,
         //     openAiClient.GetAudioClient(openAiConfig["SpeechModel"]!).AsISpeechToTextClient());
-
 
         services.AddScoped<IRagQuestionAnswering, RagQuestionAnsweringService>();
 
@@ -313,34 +361,46 @@ public static class DependenciesInjection
 
     public static void AddAiAgents(this IHostApplicationBuilder app, IConfiguration configuration)
     {
-        app.AddAIAgent(AIAgentRole.ChatAgent.DefaultAgent,
-                AIAgentRole.ChatAgent.DefaultAgentInstructions, AIType.FastChat)
+        app.AddAIAgent(
+                AIAgentRole.ChatAgent.DefaultAgent,
+                AIAgentRole.ChatAgent.DefaultAgentInstructions,
+                AIType.FastChat
+            )
             .WithInMemorySessionStore();
 
-        app.AddAIAgent(AIAgentRole.ChatAgent.GradingAgent,
-            AIAgentRole.ChatAgent.GradingAgentInstructions, AIType.Reasoning);
+        app.AddAIAgent(
+            AIAgentRole.ChatAgent.GradingAgent,
+            AIAgentRole.ChatAgent.GradingAgentInstructions,
+            AIType.Reasoning
+        );
 
         // app.AddAIAgent(AIAgentRole.ChatAgent.KnowledgeRagChatAgent,
         //         AIAgentRole.ChatAgent.KnowledgeRagChatAgentInstructions, AIType.FastChat)
         //     .WithInMemorySessionStore();
 
+        app.AddAIAgent(
+                AIAgentRole.ChatAgent.KnowledgeRagChatAgent,
+                (
+                    (provider, key) =>
+                    {
+                        var chatClient = provider.GetRequiredKeyedService<IChatClient>(
+                            AIType.FastChat
+                        );
+                        var ragFunctions = provider.GetRequiredService<AgentRagTools>();
 
-        app.AddAIAgent(AIAgentRole.ChatAgent.KnowledgeRagChatAgent,
-            ((provider, key) =>
-            {
-                var chatClient = provider.GetRequiredKeyedService<IChatClient>(AIType.FastChat);
-                var ragFunctions = provider.GetRequiredService<AgentRagTools>();
-
-                return chatClient.AsAIAgent(
-                    AIAgentRole.ChatAgent.KnowledgeRagChatAgentInstructions,
-                    name: key,
-                    tools:
-                    [
-                        AIFunctionFactory.Create(ragFunctions.SearchLessonsContentAsync),
-                        AIFunctionFactory.Create(ragFunctions.SearchLessonContentAsync)
-                    ]
-                );
-            })).WithInMemorySessionStore();
+                        return chatClient.AsAIAgent(
+                            AIAgentRole.ChatAgent.KnowledgeRagChatAgentInstructions,
+                            name: key,
+                            tools:
+                            [
+                                AIFunctionFactory.Create(ragFunctions.SearchLessonsContentAsync),
+                                AIFunctionFactory.Create(ragFunctions.SearchLessonContentAsync),
+                            ]
+                        );
+                    }
+                )
+            )
+            .WithInMemorySessionStore();
 
         app.AddAIAgent(
             AIAgentRole.ChatAgent.ReportGeneratorAgent,
@@ -350,8 +410,9 @@ public static class DependenciesInjection
 
         app.AddGroqApiServices(options =>
         {
-            options.ApiKey = configuration?.GetSection("Groq")["ApiKey"] ??
-                             throw new ArgumentNullException("Groq ApiKey is null");
+            options.ApiKey =
+                configuration?.GetSection("Groq")["ApiKey"]
+                ?? throw new ArgumentNullException("Groq ApiKey is null");
 
             options.Timeout = TimeSpan.FromSeconds(100);
             options.MaxRetries = 3;
@@ -360,25 +421,31 @@ public static class DependenciesInjection
 
     public static void AddWorkflows(this IHostApplicationBuilder app)
     {
-        app.AddWorkflow("Report-Generator", (sp, key) =>
-        {
-            var processor = sp.GetRequiredService<GetStudentStatusExecutor>();
-            var narrativeGenerator = sp.GetRequiredService<NarrativeGenerationExecutor>();
-            return new WorkflowBuilder(processor)
-                .WithName(key)
-                .AddEdge(processor, narrativeGenerator)
-                .Build();
-        });
+        app.AddWorkflow(
+            "Report-Generator",
+            (sp, key) =>
+            {
+                var processor = sp.GetRequiredService<GetStudentStatusExecutor>();
+                var narrativeGenerator = sp.GetRequiredService<NarrativeGenerationExecutor>();
+                return new WorkflowBuilder(processor)
+                    .WithName(key)
+                    .AddEdge(processor, narrativeGenerator)
+                    .Build();
+            }
+        );
 
-        app.AddWorkflow("Written-Quesions-Grades", (sp, key) =>
-        {
-            var processor = sp.GetRequiredService<GetWrittenQuestionExecutor>();
-            var grader = sp.GetRequiredService<GradingQuestionExecutor>();
+        app.AddWorkflow(
+            "Written-Quesions-Grades",
+            (sp, key) =>
+            {
+                var processor = sp.GetRequiredService<GetWrittenQuestionExecutor>();
+                var grader = sp.GetRequiredService<GradingQuestionExecutor>();
 
-            return new WorkflowBuilder(processor)
-                .AddEdge(processor, grader)
-                .WithName(key)
-                .Build();
-        });
+                return new WorkflowBuilder(processor)
+                    .AddEdge(processor, grader)
+                    .WithName(key)
+                    .Build();
+            }
+        );
     }
 }

@@ -16,8 +16,7 @@ namespace Prisma.API.Features.Student;
 
 public class StudentsController(ISender mediator) : ApiController
 {
-    [Authorize(Roles = AppRoles.Student)]
-    [ProducesResponseType<Result<ICollection<LessonCatalogDto>>>(StatusCodes.Status200OK)]
+    //[Authorize(Roles = AppRoles.Student)]
     [HttpGet("catalog")]
     public async Task<Result<ICollection<LessonCatalogDto>>> GetLessonsCatalog(CancellationToken c)
     {
@@ -26,14 +25,37 @@ public class StudentsController(ISender mediator) : ApiController
     }
 
     [Authorize(Roles = AppRoles.Student)]
-    [HttpGet("history")]
-    [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status200OK)]
-    [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status404NotFound)]
-    [ProducesResponseType<Result<GetStudentHistoryResponse>>(StatusCodes.Status500InternalServerError)]
-    public async Task<Result<GetStudentHistoryResponse>> GetStudentHistory(CancellationToken cancellationToken)
+    [HttpGet("performance")]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.NotFound,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<StatusDto>> GetStudentPerformanceStatus(
+        CancellationToken cancellationToken
+    )
     {
-        var result = await mediator.Send(new GetStudentHistoryQuery(), cancellationToken);
-        return result;
+        return await mediator.Send(new GetStudentPerformanceStatusQuery(), cancellationToken);
+    }
+
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpGet("history")]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.NotFound,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<PaginatedList<HistoryDto>>> GetStudentHistory(
+        [FromQuery] PaginationParams pagination,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(
+            new GetPaginatedStudentHistoryQuery(pagination),
+            cancellationToken
+        );
     }
 
     [HttpGet("dashboard")]

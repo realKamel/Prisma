@@ -1,25 +1,22 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 
-public record GetStudentHistoryQuery() : IRequest<Result<GetStudentHistoryResponse>>;
+public record GetPaginatedStudentHistoryQuery(PaginationParams PaginationParams)
+    : IRequest<Result<PaginatedList<HistoryDto>>>;
 
-public record GetStudentHistoryResponse(Status status, List<History> history);
-
-public record History(
-    int LessonId,
+public record HistoryDto(
+    Guid? LessonId,
     string? ImageUrl,
-    string Title,
-    string Status,
+    string? Title,
+    string? Status,
+    string? TeacherName,
+    string? Subject,
     DateTimeOffset? PurchaseDate,
     DateTimeOffset? FinishAt,
     DateTimeOffset? ExpiresAt,
     decimal? QuizDegree,
-    int? LessonPercentage);
-
-public record Status(
-    int TotalPurchasedLessons,
-    int CompletedLessonsCount,
-    int TotalStudyCount,
-    decimal AverageQuizDegree);
+    double? LessonPercentage
+);

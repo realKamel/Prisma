@@ -24,76 +24,118 @@ namespace Prisma.API.Features.Lessons;
 public class LessonsController(IMediator _mediator) : ApiController
 {
     [HttpGet("details/{id:int}")]
-    public async Task<Result<LessonDetailsDto>> GetLessonDetails([FromRoute] int id,
-        CancellationToken cancellationToken)
+    public async Task<Result<LessonDetailsDto>> GetLessonDetails(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonDetailsQuery(id);
         return await _mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("watch/{id:int}")]
-    public async Task<Result<LessonPlayerResult>> GetLessonPlayerDetails([FromRoute] int id,
-        CancellationToken cancellationToken)
+    public async Task<Result<LessonPlayerResult>> GetLessonPlayerDetails(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonPlayerQuery(id);
         return await _mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("status/{id:int}")]
-    public async Task<Result<LessonStatusResponse>> GetLessonStatus([FromRoute] int id,
-        CancellationToken cancellationToken)
+    [HttpGet("{id:int}/status")]
+    public async Task<Result<LessonStatusResponse>> GetLessonStatus(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonStatusQuery(id);
         return await _mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("options")]
-    public async Task<Result<LessonFormOptionsResponseDto>> GetPrepDataForAdd(CancellationToken cancellationToken)
+    public async Task<Result<LessonFormOptionsResponseDto>> GetPrepDataForAdd(
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonFormOptionsQuery();
         return await _mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("expired-details/{id:int}")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<LessonExpiredDto>> GetExpiredLessonDetails([FromRoute] int id,
-        CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<LessonExpiredDto>> GetExpiredLessonDetails(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonExpiredQuery(id);
         return await _mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("editor/{id:int}")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<LessonEditorResponseDto>> GetLessonEditorDetails([FromRoute] int id,
-        CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<LessonEditorResponseDto>> GetLessonEditorDetails(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         return await _mediator.Send(new GetLessonEditorDetailsQuery(id), cancellationToken);
     }
 
     [HttpPost("add")]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<CreateLessonResponse>> CreateLesson([FromForm] CreateLessonDetailsCommand command,
-        CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<CreateLessonResponse>> CreateLesson(
+        [FromForm] CreateLessonDetailsCommand command,
+        CancellationToken cancellationToken
+    )
     {
         var result = await _mediator.Send(command, cancellationToken);
         return result;
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<Result<string>> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
+    public async Task<Result<string>> DeleteLesson(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
     }
 
     [HttpPut("editor/{LessonId:int}")]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(
         [FromRoute] int LessonId,
         [FromForm] UpdateLessonDetailsCommand command,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var finalCommand = command with { Id = LessonId };
 
@@ -103,9 +145,17 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpPatch("toggle-status/{id:int}")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<string>> ToggleLessonStatus([FromRoute] int id,
-        CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<string>> ToggleLessonStatus(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var result = await _mediator.Send(new ToggleLessonStatusCommand(id), cancellationToken);
 
@@ -114,11 +164,18 @@ public class LessonsController(IMediator _mediator) : ApiController
 
     [HttpPost("upload-materials/{id:int}")]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
     public async Task<Result<string>> UploadMaterials(
         [FromRoute] int id,
         [FromForm] UploadMaterialsRequest request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var command = new UploadLessonMaterialsCommand(id, request.Files);
 
@@ -127,11 +184,18 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpDelete("delete-material/{LessonId:int}/{MaterialId:int}")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
     public async Task<Result<string>> DeleteMaterial(
         [FromRoute] int LessonId,
         [FromRoute] int MaterialId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var command = new DeleteLessonMaterialCommand(LessonId, MaterialId);
         var result = await _mediator.Send(command, cancellationToken);
@@ -139,9 +203,17 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpGet("materials/{id:int}")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<List<LessonMaterialDto>>> GetLessonMaterials([FromRoute] int id,
-        CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<List<LessonMaterialDto>>> GetLessonMaterials(
+        [FromRoute] int id,
+        CancellationToken cancellationToken
+    )
     {
         var query = new GetLessonMaterialQuery(id);
         var result = await _mediator.Send(query, cancellationToken);
@@ -149,18 +221,38 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpPost("{lessonId:int}/assignment/submit")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
     public async Task<Result<string>> SubmitAssignment(
         int lessonId,
-        IFormFile file, CancellationToken cancellationToken)
+        IFormFile file,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
+        var result = await _mediator.Send(
+            new SubmitAssignmentCommand(lessonId, file),
+            cancellationToken
+        );
         return result;
     }
 
     [HttpDelete("{lessonId:int}/assignment/submission")]
-    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Unauthorized, ResultStatus.Invalid, ResultStatus.Unauthorized)]
-    public async Task<Result<string>> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
+    [ExpectedFailures(
+        ResultStatus.CriticalError,
+        ResultStatus.Error,
+        ResultStatus.Unauthorized,
+        ResultStatus.Invalid,
+        ResultStatus.Unauthorized
+    )]
+    public async Task<Result<string>> DeleteSubmission(
+        int lessonId,
+        CancellationToken cancellationToken
+    )
     {
         var result = await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
         return result;

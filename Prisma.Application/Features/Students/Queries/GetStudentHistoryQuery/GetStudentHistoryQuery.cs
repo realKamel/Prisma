@@ -8,7 +8,7 @@ public record GetPaginatedStudentHistoryQuery(PaginationParams PaginationParams)
     : IRequest<Result<PaginatedList<HistoryDto>>>;
 
 public record HistoryDto(
-    Guid? LessonId,
+    int? LessonId,
     string? ImageUrl,
     string? Title,
     string? Status,

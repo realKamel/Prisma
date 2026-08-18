@@ -48,7 +48,7 @@ internal class GetStudentHistoryQueryHandler(
                 request.PaginationParams.PageNumber,
                 request.PaginationParams.PageSize,
                 e => new EnrollmentHistoryDto(
-                    e.Lesson != null ? e.Lesson.PublicId : Guid.Empty,
+                    e.Lesson != null ? e.Lesson.Id : 0,
                     e.Lesson != null ? (e.Lesson.ImageThumbnailUrl ?? string.Empty) : string.Empty,
                     e.Lesson != null ? (e.Lesson.Title ?? string.Empty) : string.Empty,
                     e.Status.ToString(),

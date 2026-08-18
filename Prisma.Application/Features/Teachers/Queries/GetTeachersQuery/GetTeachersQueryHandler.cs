@@ -7,6 +7,7 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Features.Teachers.Queries.GetTeachers;
 using Prisma.Domain.Entities.PaymentAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teacher;
 using TeacherEntity = Prisma.Domain.Entities.UserAggregate.Teacher;
@@ -41,7 +42,7 @@ public class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
                 .Where(p => teacherLessonIds.Contains(p.LessonId))
                 .Sum(p => p.Amount);
 
-            string status = teacher.IsBlocked ? "suspended" : "active";
+            string status = teacher.Status == TeacherStatus.Suspended ? "suspended" : "active";
 
             var dto = new TeacherDto(
                 Id: teacher.Id.ToString(),

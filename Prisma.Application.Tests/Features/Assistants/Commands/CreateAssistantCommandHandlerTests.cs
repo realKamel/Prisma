@@ -70,7 +70,7 @@ public class CreateAssistantCommandHandlerTests
             .CreateAsync(
                 Arg.Is<Assistant>(a =>
                     a.FirstName == command.FirstName &&
-                    a.LastName == command.LastName &&
+                    a.LastName == command.SecondName &&
                     a.UserName == command.Email &&
                     a.Email == command.Email &&
                     a.PhoneNumber == command.PhoneNumber),

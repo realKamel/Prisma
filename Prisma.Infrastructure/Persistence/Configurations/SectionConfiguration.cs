@@ -15,6 +15,10 @@ public class SectionConfiguration : IEntityTypeConfiguration<Section>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasIndex(x => x.PublicId)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

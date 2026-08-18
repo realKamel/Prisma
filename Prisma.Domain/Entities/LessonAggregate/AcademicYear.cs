@@ -7,6 +7,7 @@ namespace Prisma.Domain.Entities.LessonAggregate;
 public class AcademicYear : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
+    public Guid PublicId { get; set; } = Guid.CreateVersion7();
     public ICollection<Student> Students { get; set; } = new List<Student>();
     public ICollection<AcademicYearTeacher> Teachers { get; set; } = new List<AcademicYearTeacher>();
     public ICollection<AcademicYearLesson> Lessons { get; set; } = new List<AcademicYearLesson>();

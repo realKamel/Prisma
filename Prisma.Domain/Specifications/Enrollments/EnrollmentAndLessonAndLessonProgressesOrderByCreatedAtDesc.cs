@@ -4,14 +4,16 @@ using Prisma.Domain.Entities.EnrollmentAggregate;
 
 namespace Prisma.Domain.Specifications.Enrollments;
 
-public class EnrollmentAndLessonAndLessonProgressesOrderByCreatedAtDesc<TResult> :
-    Specification<Enrollment, TResult>
+public class EnrollmentAndLessonAndLessonProgressesOrderByCreatedAtDesc<TResult>
+    : Specification<Enrollment, TResult>
 {
-    public EnrollmentAndLessonAndLessonProgressesOrderByCreatedAtDesc
-    (Expression<Func<Enrollment, bool>>
-        expression, Expression<Func<Enrollment, TResult>> selector)
+    public EnrollmentAndLessonAndLessonProgressesOrderByCreatedAtDesc(
+        Expression<Func<Enrollment, bool>> expression,
+        Expression<Func<Enrollment, TResult>> selector
+    )
     {
-        Query.Where(expression)
+        Query
+            .Where(expression)
             .Include(e => e.Lesson)
             .ThenInclude(l => l.Sections)
             .ThenInclude(s => s.Progresses)

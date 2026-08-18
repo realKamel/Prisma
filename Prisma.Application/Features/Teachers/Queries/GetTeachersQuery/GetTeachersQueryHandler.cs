@@ -1,24 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Ardalis.Result;
 using MediatR;
-using Prisma.Application.Features.Teachers.Queries.GetTeachers;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teacher;
 using TeacherEntity = Prisma.Domain.Entities.UserAggregate.Teacher;
 
+namespace Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 
-namespace Prisma.Application.Features.AdminTeachers.Queries.GetTeachers;
-
-public class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
-    : IRequestHandler<GetTeachersQuery, Result<List<TeacherDto>>>
+public class GetTeachersQueryHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetTeachersQuery, Result<List<TeacherDto>>>
 {
-    public async Task<Result<List<TeacherDto>>> Handle(GetTeachersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<TeacherDto>>> Handle(GetTeachersQuery request,
+        CancellationToken cancellationToken)
     {
         var teachers = await unitOfWork.GetOrCreateRepository<TeacherEntity, Guid>()
             .ListAsync(new TeacherWithDetailsSpecification(), cancellationToken);

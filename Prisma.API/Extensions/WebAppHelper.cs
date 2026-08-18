@@ -5,6 +5,7 @@ using Hangfire;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
@@ -76,14 +77,14 @@ public static class WebAppHelper
             });
 
             // Add forwarded headers BEFORE anything else that reads the request scheme
-            //services.Configure<ForwardedHeadersOptions>(options =>
-            //{
-            //    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
-            //    // Trust Caddy (Docker internal network) — safe since Caddy is only entry point
-            //    options.KnownIPNetworks.Clear();
-            //    options.KnownProxies.Clear();
-            //});
+                // Clear known networks and proxies so .NET trusts (Caddy|Traefik)'s headers inside Docker
+                options.KnownIPNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
 
             services.AddHealthChecks();
             // .AddNpgSql(

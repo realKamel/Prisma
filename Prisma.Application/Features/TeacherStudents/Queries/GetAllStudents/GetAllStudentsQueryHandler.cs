@@ -1,21 +1,31 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Application.Features.TeacherStudents.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Queries.GetAllStudents;
 
-public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
-    : IRequestHandler<GetAllStudentsQuery, List<StudentListItemDto>>
+public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService, IIdentityService identityService)
+    : IRequestHandler<GetAllStudentsQuery, Result<List<StudentListItemDto>>>
 {
-    public async Task<List<StudentListItemDto>> Handle(GetAllStudentsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<StudentListItemDto>>> Handle(GetAllStudentsQuery request, CancellationToken cancellationToken)
     {
-        var currentUser = currentUserService.UserId;
+        var userId = currentUserService.UserId;
+        if (userId is null)
+            return Result<List<StudentListItemDto>>.Unauthorized("User is not authenticated.");
+
+        var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
+        if (user is null)
+            return Result<List<StudentListItemDto>>.NotFound("User not found.");
+
+       
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
 
         var students = await studentRepo.ListAsync(
-            new StudentsByTeacherSpec<StudentInfo>(currentUser.Value, s => new StudentInfo(
+            new StudentsByTeacherSpec<StudentInfo>(userId.Value, s => new StudentInfo(
                 s.Id,
                 s.FirstName ?? string.Empty,
                 s.SecondName ?? string.Empty,
@@ -85,7 +95,7 @@ public class GetAllStudentsQueryHandler(IUnitOfWork unitOfWork, ICurrentUserServ
                 lessonTitles));
         }
 
-        return result;
+        return Result<List<StudentListItemDto>>.Success(result);
     }
 
     public record StudentInfo(

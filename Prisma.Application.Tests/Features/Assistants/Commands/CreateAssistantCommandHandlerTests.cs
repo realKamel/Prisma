@@ -13,12 +13,13 @@ namespace Prisma.Application.Tests.Features.Assistants.Commands;
 public class CreateAssistantCommandHandlerTests
 {
     private readonly IIdentityService _identityService;
+    private readonly ICurrentUserService _currentUserService;
     private readonly CreateAssistantCommandHandler _handler;
 
     public CreateAssistantCommandHandlerTests()
     {
         _identityService = Substitute.For<IIdentityService>();
-        _handler = new CreateAssistantCommandHandler(_identityService);
+        _handler = new CreateAssistantCommandHandler(_identityService, _currentUserService);
     }
 
     [Fact]

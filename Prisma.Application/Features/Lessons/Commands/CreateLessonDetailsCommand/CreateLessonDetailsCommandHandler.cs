@@ -113,7 +113,8 @@ public class CreateLessonDetailsCommandHandler(
             {
                 Title = Path.GetFileNameWithoutExtension(request.AssignmentFile.FileName),
                 ContentURL = storageKey,
-                DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7)
+                DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
+                Grade = 10
             };
         }
 

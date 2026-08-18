@@ -20,12 +20,9 @@ namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
 public class GetAssistantDashboardQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
-    UserManager<User> userManager)
+    IIdentityService userManager)
     : IRequestHandler<GetAssistantDashboardQuery, Result<GetAssistantDashboardResponse>>
 {
-    // TODO: replace with actual teacher–assistant relation when modelled
-    private const string SupervisorName = "أ. أحمد مصطفى";
-
     // Maps policy claim → permission tile id
     private static readonly IReadOnlyDictionary<string, string> PermissionMap =
         new Dictionary<string, string>
@@ -85,7 +82,12 @@ public class GetAssistantDashboardQueryHandler(
             .ToList();
 
         // ── Permissions ────────────────────────────────────────
-        var assistant = await userManager.FindByIdAsync(currentUser.UserId!.Value.ToString());
+        var assistant = await userManager.FindByIdAsync(currentUser.UserId!.Value);
+        if (assistant == null)
+        {
+            return Result<GetAssistantDashboardResponse>.Unauthorized();
+        }
+        var teacher = await userManager.FindByIdAsync(((Assistant)assistant).TeacherId!.Value);
         var claims = assistant is not null
             ? await userManager.GetClaimsAsync(assistant)
             : [];
@@ -106,9 +108,11 @@ public class GetAssistantDashboardQueryHandler(
         {
             Teacher = new DashboardTeacher(
                 Name: assistant is not null
-                    ? $"{assistant.FirstName} {assistant.LastName}"
+                    ? $"{assistant.FirstName} {assistant.SecondName}"
                     : string.Empty,
-                SupervisorName: SupervisorName),
+                SupervisorName: teacher is not null 
+                    ? $"{teacher.FirstName} {teacher.SecondName}"
+                    : string.Empty),
 
             Kpis =
             [

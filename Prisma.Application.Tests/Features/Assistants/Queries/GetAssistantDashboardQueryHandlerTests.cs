@@ -18,7 +18,7 @@ public class GetAssistantDashboardQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUser;
-    private readonly UserManager<User> _userManager;
+    private readonly IIdentityService _userManager;
     private readonly GetAssistantDashboardQueryHandler _handler;
 
     private readonly IRepository<Enrollment, int> _enrollmentRepo;
@@ -35,8 +35,7 @@ public class GetAssistantDashboardQueryHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _currentUser = Substitute.For<ICurrentUserService>();
 
-        var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
+        _userManager = Substitute.For<IIdentityService>();
 
         _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
         _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
@@ -69,7 +68,7 @@ public class GetAssistantDashboardQueryHandlerTests
         _auditRepo.ListAsync(Arg.Any<ISpecification<AuditLog>>(), Arg.Any<CancellationToken>())
             .Returns(new List<AuditLog>());
 
-        _userManager.FindByIdAsync(TestUserId.ToString()).Returns((User)null!);
+        _userManager.FindByIdAsync(TestUserId).Returns((User)null!);
         _userManager.GetClaimsAsync(Arg.Any<User>()).Returns(new List<Claim>());
     }
 
@@ -121,7 +120,7 @@ public class GetAssistantDashboardQueryHandlerTests
         _auditRepo.ListAsync(Arg.Any<ISpecification<AuditLog>>(), Arg.Any<CancellationToken>())
             .Returns(logs);
 
-        _userManager.FindByIdAsync(TestUserId.ToString()).Returns(assistant);
+        _userManager.FindByIdAsync(TestUserId).Returns(assistant);
         _userManager.GetClaimsAsync(assistant).Returns(new List<Claim>
         {
             new(AppClaims.PermissionsClaim, AppClaims.Policies.CanManageEnrollments),
@@ -179,7 +178,7 @@ public class GetAssistantDashboardQueryHandlerTests
     public async Task Handle_WhenAssistantNotFound_ReturnsEmptyTeacherNameAndAllPermissionsOff()
     {
         // Arrange
-        _userManager.FindByIdAsync(TestUserId.ToString()).Returns((User)null!);
+        _userManager.FindByIdAsync(TestUserId).Returns((User)null!);
 
         // Act
         var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);

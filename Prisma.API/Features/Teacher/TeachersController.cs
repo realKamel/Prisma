@@ -4,13 +4,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prisma.API.Common;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Features.AdminTeachers.Queries.GetTeachers;
 using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
-using Prisma.Application.Features.Teachers.Queries.GetTeachers;
+using Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
 
 namespace Prisma.API.Features.Teacher;

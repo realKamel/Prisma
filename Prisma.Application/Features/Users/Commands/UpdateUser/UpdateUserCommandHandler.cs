@@ -42,8 +42,10 @@ public class UpdateUserCommandHandler(
             student.AcademicYearId = request.GradeId;
             student.ParentPhoneNumber = request.ParentMobile;
         }
-        // Assistant→Teacher isn't modeled in the DB — TeacherId is ignored for
-        // Assistant updates until that column/FK exists.
+        if (user is Assistant assistant)
+        {
+            assistant.TeacherId = request.TeacherId;
+        }
 
         var updateResult = await identityService.UpdateAsync(user);
         if (!updateResult.Succeeded)

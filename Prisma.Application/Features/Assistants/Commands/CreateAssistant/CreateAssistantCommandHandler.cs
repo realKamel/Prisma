@@ -8,18 +8,25 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 
-public class CreateAssistantCommandHandler(IIdentityService identityService) :
+public class CreateAssistantCommandHandler(IIdentityService identityService,
+    ICurrentUserService currentUserService) :
     IRequestHandler<CreateAssistantCommand, Result<CreateOrUpdatedAssistantCommandResponse>>
 {
     public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> Handle(CreateAssistantCommand request,
         CancellationToken cancellationToken)
     {
         var user = await identityService.FindByPhoneNumberAsync(request.PhoneNumber, cancellationToken);
+        var teacherId = currentUserService.UserId;
+        if (teacherId is null)
+        {
+            return Result.Unauthorized();
+        }
 
         if (user is not null)
         {
             return Result.Conflict("User already exists");
         }
+        
 
         var assistant = new Assistant
         {
@@ -29,6 +36,7 @@ public class CreateAssistantCommandHandler(IIdentityService identityService) :
             UserName = request.Email,
             PhoneNumber = request.PhoneNumber,
             Email = request.Email,
+            TeacherId = teacherId
         };
 
         var result = await identityService.CreateAsync(assistant, request.Password);

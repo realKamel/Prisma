@@ -12,7 +12,7 @@ public record GetAssistantDashboardQuery : IRequest<Result<GetAssistantDashboard
 
 public class GetAssistantDashboardResponse
 {
-    public DashboardTeacher Teacher { get; set; } = new(string.Empty,"أ. احمد مصطفى");
+    public DashboardTeacher Teacher { get; set; } = new(string.Empty,string.Empty);
     public List<KpiTile> Kpis { get; set; } = [];
     public List<ActivityItem> Activities { get; set; } = [];
     public List<Permission> Permissions { get; set; } = [];

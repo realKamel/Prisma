@@ -1,7 +1,6 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Common.DTOs.Auth;
-using Ardalis.Result;
-
 
 namespace Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 

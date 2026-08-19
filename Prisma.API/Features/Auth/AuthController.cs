@@ -17,25 +17,40 @@ namespace Prisma.API.Features.Auth;
 public class AuthController(IMediator mediator, IWebHostEnvironment environment) : ApiController
 {
     [HttpPost("login")]
-    public async Task<Result<LoginCredentials>> Login([FromBody] LoginRequest request, CancellationToken cancelToken)
+    public async Task<Result<LoginCredentials>> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancelToken
+    )
     {
-        var result = await mediator.Send(request.ToCommand(),
-            cancelToken);
+        var result = await mediator.Send(request.ToCommand(), cancelToken);
 
+        //TODO: What about valdations errors ?
         if (!result.IsSuccess)
         {
             return Result.Error(new ErrorList(result.Errors));
         }
 
-        Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken,
-            environment.IsDevelopment());
+        Response.Cookies.SetAuthCookies(
+            result.Value.AccessToken,
+            result.Value.RefreshToken,
+            environment.IsDevelopment()
+        );
 
-        return result.Map(r => new LoginCredentials(r.Credentials.Id, r.Credentials.Email, r.Credentials.FirstName,
-            r.Credentials.SecondName, r.Credentials.Role, r.Credentials.Permissions));
+        return result.Map(r => new LoginCredentials(
+            r.Credentials.Id,
+            r.Credentials.Email,
+            r.Credentials.FirstName,
+            r.Credentials.SecondName,
+            r.Credentials.Role,
+            r.Credentials.Permissions
+        ));
     }
 
     [HttpPost("register")]
-    public async Task<Result> Register([FromBody] RegisterRequest request, CancellationToken cancelToken)
+    public async Task<Result> Register(
+        [FromBody] RegisterRequest request,
+        CancellationToken cancelToken
+    )
     {
         return await mediator.Send(request.ToCommand(), cancellationToken: cancelToken);
     }
@@ -46,8 +61,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
         var accessToken = Request.Cookies[AppCookies.AccessToken];
         var refreshToken = Request.Cookies[AppCookies.RefreshToken];
 
-        var command = new
-            RefreshTokenCommand(accessToken, refreshToken);
+        var command = new RefreshTokenCommand(accessToken, refreshToken);
 
         var result = await mediator.Send(command, cancelToken);
 
@@ -64,13 +78,15 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     [HttpPost("logout")]
     public async Task<Result> Logout(CancellationToken cancelToken)
     {
-        var result = await mediator.Send(new LogoutCommand(Request.Cookies[AppCookies.AccessToken]), cancelToken);
+        var result = await mediator.Send(
+            new LogoutCommand(Request.Cookies[AppCookies.AccessToken]),
+            cancelToken
+        );
 
         Response.Cookies.RemoveCookies(environment.IsDevelopment());
 
         return result;
     }
-
 
     [HttpPost("forgot-password")]
     public async Task<Result> ForgotPassword([FromBody] ForgotPasswordCommand command)

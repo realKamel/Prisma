@@ -18,8 +18,8 @@ public class DataSeeder(
     RoleManager<Role> roleManager,
     UserManager<User> userManager,
     IHostEnvironment hostEnvironment,
-    IConfiguration configuration)
-    : IDataSeeder
+    IConfiguration configuration
+) : IDataSeeder
 {
     public async Task SeedAppDataAsync()
     {
@@ -45,8 +45,7 @@ public class DataSeeder(
 
                 var seedFileName = "seed_app_data.json";
 
-                var seedPath = Path.Combine(
-                    AppContext.BaseDirectory, "SeedData", seedFileName);
+                var seedPath = Path.Combine(AppContext.BaseDirectory, "SeedData", seedFileName);
 
                 logger.LogInformation("Try to Seed file : {Path} for Identity", seedPath);
 
@@ -60,8 +59,10 @@ public class DataSeeder(
 
                 await using var stream = File.OpenRead(seedPath);
 
-                using var document = await JsonDocument.ParseAsync(stream,
-                    new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
+                using var document = await JsonDocument.ParseAsync(
+                    stream,
+                    new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip }
+                );
 
                 var root = document.RootElement;
 
@@ -71,7 +72,7 @@ public class DataSeeder(
 
                     foreach (var role in roles)
                     {
-                        await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id, });
+                        await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id });
                     }
                 }
 
@@ -84,15 +85,17 @@ public class DataSeeder(
                 var admin = new User
                 {
                     FirstName = "Admin",
-                    LastName = "Prisma",
+                    SecondName = "Prisma",
                     UserName = configuration.GetSection("IdentitySeed")["AdminEmail"],
                     Email = configuration.GetSection("IdentitySeed")["AdminEmail"],
                     PhoneNumber = configuration.GetSection("IdentitySeed")["AdminPhone"],
                 };
 
-                await userManager.CreateAsync(admin,
-                    configuration.GetSection("IdentitySeed")["AdminPassword"] ??
-                    throw new Exception("Identity data is empty"));
+                await userManager.CreateAsync(
+                    admin,
+                    configuration.GetSection("IdentitySeed")["AdminPassword"]
+                        ?? throw new Exception("Identity data is empty")
+                );
 
                 await userManager.AddToRoleAsync(admin, AppRoles.Admin);
 
@@ -103,8 +106,11 @@ public class DataSeeder(
             }
             catch (Exception e)
             {
-                logger.LogError(e, "An error occured while seeding from json file during Identity Seeding :{error}",
-                    e.Message);
+                logger.LogError(
+                    e,
+                    "An error occured while seeding from json file during Identity Seeding :{error}",
+                    e.Message
+                );
                 await transaction.RollbackAsync();
                 throw;
             }
@@ -128,8 +134,11 @@ public class DataSeeder(
         }
     }
 
-    private List<TEntity> SeedData<TEntity>(JsonElement root, JsonSerializerOptions options,
-        JsonSerializerSettings? serializerSettings = null)
+    private List<TEntity> SeedData<TEntity>(
+        JsonElement root,
+        JsonSerializerOptions options,
+        JsonSerializerSettings? serializerSettings = null
+    )
         where TEntity : class
     {
         logger.LogInformation("Seeding Check: {Path}", typeof(TEntity).Name);
@@ -144,14 +153,15 @@ public class DataSeeder(
             return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText()) ?? [];
         }
 
-        return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings) ?? [];
+        return JsonConvert.DeserializeObject<List<TEntity>>(output.GetRawText(), serializerSettings)
+            ?? [];
     }
 
     private async Task SeedLoadTestUsersAsync(int count = 1000)
     {
-        bool isSeeded = await dbContext
-            .Users
-            .AnyAsync(u => u.Email != null && u.Email.StartsWith("user_"));
+        bool isSeeded = await dbContext.Users.AnyAsync(u =>
+            u.Email != null && u.Email.StartsWith("user_")
+        );
 
         if (isSeeded)
         {
@@ -168,30 +178,32 @@ public class DataSeeder(
         {
             var email = $"user_{i}@test.com";
 
-            users.Add(new User
-            {
-                Id = Guid.NewGuid(),
-                FirstName = "TestUser",
-                LastName = $"Num_{i}",
-                UserName = email,
-                NormalizedUserName = email.ToUpperInvariant(),
-                Email = email,
-                NormalizedEmail = email.ToUpperInvariant(),
-                EmailConfirmed = true,
-                PhoneNumberConfirmed = false, // Satisfies PostgreSQL NOT NULL constraint
-                TwoFactorEnabled = false, // Satisfies PostgreSQL NOT NULL constraint
-                IsBlocked = false,
-                PasswordResetConfirmed = false,
-                ResetPasswordCodeAttemptCount = 0,
-                IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                SecurityStamp = Guid.NewGuid().ToString(),
-                ConcurrencyStamp = Guid.NewGuid().ToString(),
-                LockoutEnabled = true,
-                AccessFailedCount = 0,
-                IsOnline = false,
-                PasswordHash = hashedPassword // Reuses pre-computed hash
-            });
+            users.Add(
+                new User
+                {
+                    Id = Guid.NewGuid(),
+                    FirstName = "TestUser",
+                    SecondName = $"Num_{i}",
+                    UserName = email,
+                    NormalizedUserName = email.ToUpperInvariant(),
+                    Email = email,
+                    NormalizedEmail = email.ToUpperInvariant(),
+                    EmailConfirmed = true,
+                    PhoneNumberConfirmed = false, // Satisfies PostgreSQL NOT NULL constraint
+                    TwoFactorEnabled = false, // Satisfies PostgreSQL NOT NULL constraint
+                    IsBlocked = false,
+                    PasswordResetConfirmed = false,
+                    ResetPasswordCodeAttemptCount = 0,
+                    IsDeleted = false,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    ConcurrencyStamp = Guid.NewGuid().ToString(),
+                    LockoutEnabled = true,
+                    AccessFailedCount = 0,
+                    IsOnline = false,
+                    PasswordHash = hashedPassword, // Reuses pre-computed hash
+                }
+            );
         }
 
         await dbContext.Users.AddRangeAsync(users);

@@ -1,11 +1,11 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
-using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
+using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -16,20 +16,38 @@ namespace Prisma.Application.Tests.Features.Lessons.Commands;
 public class UploadLessonMaterialsCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly UserManager<User> _userManager;
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly UploadLessonMaterialsCommandHandler _sut;
 
     public UploadLessonMaterialsCommandHandlerTests()
     {
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
+        _userManager = Substitute.For<UserManager<User>>(
+            store,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
-        _sut = new UploadLessonMaterialsCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+        _sut = new UploadLessonMaterialsCommandHandler(
+            _unitOfWork,
+            _currentUserService,
+            _userManager,
+            _storageService
+        );
     }
 
     [Fact]
@@ -77,7 +95,9 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("Only teachers and assistants can upload materials to lessons.");
+        result
+            .Errors.Should()
+            .Contain("Only teachers and assistants can upload materials to lessons.");
     }
 
     [Fact]
@@ -91,7 +111,11 @@ public class UploadLessonMaterialsCommandHandlerTests
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         // ?? ??????? ???????? Specification ?????? ??????? ?? ????????
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((Lesson?)null);
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
@@ -113,7 +137,11 @@ public class UploadLessonMaterialsCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
@@ -137,7 +165,11 @@ public class UploadLessonMaterialsCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var mockFile = Substitute.For<IFormFile>();
@@ -161,8 +193,15 @@ public class UploadLessonMaterialsCommandHandlerTests
         firstMaterial.Size.Should().Be("1 KB");
         firstMaterial.LessonId.Should().Be(lesson.Id);
 
-        await _storageService.Received(1).UploadFileAsync(
-            "prisma", Arg.Any<string>(), Arg.Any<Stream>(), "application/pdf", Arg.Any<CancellationToken>());
+        await _storageService
+            .Received(1)
+            .UploadFileAsync(
+                "prisma",
+                Arg.Any<string>(),
+                Arg.Any<Stream>(),
+                "application/pdf",
+                Arg.Any<CancellationToken>()
+            );
         _lessonRepo.Received(1).Update(lesson);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -178,7 +217,11 @@ public class UploadLessonMaterialsCommandHandlerTests
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var emptyFile = Substitute.For<IFormFile>();
@@ -190,7 +233,14 @@ public class UploadLessonMaterialsCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         lesson.LessonMaterials.Should().BeEmpty();
-        await _storageService.DidNotReceive().UploadFileAsync(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _storageService
+            .DidNotReceive()
+            .UploadFileAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Stream>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 }

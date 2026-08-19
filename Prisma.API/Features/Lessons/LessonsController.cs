@@ -8,9 +8,9 @@ using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCom
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
-using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatus;
+using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
-using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
+using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
@@ -23,7 +23,7 @@ namespace Prisma.API.Features.Lessons;
 
 public class LessonsController(IMediator _mediator) : ApiController
 {
-    [HttpGet("details/{id:int}")]
+    [HttpGet("{id:int}/details")]
     public async Task<Result<LessonDetailsDto>> GetLessonDetails(
         [FromRoute] int id,
         CancellationToken cancellationToken
@@ -33,7 +33,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return await _mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("watch/{id:int}")]
+    [HttpGet("{id:int}/watch")]
     public async Task<Result<LessonPlayerResult>> GetLessonPlayerDetails(
         [FromRoute] int id,
         CancellationToken cancellationToken
@@ -62,7 +62,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return await _mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("expired-details/{id:int}")]
+    [HttpGet("{id:int}/expired-details")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -79,7 +79,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return await _mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("editor/{id:int}")]
+    [HttpGet("{id:int}/editor")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -95,7 +95,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return await _mediator.Send(new GetLessonEditorDetailsQuery(id), cancellationToken);
     }
 
-    [HttpPost("add")]
+    [HttpPost]
     [Consumes("multipart/form-data")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
@@ -114,15 +114,12 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<Result<string>> DeleteLesson(
-        [FromRoute] int id,
-        CancellationToken cancellationToken
-    )
+    public async Task<Result> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
         return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
     }
 
-    [HttpPut("editor/{LessonId:int}")]
+    [HttpPut("{id:int}/editor")]
     [Consumes("multipart/form-data")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
@@ -132,19 +129,19 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Unauthorized
     )]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(
-        [FromRoute] int LessonId,
+        [FromRoute] int id,
         [FromForm] UpdateLessonDetailsCommand command,
         CancellationToken cancellationToken
     )
     {
-        var finalCommand = command with { Id = LessonId };
+        var finalCommand = command with { Id = id };
 
         var result = await _mediator.Send(finalCommand, cancellationToken);
 
         return result;
     }
 
-    [HttpPatch("toggle-status/{id:int}")]
+    [HttpPatch("{id:int}/toggle-status")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -152,7 +149,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
-    public async Task<Result<string>> ToggleLessonStatus(
+    public async Task<Result> ToggleLessonStatus(
         [FromRoute] int id,
         CancellationToken cancellationToken
     )
@@ -162,7 +159,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return result;
     }
 
-    [HttpPost("upload-materials/{id:int}")]
+    [HttpPost("{id:int}/materials")]
     [Consumes("multipart/form-data")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
@@ -171,19 +168,17 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
-    public async Task<Result<string>> UploadMaterials(
+    public async Task<Result> UploadMaterials(
         [FromRoute] int id,
         [FromForm] UploadMaterialsRequest request,
         CancellationToken cancellationToken
     )
     {
         var command = new UploadLessonMaterialsCommand(id, request.Files);
-
-        var result = await _mediator.Send(command, cancellationToken);
-        return result;
+        return await _mediator.Send(command, cancellationToken);
     }
 
-    [HttpDelete("delete-material/{LessonId:int}/{MaterialId:int}")]
+    [HttpDelete("{id:int}/materials/{materialId:int}")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -191,18 +186,17 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
-    public async Task<Result<string>> DeleteMaterial(
-        [FromRoute] int LessonId,
+    public async Task<Result> DeleteMaterial(
+        [FromRoute] int id,
         [FromRoute] int MaterialId,
         CancellationToken cancellationToken
     )
     {
-        var command = new DeleteLessonMaterialCommand(LessonId, MaterialId);
-        var result = await _mediator.Send(command, cancellationToken);
-        return result;
+        var command = new DeleteLessonMaterialCommand(id, MaterialId);
+        return await _mediator.Send(command, cancellationToken);
     }
 
-    [HttpGet("materials/{id:int}")]
+    [HttpGet("{id:int}/materials")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -220,7 +214,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         return result;
     }
 
-    [HttpPost("{lessonId:int}/assignment/submit")]
+    [HttpPost("{lessonId:int}/assignments")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -228,20 +222,16 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
-    public async Task<Result<string>> SubmitAssignment(
+    public async Task<Result> SubmitAssignment(
         int lessonId,
         IFormFile file,
         CancellationToken cancellationToken
     )
     {
-        var result = await _mediator.Send(
-            new SubmitAssignmentCommand(lessonId, file),
-            cancellationToken
-        );
-        return result;
+        return await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
     }
 
-    [HttpDelete("{lessonId:int}/assignment/submission")]
+    [HttpDelete("{lessonId:int}/assignments/submission")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -249,13 +239,9 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
-    public async Task<Result<string>> DeleteSubmission(
-        int lessonId,
-        CancellationToken cancellationToken
-    )
+    public async Task<Result> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
-        return result;
+        return await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
     }
 }
 

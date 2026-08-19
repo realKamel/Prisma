@@ -1,8 +1,8 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -15,9 +15,12 @@ public class DeleteLessonMaterialCommandHandler(
     ICurrentUserService _currentUserService,
     UserManager<User> _userManager,
     IStorageService storageService
-) : IRequestHandler<DeleteLessonMaterialCommand, Result<string>>
+) : IRequestHandler<DeleteLessonMaterialCommand, Result>
 {
-    public async Task<Result<string>> Handle(DeleteLessonMaterialCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        DeleteLessonMaterialCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
         if (userId is null)
@@ -27,24 +30,37 @@ public class DeleteLessonMaterialCommandHandler(
             return Result.Unauthorized("User not found.");
 
         var roles = await _userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            return Result.Unauthorized("Only teachers and assistants can delete materials from lessons.");
+        if (
+            !roles.Contains(AppRoles.Teacher)
+            && !roles.Contains(AppRoles.Assistant)
+            && !roles.Contains(AppRoles.Admin)
+        )
+            return Result.Unauthorized(
+                "Only teachers and assistants can delete materials from lessons."
+            );
 
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonWithMaterialsForUpdateSpecification(request.LessonId); var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
+        var spec = new LessonWithMaterialsForUpdateSpecification(request.LessonId);
+        var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
         if (lesson is null)
             return Result.NotFound($"Lesson material with id '{request.MaterialId}' was not found");
 
-        var materialToDelete = lesson.LessonMaterials.FirstOrDefault(m => m.Id == request.MaterialId);
+        var materialToDelete = lesson.LessonMaterials.FirstOrDefault(m =>
+            m.Id == request.MaterialId
+        );
         if (materialToDelete != null)
         {
-            await storageService.DeleteFileAsync(storageService.DefaultBucketName, materialToDelete.DownloadUrl, cancellationToken);
+            await storageService.DeleteFileAsync(
+                storageService.DefaultBucketName,
+                materialToDelete.DownloadUrl,
+                cancellationToken
+            );
 
             lesson.LessonMaterials.Remove(materialToDelete);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return Result<string>.Success("Material deleted successfully.");
+        return Result.SuccessWithMessage("Material deleted successfully.");
     }
 }

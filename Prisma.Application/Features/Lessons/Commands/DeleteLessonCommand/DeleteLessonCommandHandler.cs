@@ -14,10 +14,13 @@ public class DeleteLessonCommandHandler(
     ICurrentUserService _currentUserService,
     IIdentityService identityService,
     IStorageService storageService,
-    IVideoStorageService videoStorageService)
-    : IRequestHandler<DeleteLessonCommand, Result>
+    IVideoStorageService videoStorageService
+) : IRequestHandler<DeleteLessonCommand, Result>
 {
-    public async Task<Result> Handle(DeleteLessonCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        DeleteLessonCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
 
@@ -37,13 +40,17 @@ public class DeleteLessonCommandHandler(
         var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
         var lessonInfo = await lessonRepository.FirstOrDefaultAsync(
-            new LessonWithProjectionSpec<LessonDeletionInfo>(request.LessonId, l => new LessonDeletionInfo(
-                l.Id,
-                l.ImageThumbnailUrl,
-                l.Enrollments.Select(e => e.Id).ToList(),
-                l.Sections.Select(s => s.AssetId).ToList()
-            )),
-            cancellationToken);
+            new LessonWithProjectionSpec<LessonDeletionInfo>(
+                request.LessonId,
+                l => new LessonDeletionInfo(
+                    l.Id,
+                    l.ImageThumbnailUrl,
+                    l.Enrollments.Select(e => e.Id).ToList(),
+                    l.Sections.Select(s => s.AssetId).ToList()
+                )
+            ),
+            cancellationToken
+        );
 
         if (lessonInfo is null)
         {
@@ -58,7 +65,11 @@ public class DeleteLessonCommandHandler(
 
         if (lessonInfo.ImageThumbnailUrl != null)
         {
-            await storageService.DeleteFileAsync(storageService.DefaultBucketName, lessonInfo.ImageThumbnailUrl, cancellationToken);
+            await storageService.DeleteFileAsync(
+                storageService.DefaultBucketName,
+                lessonInfo.ImageThumbnailUrl,
+                cancellationToken
+            );
         }
 
         foreach (var assetId in lessonInfo.SectionAssetIds.Where(a => a != null))
@@ -80,6 +91,7 @@ public class DeleteLessonCommandHandler(
         }
         return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
     }
+
     public sealed record LessonDeletionInfo(
         int Id,
         string? ImageThumbnailUrl,

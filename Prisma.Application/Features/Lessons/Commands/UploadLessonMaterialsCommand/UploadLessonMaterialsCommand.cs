@@ -1,11 +1,7 @@
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Microsoft.AspNetCore.Http;
 
-namespace Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
+namespace Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
 
-public record UploadLessonMaterialsCommand(
-    int LessonId,
-    List<IFormFile> Files
-) : IRequest<Result<string>>;
+public record UploadLessonMaterialsCommand(int LessonId, List<IFormFile> Files) : IRequest<Result>;

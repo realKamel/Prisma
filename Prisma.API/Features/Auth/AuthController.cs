@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,17 +18,21 @@ namespace Prisma.API.Features.Auth;
 public class AuthController(IMediator mediator, IWebHostEnvironment environment) : ApiController
 {
     [HttpPost("login")]
-    public async Task<Result<LoginCredentials>> Login(
+    public async Task<ActionResult<LoginCredentials>> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancelToken
     )
     {
         var result = await mediator.Send(request.ToCommand(), cancelToken);
 
-        //TODO: What about valdations errors ?
         if (!result.IsSuccess)
         {
-            return Result.Error(new ErrorList(result.Errors));
+            // Map the Result<LoginResponse> to Result<LoginCredentials>
+            // The lambda (_ => ...) is IGNORED because IsSuccess is false.
+            // This aligns the generic types so ToActionResult() works.
+            var mappedError = result.Map(_ => (LoginCredentials)null!);
+
+            return mappedError.ToActionResult(this);
         }
 
         Response.Cookies.SetAuthCookies(
@@ -36,14 +41,16 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
             environment.IsDevelopment()
         );
 
-        return result.Map(r => new LoginCredentials(
-            r.Credentials.Id,
-            r.Credentials.Email,
-            r.Credentials.FirstName,
-            r.Credentials.SecondName,
-            r.Credentials.Role,
-            r.Credentials.Permissions
-        ));
+        return result
+            .Map(r => new LoginCredentials(
+                r.Credentials.Id,
+                r.Credentials.Email,
+                r.Credentials.FirstName,
+                r.Credentials.SecondName,
+                r.Credentials.Role,
+                r.Credentials.Permissions
+            ))
+            .ToActionResult(this);
     }
 
     [HttpPost("register")]
@@ -56,7 +63,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
     }
 
     [HttpPost("refresh")]
-    public async Task<Result<AuthResponse>> RefreshToken(CancellationToken cancelToken)
+    public async Task<ActionResult<AuthResponse>> RefreshToken(CancellationToken cancelToken)
     {
         var accessToken = Request.Cookies[AppCookies.AccessToken];
         var refreshToken = Request.Cookies[AppCookies.RefreshToken];
@@ -67,12 +74,17 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
 
         if (!result.IsSuccess)
         {
-            return Result.Error(new ErrorList(result.Errors));
+            // Map the Result<LoginResponse> to Result<LoginCredentials>
+            // The lambda (_ => ...) is IGNORED because IsSuccess is false.
+            // This aligns the generic types so ToActionResult() works.
+            var mappedError = result.Map(_ => (AuthResponse)null!);
+
+            return mappedError.ToActionResult(this);
         }
 
         Response.Cookies.SetAuthCookies(result.Value.AccessToken, result.Value.RefreshToken);
 
-        return result;
+        return result.ToActionResult(this);
     }
 
     [HttpPost("logout")]

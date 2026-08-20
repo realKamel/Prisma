@@ -121,11 +121,7 @@ public static class DependenciesInjection
         });
 
         services
-            .AddFusionCache()
-            .WithOptions(options =>
-            {
-                options.CacheName = "prisma_";
-            })
+            .AddFusionCache("prisma_cache")
             .WithDefaultEntryOptions(options =>
             {
                 // General Cache Duration

@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 
@@ -13,6 +13,7 @@ public class LessonsCatalogSpecification : Specification<Lesson>
             .Where(x => x.AcademicYears.Any(ay => ay.AcademicYearId == academicYearId))
             .Include(x => x.Enrollments)
             .Include(x => x.Sections)
-            .ThenInclude(s => s.Progresses);
+            .ThenInclude(s => s.Progresses)
+            .AsSplitQuery();
     }
 }

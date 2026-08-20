@@ -28,8 +28,5 @@
             <_Parameter1>Prisma.Application.Tests</_Parameter1>
         </AssemblyAttribute>
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Features\Teachers\Queries\GetPaginatedTeacherLessons\" />
-    </ItemGroup>
 
 </Project>

@@ -15,11 +15,16 @@ public class PagedTeacherLessonsCatalogSpecification : Specification<Lesson>
     )
     {
         Query
-            .Where(x => x.Status == LessonStatus.Active && x.TeacherId == teacherId)
-            .Where(x => x.AcademicYears.Any(ay => ay.AcademicYearId == academicYearId))
+            .Where(x =>
+                x.Status == LessonStatus.Active
+                && x.TeacherId == teacherId
+                && x.AcademicYears.Any(ay => ay.AcademicYearId == academicYearId)
+            )
             .Include(x => x.Enrollments)
+            .Include(x => x.Teacher)
             .Include(x => x.Sections)
-            .ThenInclude(s => s.Progresses);
+            .ThenInclude(s => s.Progresses)
+            .AsSplitQuery();
 
         if (keyword is not null)
         {
@@ -36,11 +41,16 @@ public class PagedTeacherLessonsCatalogSpecification : Specification<Lesson>
     )
     {
         Query
-            .Where(x => x.Status == LessonStatus.Active && x.TeacherId == teacherId)
-            .Where(x => x.AcademicYears.Any(ay => ay.AcademicYearId == academicYearId))
+            .Where(x =>
+                x.Status == LessonStatus.Active
+                && x.TeacherId == teacherId
+                && x.AcademicYears.Any(ay => ay.AcademicYearId == academicYearId)
+            )
             .Include(x => x.Enrollments)
+            .Include(x => x.Teacher)
             .Include(x => x.Sections)
-            .ThenInclude(s => s.Progresses);
+            .ThenInclude(s => s.Progresses)
+            .AsSplitQuery();
 
         if (keyword is not null)
         {

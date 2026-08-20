@@ -1,11 +1,11 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
+using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Users;
-using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
+using Prisma.Domain.Specifications.Admin;
 
 namespace Prisma.Application.Features.Users.Queries.GetAdminProfile;
 
@@ -16,21 +16,26 @@ public class GetAdminProfileQueryHandler(
 {
     public async Task<Result<RoleProfileDto>> Handle(GetAdminProfileQuery request, CancellationToken cancellationToken)
     {
-        var userRepo = unitOfWork.GetOrCreateRepository<User, Guid>();
-        var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.AdminId), cancellationToken);
+        var adminRepo = unitOfWork.GetOrCreateRepository<Prisma.Domain.Entities.UserAggregate.Admin, Guid>();
 
-        if (user is not Domain.Entities.UserAggregate.Admin admin)
+        var adminInfo = await adminRepo.FirstOrDefaultAsync(
+            new AdminWithProjectionSpec<AdminNameInfo>(request.AdminId, a =>
+                new AdminNameInfo(a.FirstName, a.SecondName, a.ThirdName, a.LastName)),
+            cancellationToken);
+
+        if (adminInfo is null)
             return Result.NotFound($"Admin with id '{request.AdminId}' was not found");
 
-        // NOTE: unlike Teacher/Assistant above, this platform-wide scoping is
-        // correct BY DESIGN, not a limitation — there is no per-admin concept
-        // anywhere in this system (GetAdminStatsQuery / GetAdminActivitiesQuery
-        // are already global). Every admin's profile legitimately shows the
-        // same numbers.
-        var statsResult = await mediator.Send(new GetAdminStatsQuery(), cancellationToken);
-        var activitiesResult = await mediator.Send(new GetAdminActivitiesQuery(), cancellationToken);
+        var statsTask = await mediator.Send(new GetAdminStatsQuery(), cancellationToken);
+        var activitiesTask = await mediator.Send(new GetAdminActivitiesQuery(), cancellationToken);
 
-        var name = string.Join(" ", new[] { admin.FirstName, admin.SecondName, admin.ThirdName, admin.LastName }
+        var statsResult = statsTask;
+        var activitiesResult = activitiesTask;
+
+        var name = string.Join(" ", new[]
+            {
+                adminInfo.FirstName, adminInfo.SecondName, adminInfo.ThirdName, adminInfo.LastName
+            }
             .Where(p => !string.IsNullOrWhiteSpace(p)));
 
         var stats = statsResult.Value.Kpis
@@ -45,9 +50,6 @@ public class GetAdminProfileQueryHandler(
         return Result<RoleProfileDto>.Success(new RoleProfileDto(name, stats, activities));
     }
 
-    // GetAdminStatsQueryHandler hardcodes these ids in English ("students",
-    // "revenue", "lessons-sold", "uptime") — translating + formatting here
-    // rather than touching that existing handler.
     private static ProfileStatDto MapKpi(KpiDto k) => k.Id switch
     {
         "students" => new ProfileStatDto("الطلاب", k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
@@ -56,4 +58,5 @@ public class GetAdminProfileQueryHandler(
         "uptime" => new ProfileStatDto("نسبة التشغيل", $"{k.Value:0.#}٪", "text-[var(--coral)]"),
         _ => new ProfileStatDto(k.Id, k.Value.ToString("N0"), "text-[var(--purple-lt)]"),
     };
+    public sealed record AdminNameInfo(string? FirstName, string? SecondName, string? ThirdName, string? LastName);
 }

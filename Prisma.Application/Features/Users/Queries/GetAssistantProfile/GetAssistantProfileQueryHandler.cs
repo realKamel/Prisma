@@ -12,7 +12,6 @@ using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Quizzes;
-using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Features.Users.Queries.GetAssistantProfile;
 
@@ -23,43 +22,39 @@ public class GetAssistantProfileQueryHandler(
 {
     public async Task<Result<RoleProfileDto>> Handle(GetAssistantProfileQuery request, CancellationToken cancellationToken)
     {
-        var userRepo = unitOfWork.GetOrCreateRepository<User, Guid>();
-        var user = await userRepo.FirstOrDefaultAsync(new UserByIdSpecification(request.AssistantId), cancellationToken);
+        var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
+        var assistant = await assistantRepo.GetByIdAsync(request.AssistantId, cancellationToken);
 
-        if (user is not Assistant assistant)
+        if (assistant is null)
             return Result.NotFound($"Assistant with id '{request.AssistantId}' was not found");
+
+        var teacherId = assistant.TeacherId!.Value; 
 
         var now = DateTimeOffset.UtcNow;
         var weekStart = now.AddDays(-7);
 
-        // NOTE: same platform-wide-KPI limitation as GetAssistantDashboardQueryHandler
-        // (which this is modeled after) — there's no schema link between an
-        // Assistant and a specific set of students/lessons to scope these by
-        // (Assistant→Teacher has no FK; see AssistantConfiguration). Every
-        // assistant's profile shows identical numbers here.
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var quizAttemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
-        var activeStudents = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(), cancellationToken);
-        var quizzesThisWeek = await quizAttemptRepo.CountAsync(new QuizAttemptsSpec(from: weekStart), cancellationToken);
-        var totalLessons = await lessonRepo.CountAsync(new LessonsSpec(), cancellationToken);
+        var activeStudentsTask = await enrollmentRepo.CountAsync(
+            new ActiveEnrollmentsSpec(teacherId), cancellationToken);
+        var quizzesThisWeekTask = await quizAttemptRepo.CountAsync(
+            new QuizAttemptsSpec(teacherId, from: weekStart), cancellationToken);
+        var totalLessonsTask = await lessonRepo.CountAsync(
+            new LessonsSpec(teacherId), cancellationToken);
+        var logsTask = await auditRepo.ListAsync(
+            new RecentAssistantLogsSpec(assistant.Email ?? string.Empty, take: 10), cancellationToken);
 
         var stats = new List<ProfileStatDto>
         {
-            new("الطلاب النشطون", activeStudents.ToString(), "text-[var(--purple-lt)]"),
-            new("كويزات هذا الأسبوع", quizzesThisWeek.ToString(), "text-[var(--mint)]"),
-            new("الدروس", totalLessons.ToString(), "text-[var(--star)]"),
+            new("الطلاب النشطون", activeStudentsTask.ToString(), "text-[var(--purple-lt)]"),
+            new("كويزات هذا الأسبوع", quizzesThisWeekTask.ToString(), "text-[var(--mint)]"),
+            new("الدروس", totalLessonsTask.ToString(), "text-[var(--star)]"),
         };
 
-        // These two pieces ARE genuinely scoped to this specific assistant —
-        // real per-target-user data, not inherited from the KPI limitation above.
-        var logs = await auditRepo.ListAsync(
-            new RecentAssistantLogsSpec(assistant.Email ?? string.Empty, take: 10),
-            cancellationToken);
-
-        var activities = logs
+        var activities = logsTask
             .Select(l => new ProfileActivityDto(
                 $"{l.Action} — {l.TableName}",
                 l.CreatedAt?.ToString("yyyy-MM-dd hh:mm tt") ?? "—",

@@ -24,9 +24,11 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
             Domain.Entities.UserAggregate.Admin => AppRoles.Admin,
             _ => "Unknown",
         };
+        List<Guid> teacherIds = user is Student ?
+            (user as Student).TeacherStudents.Select(ts => ts.TeacherId).ToList() : new();
 
-        // TeacherId is only meaningful for Student — Assistant→Teacher isn't
-        // modeled in the DB (see AssistantConfiguration), so it stays null there.
+        if (user is Assistant) teacherIds.Add((user as Assistant).TeacherId.Value);
+ 
         var dto = new UserEditDto(
             user.Id,
             user.FirstName,
@@ -37,7 +39,7 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
             user.Email,
             role,
             (user as Student)?.AcademicYearId,
-            (user as Student)?.TeacherStudents.Select(ts => ts.TeacherId).ToList(),
+            teacherIds,
             (user as Student)?.ParentPhoneNumber);
 
         return Result<UserEditDto>.Success(dto);

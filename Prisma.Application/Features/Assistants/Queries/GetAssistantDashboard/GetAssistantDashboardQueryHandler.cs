@@ -1,8 +1,7 @@
+using Ardalis.Result;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -13,6 +12,7 @@ using Prisma.Domain.Specifications.Assignments;
 using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
+using Prisma.Domain.Specifications.QuizAttemptSpecs;
 using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
@@ -23,7 +23,6 @@ public class GetAssistantDashboardQueryHandler(
     IIdentityService userManager)
     : IRequestHandler<GetAssistantDashboardQuery, Result<GetAssistantDashboardResponse>>
 {
-    // Maps policy claim → permission tile id
     private static readonly IReadOnlyDictionary<string, string> PermissionMap =
         new Dictionary<string, string>
         {
@@ -37,61 +36,18 @@ public class GetAssistantDashboardQueryHandler(
         GetAssistantDashboardQuery request,
         CancellationToken cancellationToken)
     {
-        var now = DateTimeOffset.UtcNow;
-        var weekStart = now.AddDays(-7);
-        var prevWeekStart = now.AddDays(-14);
-
-        var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
-        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var quizAttemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-        var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
-        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
-
-        // ── KPI 1 · Active students ────────────────────────────
-        var activeNow = await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(), cancellationToken);
-        var activeLastWeek =
-            await enrollmentRepo.CountAsync(new ActiveEnrollmentsSpec(before: weekStart), cancellationToken);
-        var studentDelta = activeNow - activeLastWeek;
-
-        // ── KPI 2 · Quizzes this week + pass-rate delta ────────
-        var quizzesThisWeek =
-            await quizAttemptRepo.CountAsync(new QuizAttemptsSpec(from: weekStart), cancellationToken);
-
-        var gradedThisWeek = await quizAttemptRepo.ListAsync(
-            new QuizAttemptsSpec(from: weekStart, to: now, status: QuizAttemptStatus.Graded), cancellationToken);
-        var gradedLastWeek = await quizAttemptRepo.ListAsync(
-            new QuizAttemptsSpec(from: prevWeekStart, to: weekStart, status: QuizAttemptStatus.Graded),
-            cancellationToken);
-
-        var passRateDelta = ComputePassRate(gradedThisWeek) - ComputePassRate(gradedLastWeek);
-
-        // ── KPI 3 · Ungraded submissions ───────────────────────
-        var ungradedSubmissions = await submissionRepo.CountAsync(new UngradedSubmissionsSpec(), cancellationToken);
-
-        // ── KPI 4 · Lessons ────────────────────────────────────
-        var totalLessons = await lessonRepo.CountAsync(new LessonsSpec(), cancellationToken);
-        var newLessonsThisWeek = await lessonRepo.CountAsync(new LessonsSpec(from: weekStart), cancellationToken);
-
-        // ── Activities ─────────────────────────────────────────
-        var logs = await auditRepo.ListAsync(
-            new RecentAssistantLogsSpec(currentUser.Email!, take: 10),
-            cancellationToken);
-
-        var activities = logs
-            .Select(l => new ActivityItem(l.Id, l.Action, l.TableName, l.CreatedAt ?? DateTimeOffset.UtcNow))
-            .ToList();
-
-        // ── Permissions ────────────────────────────────────────
-        var assistant = await userManager.FindByIdAsync(currentUser.UserId!.Value);
-        if (assistant == null)
-        {
+        if (currentUser.UserId is not { } userId)
             return Result<GetAssistantDashboardResponse>.Unauthorized();
-        }
-        var teacher = await userManager.FindByIdAsync(((Assistant)assistant).TeacherId!.Value);
-        var claims = assistant is not null
-            ? await userManager.GetClaimsAsync(assistant)
-            : [];
 
+        var assistant = await userManager.FindByIdAsync(userId);
+        if (assistant is not Assistant assistantUser)
+            return Result<GetAssistantDashboardResponse>.Unauthorized();
+
+        var teacherId = assistantUser.TeacherId!.Value;
+
+        var teacher = await userManager.FindByIdAsync(teacherId);
+
+        var claims = await userManager.GetClaimsAsync(assistantUser);
         var heldPolicies = claims
             .Where(c => c.Type == AppClaims.PermissionsClaim)
             .Select(c => c.Value)
@@ -103,14 +59,64 @@ public class GetAssistantDashboardQueryHandler(
                 Status: heldPolicies.Contains(kvp.Key) ? "on" : "off"))
             .ToList();
 
+        var now = DateTimeOffset.UtcNow;
+        var weekStart = now.AddDays(-7);
+        var prevWeekStart = now.AddDays(-14);
+
+        var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var quizAttemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
+        var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
+        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
+
+        // ── KPI 1 · Active students ────────────────────────────
+        var activeNow = await enrollmentRepo.CountAsync(
+            new ActiveEnrollmentsSpec(teacherId), cancellationToken);
+        var activeLastWeek = await enrollmentRepo.CountAsync(
+            new ActiveEnrollmentsSpec(teacherId, before: weekStart), cancellationToken);
+        var studentDelta = activeNow - activeLastWeek;
+
+        // ── KPI 2 · Quizzes this week + pass-rate delta ────────
+        var quizzesThisWeek = await quizAttemptRepo.CountAsync(
+            new QuizAttemptsSpec(teacherId, from: weekStart), cancellationToken);
+
+        var gradedThisWeek = await quizAttemptRepo.ListAsync(
+            new QuizAttemptWithProjectionSpec<QuizAttemptScoreInfo>(
+                teacherId, weekStart, now, QuizAttemptStatus.Graded,
+                a => new QuizAttemptScoreInfo(a.Degree, a.Quiz!.TotalDegree)),
+            cancellationToken);
+
+        var gradedLastWeek = await quizAttemptRepo.ListAsync(
+            new QuizAttemptWithProjectionSpec<QuizAttemptScoreInfo>(
+                teacherId, prevWeekStart, weekStart, QuizAttemptStatus.Graded,
+                a => new QuizAttemptScoreInfo(a.Degree, a.Quiz!.TotalDegree)),
+            cancellationToken);
+
+        var passRateDelta = ComputePassRate(gradedThisWeek) - ComputePassRate(gradedLastWeek);
+
+        // ── KPI 3 · Ungraded submissions ───────────────────────
+        var ungradedSubmissions = await submissionRepo.CountAsync(
+            new UngradedSubmissionsSpec(teacherId), cancellationToken);
+
+        // ── KPI 4 · Lessons ────────────────────────────────────
+        var totalLessons = await lessonRepo.CountAsync(
+            new LessonsSpec(teacherId), cancellationToken);
+        var newLessonsThisWeek = await lessonRepo.CountAsync(
+            new LessonsSpec(teacherId, from: weekStart), cancellationToken);
+
+        // ── Activities ─────────────────────────────────────────
+        var activities = await auditRepo.ListAsync(
+            new AuditLogWithProjectionSpec<ActivityItem>(
+                currentUser.Email!, take: 10,
+                l => new ActivityItem(l.Id, l.Action, l.TableName, l.CreatedAt ?? DateTimeOffset.UtcNow)),
+            cancellationToken);
+
         // ── Assemble ───────────────────────────────────────────
         var response = new GetAssistantDashboardResponse
         {
             Teacher = new DashboardTeacher(
-                Name: assistant is not null
-                    ? $"{assistant.FirstName} {assistant.SecondName}"
-                    : string.Empty,
-                SupervisorName: teacher is not null 
+                Name: $"{assistantUser.FirstName} {assistantUser.SecondName}",
+                SupervisorName: teacher is not null
                     ? $"{teacher.FirstName} {teacher.SecondName}"
                     : string.Empty),
 
@@ -122,17 +128,18 @@ public class GetAssistantDashboardQueryHandler(
                 new("lessons", totalLessons, newLessonsThisWeek, newLessonsThisWeek > 0 ? "up" : "down", "coral"),
             ],
 
-            Activities = activities,
+            Activities = activities.ToList(),
             Permissions = permissions,
         };
 
         return Result<GetAssistantDashboardResponse>.Success(response);
     }
 
-    private static double ComputePassRate(IList<QuizAttempt> attempts)
+    private static double ComputePassRate(IList<QuizAttemptScoreInfo> attempts)
     {
         if (attempts.Count == 0) return 0.0;
-        var passed = attempts.Count(a => a.Degree >= a.Quiz.TotalDegree * 0.5m);
+        var passed = attempts.Count(a => a.Degree >= a.TotalDegree * 0.5m);
         return passed / (double)attempts.Count;
     }
+    public sealed record QuizAttemptScoreInfo(decimal Degree, decimal TotalDegree);
 }

@@ -10,6 +10,7 @@ using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
 using Prisma.Application.Features.Students.Queries.GetPagedTeacherLessonsCatalog;
 using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
+using Prisma.Application.Features.Teachers.Queries.GetPublicTeacherProfile;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
@@ -95,5 +96,14 @@ public class TeachersController(ISender mediator) : ApiController
             new GetPaginatedTeacherLessonsQuery(id, keyword, pagination),
             cancellationToken
         );
+    }
+
+    [HttpGet("{id:guid}/profile")]
+    public async Task<Result<PublicTeacherProfileResponse>> GetTeacherProfile(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(new GetPublicTeacherProfileQuery(id), cancellationToken);
     }
 }

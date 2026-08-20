@@ -15,9 +15,9 @@ public record PublicTeacherProfileResponse(
     string? Bio,
     string? ImageUrl,
     int LessonsCount,
-    /** Total students who follow / subscribe to this teacher. */
+    // Total students who follow / subscribe to this teacher
     int TotalStudents,
-    /** Years of teaching experience. */
+    // Years of teaching experience
     int? YearsOfExperience,
     IReadOnlyList<AcademicYearDto> AcademicYears,
     bool Featured = false

@@ -3,20 +3,25 @@ using MediatR;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 using TeacherEntity = Prisma.Domain.Entities.UserAggregate.Teacher;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 
-public class GetTeachersQueryHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetTeachersQuery, Result<List<TeacherDto>>>
+public class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<GetTeachersQuery, Result<List<TeacherDto>>>
 {
-    public async Task<Result<List<TeacherDto>>> Handle(GetTeachersQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<List<TeacherDto>>> Handle(
+        GetTeachersQuery request,
+        CancellationToken cancellationToken
+    )
     {
-        var teachers = await unitOfWork.GetOrCreateRepository<TeacherEntity, Guid>()
+        var teachers = await unitOfWork
+            .GetOrCreateRepository<TeacherEntity, Guid>()
             .ListAsync(new TeacherWithDetailsSpecification(), cancellationToken);
 
-        var payments = await unitOfWork.GetOrCreateRepository<Payment, int>()
+        var payments = await unitOfWork
+            .GetOrCreateRepository<Payment, int>()
             .ListAsync(new TeacherFinancesSpec(), cancellationToken);
 
         var teacherDtos = new List<TeacherDto>();

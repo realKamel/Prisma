@@ -1,7 +1,7 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Domain.Specifications.Teacher;
+namespace Prisma.Domain.Specifications.Teachers;
 
 public sealed class TeacherStudentPairSpec : Specification<TeacherStudent>
 {

@@ -1,9 +1,8 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace Prisma.Domain.Specifications.Teacher;
+namespace Prisma.Domain.Specifications.Teachers;
 
 public class CurrentMonthPaymentsSpecification : Specification<Payment>
 {

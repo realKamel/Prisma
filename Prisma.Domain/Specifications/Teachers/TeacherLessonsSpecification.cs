@@ -1,7 +1,7 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
 
-namespace Prisma.Domain.Specifications.Teacher;
+namespace Prisma.Domain.Specifications.Teachers;
 
 public class TeacherLessonsSpecification : Specification<Lesson>
 {

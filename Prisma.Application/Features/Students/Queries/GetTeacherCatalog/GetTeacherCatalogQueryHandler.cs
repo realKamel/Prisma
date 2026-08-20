@@ -3,7 +3,7 @@ using MediatR;
 using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
 

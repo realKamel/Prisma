@@ -1,14 +1,11 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Http;
-using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
+using Ardalis.Result;
+using MediatR;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 
-namespace Application.Features.Teachers.Commands.SuspendTeacher;
-
-using Ardalis.Result;
+namespace Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
 
 public class SuspendTeacherCommandHandler : IRequestHandler<SuspendTeacherCommand, Result<bool>>
 {
@@ -19,9 +16,12 @@ public class SuspendTeacherCommandHandler : IRequestHandler<SuspendTeacherComman
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<bool>> Handle(SuspendTeacherCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(
+        SuspendTeacherCommand request,
+        CancellationToken cancellationToken
+    )
     {
-        var teacherRepo = _unitOfWork.GetOrCreateRepository<Prisma.Domain.Entities.UserAggregate.Teacher, Guid>();
+        var teacherRepo = _unitOfWork.GetOrCreateRepository<Teacher, Guid>();
         var spec = new TeacherByIdSpecification(request.TeacherId);
 
         var teacher = await teacherRepo.FirstOrDefaultAsync(spec, cancellationToken);

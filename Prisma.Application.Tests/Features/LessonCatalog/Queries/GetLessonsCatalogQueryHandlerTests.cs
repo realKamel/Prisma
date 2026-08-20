@@ -2,7 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.LessonCatalog.Queries;
+using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -16,8 +16,12 @@ public class GetLessonsCatalogQueryHandlerTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<IRepository<Student, Guid>>();
-    private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<
+        IRepository<Student, Guid>
+    >();
+    private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly GetLessonsCatalogQueryHandler _handler;
 
     private static readonly GetLessonsCatalogQuery ValidQuery = new();
@@ -35,27 +39,37 @@ public class GetLessonsCatalogQueryHandlerTests
 
     #region Helpers
 
-    private static Domain.Entities.UserAggregate.Teacher CreateTeacher(string firstName = "Ahmed",
-        string lastName = "Mostafa", string subject = "Math") =>
-        new() { Id = Guid.NewGuid(), FirstName = firstName, LastName = lastName, Subject = subject };
+    private static Domain.Entities.UserAggregate.Teacher CreateTeacher(
+        string firstName = "Ahmed",
+        string lastName = "Mostafa",
+        string subject = "Math"
+    ) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+            Subject = subject,
+        };
 
-    private static Student CreateStudent(int? academicYearId, params Domain.Entities.UserAggregate.Teacher[] teachers)
+    private static Student CreateStudent(
+        int? academicYearId,
+        params Domain.Entities.UserAggregate.Teacher[] teachers
+    )
     {
         var student = new Student
         {
             Id = StudentId,
             FirstName = "Sara",
             LastName = "Ali",
-            AcademicYearId = academicYearId
+            AcademicYearId = academicYearId,
         };
 
         foreach (var teacher in teachers)
         {
-            student.TeacherStudents.Add(new TeacherStudent
-            {
-                StudentId = student.Id,
-                TeacherId = teacher.Id,
-            });
+            student.TeacherStudents.Add(
+                new TeacherStudent { StudentId = student.Id, TeacherId = teacher.Id }
+            );
         }
 
         return student;
@@ -66,7 +80,8 @@ public class GetLessonsCatalogQueryHandlerTests
         decimal price = 100m,
         string? thumbnailUrl = null,
         int? prerequisiteId = null,
-        TimeSpan? duration = null)
+        TimeSpan? duration = null
+    )
     {
         var lesson = new Lesson
         {
@@ -75,7 +90,7 @@ public class GetLessonsCatalogQueryHandlerTests
             Price = price,
             Duration = duration ?? TimeSpan.FromHours(2),
             ImageThumbnailUrl = thumbnailUrl,
-            PrerequisiteId = prerequisiteId
+            PrerequisiteId = prerequisiteId,
         };
         return lesson;
     }
@@ -83,8 +98,14 @@ public class GetLessonsCatalogQueryHandlerTests
     private static Enrollment CreateEnrollment(
         Guid studentId,
         DateTimeOffset? expiresAt = null,
-        bool isCompleted = false) =>
-        new() { StudentId = studentId, ExpiresAt = expiresAt, IsCompleted = isCompleted };
+        bool isCompleted = false
+    ) =>
+        new()
+        {
+            StudentId = studentId,
+            ExpiresAt = expiresAt,
+            IsCompleted = isCompleted,
+        };
 
     private void SetupStudentAndLessons(Student student, ICollection<Lesson> lessons)
     {
@@ -112,7 +133,9 @@ public class GetLessonsCatalogQueryHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
 
-        await _studentRepository.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _studentRepository
+            .DidNotReceive()
+            .GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -120,7 +143,9 @@ public class GetLessonsCatalogQueryHandlerTests
     {
         // Arrange
         _currentUser.UserId.Returns(StudentId);
-        _studentRepository.GetByIdAsync(StudentId, Arg.Any<CancellationToken>()).Returns((Student?)null);
+        _studentRepository
+            .GetByIdAsync(StudentId, Arg.Any<CancellationToken>())
+            .Returns((Student?)null);
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -129,7 +154,8 @@ public class GetLessonsCatalogQueryHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
 
-        await _lessonRepository.DidNotReceive()
+        await _lessonRepository
+            .DidNotReceive()
             .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
     }
 
@@ -150,7 +176,8 @@ public class GetLessonsCatalogQueryHandlerTests
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Error);
 
-        await _lessonRepository.DidNotReceive()
+        await _lessonRepository
+            .DidNotReceive()
             .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
     }
 
@@ -186,8 +213,12 @@ public class GetLessonsCatalogQueryHandlerTests
         var teacher = CreateTeacher();
         var student = CreateStudent(AcademicYearId, teacher);
         var lesson = CreateLesson(id: 1, price: 250m);
-        lesson.Enrollments.Add(CreateEnrollment(
-            StudentId, expiresAt: new DateTimeOffset(2024, 6, 15, 0, 0, 0, TimeSpan.Zero)));
+        lesson.Enrollments.Add(
+            CreateEnrollment(
+                StudentId,
+                expiresAt: new DateTimeOffset(2024, 6, 15, 0, 0, 0, TimeSpan.Zero)
+            )
+        );
 
         SetupStudentAndLessons(student, [lesson]);
 

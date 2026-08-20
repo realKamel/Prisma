@@ -2,17 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Teachers.Queries;
@@ -20,8 +20,11 @@ namespace Prisma.Application.Tests.Features.Teachers.Queries;
 public class GetTeacherLessonsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly GetTeacherLessonsQueryHandler _sut;
 
     public GetTeacherLessonsQueryHandlerTests()
@@ -64,8 +67,8 @@ public class GetTeacherLessonsQueryHandlerTests
                 Enrollments = new List<Enrollment>
                 {
                     new() { Id = 101, StudentId = Guid.NewGuid() },
-                    new() { Id = 102, StudentId = Guid.NewGuid() }
-                }
+                    new() { Id = 102, StudentId = Guid.NewGuid() },
+                },
             },
             new()
             {
@@ -73,11 +76,12 @@ public class GetTeacherLessonsQueryHandlerTests
                 Title = "مراجعة ليلة الامتحان",
                 Price = 150.00m,
                 Status = LessonStatus.Drafted, // ستتحول لـ "draft" حروف صغيرة
-                Enrollments = null // لاختبار الـ null coalescing وإرجاع 0 طلاب
-            }
+                Enrollments = null, // لاختبار الـ null coalescing وإرجاع 0 طلاب
+            },
         };
 
-        _lessonRepo.ListAsync(Arg.Any<TeacherLessonsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .ListAsync(Arg.Any<TeacherLessonsSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeLessons);
 
         // Act

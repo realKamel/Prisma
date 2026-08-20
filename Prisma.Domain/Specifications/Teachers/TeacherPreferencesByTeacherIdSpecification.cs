@@ -1,7 +1,7 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities;
 
-namespace Prisma.Domain.Specifications.Teacher;
+namespace Prisma.Domain.Specifications.Teachers;
 
 public class TeacherPreferencesByTeacherIdSpecification : Specification<TeacherPreferences>
 {
@@ -10,4 +10,3 @@ public class TeacherPreferencesByTeacherIdSpecification : Specification<TeacherP
         Query.Where(p => p.Id == teacherId);
     }
 }
-

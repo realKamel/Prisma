@@ -1,18 +1,18 @@
-using FluentAssertions;
-using NSubstitute;
-using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
-using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
+using FluentAssertions;
+using NSubstitute;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.PaymentAggregate;
+using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Teachers;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Teachers.Queries;
@@ -20,8 +20,11 @@ namespace Prisma.Application.Tests.Features.Teachers.Queries;
 public class GetTeacherFinancesQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<IRepository<Payment, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<
+        IRepository<Payment, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly GetTeacherFinancesQueryHandler _sut;
 
     public GetTeacherFinancesQueryHandlerTests()
@@ -62,11 +65,12 @@ public class GetTeacherFinancesQueryHandlerTests
                 PaidAt = new DateTimeOffset(2026, 5, 20, 10, 0, 0, TimeSpan.Zero),
                 // تمرير نصوص عادية للتوافق التام مع نتيجة المقارنة الفعليّة للـ Handler
                 Student = new Student { FirstName = "احمد", LastName = "علي" },
-                Lesson = new Lesson { Id = 1, Title = "اللغة الإنجليزية - الدرس الأول" }
-            }
+                Lesson = new Lesson { Id = 1, Title = "اللغة الإنجليزية - الدرس الأول" },
+            },
         };
 
-        _paymentRepo.ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act
@@ -103,11 +107,12 @@ public class GetTeacherFinancesQueryHandlerTests
                 Amount = 200.00m,
                 PaidAt = null,
                 Student = null,
-                Lesson = null
-            }
+                Lesson = null,
+            },
         };
 
-        _paymentRepo.ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakePaymentsWithNulls);
 
         // Act

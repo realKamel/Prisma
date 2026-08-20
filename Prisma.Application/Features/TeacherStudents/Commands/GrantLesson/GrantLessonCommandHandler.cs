@@ -6,13 +6,17 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
 
-public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<GrantLessonCommand, Result>
+public class GrantLessonCommandHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<GrantLessonCommand, Result>
 {
-    public async Task<Result> Handle(GrantLessonCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        GrantLessonCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
@@ -26,14 +30,16 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
         // Single query: doubles as existence check AND teacher id fetch
         var teacherId = await lessonRepo.FirstOrDefaultAsync(
             new LessonWithProjectionSpec<Guid?>(request.LessonId, l => l.TeacherId),
-            cancellationToken);
+            cancellationToken
+        );
         if (teacherId is null)
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
 
         // Find any enrollment including soft-deleted ones (IgnoreQueryFilters in spec)
         var existing = await enrollmentRepo.FirstOrDefaultAsync(
             new EnrollmentByStudentAndLessonSpec(request.StudentId, request.LessonId),
-            cancellationToken);
+            cancellationToken
+        );
 
         if (existing is not null)
         {
@@ -57,22 +63,22 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler
                 ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays),
                 LessonId = request.LessonId,
                 StudentId = request.StudentId,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
             };
 
             enrollmentRepo.Add(enrollment);
         }
 
         var pairExists = await teacherStudentRepo.AnyAsync(
-            new TeacherStudentPairSpec(teacherId.Value, request.StudentId), cancellationToken);
+            new TeacherStudentPairSpec(teacherId.Value, request.StudentId),
+            cancellationToken
+        );
 
         if (!pairExists)
         {
-            teacherStudentRepo.Add(new TeacherStudent
-            {
-                TeacherId = teacherId.Value,
-                StudentId = request.StudentId
-            });
+            teacherStudentRepo.Add(
+                new TeacherStudent { TeacherId = teacherId.Value, StudentId = request.StudentId }
+            );
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

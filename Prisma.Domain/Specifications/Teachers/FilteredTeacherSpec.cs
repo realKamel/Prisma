@@ -1,15 +1,15 @@
 using Ardalis.Specification;
 
-namespace Prisma.Domain.Specifications.Teacher;
+namespace Prisma.Domain.Specifications.Teachers;
 
 public class FilteredTeacherSpec : Specification<Entities.UserAggregate.Teacher>
 {
     public FilteredTeacherSpec(string? search)
     {
-        Query
-            .AsNoTrackingWithIdentityResolution();
+        Query.AsNoTrackingWithIdentityResolution();
 
-        if (string.IsNullOrWhiteSpace(search)) return;
+        if (string.IsNullOrWhiteSpace(search))
+            return;
 
         var searchPattern = $"%{search}%";
 

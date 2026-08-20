@@ -1,12 +1,11 @@
-﻿using MediatR;
-using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
+using Ardalis.Result;
+using MediatR;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Ardalis.Result;
+using Prisma.Domain.Specifications.Teachers;
 
-
-namespace Application.Features.Teachers.Commands.ActivateTeacher;
+namespace Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 
 public class ActivateTeacherCommandHandler : IRequestHandler<ActivateTeacherCommand, Result<bool>>
 {
@@ -17,7 +16,10 @@ public class ActivateTeacherCommandHandler : IRequestHandler<ActivateTeacherComm
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<bool>> Handle(ActivateTeacherCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(
+        ActivateTeacherCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var teacherRepo = _unitOfWork.GetOrCreateRepository<Teacher, Guid>();
         var spec = new TeacherByIdSpecification(request.TeacherId);
@@ -26,7 +28,7 @@ public class ActivateTeacherCommandHandler : IRequestHandler<ActivateTeacherComm
 
         if (teacher is null)
         {
-          return Result<bool>.NotFound($"المعلم برقم {request.TeacherId} غير موجود");
+            return Result<bool>.NotFound($"المعلم برقم {request.TeacherId} غير موجود");
         }
 
         teacher.Status = TeacherStatus.Active;

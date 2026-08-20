@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Features.Payments.HandleCallback;
+using Prisma.Application.Features.Payments.HandlePaymentCallback;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
@@ -16,8 +17,12 @@ namespace Prisma.Application.Tests.Features.Payments.Commands;
 public class HandlePaymentCallbackCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<IRepository<Payment, int>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
+    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<
+        IRepository<Payment, int>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
     private readonly HandlePaymentCallbackCommandHandler _sut;
 
     public HandlePaymentCallbackCommandHandlerTests()
@@ -31,13 +36,15 @@ public class HandlePaymentCallbackCommandHandlerTests
     public async Task Handle_WhenSuccessIsFalse_DoesNothing()
     {
         // Arrange
-        var command = new HandlePaymentCallbackCommand("order-123", false,"123");
+        var command = new HandlePaymentCallbackCommand("order-123", false, "123");
 
         // Act
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _paymentRepo.DidNotReceive().FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>());
+        await _paymentRepo
+            .DidNotReceive()
+            .FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>());
         _enrollmentRepo.DidNotReceive().Add(Arg.Any<Enrollment>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -46,8 +53,9 @@ public class HandlePaymentCallbackCommandHandlerTests
     public async Task Handle_WhenPaymentNotFound_DoesNothing()
     {
         // Arrange
-        var command = new HandlePaymentCallbackCommand("order-123", true,"123");
-        _paymentRepo.FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>())
+        var command = new HandlePaymentCallbackCommand("order-123", true, "123");
+        _paymentRepo
+            .FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>())
             .Returns((Payment?)null);
 
         // Act
@@ -68,11 +76,12 @@ public class HandlePaymentCallbackCommandHandlerTests
             Id = 42,
             StudentId = studentId,
             LessonId = 7,
-            Status = PaymentStatus.Pending
+            Status = PaymentStatus.Pending,
         };
 
         var command = new HandlePaymentCallbackCommand("order-123", true, "123");
-        _paymentRepo.FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .FirstOrDefaultAsync(Arg.Any<PaymentByProviderRefSpec>(), Arg.Any<CancellationToken>())
             .Returns(payment);
 
         // Act
@@ -83,12 +92,17 @@ public class HandlePaymentCallbackCommandHandlerTests
         payment.PaidAt.Should().NotBeNull();
         payment.PaidAt!.Value.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
 
-        _enrollmentRepo.Received(1).Add(Arg.Is<Enrollment>(e =>
-            e.StudentId == studentId &&
-            e.LessonId == 7 &&
-            e.PaymentId == 42 &&
-            e.EnrollmentMethod == EnrollmentMethod.OnlinePayment &&
-            e.Status == EnrollmentStatus.Active));
+        _enrollmentRepo
+            .Received(1)
+            .Add(
+                Arg.Is<Enrollment>(e =>
+                    e.StudentId == studentId
+                    && e.LessonId == 7
+                    && e.PaymentId == 42
+                    && e.EnrollmentMethod == EnrollmentMethod.OnlinePayment
+                    && e.Status == EnrollmentStatus.Active
+                )
+            );
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }

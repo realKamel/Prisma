@@ -8,20 +8,19 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 // Alias to avoid collision with Prisma.Application.Features.RedeemCodes namespace
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
 namespace Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 
-public class RedeemCodeCommandHandler(
-    IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
+public class RedeemCodeCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
     : IRequestHandler<RedeemCodeCommand, Result<RedeemCodeResponse>>
 {
     public async Task<Result<RedeemCodeResponse>> Handle(
         RedeemCodeCommand request,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         if (currentUser.UserId is not { } studentId)
             return Result.Unauthorized("User is not authenticated.");
@@ -38,7 +37,9 @@ public class RedeemCodeCommandHandler(
         // ── 2. Find the GeneratedCode by code value ──
         var generatedCodeRepo = unitOfWork.GetOrCreateRepository<GeneratedCode, int>();
         var generatedCode = await generatedCodeRepo.FirstOrDefaultAsync(
-            new GeneratedCodeByValueSpecification(request.Code), ct);
+            new GeneratedCodeByValueSpecification(request.Code),
+            ct
+        );
         if (generatedCode is null)
             return Result.Error("الكود غلط — تأكد إنك كتبته صح");
 
@@ -49,17 +50,20 @@ public class RedeemCodeCommandHandler(
         // ── 4. Load the batch projection (lesson id, academic year, teacher id — nothing else) ──
         var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
         var batch = await batchRepo.FirstOrDefaultAsync(
-            new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(generatedCode.BatchId, b => new CodeBatchLessonInfo(
-                b.LessonId,
-                b.AcademicYearId,
-                b.Lesson!.TeacherId
-            )), ct);
+            new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(
+                generatedCode.BatchId,
+                b => new CodeBatchLessonInfo(b.LessonId, b.AcademicYearId, b.Lesson!.TeacherId)
+            ),
+            ct
+        );
         if (batch is null)
             return Result.NotFound($"CodeBatch with id '{generatedCode.BatchId}' was not found");
 
         // ── 5. Validate lesson matches ──
         if (batch.LessonId != request.LessonId)
-            return Result.Error("الكود ده صح بس مش للدرس ده — تأكد إنك بتستخدم الكود الصح للدرس الصح");
+            return Result.Error(
+                "الكود ده صح بس مش للدرس ده — تأكد إنك بتستخدم الكود الصح للدرس الصح"
+            );
 
         // ── 6. Validate student academic year matches batch academic year ──
         if (batch.AcademicYearId != student.AcademicYearId)
@@ -68,7 +72,9 @@ public class RedeemCodeCommandHandler(
         // ── 7. Check student not already enrolled ──
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var existing = await enrollmentRepo.FirstOrDefaultAsync(
-            new EnrollmentByStudentAndLessonSpec(studentId, request.LessonId), ct);
+            new EnrollmentByStudentAndLessonSpec(studentId, request.LessonId),
+            ct
+        );
 
         if (existing is not null && !existing.IsDeleted)
             return Result.Error("انت عندك الدرس ده بالفعل");
@@ -111,24 +117,21 @@ public class RedeemCodeCommandHandler(
         // ── 10. Ensure teacher-student pairing exists ──
         var teacherStudentRepo = unitOfWork.GetOrCreateRepository<TeacherStudent, int>();
         var pairExists = await teacherStudentRepo.AnyAsync(
-            new TeacherStudentPairSpec(batch.TeacherId.Value, studentId), ct);
+            new TeacherStudentPairSpec(batch.TeacherId.Value, studentId),
+            ct
+        );
 
         if (!pairExists)
         {
-            teacherStudentRepo.Add(new TeacherStudent
-            {
-                TeacherId = batch.TeacherId.Value,
-                StudentId = studentId
-            });
+            teacherStudentRepo.Add(
+                new TeacherStudent { TeacherId = batch.TeacherId.Value, StudentId = studentId }
+            );
         }
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return new RedeemCodeResponse { EnrollmentId = enrollment.Id, ExpiresAt = expiresAt, };
+        return new RedeemCodeResponse { EnrollmentId = enrollment.Id, ExpiresAt = expiresAt };
     }
 }
-public sealed record CodeBatchLessonInfo(
-    int LessonId,
-    int? AcademicYearId,
-    Guid? TeacherId
-);
+
+public sealed record CodeBatchLessonInfo(int LessonId, int? AcademicYearId, Guid? TeacherId);

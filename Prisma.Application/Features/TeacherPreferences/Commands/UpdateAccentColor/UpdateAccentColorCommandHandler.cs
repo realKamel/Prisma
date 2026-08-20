@@ -1,15 +1,15 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Teacher;
+using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.TeacherPreferences.Commands.UpdateAccentColor;
 
 public sealed class UpdateAccentColorCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService)
-    : IRequestHandler<UpdateAccentColorCommand, Result>
+    ICurrentUserService currentUserService
+) : IRequestHandler<UpdateAccentColorCommand, Result>
 {
     public async Task<Result> Handle(UpdateAccentColorCommand request, CancellationToken ct)
     {
@@ -18,7 +18,10 @@ public sealed class UpdateAccentColorCommandHandler(
             return Result.Error("المستخدم غير مصرح له");
         }
 
-        var repository = unitOfWork.GetOrCreateRepository<Prisma.Domain.Entities.TeacherPreferences, Guid>();
+        var repository = unitOfWork.GetOrCreateRepository<
+            Prisma.Domain.Entities.TeacherPreferences,
+            Guid
+        >();
         var spec = new TeacherPreferencesByTeacherIdSpecification(teacherId);
         var preferences = await repository.FirstOrDefaultAsync(spec, ct);
 

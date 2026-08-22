@@ -17,4 +17,14 @@ public class EnrollmentWithProjectionSpec<TResult> : Specification<Enrollment, T
             .AsNoTracking()
             .Select(projection);
     }
+    public EnrollmentWithProjectionSpec(
+    Expression<Func<Enrollment, bool>> filter,
+    Expression<Func<Enrollment, TResult>> projection)
+    {
+        Query
+            .Where(filter)
+            .OrderByDescending(e => e.CreatedAt)
+            .AsNoTracking()
+            .Select(projection);
+    }
 }

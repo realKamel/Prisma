@@ -5,17 +5,11 @@ namespace Prisma.Domain.Specifications.Students;
 
 public class ActiveStudentSpecification : Specification<Student>
 {
-    public ActiveStudentSpecification()
-    {
-        Query.Where(s => s.IsOnline).AsNoTracking();
-    }
-
-    public ActiveStudentSpecification(Guid teacherId)
+    public ActiveStudentSpecification(Guid? teacherId = null)
     {
         Query
             .Where(s => s.IsOnline
-               && s.TeacherStudents.Any(ts => ts.TeacherId == teacherId
-               && !ts.IsKicked))
+                && (teacherId == null || s.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked)))
             .AsNoTracking();
     }
 }

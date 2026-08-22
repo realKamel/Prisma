@@ -3,30 +3,31 @@ using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assistants;
+using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistants;
 
-public class GetAssistantQueryHandler(IUnitOfWork unitOfWork)
+public class GetAssistantQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<GetAssistantQuery, Result<List<AssistantInfo>>>
 {
     public async Task<Result<List<AssistantInfo>>> Handle(GetAssistantQuery request,
-        CancellationToken cancellationToken)
+    CancellationToken cancellationToken)
     {
         var repo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
-
-        var assistants = await repo.ListAsync(new AssistantsWithClaimsSpec(), cancellationToken);
-
-        List<AssistantInfo> dto = [];
-
-        foreach (var a in assistants)
-        {
-            dto.Add(new AssistantInfo(
-                a.Id, a.Email, a.FirstName, a.LastName,
+        var teacherId = currentUserService.UserId;
+        var dto = await repo.ListAsync(
+            new AssistantWithProjectionSpec<AssistantInfo>(teacherId, a => new AssistantInfo(
+                a.Id,
+                a.Email,
+                a.FirstName,
+                a.LastName,
                 a.PhoneNumber,
-                (a.Claims
-                    .Where(c => c.ClaimValue is not null)
-                    .Select(x => x.ClaimValue).ToArray())));
-        }
+                a.Claims
+                    .Where(c => c.ClaimValue != null)
+                    .Select(c => c.ClaimValue!)
+                    .ToArray()
+            )),
+            cancellationToken);
 
         return dto.ToList();
     }

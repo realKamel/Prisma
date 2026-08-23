@@ -26,17 +26,26 @@ public class GetTeacherFinancesQueryHandler(
         }
 
         var paymentRepository = unitOfWork.GetOrCreateRepository<Payment, int>();
+        
+        var spec = new TeacherFinancesSpecification<Financesinfo>(userId.Value, p => new Financesinfo(
+            Id: p.Id,
+            Amount: p.Amount,
+            PaidAt: p.PaidAt,
+            StudentFirstName: p.Student.FirstName,
+            StudentLastName: p.Student.SecondName,
+            LessonTitle: p.Lesson.Title
+        ));
 
-        var spec = new TeacherFinancesSpecification();
+
         var payments = await paymentRepository.ListAsync(spec, cancellationToken);
 
         var transactionsList = payments
             .Select(p => new RawTransactionDto(
                 Id: p.Id.ToString(),
-                StudentName: p.Student != null
-                    ? $"{p.Student.FirstName} {p.Student.LastName}".Trim()
+                StudentName: p.StudentFirstName != null
+                    ? $"{p.StudentFirstName} {p.StudentLastName}".Trim()
                     : "طالب غير معروف",
-                LessonTitle: p.Lesson?.Title ?? "درس غير معروف",
+                LessonTitle: p.LessonTitle ?? "درس غير معروف",
                 Amount: p.Amount,
                 Date: p.PaidAt?.ToString("yyyy-MM-dd") ?? string.Empty
             ))
@@ -45,3 +54,13 @@ public class GetTeacherFinancesQueryHandler(
         return transactionsList;
     }
 }
+
+public record Financesinfo(
+    int Id,
+    decimal Amount,
+    DateTimeOffset? PaidAt,
+    string? StudentFirstName,
+    string? StudentLastName,
+    string? LessonTitle
+);
+

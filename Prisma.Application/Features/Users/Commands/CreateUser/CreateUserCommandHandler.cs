@@ -29,8 +29,10 @@ public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfW
             {
                 Id = Guid.CreateVersion7(),
                 AcademicYearId = request.GradeId,
-                ParentPhoneNumber = request.ParentMobile,            },
-            AppRoles.Teacher => new Teacher { Id = Guid.CreateVersion7() },
+                ParentPhoneNumber = request.ParentMobile},
+            AppRoles.Teacher => new Teacher { Id = Guid.CreateVersion7(),
+                Subject = request.Subject ?? string.Empty
+            },
             // NOTE: unlike CreateAssistantCommand, this generic path doesn't set
             // Policies claims — an admin can grant permissions afterward via the
             // existing AssistantsController.UpdateAssistantPermissions endpoint.
@@ -77,7 +79,7 @@ public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfW
             user.PhoneNumber, user.Email, request.Role,
             (user as Student)?.AcademicYearId,
             [],
-            (user as Student)?.ParentPhoneNumber);
+            (user as Student)?.ParentPhoneNumber );
 
         return dto;
     }

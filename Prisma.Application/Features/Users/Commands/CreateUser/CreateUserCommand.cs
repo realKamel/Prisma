@@ -15,5 +15,7 @@ public record CreateUserCommand(
     string Role,           // "Admin" | "Teacher" | "Student" | "Assistant"
     int? GradeId,           // Student only
     Guid? TeacherId,        // Student only — ignored for Assistant, see handler note
-    string? ParentMobile    // Student only
+    string? ParentMobile ,
+        string? Subject
+// Student only
 ) : IRequest<Result<UserEditDto>>;

@@ -69,7 +69,7 @@ public class UsersController(ISender mediator) : ApiController
         var command = new CreateUserCommand(
             request.FirstName, request.SecondName, request.ThirdName, request.LastName,
             request.Mobile, request.Email, request.Password, request.Role,
-            request.GradeId, request.TeacherId, request.ParentMobile);
+            request.GradeId, request.TeacherId, request.ParentMobile, request.Subject );
 
         var result = await mediator.Send(command, ct);
         return result;

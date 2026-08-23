@@ -21,11 +21,18 @@ public class GetAllStudentsQueryHandler(
     {
         var userId = currentUserService.UserId;
         if (userId is null)
-            return Result<List<StudentListItemDto>>.Unauthorized("User is not authenticated.");
+            return Result.Unauthorized("User is not authenticated.");
 
         var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
         if (user is null)
-            return Result<List<StudentListItemDto>>.NotFound("User not found.");
+            return Result.NotFound("User not found.");
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
 
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
 

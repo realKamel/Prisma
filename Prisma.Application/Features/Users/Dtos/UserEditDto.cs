@@ -11,6 +11,6 @@ public record UserEditDto
     string? Email,
     string Role,
     int? GradeId,
-    List<Guid> TeacherIds,
+    List<string> TeacherIds,
     string? ParentMobile
     );

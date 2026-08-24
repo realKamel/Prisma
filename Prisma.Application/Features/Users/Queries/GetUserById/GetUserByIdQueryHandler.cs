@@ -1,13 +1,15 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.TeacherStudent;
 
 namespace Prisma.Application.Features.Users.Queries.GetUserById;
 
-public class GetUserByIdQueryHandler(IIdentityService identityService)
+public class GetUserByIdQueryHandler(IUnitOfWork unitOfWork, IIdentityService identityService)
     : IRequestHandler<GetUserByIdQuery, Result<UserEditDto>>
 {
     public async Task<Result<UserEditDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
@@ -24,11 +26,13 @@ public class GetUserByIdQueryHandler(IIdentityService identityService)
             Domain.Entities.UserAggregate.Admin => AppRoles.Admin,
             _ => "Unknown",
         };
-        List<Guid> teacherIds = user is Student ?
-            (user as Student).TeacherStudents.Select(ts => ts.TeacherId).ToList() : new();
+        var teacherStudentsRepo = unitOfWork.GetOrCreateRepository<TeacherStudent, int>();
+        await teacherStudentsRepo.ListAsync(new TeacherByStudentSpec(user.Id), cancellationToken);
+        List<string> teacherIds = user is Student ?
+            (user as Student).TeacherStudents.Select(ts => ts.TeacherId.ToString()).ToList() : new();
 
-        if (user is Assistant) teacherIds.Add((user as Assistant).TeacherId.Value);
- 
+        if (user is Assistant) teacherIds.Add((user as Assistant).TeacherId.Value.ToString());
+
         var dto = new UserEditDto(
             user.Id,
             user.FirstName,

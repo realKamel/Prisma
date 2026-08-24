@@ -75,7 +75,7 @@ public class UpdateUserCommandHandler(
             user.Id, user.FirstName, user.SecondName, user.ThirdName, user.LastName,
             user.PhoneNumber, user.Email, role,
             (user as Student)?.AcademicYearId,
-            (user as Student)?.TeacherStudents?.Select(ts => ts.TeacherId).ToList() ?? [],
+            (user as Student)?.TeacherStudents?.Select(ts => ts.TeacherId.ToString()).ToList() ?? [],
             (user as Student)?.ParentPhoneNumber);
 
         return Result<UserEditDto>.Success(dto, "User updated successfully.");

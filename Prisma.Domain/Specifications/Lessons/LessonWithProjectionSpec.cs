@@ -13,4 +13,11 @@ public class LessonWithProjectionSpec<TResult> : Specification<Lesson, TResult>
             .AsNoTracking()
             .Select(projection);
     }
+    public LessonWithProjectionSpec(Guid? teacherId, Expression<Func<Lesson, TResult>> projection)
+    {
+        Query
+            .Where(l => l.TeacherId == teacherId)
+            .AsNoTracking()
+            .Select(projection);
+    }
 }

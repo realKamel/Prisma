@@ -1,8 +1,9 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
@@ -10,11 +11,30 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 
 public class GetLessonEditorDetailsQueryHandler(
     IUnitOfWork _unitOfWork,
-    IStorageService storageService)
+    IStorageService storageService,
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetLessonEditorDetailsQuery, Result<LessonEditorResponseDto>>
 {
-    public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<LessonEditorResponseDto>> Handle(GetLessonEditorDetailsQuery request,
+        CancellationToken cancellationToken)
     {
+
+        var userId = currentUserService.UserId;
+        if (userId is null)
+            return Result.Unauthorized("User is not authenticated.");
+
+        var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
+        if (user is null)
+            return Result.NotFound("User not found.");
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
+
         var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
         var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
 
@@ -24,7 +44,7 @@ public class GetLessonEditorDetailsQueryHandler(
         if (lesson is null)
             return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
-        var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id);
+        var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id, userId.Value);
         var prerequisitesOptions = (await lessonRepository.ListAsync(prerequisiteSpec, cancellationToken))
             .Select(l => new LessonDto(l.Title ?? string.Empty, l.Id))
             .ToList();

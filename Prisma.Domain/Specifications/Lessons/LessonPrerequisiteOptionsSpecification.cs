@@ -5,8 +5,8 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonPrerequisiteOptionsSpecification : Specification<Lesson>
 {
-    public LessonPrerequisiteOptionsSpecification(int excludeLessonId)
+    public LessonPrerequisiteOptionsSpecification(int excludeLessonId , Guid teacherId)
     {
-        Query.Where(l => l.Id != excludeLessonId);
+        Query.Where(l => l.Id != excludeLessonId && l.TeacherId == teacherId);
     }
 }

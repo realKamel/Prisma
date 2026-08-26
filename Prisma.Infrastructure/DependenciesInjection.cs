@@ -41,7 +41,6 @@ using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
-using Role = Prisma.Domain.Entities.UserAggregate.Role;
 
 namespace Prisma.Infrastructure;
 
@@ -57,55 +56,22 @@ public static class DependenciesInjection
 
         services.AddInfrastructureHealthChecks(configuration);
 
-        services.AddIdentityWithConfig(configuration);
+        services.AddIdentityWithConfig(environment, configuration);
 
-        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-        services.AddScoped<IEmailService, EmailService>();
+        services.AddEmailServices(configuration);
 
         services.AddSingleton<IPdfTextExtractor, PdfTextExtractor>();
         services.AddSingleton<IOpenAiExamExtractor, OpenAiExamExtractor>();
         services.AddSingleton<IExtractionJobQueue, ExtractionJobQueue>();
 
-        services.Configure<PaymobSettings>(configuration.GetSection("PaymobSettings"));
+        services.AddPaymentServices(configuration);
 
-        services.AddHttpClient<PaymobCardService>();
-        services.AddHttpClient<PaymobFawryService>();
+        services.AddObjectStorageServices(configuration);
 
-        services.AddKeyedScoped<IPaymentService, PaymobCardService>("card");
-        services.AddKeyedScoped<IPaymentService, PaymobFawryService>("fawry");
-
-        var storageConfig = configuration.GetSection("Storage");
-
-        services.AddSingleton<IAmazonS3>(sp =>
-        {
-            var config = new AmazonS3Config
-            {
-                ServiceURL = storageConfig["ServiceUrl"],
-                ForcePathStyle = bool.Parse(storageConfig["ForcePathStyle"]!),
-            };
-
-            return new AmazonS3Client(
-                storageConfig["AccessKey"],
-                storageConfig["SecretKey"],
-                config
-            );
-        });
-
-        services.AddScoped<IStorageService, S3StorageService>();
         services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
         services.AddScoped<IMuxTokenService, MuxTokenService>();
 
         // services.AddHostedService<StorageBucketPolicyInitializer>();
-
-        services
-            .AddDataProtection()
-            .PersistKeysToStackExchangeRedis(
-                ConnectionMultiplexer.Connect(
-                    configuration.GetConnectionString("Valkey")
-                        ?? throw new ArgumentException("Bad Connection string for Valkey")
-                ),
-                "DataProtection-Keys"
-            );
 
         services.AddBackgroundJobsAndHangfireWithConfig(configuration);
 
@@ -114,52 +80,8 @@ public static class DependenciesInjection
         services.AddScoped<ISummarizationServices, SummarizationServices>();
         services.AddScoped<ITextEmbeddingProcessor, TextEmbeddingProcessor>();
 
-        services.AddLocalization();
-        services.AddTransient<IAppLocalizer, AppLocalizer>();
-
-        services.AddStackExchangeRedisCache(options =>
-        {
-            options.Configuration = configuration.GetConnectionString("Valkey");
-        });
-
-        services
-            .AddFusionCache("prisma_cache")
-            .WithDefaultEntryOptions(options =>
-            {
-                // General Cache Duration
-                options.Duration = TimeSpan.FromMinutes(10);
-
-                // A. Fail-Safe: If DB crashes under load, we serve stale exam data
-                // up to 6 (will change) hours instead of throwing an HTTP 500 error to students.
-                options.IsFailSafeEnabled = true;
-                options.FailSafeMaxDuration = TimeSpan.FromHours(24);
-                options.FailSafeThrottleDuration = TimeSpan.FromSeconds(30);
-
-                // B. Soft Timeout: If DB takes longer than 150ms during a rush,
-                // abort waiting and instantly entry from the cached payload.
-                options.FactorySoftTimeout = TimeSpan.FromMilliseconds(150);
-
-                // C. Hard Timeout: Never allow a DB call to block an API thread
-                // for longer than 2 seconds.
-                options.FactoryHardTimeout = TimeSpan.FromSeconds(2);
-
-                // Dynamic Jittering: random extra seconds to expiration times.
-                // Prevents thousands of cache entries from expiring simultaneously.
-                options.JitterMaxDuration = TimeSpan.FromSeconds(30);
-            })
-            // Serializer for L2 Valkey Cache
-            .WithSerializer(new FusionCacheSystemTextJsonSerializer())
-            .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
-            // Backplane: Syncs all API nodes so no server returns old data
-            .WithBackplane(
-                new RedisBackplane(
-                    new RedisBackplaneOptions
-                    {
-                        Configuration = configuration.GetConnectionString("Valkey"),
-                    }
-                )
-            )
-            .AsHybridCache();
+        services.AddCacheServices(configuration);
+        services.AddLocalizationServices();
     }
 
     private static void AddBackgroundJobsAndHangfireWithConfig(
@@ -251,6 +173,27 @@ public static class DependenciesInjection
                 }
             }
         );
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+
+        services.AddScoped<AuditInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IDataSeeder, DataSeeder>();
+
+        //Custom Repositories
+        services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+    }
+
+    private static void AddIdentityWithConfig(
+        this IServiceCollection services,
+        IHostEnvironment environment,
+        IConfiguration configuration
+    )
+    {
+        services.AddHttpContextAccessor();
+
         services
             .AddIdentityCore<User>(options =>
             {
@@ -275,29 +218,18 @@ public static class DependenciesInjection
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 }
             })
-            .AddRoles<Role>()
+            .AddRoles<Domain.Entities.UserAggregate.Role>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+        //services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
 
-        services.AddScoped<AuditInterceptor>();
-        services.AddScoped<AuditLogInterceptor>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<IDataSeeder, DataSeeder>();
+        services
+            .AddOptions<JwtSettingsOptions>()
+            .Bind(configuration.GetSection(JwtSettingsOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-        //Custom Repositories
-        services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
-    }
-
-    private static void AddIdentityWithConfig(
-        this IServiceCollection services,
-        IConfiguration configuration
-    )
-    {
-        services.AddHttpContextAccessor();
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
     }
@@ -449,21 +381,37 @@ public static class DependenciesInjection
         );
     }
 
-    public static void AddInfrastructureHealthChecks(
+    private static void AddInfrastructureHealthChecks(
         this IServiceCollection services,
         IConfiguration configuration
     )
     {
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            connectionStrings.PostgresConnectionString,
+            nameof(connectionStrings.PostgresConnectionString)
+        );
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            connectionStrings.ValkeyConnectionString,
+            nameof(connectionStrings.ValkeyConnectionString)
+        );
+
         services
             .AddHealthChecks()
             .AddNpgSql(
-                connectionString: configuration.GetConnectionString("DefaultSqlConnection"),
+                connectionString: connectionStrings.PostgresConnectionString,
                 name: "PostgreSQL",
                 tags: ["db", "sql", "postgresql", "ready"]
             )
             .AddRedis(
-                configuration.GetConnectionString("Valkey"),
-                name: "valkey",
+                connectionStrings.ValkeyConnectionString,
+                name: "Valkey",
                 tags: ["cache", "valkey", "ready"]
             )
             .AddHangfire(
@@ -475,5 +423,128 @@ public static class DependenciesInjection
                 name: "hangfire",
                 tags: ["jobs", "hangfire", "ready"]
             );
+    }
+
+    private static void AddLocalizationServices(this IServiceCollection services)
+    {
+        services.AddLocalization();
+        services.AddTransient<IAppLocalizer, AppLocalizer>();
+    }
+
+    private static void AddCacheServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(
+            connectionStrings.ValkeyConnectionString,
+            nameof(connectionStrings.ValkeyConnectionString)
+        );
+
+        services
+            .AddDataProtection()
+            .PersistKeysToStackExchangeRedis(
+                ConnectionMultiplexer.Connect(connectionStrings.ValkeyConnectionString),
+                "DataProtection-Keys"
+            );
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = connectionStrings.ValkeyConnectionString;
+        });
+
+        services
+            .AddFusionCache("prisma_cache")
+            .WithDefaultEntryOptions(options =>
+            {
+                // General Cache Duration
+                options.Duration = TimeSpan.FromMinutes(10);
+
+                // A. Fail-Safe: If DB crashes under load, we serve stale exam data
+                // up to 6 (will change) hours instead of throwing an HTTP 500 error to students.
+                options.IsFailSafeEnabled = true;
+                options.FailSafeMaxDuration = TimeSpan.FromHours(24);
+                options.FailSafeThrottleDuration = TimeSpan.FromSeconds(30);
+
+                // B. Soft Timeout: If DB takes longer than 150ms during a rush,
+                // abort waiting and instantly entry from the cached payload.
+                options.FactorySoftTimeout = TimeSpan.FromMilliseconds(150);
+
+                // C. Hard Timeout: Never allow a DB call to block an API thread
+                // for longer than 2 seconds.
+                options.FactoryHardTimeout = TimeSpan.FromSeconds(2);
+
+                // Dynamic Jittering: random extra seconds to expiration times.
+                // Prevents thousands of cache entries from expiring simultaneously.
+                options.JitterMaxDuration = TimeSpan.FromSeconds(30);
+            })
+            // Serializer for L2 Valkey Cache
+            .WithSerializer(new FusionCacheSystemTextJsonSerializer())
+            .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
+            // Backplane: Syncs all API nodes so no server returns old data
+            .WithBackplane(
+                new RedisBackplane(
+                    new RedisBackplaneOptions
+                    {
+                        Configuration = connectionStrings.ValkeyConnectionString,
+                    }
+                )
+            )
+            .AsHybridCache();
+    }
+
+    private static void AddEmailServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+
+        services.AddScoped<IEmailService, EmailService>();
+    }
+
+    private static void AddPaymentServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.Configure<PaymobSettings>(configuration.GetSection("PaymobSettings"));
+
+        services.AddHttpClient<PaymobCardService>();
+        services.AddHttpClient<PaymobFawryService>();
+
+        services.AddKeyedScoped<IPaymentService, PaymobCardService>("card");
+        services.AddKeyedScoped<IPaymentService, PaymobFawryService>("fawry");
+    }
+
+    private static void AddObjectStorageServices(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var storageConfig = configuration
+            .GetSection(ObjectStorageOptions.SectionName)
+            .Get<ObjectStorageOptions>();
+
+        ArgumentNullException.ThrowIfNull(storageConfig);
+
+        services.AddSingleton<IAmazonS3>(sp =>
+        {
+            var config = new AmazonS3Config
+            {
+                ServiceURL = storageConfig.ServiceUrl,
+                ForcePathStyle = storageConfig.ForcePathStyle,
+            };
+
+            return new AmazonS3Client(storageConfig.AccessKey, storageConfig.SecretKey, config);
+        });
+
+        services.AddScoped<IStorageService, S3StorageService>();
     }
 }

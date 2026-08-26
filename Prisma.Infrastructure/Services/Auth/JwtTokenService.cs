@@ -11,17 +11,22 @@ namespace Prisma.Infrastructure.Services.Auth;
 public class JwtTokenService : IJwtTokenService
 {
     private readonly SigningCredentials _signingCredentials;
-    private readonly JwtSettings _jwtSettings;
+    private readonly JwtSettingsOptions _jwtSettings;
     private readonly SymmetricSecurityKey _securityKey;
 
-    public JwtTokenService(IOptions<JwtSettings> jwtSettings)
+    public JwtTokenService(IOptions<JwtSettingsOptions> jwtSettings)
     {
         _securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Value.Secret));
         _jwtSettings = jwtSettings.Value;
         _signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
     }
 
-    public string GenerateAccessToken(Guid userId, string email, IList<string> roles, IList<Claim>? permissions = null)
+    public string GenerateAccessToken(
+        Guid userId,
+        string email,
+        IList<string> roles,
+        IList<Claim>? permissions = null
+    )
     {
         var userClaims = new List<Claim>
         {
@@ -42,7 +47,8 @@ public class JwtTokenService : IJwtTokenService
             audience: _jwtSettings.Audience,
             claims: userClaims,
             expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryInMinutes),
-            signingCredentials: _signingCredentials);
+            signingCredentials: _signingCredentials
+        );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

@@ -37,100 +37,127 @@ public class DataSeeder(
 
         if (!await dbContext.Users.AnyAsync())
         {
-            await using var transaction = await dbContext.Database.BeginTransactionAsync();
-            try
-            {
-                // Defer foreign key checking until COMMIT instead of using session_replication_role
-                await dbContext.Database.ExecuteSqlRawAsync("SET CONSTRAINTS ALL DEFERRED;");
-
-                var seedFileName = "seed_app_data.json";
-
-                var seedPath = Path.Combine(AppContext.BaseDirectory, "SeedData", seedFileName);
-
-                logger.LogInformation("Try to Seed file : {Path} for Identity", seedPath);
-
-                if (!File.Exists(seedPath))
+            await dbContext
+                .Database.CreateExecutionStrategy()
+                .ExecuteAsync(async () =>
                 {
-                    logger.LogWarning("Seed file not found: {Path}", seedPath);
-                    return;
-                }
-
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                await using var stream = File.OpenRead(seedPath);
-
-                using var document = await JsonDocument.ParseAsync(
-                    stream,
-                    new() { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip }
-                );
-
-                var root = document.RootElement;
-
-                if (!await roleManager.Roles.AnyAsync())
-                {
-                    var roles = SeedData<Role>(root, options);
-
-                    foreach (var role in roles)
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync();
+                    try
                     {
-                        await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id });
+                        // Defer foreign key checking until COMMIT instead of using session_replication_role
+                        await dbContext.Database.ExecuteSqlRawAsync(
+                            "SET CONSTRAINTS ALL DEFERRED;"
+                        );
+
+                        var seedFileName = "seed_app_data.json";
+
+                        var seedPath = Path.Combine(
+                            AppContext.BaseDirectory,
+                            "SeedData",
+                            seedFileName
+                        );
+
+                        logger.LogInformation("Try to Seed file : {Path} for Identity", seedPath);
+
+                        if (!File.Exists(seedPath))
+                        {
+                            logger.LogWarning("Seed file not found: {Path}", seedPath);
+                            return;
+                        }
+
+                        var options = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true,
+                        };
+
+                        await using var stream = File.OpenRead(seedPath);
+
+                        using var document = await JsonDocument.ParseAsync(
+                            stream,
+                            new()
+                            {
+                                AllowTrailingCommas = true,
+                                CommentHandling = JsonCommentHandling.Skip,
+                            }
+                        );
+
+                        var root = document.RootElement;
+
+                        if (!await roleManager.Roles.AnyAsync())
+                        {
+                            var roles = SeedData<Role>(root, options);
+
+                            foreach (var role in roles)
+                            {
+                                await roleManager.CreateAsync(new Role(role.Name) { Id = role.Id });
+                            }
+                        }
+
+                        var academicYears = SeedData<AcademicYear>(root, options);
+
+                        dbContext.Set<AcademicYear>().AddRange(academicYears);
+
+                        await dbContext.SaveChangesAsync();
+
+                        var admin = new User
+                        {
+                            FirstName = "Admin",
+                            SecondName = "Prisma",
+                            UserName = configuration.GetSection("IdentitySeed")["AdminEmail"],
+                            Email = configuration.GetSection("IdentitySeed")["AdminEmail"],
+                            PhoneNumber = configuration.GetSection("IdentitySeed")["AdminPhone"],
+                        };
+
+                        await userManager.CreateAsync(
+                            admin,
+                            configuration.GetSection("IdentitySeed")["AdminPassword"]
+                                ?? throw new Exception("Identity data is empty")
+                        );
+
+                        await userManager.AddToRoleAsync(admin, AppRoles.Admin);
+
+                        await dbContext.SaveChangesAsync();
+
+                        // All circular/deferred foreign keys are validated right here when the transaction commits
+                        await transaction.CommitAsync();
                     }
-                }
-
-                var academicYears = SeedData<AcademicYear>(root, options);
-
-                dbContext.Set<AcademicYear>().AddRange(academicYears);
-
-                await dbContext.SaveChangesAsync();
-
-                var admin = new User
-                {
-                    FirstName = "Admin",
-                    SecondName = "Prisma",
-                    UserName = configuration.GetSection("IdentitySeed")["AdminEmail"],
-                    Email = configuration.GetSection("IdentitySeed")["AdminEmail"],
-                    PhoneNumber = configuration.GetSection("IdentitySeed")["AdminPhone"],
-                };
-
-                await userManager.CreateAsync(
-                    admin,
-                    configuration.GetSection("IdentitySeed")["AdminPassword"]
-                        ?? throw new Exception("Identity data is empty")
-                );
-
-                await userManager.AddToRoleAsync(admin, AppRoles.Admin);
-
-                await dbContext.SaveChangesAsync();
-
-                // All circular/deferred foreign keys are validated right here when the transaction commits
-                await transaction.CommitAsync();
-            }
-            catch (Exception e)
-            {
-                logger.LogError(
-                    e,
-                    "An error occured while seeding from json file during Identity Seeding :{error}",
-                    e.Message
-                );
-                await transaction.RollbackAsync();
-                throw;
-            }
+                    catch (Exception e)
+                    {
+                        logger.LogError(
+                            e,
+                            "An error occured while seeding from json file during Identity Seeding :{error}",
+                            e.Message
+                        );
+                        await transaction.RollbackAsync();
+                        throw;
+                    }
+                });
         }
 
         if (hostEnvironment.IsDevelopment())
         {
-            await using var transaction2 = await dbContext.Database.BeginTransactionAsync();
-
-            try
-            {
-                await SeedLoadTestUsersAsync();
-                await transaction2.CommitAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                await transaction2.RollbackAsync();
-                throw;
-            }
+            await dbContext
+                .Database.CreateExecutionStrategy()
+                .ExecuteAsync(async () =>
+                {
+                    await using var transaction2 = await dbContext.Database.BeginTransactionAsync();
+                    try
+                    {
+                        await SeedLoadTestUsersAsync();
+                        await dbContext.SaveChangesAsync();
+                        await transaction2.CommitAsync();
+                    }
+                    catch (Exception e)
+                    {
+                        logger.LogError(
+                            e,
+                            "An error occurred while seeding load test users: {error}",
+                            e.Message
+                        );
+                        await transaction2.RollbackAsync();
+                        throw;
+                    }
+                });
         }
     }
 
@@ -207,6 +234,5 @@ public class DataSeeder(
         }
 
         await dbContext.Users.AddRangeAsync(users);
-        await dbContext.SaveChangesAsync();
     }
 }

@@ -55,6 +55,8 @@ public static class DependenciesInjection
     {
         services.AddPersistenceConfig(configuration, environment);
 
+        services.AddInfrastructureHealthChecks(configuration);
+
         services.AddIdentityWithConfig(configuration);
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
@@ -225,10 +227,11 @@ public static class DependenciesInjection
                     configuration.GetConnectionString("DefaultSqlConnection"),
                     npgSqlOptions =>
                     {
-                        // npgsqlOptions.EnableRetryOnFailure(
-                        //     maxRetryCount: 5,
-                        //     maxRetryDelay: TimeSpan.FromSeconds(10),
-                        //     errorCodesToAdd: null);
+                        npgSqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(10),
+                            errorCodesToAdd: null
+                        );
                         npgSqlOptions.UseVector();
                     }
                 );
@@ -238,13 +241,14 @@ public static class DependenciesInjection
                     serviceProvider.GetRequiredService<AuditLogInterceptor>()
                 );
 
-                if (!environment.IsDevelopment())
+                if (environment.IsDevelopment())
                 {
-                    return;
-                }
+                    options.EnableDetailedErrors();
 
-                //options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
+                    // ONLY uncomment the line below when you actively need to see SQL parameter values
+                    // to debug a specific query. NEVER leave it uncommented in Production.
+                    // options.EnableSensitiveDataLogging();
+                }
             }
         );
         services
@@ -443,5 +447,33 @@ public static class DependenciesInjection
                     .Build();
             }
         );
+    }
+
+    public static void AddInfrastructureHealthChecks(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services
+            .AddHealthChecks()
+            .AddNpgSql(
+                connectionString: configuration.GetConnectionString("DefaultSqlConnection"),
+                name: "PostgreSQL",
+                tags: ["db", "sql", "postgresql", "ready"]
+            )
+            .AddRedis(
+                configuration.GetConnectionString("Valkey"),
+                name: "valkey",
+                tags: ["cache", "valkey", "ready"]
+            )
+            .AddHangfire(
+                setup =>
+                {
+                    setup.MaximumJobsFailed = 5; // Default to 5 if not configured
+                    setup.MinimumAvailableServers = 1; // Default to 1
+                },
+                name: "hangfire",
+                tags: ["jobs", "hangfire", "ready"]
+            );
     }
 }

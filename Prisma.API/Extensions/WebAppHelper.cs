@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Middlewares;
@@ -86,20 +87,11 @@ public static class WebAppHelper
                 options.KnownProxies.Clear();
             });
 
-            services.AddHealthChecks();
-            // .AddNpgSql(
-            //     configuration.GetConnectionString("DefaultSqlConnection")!,
-            //     name: "PostgreSQL Database",
-            //     failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
-            //     tags: new[] { "db", "postgres" }
-            // );
-            // services.AddHealthChecksUI(setup =>
+            //services.AddHealthChecksUI(setup =>
             // {
-            //     // Points the UI dashboard to the JSON data endpoint mapped below
-            //     setup.AddHealthCheckEndpoint("Application Database Health", "/health-json");
-            //     setup.SetEvaluationTimeInSeconds(15); // Polls every 15 seconds
-            //     setup.DisableDatabaseMigrations();
-            // }).AddSqliteStorage("Data Source=healthchecks.db");
+            //     setup.SetEvaluationTimeInSeconds(30); // How often the UI polls the /health/ready endpoint
+            //     setup.AddHealthCheckEndpoint("API Health", "/health/ready");
+            // }).AddInMemoryStorage();
 
             // services.AddOpenAIResponses();
             // services.AddOpenAIConversations();
@@ -225,13 +217,24 @@ public static class WebAppHelper
             });
         }
 
-        public void MapHealthChecks()
+        public void MapAppHealthChecks()
         {
-            app.MapHealthChecks("/health-json",
-                new HealthCheckOptions { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
-            app.MapHealthChecksUI(options =>
+            // 1. Liveness Probe (Lightweight)
+            // Kubernetes uses this to know if the app process is alive. 
+            // We exclude heavy checks (like DB) so a temporary DB blip doesn't restart the whole pod.
+            app.MapHealthChecks("/health/live", new HealthCheckOptions
             {
-                options.UIPath = "/health-ui"; // URL path to open in browser
+                Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
+
+            // 2. Readiness Probe (Heavyweight)
+            // Kubernetes / Load Balancers use this to know if the app can accept traffic.
+            // This includes Postgres, Valkey, and Hangfire (as we tagged them with "ready").
+            app.MapHealthChecks("/health/ready", new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready"),
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
             });
         }
 

@@ -70,7 +70,7 @@ public class Program
 
             app.UseRecurringJobs();
 
-            app.MapHealthChecks();
+            app.MapAppHealthChecks();
 
             app.UseLocalization();
 

@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
+    <PackageReference Include="AspNetCore.HealthChecks.Hangfire" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
     <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
     <PackageReference Include="Groq.Sdk.Core" Version="2.0.0.11-alpha" />
     <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" Version="2.0.0.11-alpha" />

@@ -393,27 +393,23 @@ public static class DependenciesInjection
         ArgumentNullException.ThrowIfNull(connectionStrings);
 
         ArgumentException.ThrowIfNullOrWhiteSpace(
-            connectionStrings.PostgresConnectionString,
-            nameof(connectionStrings.PostgresConnectionString)
+            connectionStrings.DefaultSqlConnection,
+            nameof(connectionStrings.DefaultSqlConnection)
         );
 
         ArgumentException.ThrowIfNullOrWhiteSpace(
-            connectionStrings.ValkeyConnectionString,
-            nameof(connectionStrings.ValkeyConnectionString)
+            connectionStrings.Valkey,
+            nameof(connectionStrings.Valkey)
         );
 
         services
             .AddHealthChecks()
             .AddNpgSql(
-                connectionString: connectionStrings.PostgresConnectionString,
+                connectionString: connectionStrings.DefaultSqlConnection,
                 name: "PostgreSQL",
                 tags: ["db", "sql", "postgresql", "ready"]
             )
-            .AddRedis(
-                connectionStrings.ValkeyConnectionString,
-                name: "Valkey",
-                tags: ["cache", "valkey", "ready"]
-            )
+            .AddRedis(connectionStrings.Valkey, name: "Valkey", tags: ["cache", "valkey", "ready"])
             .AddHangfire(
                 setup =>
                 {
@@ -443,20 +439,20 @@ public static class DependenciesInjection
         ArgumentNullException.ThrowIfNull(connectionStrings);
 
         ArgumentException.ThrowIfNullOrWhiteSpace(
-            connectionStrings.ValkeyConnectionString,
-            nameof(connectionStrings.ValkeyConnectionString)
+            connectionStrings.Valkey,
+            nameof(connectionStrings.Valkey)
         );
 
         services
             .AddDataProtection()
             .PersistKeysToStackExchangeRedis(
-                ConnectionMultiplexer.Connect(connectionStrings.ValkeyConnectionString),
+                ConnectionMultiplexer.Connect(connectionStrings.Valkey),
                 "DataProtection-Keys"
             );
 
         services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = connectionStrings.ValkeyConnectionString;
+            options.Configuration = connectionStrings.Valkey;
         });
 
         services
@@ -490,10 +486,7 @@ public static class DependenciesInjection
             // Backplane: Syncs all API nodes so no server returns old data
             .WithBackplane(
                 new RedisBackplane(
-                    new RedisBackplaneOptions
-                    {
-                        Configuration = connectionStrings.ValkeyConnectionString,
-                    }
+                    new RedisBackplaneOptions { Configuration = connectionStrings.Valkey }
                 )
             )
             .AsHybridCache();

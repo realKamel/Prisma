@@ -32,7 +32,7 @@ internal class GetPublicTeacherProfileQueryHandler(IUnitOfWork unitOfWork, Hybri
 
                 if (teacher is null)
                 {
-                    return null; // Don't wrap in Result here
+                    return null;
                 }
 
                 return new PublicTeacherProfileResponse(

@@ -76,8 +76,4 @@
     </Content>
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Persistence\Configurations\ApplicationUserConfiguration.cs" />
-  </ItemGroup>
-
 </Project>

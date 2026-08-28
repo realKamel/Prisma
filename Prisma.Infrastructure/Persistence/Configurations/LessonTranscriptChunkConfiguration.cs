@@ -18,20 +18,19 @@ public class LessonTranscriptChunkConfiguration : IEntityTypeConfiguration<Lesso
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Embedding)
+        builder
+            .Property(x => x.Embedding)
             .HasColumnType("vector(1536)")
-            .HasConversion<Vector>(v =>
-                    new Vector(v), v => v.ToArray(),
-                floatArrayComparer)
+            .HasConversion<Vector>(v => new Vector(v), v => v.ToArray(), floatArrayComparer)
             .IsRequired();
 
-        builder.HasIndex(x => x.Embedding)
+        builder
+            .HasIndex(x => x.Embedding)
             .HasMethod("hnsw")
             .HasOperators("vector_cosine_ops")
             .HasStorageParameter("m", 16)
             .HasStorageParameter("ef_construction", 64);
 
-
-        // builder.HasQueryFilter(x => !x.IsDeleted);
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

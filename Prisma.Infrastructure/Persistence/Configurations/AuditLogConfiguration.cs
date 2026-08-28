@@ -6,8 +6,5 @@ namespace Prisma.Infrastructure.Persistence.Configurations;
 
 internal class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 {
-    public void Configure(EntityTypeBuilder<AuditLog> builder)
-    {
-
-    }
+    public void Configure(EntityTypeBuilder<AuditLog> builder) { }
 }

@@ -12,10 +12,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasQueryFilter(u => !u.IsDeleted);
 
-        builder
-            .HasMany(x => x.Claims)
-            .WithOne()
-            .HasForeignKey(x => x.UserId);
+        builder.HasMany(x => x.Claims).WithOne().HasForeignKey(x => x.UserId);
 
         builder
             .HasIndex(u => u.NormalizedEmail)
@@ -29,9 +26,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDatabaseName("UserNameIndex")
             .HasFilter("\"IsDeleted\" = false");
 
-        builder
-            .HasIndex(x => x.PhoneNumber)
-            .IsUnique()
-            .HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(x => x.PhoneNumber).IsUnique().HasFilter("\"IsDeleted\" = false");
     }
 }

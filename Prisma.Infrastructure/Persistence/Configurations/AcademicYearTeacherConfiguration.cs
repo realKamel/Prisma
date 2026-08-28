@@ -10,18 +10,20 @@ internal class AcademicYearTeacherConfiguration : IEntityTypeConfiguration<Acade
     {
         builder.HasKey(e => e.Id);
 
+        builder
+            .HasIndex(x => new { x.AcademicYearId, x.TeacherId })
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
 
-        builder.HasIndex(x => new { x.AcademicYearId, x.TeacherId })
-               .IsUnique()
-               .HasFilter("\"IsDeleted\" = false");
+        builder
+            .HasOne(x => x.Teacher)
+            .WithMany(a => a.AcademicYears)
+            .HasForeignKey(s => s.TeacherId);
 
-        builder.HasOne(x => x.Teacher)
-               .WithMany(a => a.AcademicYears)
-               .HasForeignKey(s => s.TeacherId);
-
-        builder.HasOne(x => x.AcademicYear)
-               .WithMany(y => y.Teachers)
-               .HasForeignKey(x => x.AcademicYearId);
+        builder
+            .HasOne(x => x.AcademicYear)
+            .WithMany(y => y.Teachers)
+            .HasForeignKey(x => x.AcademicYearId);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

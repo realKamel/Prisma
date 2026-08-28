@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class AcademicYearLessonConfiguration : IEntityTypeConfiguration<AcademicYearLesson>
+internal sealed class AcademicYearLessonConfiguration : IEntityTypeConfiguration<AcademicYearLesson>
 {
     public void Configure(EntityTypeBuilder<AcademicYearLesson> builder)
     {
@@ -12,9 +12,10 @@ public class AcademicYearLessonConfiguration : IEntityTypeConfiguration<Academic
 
         builder.HasQueryFilter(x => !x.IsDeleted);
 
-        builder.HasIndex(x => new { x.AcademicYearId, x.LessonId })
-           .IsUnique()
-           .HasFilter("\"IsDeleted\" = false");
+        builder
+            .HasIndex(x => new { x.AcademicYearId, x.LessonId })
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

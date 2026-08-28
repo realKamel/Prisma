@@ -1,6 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -9,7 +6,6 @@ namespace Prisma.Domain.Entities;
 
 public class TeacherPreferences : IAuditable, IEntity<Guid>
 {
-
     public Guid Id { get; set; }
     public Teacher Teacher { get; set; } = null!;
 
@@ -19,11 +15,7 @@ public class TeacherPreferences : IAuditable, IEntity<Guid>
 
     public static TeacherPreferences CreateDefault(Guid teacherId)
     {
-        return new TeacherPreferences
-        {
-            Id = teacherId,
-            AccentColor = AccentColor.Purple
-        };
+        return new TeacherPreferences { Id = teacherId, AccentColor = AccentColor.Purple };
     }
 
     public void UpdateAccentColor(AccentColor accentColor)

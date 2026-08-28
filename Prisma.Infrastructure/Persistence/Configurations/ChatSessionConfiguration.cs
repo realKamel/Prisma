@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class ChatSessionConfiguration : IEntityTypeConfiguration<ChatSession>
+internal sealed class ChatSessionConfiguration : IEntityTypeConfiguration<ChatSession>
 {
     public void Configure(EntityTypeBuilder<ChatSession> builder)
     {

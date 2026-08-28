@@ -2,7 +2,7 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
-public class LessonTranscriptChunk : IEntity<Guid>
+public sealed class LessonTranscriptChunk : IEntity<Guid>, IAuditable
 {
     public Guid Id { get; set; }
     public int LessonId { get; private set; }
@@ -11,11 +11,14 @@ public class LessonTranscriptChunk : IEntity<Guid>
     public int ChunkIndex { get; private set; }
     public float[] Embedding { get; private set; }
 
-    private LessonTranscriptChunk()
-    {
-    }
+    private LessonTranscriptChunk() { }
 
-    public static LessonTranscriptChunk Create(int lessonId, string content, int index, float[] embedding)
+    public static LessonTranscriptChunk Create(
+        int lessonId,
+        string content,
+        int index,
+        float[] embedding
+    )
     {
         return new LessonTranscriptChunk
         {
@@ -23,7 +26,15 @@ public class LessonTranscriptChunk : IEntity<Guid>
             LessonId = lessonId,
             Content = content,
             ChunkIndex = index,
-            Embedding = embedding
+            Embedding = embedding,
         };
     }
+
+    public DateTimeOffset? CreatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
+    public Guid? CreatedBy { get; set; }
+    public Guid? UpdatedBy { get; set; }
+    public Guid? DeletedBy { get; set; }
+    public bool IsDeleted { get; set; }
 }

@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer>
+internal sealed class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer>
 {
     public void Configure(EntityTypeBuilder<AttemptAnswer> builder)
     {
@@ -12,29 +12,34 @@ public class AttemptAnswerConfiguration : IEntityTypeConfiguration<AttemptAnswer
 
         builder.Property(a => a.Score).HasPrecision(5, 2);
 
-        builder.HasOne(x => x.QuizAttempt)
+        builder
+            .HasOne(x => x.QuizAttempt)
             .WithMany(x => x.Answers)
             .HasForeignKey(x => x.QuizAttemptId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.Student)
+        builder
+            .HasOne(x => x.Student)
             .WithMany(x => x.AttemptAnswers)
             .HasForeignKey(x => x.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Question)
+        builder
+            .HasOne(x => x.Question)
             .WithMany(x => x.AttemptAnswers)
             .HasForeignKey(x => x.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Choice)
+        builder
+            .HasOne(x => x.Choice)
             .WithMany()
             .HasForeignKey(x => x.ChoiceId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => new { a.QuizAttemptId, a.QuestionId })
-        .IsUnique()
-        .HasFilter("\"IsDeleted\" = false");
+        builder
+            .HasIndex(a => new { a.QuizAttemptId, a.QuestionId })
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

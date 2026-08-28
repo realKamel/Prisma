@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
+internal sealed class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
 {
     public void Configure(EntityTypeBuilder<Assignment> builder)
     {
@@ -15,10 +15,7 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
         //     .HasForeignKey(x => x.LessonId)
         //     .OnDelete(DeleteBehavior.Cascade);
 
-        builder
-        .HasIndex(x => x.LessonId)
-        .IsUnique()
-        .HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(x => x.LessonId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

@@ -247,3 +247,12 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix = 
 dotnet_naming_style.begins_with_i.word_separator = 
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+# Force explicit accessibility modifiers (e.g., forces typing 'internal')
+dotnet_diagnostic.IDE0040.severity = warning
+
+# Enforce sealing internal types
+dotnet_diagnostic.CA1852.severity = warning
+
+# Optional: Auto-fix these on save in supported IDEs
+dotnet_diagnostic.IDE0040.severity = warning

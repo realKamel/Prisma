@@ -1,5 +1,5 @@
 using Prisma.API.Extensions;
-using Prisma.Infrastructure;
+using Prisma.Infrastructure.DependenciesInjections;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;

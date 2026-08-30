@@ -6,12 +6,16 @@ using MediatR;
 
 namespace Prisma.Application.Behaviours;
 
-public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidator<TRequest>> validators)
-    : IPipelineBehavior<TRequest, TResponse>
+public sealed class ValidationBehavior<TRequest, TResponse>(
+    IEnumerable<IValidator<TRequest>> validators
+) : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
-    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+    public async Task<TResponse> Handle(
+        TRequest request,
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken
+    )
     {
         if (!validators.Any())
         {
@@ -21,40 +25,49 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
         ValidationContext<TRequest> context = new(request);
 
         ValidationResult[] validationResults = await Task.WhenAll(
-            validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+            validators.Select(v => v.ValidateAsync(context, cancellationToken))
+        );
 
-        List<ValidationFailure> failures = validationResults
-            .SelectMany(result => result.Errors)
-            .Where(failure => failure is not null)
-            .ToList();
+        List<ValidationFailure> failures =
+        [
+            .. validationResults
+                .SelectMany(result => result.Errors)
+                .Where(failure => failure is not null),
+        ];
 
         if (failures.Count == 0)
         {
             return await next(cancellationToken);
         }
 
-        List<ValidationError> validationErrors = failures
-            .Select(f => new ValidationError(
+        List<ValidationError> validationErrors =
+        [
+            .. failures.Select(f => new ValidationError(
                 f.PropertyName,
                 f.ErrorMessage,
                 f.ErrorCode,
-                MapSeverity(f.Severity)))
-            .ToList();
-
+                MapSeverity(f.Severity)
+            )),
+        ];
 
         Type responseType = typeof(TResponse);
 
         // If the handler returns Result<T>, return an Invalid result through the pipeline.
-        if (responseType.IsGenericType && responseType.GetGenericTypeDefinition() == typeof(Result<>))
+        if (
+            responseType.IsGenericType
+            && responseType.GetGenericTypeDefinition() == typeof(Result<>)
+        )
         {
             Type resultType = responseType.GetGenericArguments()[0];
 
             MethodInfo invalidMethod = typeof(Result<>)
                 .MakeGenericType(resultType)
                 .GetMethods()
-                .First(m => m.Name == nameof(Result<>.Invalid)
-                            && m.GetParameters().Length == 1
-                            && m.GetParameters()[0].ParameterType == typeof(IEnumerable<ValidationError>));
+                .First(m =>
+                    m.Name == nameof(Result<>.Invalid)
+                    && m.GetParameters().Length == 1
+                    && m.GetParameters()[0].ParameterType == typeof(IEnumerable<ValidationError>)
+                );
             return (TResponse)invalidMethod.Invoke(null, [validationErrors])!;
         }
 
@@ -75,7 +88,7 @@ public sealed class ValidationBehavior<TRequest, TResponse>(IEnumerable<IValidat
             Severity.Error => ValidationSeverity.Error,
             Severity.Warning => ValidationSeverity.Warning,
             Severity.Info => ValidationSeverity.Info,
-            _ => ValidationSeverity.Error
+            _ => ValidationSeverity.Error,
         };
     }
 }

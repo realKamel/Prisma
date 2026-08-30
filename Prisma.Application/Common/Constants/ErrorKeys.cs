@@ -18,6 +18,9 @@ public static class ErrorKeys
         public const string InvalidCredentials = "AUTH.INVALID_CREDENTIALS";
         public const string TokenExpired = "AUTH.TOKEN_EXPIRED";
         public const string AccountLocked = "AUTH.ACCOUNT_LOCKED";
+        public const string CodeInvalid = "AUTH.CODE_INVALID";
+        public const string EmailOrPhoneRequired = "AUTH.EMAIL_OR_PHONE_REQUIRED";
+        public const string PasswordsDoNotMatch = "AUTH.PASSWORDS_DO_NOT_MATCH";
     }
 
     public static class User

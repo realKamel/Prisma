@@ -4,31 +4,24 @@ using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
+internal sealed class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAttempt>
 {
     public void Configure(EntityTypeBuilder<QuizAttempt> builder)
     {
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Degree)
-            .HasPrecision(8, 2);
+        builder.Property(x => x.Degree).HasPrecision(8, 2);
 
-        builder.Property(a => a.PenaltyScore)
-            .HasColumnType("decimal(5,2)")
-            .HasDefaultValue(0);
+        builder.Property(a => a.PenaltyScore).HasColumnType("decimal(5,2)").HasDefaultValue(0);
 
-        builder.Property(a => a.Status)
-            .HasConversion<string>()
-            .HasMaxLength(20)
-            .IsRequired();
+        builder.Property(a => a.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
 
-        builder.HasOne(x => x.Student)
+        builder
+            .HasOne(x => x.Student)
             .WithMany(x => x.QuizAttempts)
             .HasForeignKey(x => x.StudentId);
 
-        builder.HasOne(x => x.Quiz)
-            .WithMany(x => x.Attempts)
-            .HasForeignKey(x => x.QuizId);
+        builder.HasOne(x => x.Quiz).WithMany(x => x.Attempts).HasForeignKey(x => x.QuizId);
 
         builder.Property(a => a.TabSwitchCount).HasDefaultValue(0);
         builder.Property(a => a.CopyPasteAttemptCount).HasDefaultValue(0);

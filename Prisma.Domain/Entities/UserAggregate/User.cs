@@ -9,13 +9,8 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public string SecondName { get; set; }
     public string? ThirdName { get; set; }
     public string? LastName { get; set; }
-
     public bool IsBlocked { get; set; }
     public bool IsOnline { get; set; }
-
-    public string? RefreshToken { get; set; }
-    public DateTimeOffset? RefreshTokenExpiry { get; set; }
-
     public string? PasswordResetCode { get; set; }
     public bool PasswordResetConfirmed { get; set; }
     public DateTimeOffset? PasswordResetCodeExpiry { get; set; }
@@ -32,17 +27,6 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public ICollection<UserRole> Roles { get; set; } = [];
 
     public void MarkAsOnline() => IsOnline = true;
-    public void UpdateOnlineStatus(bool status) => IsOnline = status;
 
-    public void UpdateRefreshToken(string token, DateTimeOffset? dateTime)
-    {
-        RefreshToken = token;
-        RefreshTokenExpiry = dateTime;
-    }
-
-    public void ClearRefreshTokens()
-    {
-        RefreshToken = null;
-        RefreshTokenExpiry = null;
-    }
+    public void SetOnlineStatus(bool status) => IsOnline = status;
 }

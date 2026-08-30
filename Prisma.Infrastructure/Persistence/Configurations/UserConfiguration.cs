@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<User>
+internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {

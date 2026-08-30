@@ -9,9 +9,8 @@ public class ExtractionJob : BaseEntity
     public string FilePath { get; set; } = string.Empty;
     public ExtractionStatus Status { get; set; } = ExtractionStatus.Pending;
     public string? ErrorMessage { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? CompletedAt { get; set; }
-    
+    public DateTimeOffset? CompletedAt { get; set; }
+
     // Store as JSON string - simpler and more reliable
     public string QuestionsJson { get; set; } = "[]";
 }

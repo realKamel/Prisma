@@ -6,7 +6,8 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class LessonTranscriptChunkConfiguration : IEntityTypeConfiguration<LessonTranscriptChunk>
+internal sealed class LessonTranscriptChunkConfiguration
+    : IEntityTypeConfiguration<LessonTranscriptChunk>
 {
     private readonly ValueComparer<float[]> floatArrayComparer = new ValueComparer<float[]>(
         (c1, c2) => c1 != null && c2 != null ? c1.AsEnumerable().SequenceEqual(c2) : c1 == c2,

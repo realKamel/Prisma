@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class LessonMaterialConfiguration : IEntityTypeConfiguration<LessonMaterial>
+internal sealed class LessonMaterialConfiguration : IEntityTypeConfiguration<LessonMaterial>
 {
     public void Configure(EntityTypeBuilder<LessonMaterial> builder)
     {

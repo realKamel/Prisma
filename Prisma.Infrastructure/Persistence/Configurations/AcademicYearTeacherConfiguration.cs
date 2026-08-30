@@ -4,7 +4,8 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-internal class AcademicYearTeacherConfiguration : IEntityTypeConfiguration<AcademicYearTeacher>
+internal sealed class AcademicYearTeacherConfiguration
+    : IEntityTypeConfiguration<AcademicYearTeacher>
 {
     public void Configure(EntityTypeBuilder<AcademicYearTeacher> builder)
     {

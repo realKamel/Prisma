@@ -4,9 +4,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-public class AdminConfiguration : IEntityTypeConfiguration<Admin>
+internal sealed class AdminConfiguration : IEntityTypeConfiguration<Admin>
 {
-    public void Configure(EntityTypeBuilder<Admin> builder)
-    {
-    }
+    public void Configure(EntityTypeBuilder<Admin> builder) { }
 }

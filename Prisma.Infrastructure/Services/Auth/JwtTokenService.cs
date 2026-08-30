@@ -24,8 +24,8 @@ public class JwtTokenService : IJwtTokenService
     public string GenerateAccessToken(
         Guid userId,
         string email,
-        IList<string> roles,
-        IList<Claim>? permissions = null
+        ICollection<string>? roles,
+        ICollection<Claim>? permissions = default
     )
     {
         var userClaims = new List<Claim>
@@ -40,7 +40,10 @@ public class JwtTokenService : IJwtTokenService
             userClaims.AddRange(permissions);
         }
 
-        userClaims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        if (roles is not null && roles.Count > 0)
+        {
+            userClaims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        }
 
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,

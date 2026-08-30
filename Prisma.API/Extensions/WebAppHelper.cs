@@ -10,9 +10,11 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
+using Prisma.API.Localization;
 using Prisma.API.Middlewares;
 using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.DependenciesInjections;
@@ -96,6 +98,8 @@ public static class WebAppHelper
             // services.AddOpenAIResponses();
             // services.AddOpenAIConversations();
             // services.AddDevUI();
+
+            services.AddLocalizationServices();
         }
 
         private void AddJwtAuthentication(IConfiguration configuration,
@@ -185,6 +189,12 @@ public static class WebAppHelper
                         p.RequireClaim(AppClaims.PermissionsClaim, policy));
                 }
             });
+        }
+
+        private void AddLocalizationServices()
+        {
+            services.AddLocalization();
+            services.AddTransient<IAppLocalizer, AppLocalizer>();
         }
     }
 

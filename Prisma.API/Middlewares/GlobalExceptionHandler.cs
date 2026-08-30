@@ -39,18 +39,26 @@ namespace Prisma.API.Middlewares;
 /// </remarks>
 public class GlobalExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,
-    IProblemDetailsService problemDetailsService) : IExceptionHandler
+    IProblemDetailsService problemDetailsService
+) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
-        CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
     {
         // The client disconnected — writing a response would be pointless (and the current
         // connection is gone).
         if (httpContext.RequestAborted.IsCancellationRequested)
         {
-            logger.LogDebug(exception,
+            logger.LogDebug(
+                exception,
                 "Client aborted request {Method} {Path} (TraceId: {TraceId}).",
-                httpContext.Request.Method, httpContext.Request.Path, httpContext.TraceIdentifier);
+                httpContext.Request.Method,
+                httpContext.Request.Path,
+                httpContext.TraceIdentifier
+            );
 
             return true;
         }
@@ -58,9 +66,13 @@ public class GlobalExceptionHandler(
         // Headers/body already flushed — we cannot replace the response at this point.
         if (httpContext.Response.HasStarted)
         {
-            logger.LogWarning(exception,
+            logger.LogWarning(
+                exception,
                 "Response already started for {Method} {Path}; cannot write Problem Details (TraceId: {TraceId}).",
-                httpContext.Request.Method, httpContext.Request.Path, httpContext.TraceIdentifier);
+                httpContext.Request.Method,
+                httpContext.Request.Path,
+                httpContext.TraceIdentifier
+            );
 
             return false;
         }
@@ -71,82 +83,108 @@ public class GlobalExceptionHandler(
         // expected behavior and logged at debug level. Nothing here reaches the client.
         if (status == StatusCodes.Status500InternalServerError)
         {
-            logger.LogError(exception,
+            logger.LogError(
+                exception,
                 "Unhandled exception processing {Method} {Path} (TraceId: {TraceId}).",
-                httpContext.Request.Method, httpContext.Request.Path, httpContext.TraceIdentifier);
+                httpContext.Request.Method,
+                httpContext.Request.Path,
+                httpContext.TraceIdentifier
+            );
         }
         else
         {
-            logger.LogDebug(exception,
+            logger.LogDebug(
+                exception,
                 "Handled {ExceptionType} for {Method} {Path} -> {StatusCode} (TraceId: {TraceId}).",
-                exception.GetType().Name, httpContext.Request.Method, httpContext.Request.Path,
-                status, httpContext.TraceIdentifier);
+                exception.GetType().Name,
+                httpContext.Request.Method,
+                httpContext.Request.Path,
+                status,
+                httpContext.TraceIdentifier
+            );
         }
 
         httpContext.Response.StatusCode = status;
 
         var problem = new ProblemDetails
         {
-            Title = title, Detail = detail, Status = status, Instance = httpContext.Request.Path,
+            Title = title,
+            Detail = detail,
+            Status = status,
+            Instance = httpContext.Request.Path,
         };
 
         extra?.Invoke(problem);
 
-        return await problemDetailsService.TryWriteAsync(new ProblemDetailsContext
-        {
-            HttpContext = httpContext, ProblemDetails = problem, Exception = exception,
-        });
+        return await problemDetailsService.TryWriteAsync(
+            new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                ProblemDetails = problem,
+                Exception = exception,
+            }
+        );
     }
 
     /// <summary>
     /// Maps an exception to the Problem Details fields it should produce.
     /// </summary>
-    private static (int Status, string Title, string Detail, Action<ProblemDetails>? Extra) MapException(
-        Exception exception) => exception switch
-    {
-        FluentValidation.ValidationException vex => (
-            StatusCodes.Status400BadRequest,
-            "Validation Failed",
-            "One or more validation errors occurred.",
-            p =>
-            {
-                p.Extensions["errors"] = vex.Errors
-                    .GroupBy(e => e.PropertyName)
-                    .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-            }),
+    private static (
+        int Status,
+        string Title,
+        string Detail,
+        Action<ProblemDetails>? Extra
+    ) MapException(Exception exception) =>
+        exception switch
+        {
+            FluentValidation.ValidationException vex => (
+                StatusCodes.Status400BadRequest,
+                "Validation Failed",
+                "One or more validation errors occurred.",
+                p =>
+                {
+                    p.Extensions["errors"] = vex
+                        .Errors.GroupBy(e => e.PropertyName)
+                        .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
+                }
+            ),
 
-        // Server-side timeout only — client aborts are filtered out at the top
-        // of TryHandleAsync.
-        OperationCanceledException => (
-            StatusCodes.Status504GatewayTimeout,
-            "Operation Timed Out",
-            "The operation timed out. Please try again.",
-            null),
+            // Server-side timeout only — client aborts are filtered out at the top
+            // of TryHandleAsync.
+            OperationCanceledException => (
+                StatusCodes.Status504GatewayTimeout,
+                "Operation Timed Out",
+                "The operation timed out. Please try again.",
+                null
+            ),
 
-        // Malformed requests rejected by the server (invalid content type,
-        // malformed JSON, payload too large, ...). The exception message describes the
-        // request problem, not application internals.
-        BadHttpRequestException badHttp => (
-            badHttp.StatusCode,
-            GetReasonTitle(badHttp.StatusCode),
-            badHttp.Message,
-            null),
+            // Malformed requests rejected by the server (invalid content type,
+            // malformed JSON, payload too large, ...). The exception message describes the
+            // request problem, not application internals.
+            BadHttpRequestException badHttp => (
+                badHttp.StatusCode,
+                GetReasonTitle(badHttp.StatusCode),
+                badHttp.Message,
+                null
+            ),
 
-        // Fallback for bugs and unexpected failures: the client only ever sees a generic
-        // message — never the real exception message or stack trace.
-        _ => (
-            StatusCodes.Status500InternalServerError,
-            "An error occurred while processing your request.",
-            "An unexpected error occurred. Please try again later.",
-            null),
-    };
+            // Fallback for bugs and unexpected failures: the client only ever sees a generic
+            // message — never the real exception message or stack trace.
+            _ => (
+                StatusCodes.Status500InternalServerError,
+                "An error occurred while processing your request.",
+                "An unexpected error occurred. Please try again later.",
+                null
+            ),
+        };
 
-    private static string GetReasonTitle(int statusCode) => statusCode switch
-    {
-        StatusCodes.Status400BadRequest => "Bad Request",
-        StatusCodes.Status404NotFound => "Not Found",
-        StatusCodes.Status413PayloadTooLarge => "Payload Too Large",
-        StatusCodes.Status415UnsupportedMediaType => "Unsupported Media Type",
-        _ => "Request Error",
-    };
+    private static string GetReasonTitle(int statusCode) =>
+        statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Bad Request",
+            StatusCodes.Status404NotFound => "Not Found",
+            StatusCodes.Status413PayloadTooLarge => "Payload Too Large",
+            StatusCodes.Status415UnsupportedMediaType => "Unsupported Media Type",
+            _ => "Request Error",
+        };
 }

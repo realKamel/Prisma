@@ -19,6 +19,11 @@ public static partial class DependenciesInjection
     )
     {
         services.AddHttpContextAccessor();
+        services
+            .AddOptions<IdentityConfigOptions>()
+            .Bind(configuration.GetSection(IdentityConfigOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services
             .AddIdentityCore<User>(options =>

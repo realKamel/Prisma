@@ -12,7 +12,7 @@ internal sealed class LocalizeResultAttribute : ActionFilterAttribute
     {
         var localizer = context.HttpContext.RequestServices.GetRequiredService<IAppLocalizer>();
 
-        // 1. Intercept Raw Ardalis Validation Errors
+        //Intercept Raw Validation Errors
         if (
             context.Result is BadRequestObjectResult badRequest
             && badRequest.Value is IEnumerable<ValidationError> validationErrors
@@ -21,8 +21,10 @@ internal sealed class LocalizeResultAttribute : ActionFilterAttribute
             var localizedErrors = validationErrors.Select(v => new
             {
                 field = v.Identifier,
-                code = v.ErrorMessage,
-                message = localizer[v.ErrorMessage],
+                code = v.ErrorCode, // was v.ErrorMessage
+                message = !string.IsNullOrWhiteSpace(v.ErrorCode)
+                    ? localizer[v.ErrorCode]
+                    : v.ErrorMessage, // fallback
             });
 
             context.Result = new BadRequestObjectResult(new { errors = localizedErrors });

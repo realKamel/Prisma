@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Interfaces;
-using Prisma.Infrastructure.Localization;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services;
 
@@ -46,7 +45,6 @@ public static partial class DependenciesInjection
         services.AddScoped<ITextEmbeddingProcessor, TextEmbeddingProcessor>();
 
         services.AddCacheServices(configuration);
-        services.AddLocalizationServices();
     }
 
     private static void AddInfrastructureHealthChecks(
@@ -87,11 +85,5 @@ public static partial class DependenciesInjection
                 name: "hangfire",
                 tags: ["jobs", "hangfire", "ready"]
             );
-    }
-
-    private static void AddLocalizationServices(this IServiceCollection services)
-    {
-        services.AddLocalization();
-        services.AddTransient<IAppLocalizer, AppLocalizer>();
     }
 }

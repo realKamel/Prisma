@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Infrastructure.Caching;
 using Prisma.Infrastructure.Persistence;
 using StackExchange.Redis;
 using ZiggyCreatures.Caching.Fusion;
@@ -28,16 +30,18 @@ public static partial class DependenciesInjection
             nameof(connectionStrings.Valkey)
         );
 
+        var multiplexer = ConnectionMultiplexer.Connect(connectionStrings.Valkey);
+
+        services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+
         services
             .AddDataProtection()
-            .PersistKeysToStackExchangeRedis(
-                ConnectionMultiplexer.Connect(connectionStrings.Valkey),
-                "DataProtection-Keys"
-            );
+            .PersistKeysToStackExchangeRedis(multiplexer, "DataProtection-Keys");
 
         services.AddStackExchangeRedisCache(options =>
         {
-            options.Configuration = connectionStrings.Valkey;
+            options.ConnectionMultiplexerFactory = () =>
+                Task.FromResult<IConnectionMultiplexer>(multiplexer);
         });
 
         services
@@ -71,9 +75,15 @@ public static partial class DependenciesInjection
             // Backplane: Syncs all API nodes so no server returns old data
             .WithBackplane(
                 new RedisBackplane(
-                    new RedisBackplaneOptions { Configuration = connectionStrings.Valkey }
+                    new RedisBackplaneOptions
+                    {
+                        ConnectionMultiplexerFactory = () =>
+                            Task.FromResult<IConnectionMultiplexer>(multiplexer),
+                    }
                 )
             )
             .AsHybridCache();
+
+        services.AddScoped<ITokenService, ValkeyTokenService>();
     }
 }

@@ -1,59 +1,70 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Authentication.Commands.RefreshToken;
 
 public class RefreshTokenCommandHandler(
-    UserManager<User> userManager,
-    IJwtTokenService jwtService) : IRequestHandler<RefreshTokenCommand, Result<AuthResponse>>
+    IIdentityService identityService,
+    ITokenService tokenService,
+    IJwtTokenService jwtService
+) : IRequestHandler<RefreshTokenCommand, Result<AuthResponse>>
 {
-    public async Task<Result<AuthResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponse>> Handle(
+        RefreshTokenCommand request,
+        CancellationToken cancellationToken
+    )
     {
         // 1. Validate the expired access token and extract claims
         if (string.IsNullOrWhiteSpace(request.RefreshToken))
         {
-            return Result.Unauthorized("Please Login");
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
         }
 
         var principal = jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
 
         if (principal is null)
         {
-            return Result.Error("Please Login");
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
         }
 
-        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier)
-                     ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var userId =
+            principal.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return Result.Unauthorized("Please Login");
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
         }
 
-        var user = await userManager.FindByIdAsync(userId);
-
-        if (user is null || user.RefreshToken != request.RefreshToken ||
-            user.RefreshTokenExpiry < DateTimeOffset.UtcNow)
+        if (!Guid.TryParse(userId, out Guid id))
         {
-            return Result.Unauthorized("Please Login");
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
         }
 
-        var claims = await userManager.GetClaimsAsync(user);
-        var roles = await userManager.GetRolesAsync(user);
+        var user = await identityService.FindByIdAsync(id, false, cancellationToken);
 
-        var newAccessToken = jwtService.GenerateAccessToken(user.Id, user.Email, roles, claims);
+        if (user is null)
+        {
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
+        }
+
+        var permissions = user.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+
+        var roles = user.Roles.Select(x => x.Role.Name).ToList();
+
+        var newAccessToken = jwtService.GenerateAccessToken(
+            user.Id,
+            user.Email,
+            roles,
+            permissions
+        );
 
         var newRefreshToken = jwtService.GenerateRefreshToken();
 
-        user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiry = DateTimeOffset.UtcNow.AddDays(7);
-
-        await userManager.UpdateAsync(user);
+        await tokenService.SaveRefreshTokenAsync(user.Id, newRefreshToken);
 
         return new AuthResponse(newAccessToken, newRefreshToken);
     }

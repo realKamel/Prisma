@@ -8,8 +8,11 @@ using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
-public class LoginCommandHandler(IIdentityService identityService, IJwtTokenService jwtTokenService)
-    : IRequestHandler<LoginCommand, Result<LoginResponse>>
+public class LoginCommandHandler(
+    IIdentityService identityService,
+    IJwtTokenService jwtTokenService,
+    ITokenService tokenService
+) : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
     public async Task<Result<LoginResponse>> Handle(
         LoginCommand request,
@@ -24,7 +27,7 @@ public class LoginCommandHandler(IIdentityService identityService, IJwtTokenServ
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
         {
-            return Result.Unauthorized("Invalid Credentials");
+            return Result.Unauthorized("COMMON.UNAUTHORIZED");
         }
 
         if (user is Teacher teacher)
@@ -54,7 +57,10 @@ public class LoginCommandHandler(IIdentityService identityService, IJwtTokenServ
 
         var roles = user.Roles.Select(x => x.Role.Name).ToList();
 
-        var permissions = user.Claims.Select(c => new Claim(c.ClaimType, c.ClaimValue)).ToList();
+        var permissions = user
+            .Claims.Where(c => c is not null)
+            .Select(c => new Claim(c.ClaimType, c.ClaimValue))
+            .ToList();
 
         var permissionList = permissions.Select(c => c.Value).ToArray();
 
@@ -67,12 +73,9 @@ public class LoginCommandHandler(IIdentityService identityService, IJwtTokenServ
 
         var refreshToken = jwtTokenService.GenerateRefreshToken();
 
-        //TODO: this must be set from configuration
-        user.UpdateRefreshToken(refreshToken, DateTimeOffset.UtcNow.AddDays(7));
-
         user.MarkAsOnline();
 
-        await identityService.UpdateAsync(user);
+        await tokenService.SaveRefreshTokenAsync(user.Id, refreshToken);
 
         return new LoginResponse(
             accessToken,

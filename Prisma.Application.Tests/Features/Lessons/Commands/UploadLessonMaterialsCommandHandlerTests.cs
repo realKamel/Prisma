@@ -16,36 +16,28 @@ namespace Prisma.Application.Tests.Features.Lessons.Commands;
 public class UploadLessonMaterialsCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+
     private readonly ICurrentUserService _currentUserService =
         Substitute.For<ICurrentUserService>();
-    private readonly UserManager<User> _userManager;
+
+    // private readonly UserManager<User> identityService;
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
+
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
         IRepository<Lesson, int>
     >();
+
     private readonly UploadLessonMaterialsCommandHandler _sut;
 
     public UploadLessonMaterialsCommandHandlerTests()
     {
-        var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(
-            store,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _sut = new UploadLessonMaterialsCommandHandler(
             _unitOfWork,
             _currentUserService,
-            _userManager,
+            _identityService,
             _storageService
         );
     }
@@ -68,7 +60,7 @@ public class UploadLessonMaterialsCommandHandlerTests
     {
         var userId = Guid.NewGuid();
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns((User?)null);
+        _identityService.FindByIdAsync(userId).Returns((User?)null);
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
@@ -86,8 +78,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var fakeUser = new User { Id = userId };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { "Student" });
+        _identityService.FindByIdAsync(userId).Returns(fakeUser);
+        _identityService.GetRolesAsync(fakeUser).Returns(new List<string> { "Student" });
 
         var command = new UploadLessonMaterialsCommand(1, new List<IFormFile>());
 
@@ -107,8 +99,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var fakeUser = new User { Id = userId };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId).Returns(fakeUser);
+        _identityService.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         // ?? ??????? ???????? Specification ?????? ??????? ?? ????????
         _lessonRepo
@@ -134,8 +126,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var lesson = new Lesson { Id = 1, LessonMaterials = new List<LessonMaterial>() };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId).Returns(fakeUser);
+        _identityService.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         _lessonRepo
             .FirstOrDefaultAsync(
@@ -162,8 +154,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var lesson = new Lesson { Id = 1, LessonMaterials = new List<LessonMaterial>() };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId).Returns(fakeUser);
+        _identityService.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         _lessonRepo
             .FirstOrDefaultAsync(
@@ -214,8 +206,8 @@ public class UploadLessonMaterialsCommandHandlerTests
         var lesson = new Lesson { Id = 1, LessonMaterials = new List<LessonMaterial>() };
 
         _currentUserService.UserId.Returns(userId);
-        _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
-        _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
+        _identityService.FindByIdAsync(userId).Returns(fakeUser);
+        _identityService.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         _lessonRepo
             .FirstOrDefaultAsync(

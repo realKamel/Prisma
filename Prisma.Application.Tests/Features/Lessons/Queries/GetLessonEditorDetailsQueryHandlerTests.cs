@@ -19,6 +19,8 @@ public class GetLessonEditorDetailsQueryHandlerTests
 
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
     private readonly GetLessonEditorDetailsQueryHandler _sut;
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     public GetLessonEditorDetailsQueryHandlerTests()
     {
@@ -28,7 +30,8 @@ public class GetLessonEditorDetailsQueryHandlerTests
 
         _storageService.DefaultBucketName.Returns("prisma-bucket");
 
-        _sut = new GetLessonEditorDetailsQueryHandler(_unitOfWork, _storageService);
+        _sut = new GetLessonEditorDetailsQueryHandler(_unitOfWork, _storageService, _currentUserService,
+            _identityService);
     }
 
     [Fact]

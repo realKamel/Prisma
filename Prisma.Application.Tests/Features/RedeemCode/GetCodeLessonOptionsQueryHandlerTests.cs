@@ -13,16 +13,21 @@ public class GetCodeLessonOptionsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AcademicYearLesson, int> _repo = Substitute.For<IRepository<AcademicYearLesson, int>>();
+
+    private readonly IRepository<AcademicYearLesson, int>
+        _repo = Substitute.For<IRepository<AcademicYearLesson, int>>();
+
     private readonly GetCodeLessonOptionsQueryHandler _sut;
 
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly Guid _teacherId = Guid.NewGuid();
 
     public GetCodeLessonOptionsQueryHandlerTests()
     {
         _currentUser.UserId.Returns(_teacherId);
         _unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>().Returns(_repo);
-        _sut = new GetCodeLessonOptionsQueryHandler(_unitOfWork, _currentUser);
+        _sut = new GetCodeLessonOptionsQueryHandler(_unitOfWork, _currentUserService, _identityService);
     }
 
     [Fact]
@@ -38,8 +43,8 @@ public class GetCodeLessonOptionsQueryHandlerTests
         };
 
         _repo.ListAsync(
-            Arg.Any<TeacherAcademicYearLessonsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearLessonsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(links);
 
         // Act
@@ -57,8 +62,8 @@ public class GetCodeLessonOptionsQueryHandlerTests
     {
         // Arrange
         _repo.ListAsync(
-            Arg.Any<TeacherAcademicYearLessonsSpecification>(),
-            Arg.Any<CancellationToken>())
+                Arg.Any<TeacherAcademicYearLessonsSpecification>(),
+                Arg.Any<CancellationToken>())
             .Returns(new List<AcademicYearLesson>());
 
         // Act

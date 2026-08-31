@@ -19,7 +19,7 @@ public class CreateUserCommandHandlerTests
 
     public CreateUserCommandHandlerTests()
     {
-        _sut = new CreateUserCommandHandler(_identityService,_unitOfWork);
+        _sut = new CreateUserCommandHandler(_identityService, _unitOfWork);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class CreateUserCommandHandlerTests
 
         var command = new CreateUserCommand(
             "محمد", "علي", "حسن", "إبراهيم", "01012345678", "m@test.com", "Passw0rd!",
-            AppRoles.Student, 1, Guid.NewGuid(), "01198765432");
+            AppRoles.Student, 1, Guid.NewGuid(), "01198765432", "English");
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -53,7 +53,7 @@ public class CreateUserCommandHandlerTests
         var teacherId = Guid.NewGuid();
         var command = new CreateUserCommand(
             "محمد", "علي", "حسن", "إبراهيم", "01012345678", "m@test.com", "Passw0rd!",
-            AppRoles.Student, 2, teacherId, "01198765432");
+            AppRoles.Student, 2, teacherId, "01198765432", "English");
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -62,7 +62,7 @@ public class CreateUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be(AppRoles.Student);
         result.Value.GradeId.Should().Be(2);
-        result.Value.TeacherIds.Should().Contain(teacherId);
+        result.Value.TeacherIds.Should().Contain(teacherId.ToString());
 
         await _identityService.Received(1).CreateAsync(
             Arg.Is<User>(u => u is Student && u.Email == "m@test.com"),
@@ -81,7 +81,7 @@ public class CreateUserCommandHandlerTests
 
         var command = new CreateUserCommand(
             "سارة", "خالد", "عبدالله", "محمود", "01198765432", "s@test.com", "Passw0rd!",
-            AppRoles.Teacher, null, null, null);
+            AppRoles.Teacher, null, null, null, null);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -103,7 +103,7 @@ public class CreateUserCommandHandlerTests
 
         var command = new CreateUserCommand(
             "سارة", "خالد", "عبدالله", "محمود", "01198765432", "s@test.com", "weak",
-            AppRoles.Teacher, null, null, null);
+            AppRoles.Teacher, null, null, null, null);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -122,7 +122,7 @@ public class CreateUserCommandHandlerTests
 
         var command = new CreateUserCommand(
             "س", "خ", "ع", "م", "01198765432", "s@test.com", "Passw0rd!",
-            "SuperAdmin", null, null, null); // not a real role
+            "SuperAdmin", null, null, null, null); // not a real role
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);

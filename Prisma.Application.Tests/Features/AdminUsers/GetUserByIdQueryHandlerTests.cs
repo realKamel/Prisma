@@ -4,17 +4,19 @@ using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Queries.GetUserById;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Tests.Features.AdminUsers;
 
 public class GetUserByIdQueryHandlerTests
 {
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly GetUserByIdQueryHandler _sut;
 
     public GetUserByIdQueryHandlerTests()
     {
-        _sut = new GetUserByIdQueryHandler(_identityService);
+        _sut = new GetUserByIdQueryHandler(_unitOfWork, _identityService);
     }
 
     [Fact]
@@ -35,10 +37,7 @@ public class GetUserByIdQueryHandlerTests
             ParentPhoneNumber = "01198765432",
         };
 
-        student.TeacherStudents.Add(new TeacherStudent
-        {
-            TeacherId = teacherId
-        });
+        student.TeacherStudents.Add(new TeacherStudent { TeacherId = teacherId });
 
         _identityService
             .FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
@@ -51,7 +50,7 @@ public class GetUserByIdQueryHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be("Student");
         result.Value.GradeId.Should().Be(2);
-        result.Value.TeacherIds.Should().Contain(teacherId);
+        result.Value.TeacherIds.Should().Contain(teacherId.ToString());
         result.Value.ParentMobile.Should().Be("01198765432");
     }
 
@@ -61,10 +60,7 @@ public class GetUserByIdQueryHandlerTests
         // Arrange
         var assistant = new Assistant
         {
-            Id = Guid.CreateVersion7(),
-            FirstName = "فاطمة",
-            LastName = "أحمد",
-            Email = "f@test.com",
+            Id = Guid.CreateVersion7(), FirstName = "فاطمة", LastName = "أحمد", Email = "f@test.com",
         };
 
         _identityService

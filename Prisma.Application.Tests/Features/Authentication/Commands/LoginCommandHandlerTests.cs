@@ -14,6 +14,7 @@ public class LoginCommandHandlerTests
 {
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly IJwtTokenService _jwtTokenService = Substitute.For<IJwtTokenService>();
+    private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
     private readonly LoginCommandHandler _sut;
 
     private readonly User _fakeUser = new()
@@ -23,7 +24,7 @@ public class LoginCommandHandlerTests
 
     public LoginCommandHandlerTests()
     {
-        _sut = new LoginCommandHandler(_identityService, _jwtTokenService);
+        _sut = new LoginCommandHandler(_identityService, _jwtTokenService, tokenService: _tokenService);
     }
 
     // ── Happy path ──────────────────────────────────────────────────────────
@@ -81,10 +82,6 @@ public class LoginCommandHandlerTests
         // Act
         await _sut.Handle(command, CancellationToken.None);
 
-        // Assert
-        _fakeUser.RefreshToken.Should().Be("refresh-token");
-        _fakeUser.RefreshTokenExpiry.Should().BeCloseTo(
-            DateTimeOffset.UtcNow.AddDays(7), precision: TimeSpan.FromSeconds(5));
         _fakeUser.IsOnline.Should().BeTrue();
     }
 

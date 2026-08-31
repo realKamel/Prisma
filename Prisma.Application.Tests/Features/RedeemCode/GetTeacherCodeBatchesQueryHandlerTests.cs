@@ -22,12 +22,15 @@ public class GetTeacherCodeBatchesQueryHandlerTests
 
     private readonly Guid _teacherId = Guid.NewGuid();
 
+    // private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+
     public GetTeacherCodeBatchesQueryHandlerTests()
     {
         _currentUser.UserId.Returns(_teacherId);
         _currentUser.IsAuthenticated.Returns(true);
         _unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>().Returns(_batchRepo);
-        _sut = new GetTeacherCodeBatchesQueryHandler(_unitOfWork, _currentUser);
+        _sut = new GetTeacherCodeBatchesQueryHandler(_unitOfWork, _currentUser, _identityService);
     }
 
     [Fact]

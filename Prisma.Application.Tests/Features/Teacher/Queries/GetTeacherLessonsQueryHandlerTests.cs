@@ -1,36 +1,35 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherLessons;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
-using Xunit;
 
-namespace Prisma.Application.Tests.Features.Teachers.Queries;
+namespace Prisma.Application.Tests.Features.Teacher.Queries;
 
 public class GetTeacherLessonsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
         IRepository<Lesson, int>
     >();
+
     private readonly ICurrentUserService _currentUserService =
         Substitute.For<ICurrentUserService>();
+
     private readonly GetTeacherLessonsQueryHandler _sut;
+
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetTeacherLessonsQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
-        _sut = new GetTeacherLessonsQueryHandler(_unitOfWork, _currentUserService);
+        _sut = new GetTeacherLessonsQueryHandler(_unitOfWork, _currentUserService, _identityService);
     }
 
     [Fact]
@@ -64,11 +63,12 @@ public class GetTeacherLessonsQueryHandlerTests
                 Title = "الكورس المكثف في النحو",
                 Price = 250.00m,
                 Status = LessonStatus.Active, // يتأكد الـ Test من تحويلها لـ "active" حروف صغيرة
-                Enrollments = new List<Enrollment>
-                {
-                    new() { Id = 101, StudentId = Guid.NewGuid() },
-                    new() { Id = 102, StudentId = Guid.NewGuid() },
-                },
+                Enrollments =
+                    new List<Enrollment>
+                    {
+                        new() { Id = 101, StudentId = Guid.NewGuid() },
+                        new() { Id = 102, StudentId = Guid.NewGuid() },
+                    },
             },
             new()
             {

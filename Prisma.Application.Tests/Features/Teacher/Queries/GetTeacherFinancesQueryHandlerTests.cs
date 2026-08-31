@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
@@ -13,18 +9,20 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
-using Xunit;
 
-namespace Prisma.Application.Tests.Features.Teachers.Queries;
+namespace Prisma.Application.Tests.Features.Teacher.Queries;
 
 public class GetTeacherFinancesQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+
     private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<
         IRepository<Payment, int>
     >();
+
     private readonly ICurrentUserService _currentUserService =
         Substitute.For<ICurrentUserService>();
+
     private readonly GetTeacherFinancesQueryHandler _sut;
 
     public GetTeacherFinancesQueryHandlerTests()

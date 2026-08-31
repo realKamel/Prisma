@@ -8,6 +8,7 @@ using Prisma.Domain.Interfaces;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Prisma.Application.Abstractions.Services;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
@@ -16,8 +17,13 @@ public class GetLessonFormOptionsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
+
+    private readonly IRepository<AcademicYear, int>
+        _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
+
     private readonly GetLessonFormOptionsQueryHandler _sut;
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
 
     public GetLessonFormOptionsQueryHandlerTests()
     {
@@ -25,7 +31,7 @@ public class GetLessonFormOptionsQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<AcademicYear, int>().Returns(_academicYearRepo);
 
-        _sut = new GetLessonFormOptionsQueryHandler(_unitOfWork);
+        _sut = new GetLessonFormOptionsQueryHandler(_unitOfWork, _identityService, _currentUserService);
     }
 
     [Fact]
@@ -37,15 +43,13 @@ public class GetLessonFormOptionsQueryHandlerTests
         // بناء دروس وهمية لتكون خيارات للمتطلبات السابقة (Prerequisites)
         var fakeLessons = new List<Lesson>
         {
-            new() { Id = 10, Title = "درس القراءة: الحرية" },
-            new() { Id = 11, Title = "درس النحو: المبتدأ والخبر" }
+            new() { Id = 10, Title = "درس القراءة: الحرية" }, new() { Id = 11, Title = "درس النحو: المبتدأ والخبر" }
         };
 
         // بناء مراحل دراسية وهمية
         var fakeAcademicYears = new List<AcademicYear>
         {
-            new() { Id = 1, Title = "الصف الأول الإعدادي" },
-            new() { Id = 2, Title = "الصف الثاني الإعدادي" }
+            new() { Id = 1, Title = "الصف الأول الإعدادي" }, new() { Id = 2, Title = "الصف الثاني الإعدادي" }
         };
 
         // عمل Mock للـ ListAsync لكل Repository لترجع البيانات المجهزة

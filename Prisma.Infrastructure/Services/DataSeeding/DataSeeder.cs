@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Infrastructure.Persistence;
+using Prisma.Infrastructure.Services.Auth;
 
 namespace Prisma.Infrastructure.Services.DataSeeding;
 
@@ -18,7 +20,8 @@ public class DataSeeder(
     RoleManager<Role> roleManager,
     UserManager<User> userManager,
     IHostEnvironment hostEnvironment,
-    IConfiguration configuration
+    IConfiguration configuration,
+    IOptions<IdentityConfigOptions> identityOptions
 ) : IDataSeeder
 {
     public async Task SeedAppDataAsync()
@@ -103,14 +106,14 @@ public class DataSeeder(
                         {
                             FirstName = "Admin",
                             SecondName = "Prisma",
-                            UserName = configuration.GetSection("IdentitySeed")["AdminEmail"],
-                            Email = configuration.GetSection("IdentitySeed")["AdminEmail"],
-                            PhoneNumber = configuration.GetSection("IdentitySeed")["AdminPhone"],
+                            UserName = identityOptions.Value.AdminEmail,
+                            Email = identityOptions.Value.AdminEmail,
+                            PhoneNumber = identityOptions.Value.AdminPhone,
                         };
 
                         await userManager.CreateAsync(
                             admin,
-                            configuration.GetSection("IdentitySeed")["AdminPassword"]
+                            identityOptions.Value.AdminPassword
                                 ?? throw new Exception("Identity data is empty")
                         );
 

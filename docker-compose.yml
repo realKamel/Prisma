@@ -1,6 +1,75 @@
-services:
+﻿services:
   prisma.api:
     image: ${DOCKER_REGISTRY-}prismaapi
     build:
       context: .
       dockerfile: Prisma.API/Dockerfile
+    environment:
+      ConnectionStrings__DefaultSqlConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=true;SSL Mode=Disable;"
+      ConnectionStrings__DefaultSqlConnection2: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};No Reset On Close=true;Max Auto Prepare=0;Include Error Detail=true;SSL Mode=Disable;"
+      ConnectionStrings__Valkey: "cache:6379"
+      IdentitySeed__AdminEmail: ${IDENTITY_SEED_ADMIN_EMAIL}
+      IdentitySeed__AdminPassword: ${IDENTITY_SEED_ADMIN_PASSWORD}
+      IdentitySeed__AdminPhone: ${IDENTITY_SEED_ADMIN_PHONE_NUMBER}
+    depends_on:
+      - db
+      - cache
+      - object-storage
+      - connection-pooler
+
+  db:
+    image: pgvector/pgvector:pg18
+    container_name: prisma-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
+
+  cache:
+    image: valkey/valkey:latest
+    container_name: prisma-cache
+    ports:
+      - "6379:6379"
+    volumes:
+      - cache-data:/data
+
+  object-storage:
+    image: minio/minio:latest
+    container_name: prisma-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  connection-pooler:
+    image: edoburu/pgbouncer:latest
+    container_name: prisma-pgbouncer
+    environment:
+      DB_HOST: ${PGBOUNCER_DB_HOST}
+      DB_PORT: ${PGBOUNCER_DB_PORT}
+      DB_USER: ${PGBOUNCER_DB_USER}
+      DB_PASSWORD: ${PGBOUNCER_DB_PASSWORD}
+      DB_NAME: ${PGBOUNCER_DB_NAME}
+      POOL_MODE: ${PGBOUNCER_POOL_MODE}
+      MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN}
+      DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE}
+      ADMIN_USERS: ${PGBOUNCER_ADMIN_USERS}
+    depends_on:
+      - db
+    ports:
+      - "6432:5432"
+
+volumes:
+  postgres-data:
+  cache-data:
+  minio-data:

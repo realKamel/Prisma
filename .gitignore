@@ -364,3 +364,4 @@ FodyWeavers.xsd
 /.idea/.idea.Prisma/.idea
 /.vscode
 /.env
+/Prisma.API/wwwroot

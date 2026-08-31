@@ -12,15 +12,25 @@ namespace Prisma.Application.Features.Users.Commands.CreateUser;
 public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfWork uow)
     : IRequestHandler<CreateUserCommand, Result<UserEditDto>>
 {
-    public async Task<Result<UserEditDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserEditDto>> Handle(
+        CreateUserCommand request,
+        CancellationToken cancellationToken
+    )
     {
-        var existing = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Mobile, cancellationToken);
+        var existing = await identityService.FindByEmailOrPhoneAsync(
+            request.Email,
+            request.Mobile,
+            cancellationToken
+        );
         if (existing is not null)
             return Result.Conflict("A user with this email or phone already exists.");
 
         var roleInRequest = request.Role.ToLower();
 
-        if (roleInRequest is not (AppRoles.Student or AppRoles.Teacher or AppRoles.Assistant or AppRoles.Admin))
+        if (
+            roleInRequest
+            is not (AppRoles.Student or AppRoles.Teacher or AppRoles.Assistant or AppRoles.Admin)
+        )
             return Result.Error($"Unknown role '{request.Role}'.");
 
         User user = roleInRequest switch
@@ -29,15 +39,25 @@ public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfW
             {
                 Id = Guid.CreateVersion7(),
                 AcademicYearId = request.GradeId,
-                ParentPhoneNumber = request.ParentMobile},
-            AppRoles.Teacher => new Teacher { Id = Guid.CreateVersion7(),
-                Subject = request.Subject ?? string.Empty
+                ParentPhoneNumber = request.ParentMobile,
+            },
+            AppRoles.Teacher => new Teacher
+            {
+                Id = Guid.CreateVersion7(),
+                Subject = request.Subject ?? string.Empty,
             },
             // NOTE: unlike CreateAssistantCommand, this generic path doesn't set
             // Policies claims — an admin can grant permissions afterward via the
             // existing AssistantsController.UpdateAssistantPermissions endpoint.
-            AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7(), TeacherId = request.TeacherId },
-            AppRoles.Admin => new Domain.Entities.UserAggregate.Admin { Id = Guid.CreateVersion7() },
+            AppRoles.Assistant => new Assistant
+            {
+                Id = Guid.CreateVersion7(),
+                TeacherId = request.TeacherId,
+            },
+            AppRoles.Admin => new Domain.Entities.UserAggregate.Admin
+            {
+                Id = Guid.CreateVersion7(),
+            },
         };
 
         user.FirstName = request.FirstName;
@@ -75,11 +95,18 @@ public class CreateUserCommandHandler(IIdentityService identityService, IUnitOfW
         }
         await uow.SaveChangesAsync(cancellationToken);
         var dto = new UserEditDto(
-            user.Id, user.FirstName, user.SecondName, user.ThirdName, user.LastName,
-            user.PhoneNumber, user.Email, request.Role,
+            user.Id,
+            user.FirstName,
+            user.SecondName,
+            user.ThirdName,
+            user.LastName,
+            user.PhoneNumber,
+            user.Email,
+            request.Role,
             (user as Student)?.AcademicYearId,
             [],
-            (user as Student)?.ParentPhoneNumber );
+            (user as Student)?.ParentPhoneNumber
+        );
 
         return dto;
     }

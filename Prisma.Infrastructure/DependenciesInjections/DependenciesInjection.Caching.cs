@@ -34,10 +34,6 @@ public static partial class DependenciesInjection
 
         services.AddSingleton<IConnectionMultiplexer>(multiplexer);
 
-        services
-            .AddDataProtection()
-            .PersistKeysToStackExchangeRedis(multiplexer, "DataProtection-Keys");
-
         services.AddStackExchangeRedisCache(options =>
         {
             options.ConnectionMultiplexerFactory = () =>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,8 +22,7 @@ public static partial class DependenciesInjection
         IHostEnvironment environment
     )
     {
-        services.AddDbContext<AppDbContext>(
-            (serviceProvider, options) =>
+        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             {
                 options.UseNpgsql(
                     configuration.GetConnectionString("DefaultSqlConnection"),
@@ -52,6 +52,10 @@ public static partial class DependenciesInjection
                 }
             }
         );
+
+        services
+            .AddDataProtection()
+            .PersistKeysToDbContext<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));

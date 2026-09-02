@@ -4,6 +4,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - Mux__TokenId=${MUX_TOKEN_ID}
+      - Mux__TokenSecret=${MUX_TOKEN_SECRET}
+      - Mux__SigningKeyId=${MUX_SIGNING_KEY_ID}
+      - Mux__SigningPrivateKey=${MUX_SIGNING_PRIVATE_KEY}
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -12,3 +16,37 @@ services:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    depends_on:
+      object-storage:
+        condition: service_healthy
+  object-storage:
+    image: minio/minio:latest
+    container_name: prisma-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+  db:
+    ports:
+      - "5432:5432"
+  
+  cache:
+    ports:
+      - "6379:6379"
+  
+  connection-pooler:
+    ports:
+      - "6432:5432"
+volumes:
+  minio-data:

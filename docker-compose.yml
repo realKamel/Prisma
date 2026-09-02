@@ -1,4 +1,4 @@
-﻿services:
+services:
   prisma.api:
     image: ${DOCKER_REGISTRY-}prismaapi
     build:
@@ -11,11 +11,40 @@
       IdentitySeed__AdminEmail: ${IDENTITY_SEED_ADMIN_EMAIL}
       IdentitySeed__AdminPassword: ${IDENTITY_SEED_ADMIN_PASSWORD}
       IdentitySeed__AdminPhone: ${IDENTITY_SEED_ADMIN_PHONE_NUMBER}
+      ObjectStorage__ServiceUrl: ${S3_ENDPOINT}
+      ObjectStorage__AccessKey: ${S3_ACCESS_KEY_ID}
+      ObjectStorage__SecretKey: ${S3_SECRET_ACCESS_KEY}
+      ObjectStorage__BucketName: ${S3_BUCKET_NAME}
+      ObjectStorage__Region: ${S3_BUCKET_REGION}
+      ObjectStorage__ForcePathStyle: ${S3_BUCKET_FORCE_PATH_STYLE}
+      PaymobSettings__SecretKey: ${PAYMOB_SECRET_KEY}
+      PaymobSettings__RedirectionUrl: ${PAYMOB_REDIRECTION_URL}
+      PaymobSettings__PublicKey: ${PAYMOB_PUBLIC_KEY}
+      PaymobSettings__NotificationUrl: ${PAYMOB_NOTIFICATION_URL}
+      PaymobSettings__IframeId: ${PAYMOB_IFRAME_ID}
+      PaymobSettings__HmacSecret: ${PAYMOB_HMAC_SECRET}
+      PaymobSettings__FawryIntegrationId: ${PAYMOB_FAWRY_INTEGRATION_ID}
+      PaymobSettings__CardIntegrationId: ${PAYMOB_CARD_INTEGRATION_ID}
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      Groq__ApiKey: ${GROQ_API_KEY}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    mem_limit: 3072m
+    
     depends_on:
-      - db
-      - cache
-      - object-storage
-      - connection-pooler
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+      connection-pooler:
+        condition: service_started
 
   db:
     image: pgvector/pgvector:pg18
@@ -24,32 +53,30 @@
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./docker/postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 3072m
+    restart: unless-stopped
 
   cache:
     image: valkey/valkey:latest
     container_name: prisma-cache
-    ports:
-      - "6379:6379"
     volumes:
       - cache-data:/data
-
-  object-storage:
-    image: minio/minio:latest
-    container_name: prisma-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio-data:/data
+    command: ["valkey-server", "--maxmemory", "900mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1024m
+    restart: unless-stopped
 
   connection-pooler:
     image: edoburu/pgbouncer:latest
@@ -65,11 +92,11 @@
       DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE}
       ADMIN_USERS: ${PGBOUNCER_ADMIN_USERS}
     depends_on:
-      - db
-    ports:
-      - "6432:5432"
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    restart: unless-stopped
 
 volumes:
   postgres-data:
   cache-data:
-  minio-data:

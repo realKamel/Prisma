@@ -1,329 +1,184 @@
 # Prisma
 
-**Prisma** is a modern, AI-powered educational management platform built with **.NET 10** following **Clean Architecture** principles. It serves as a comprehensive backend for managing students, teachers, lessons, quizzes, assignments, payments, and more — with deep integration of AI features for grading, content generation, and intelligent assistance.
+Prisma is an AI-enabled educational management backend built with .NET 10 and ASP.NET Core. It provides APIs for authentication, users, lessons, assessments, assignments, payments, storage, and AI-assisted learning workflows.
 
----
+## Features
 
-## ✨ Features
+- Role-based access for students, teachers, assistants, and administrators.
+- JWT authentication with HTTP-only cookie support and policy-based authorization.
+- Lesson, section, material, transcript, and student-progress management.
+- Mux video integration and S3-compatible object storage.
+- Quizzes with multiple-choice, true/false, and written questions.
+- AI-assisted written-answer grading, PDF question extraction, RAG chat, lesson summaries, and weekly student reports.
+- Assignments, submissions, grades, redeem codes, and Paymob card/Fawry payments.
+- Hangfire background jobs, including weekly report generation.
+- English (`en-US`) and Arabic (`ar-EG`) localization.
+- Serilog structured logging, output caching, OpenAPI, health checks, and Docker support.
 
-### 👥 User Management
+## Architecture
 
-- Multi-role system: **Students**, **Teachers**, **Assistants**, and **Admins**
-- JWT-based authentication with cookie support
-- Role-based authorization with granular permission policies
-- User profiles, preferences, and landing page customization
+The solution follows Clean Architecture and separates the web layer, use cases, domain rules, and infrastructure integrations.
 
-### 📚 Lesson & Content Management
-
-- Lesson catalog with academic year organization
-- Support for multiple material types (videos, PDFs, documents)
-- Lesson transcripts and AI-powered summarization
-- Section management with student progress tracking
-- Video streaming via **Mux** integration
-- File storage via **S3-compatible object storage** (Backblaze B2)
-
-### 📝 Quiz & Assessment System
-
-- Multiple question types: **MCQ**, **True/False**, **Written**
-- Quiz creation and attempt tracking
-- AI-powered **written question grading** via agentic workflows
-- Extraction of exam content from PDFs using OpenAI
-- Grading suggestions with status tracking
-
-### 📊 Assignments & Reports
-
-- Assignment creation and submission management
-- **AI-generated weekly student reports**
-- Report generation background jobs
-
-### 💳 Payment System
-
-- Integrated with **Paymob** payment gateway
-- Supports **Card** and **Fawry** payment methods
-- Payment webhook handling and reconciliation
-- Redeem code system
-
-### 🤖 AI-Powered Features
-
-- **AI Grading**: Automatic grading of written answers using LLMs
-- **RAG Chat**: Retrieval-Augmented Generation chat over lesson content
-- **PDF Exam Extraction**: Parse exam PDFs and extract structured questions
-- **Lesson Summarization**: Generate summaries from lesson transcripts
-- **Report Generation**: AI-crafted weekly student performance reports
-- **Groq Integration**: High-speed LLM inference via Groq API
-- **Agentic Workflows**: Structured AI workflows for grading and report generation using Microsoft Agents SDK
-
-### 🌐 Additional Features
-
-- **Localization**: Full Arabic (ar-EG) and English (en-US) support
-- **Hangfire Dashboard**: Background job management UI at `/hangfire`
-- **Health Checks**: Database and service health monitoring at `/health-ui`
-- **Serilog Logging**: Structured logging to console, file, and Seq
-- **Output Caching**: Configurable response caching policies
-- **CORS**: Configured for local development and production (monsterasp.net)
-- **OpenAPI / Swagger**: API documentation at `/swagger`
-- **Docker Support**: Infrastructure services (PostgreSQL, Seq, Redis) managed via Docker Compose
-
----
-
-## 🏗️ Architecture
-
-The project follows **Clean Architecture** (layered architecture) principles, ensuring separation of concerns and testability.
-
-```
-┌──────────────────────────────────────────────────┐
-│                   Prisma.API                     │
-│          (Presentation / Web Layer)              │
-│     Controllers, Middlewares, Filters, DTOs      │
-├──────────────────────────────────────────────────┤
-│               Prisma.Application                 │
-│            (Use Cases / Business Logic)          │
-│    MediatR Commands/Queries, Validation, DTOs    │
-├──────────────────────────────────────────────────┤
-│              Prisma.Infrastructure               │
-│     (Persistence, External Services, Identity)   │
-│EF Core, Hangfire, S3, Mux, Paymob, OpenAI, etc.  │
-├──────────────────────────────────────────────────┤
-│                 Prisma.Domain                    │
-│      (Enterprise Business Entities & Rules)      │
-│    Entities, Enums, Interfaces, Specifications   │
-└──────────────────────────────────────────────────┘
+```text
++--------------------------------------------------+
+|                    Prisma.API                    |
+|        Presentation / HTTP and Web Layer         |
+|   Controllers, middleware, filters, OpenAPI      |
++--------------------------+-----------------------+
+						   |
++--------------------------v-----------------------+
+|                Prisma.Application                |
+|              Use Cases / Business Logic          |
+|    MediatR commands, queries, validation, DTOs   |
++--------------------------+-----------------------+
+						   |
++--------------------------v-----------------------+
+|                  Prisma.Domain                   |
+|               Enterprise Business Rules          |
+|     Entities, value objects, interfaces, rules   |
++--------------------------^-----------------------+
+						   |
++--------------------------+-----------------------+
+|             Prisma.Infrastructure                |
+|       Persistence and External Integrations      |
+| EF Core, Identity, Hangfire, AI, storage, email  |
++--------------------------------------------------+
 ```
 
-### Solution Structure
+| Project | Responsibility |
+| --- | --- |
+| `Prisma.API` | ASP.NET Core API, controllers, middleware, filters, authentication, health endpoints, and OpenAPI UI. |
+| `Prisma.Application` | Application use cases, MediatR commands and queries, validation, and application contracts. |
+| `Prisma.Domain` | Entities, value objects, enums, errors, interfaces, repositories, and specifications. |
+| `Prisma.Infrastructure` | EF Core persistence, Identity, Hangfire, caching, storage, payments, video, email, and AI integrations. |
+| `Prisma.Application.Tests` | Unit tests for application behavior. |
+| `Prisma.Integration.Tests` | API and persistence integration tests using ASP.NET Core testing and Testcontainers PostgreSQL. |
 
-| Project                    | Description                                                                                  |
-| -------------------------- | -------------------------------------------------------------------------------------------- |
-| `Prisma.API`               | ASP.NET Core Web API — controllers, middleware, filters, Angular SPA (built into `wwwroot/`) |
-| `Prisma.Application`       | Application business logic — MediatR commands/queries, validation, DTOs                      |
-| `Prisma.Domain`            | Core domain — entities, enums, interfaces, specifications                                    |
-| `Prisma.Infrastructure`    | Data access, external services, identity, background jobs, AI agents                         |
-| `Prisma.Application.Tests` | Unit tests for the application layer                                                         |
-| `Prisma.Integration.Tests` | Integration tests                                                                            |
+## Technology
 
----
+- .NET 10, ASP.NET Core, Entity Framework Core, and PostgreSQL with pgvector.
+- MediatR, FluentValidation, Ardalis Specification, and Microsoft Identity.
+- JWT Bearer authentication, HTTP-only cookies, and policy authorization.
+- Hangfire with PostgreSQL storage and Valkey/Redis-compatible caching.
+- Microsoft Agent Framework, OpenAI, Groq, Semantic Kernel, and vector search.
+- Mux for video, AWS S3-compatible APIs for object storage, MailKit for email, and Paymob for payments.
+- Serilog for logging and OpenAPI/Swagger for API documentation.
 
-## 🧱 Tech Stack
+## Solution Structure
 
-| Technology                      | Purpose                                        |
-| ------------------------------- | ---------------------------------------------- |
-| **.NET 10**                     | Web framework & runtime                        |
-| **ASP.NET Core**                | REST API                                       |
-| **Entity Framework Core 10**    | ORM & database access                          |
-| **PostgreSQL**                  | Primary database (Docker container)            |
-| **MediatR**                     | CQRS / command-query separation                |
-| **FluentValidation**            | Request validation                             |
-| **Ardalis.Specification**       | Specification pattern for queries              |
-| **Hangfire**                    | Background job processing (PostgreSQL storage) |
-| **Serilog**                     | Structured logging (Console, File, Seq)        |
-| **Microsoft Identity**          | User identity & role management                |
-| **JWT Bearer**                  | Authentication                                 |
-| **Microsoft.Agents.AI**         | Agentic workflows (OpenAI)                     |
-| **OpenAI / Groq**               | LLM inference                                  |
-| **Mux**                         | Video processing & streaming                   |
-| **AWS S3 SDK**                  | Object storage (Backblaze B2)                  |
-| **Paymob**                      | Payment gateway (Card & Fawry)                 |
-| **MailKit**                     | Email delivery (SMTP)                          |
-| **Swagger / OpenAPI**           | API documentation                              |
-| **Microsoft.FeatureManagement** | Feature flags                                  |
-| **Docker**                      | Containerization                               |
+```text
+Prisma/
+├── Prisma.API/                 # Web API and HTTP presentation layer
+├── Prisma.Application/         # Use cases and application contracts
+├── Prisma.Domain/              # Core domain model
+├── Prisma.Infrastructure/     # Persistence and external integrations
+├── Prisma.Application.Tests/   # Unit tests
+├── Prisma.Integration.Tests/   # Integration tests
+├── docker-compose.yml          # Production-like local services
+├── docker-compose.override.yml # Development ports and MinIO
+└── postman/                    # API collections and environments
+```
 
----
+## Prerequisites
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- API keys for: OpenAI, Groq, Mux, Paymob, Backblaze B2 (see `appsettings.json`)
+- Credentials for the external services enabled in your environment: OpenAI, Groq, Mux, Paymob, SMTP, and object storage.
 
-### Clone & Run
+## Configuration
+
+Do not commit secrets. Local configuration can be supplied through .NET user secrets, environment variables, or a local `.env` file used by Docker Compose. The main configuration sections are:
+
+| Section | Purpose |
+| --- | --- |
+| `ConnectionStrings` | PostgreSQL and Valkey connections. |
+| `JwtSettings` and `IdentitySeed` | Authentication and development admin seed data. |
+| `OpenAI` and `Groq` | Models and API credentials for AI features. |
+| `Mux` | Video access and signing credentials. |
+| `ObjectStorage` and `VideoStorage` | S3-compatible storage configuration. |
+| `PaymobSettings` | Payment gateway credentials, integrations, and callback URLs. |
+| `EmailSettings` | SMTP configuration. |
+| `FeatureManagement` | AI grading, RAG chat, and weekly report feature flags. |
+
+## Run Locally
+
+Start the local infrastructure first:
 
 ```bash
-# Clone the repository
-git clone https://github.com/realKamel/Prisma.git
-cd Prisma
+docker compose up -d
+```
 
-# Start infrastructure services (PostgreSQL, Seq, Redis) via Docker
-docker-compose up -d
+The Compose stack includes:
 
-# Restore dependencies
+- PostgreSQL with the pgvector extension (`db`)
+- Valkey cache (`cache`)
+- PgBouncer connection pooling (`connection-pooler`)
+- MinIO S3-compatible object storage in the development override
+
+Then restore and run the API:
+
+```bash
 dotnet restore
-
-# Run the API
 dotnet run --project Prisma.API
 ```
 
-Infrastructure services (PostgreSQL, Seq, Redis) are fully managed by Docker Compose — no manual installation required.
+The development launch profiles expose the API at:
 
-The API will be available at `https://localhost:5001` (or the port configured in `launchSettings.json`).
+- HTTP: `http://localhost:5117`
+- HTTPS: `https://localhost:7109`
+- OpenAPI/Swagger UI: `/swagger`
 
-### Database
+Application data seeding runs during startup. The API also exposes `/health/live` for liveness and `/health/ready` for readiness checks. The Hangfire dashboard is available at `/hangfire`.
 
-Entity Framework Core is used with PostgreSQL. Migrations are located in `Prisma.Infrastructure/Persistence/Migrations/`.
+## API
 
-```bash
-dotnet ef database update --project Prisma.Infrastructure --startup-project Prisma.API
-```
+All controllers use the `/api/v1/{controller}` route pattern. The main endpoint groups are:
 
-Data seeding runs automatically on application startup (see `UseDataSeedingAsync`).
+| Area | Controllers |
+| --- | --- |
+| Authentication and users | `AuthController`, `UsersController`, `PreferencesController` |
+| Student and teacher workflows | `StudentsController`, `TeachersController`, `TeacherStudentsController` |
+| Administration | `AdminController`, `PlatformConfigurationsController` |
+| Learning content | `LessonsController`, `SectionProgressController`, `LandingPageController` |
+| Assessments | `TeacherQuizzesController`, `StudentQuizzesController`, `GradingController`, `GradesController` |
+| Assignments | `TeacherAssignmentsController` |
+| AI | `AssistantsController`, `RagController` |
+| Payments and access | `PaymentsController`, `CodesController` |
+| Files and video | `StorageController`, `VideoStorageController` |
 
----
+OpenAPI and Swagger are enabled in the Development environment.
 
-## 🔌 API Endpoints
+## Database and Migrations
 
-All API routes follow the pattern: `/api/v1/{controller}`
-
-| Area                 | Controller                  | Description                             |
-| -------------------- | --------------------------- | --------------------------------------- |
-| **Auth**             | `AuthController`            | Register, login, logout, refresh tokens |
-| **Users**            | `UsersController`           | User profile management                 |
-| **Students**         | `StudentsController`        | Student-specific operations             |
-| **Teachers**         | `TeachersController`        | Teacher-specific operations             |
-| **Teacher Students** | `TeacherStudentsController` | Teacher-student relationship management |
-| **Admin**            | `AdminController`           | Administrative operations               |
-| **Assistant**        | `AssistantController`       | AI-powered assistant chat               |
-| **Lessons**          | `LessonsController`         | Lesson CRUD, materials, transcripts     |
-| **Sections**         | `SectionsController`        | Section management and progress         |
-| **Assignments**      | `AssignmentsController`     | Assignment CRUD and submissions         |
-| **Quizzes**          | `QuizzesController`         | Quiz management and attempts            |
-| **Grades**           | `GradesController`          | Grade viewing and management            |
-| **Payments**         | `PaymentsController`        | Payment processing and history          |
-| **Redeem Codes**     | `RedeemCodesController`     | Redeem code management                  |
-| **Landing Page**     | `LandingPageController`     | Landing page content                    |
-| **Storage**          | `StorageController`         | File upload/download                    |
-| **RAG**              | `RAGController`             | AI-powered Q&A over content             |
-| **Preferences**      | `PreferencesController`     | User preferences                        |
-
-> **Swagger UI** is available at `/swagger` in development mode.
-
----
-
-## 🧩 Domain Model
-
-### Core Entities
-
-- **User** (with roles: Student, Teacher, Admin, Assistant)
-- **Lesson** — Learning content with materials and transcripts
-- **Section** — Course sections with student progress tracking
-- **AcademicYear** — Organizational year grouping
-- **Quiz** — Assessments with multiple question types
-- **QuizAttempt** — Student quiz submissions
-- **Question** — Base class (MCQ, True/False, Written)
-- **Assignment** — Tasks with student submissions
-- **Enrollment** — Student enrollment records
-- **Payment** — Transaction records
-- **RedeemCode** — Discount/access codes
-- **ChatSession** — AI chat sessions
-- **AuditLog** — Security & activity auditing
-
----
-
-## 🔐 Authentication & Authorization
-
-- **JWT tokens** stored in HTTP-only cookies
-- Roles: `Student`, `Teacher`, `Admin`, `Assistant`
-- Permission-based policy authorization
-- Token validation includes issuer, audience, signing key, and lifetime checks
-
----
-
-## 📦 External Services
-
-### 🐳 Docker-Managed Infrastructure
-
-These services run in Docker containers and are started via `docker-compose up -d`:
-
-| Service        | Usage                     | Notes                      |
-| -------------- | ------------------------- | -------------------------- |
-| **PostgreSQL** | Primary database          | Hosted in Docker container |
-| **Seq**        | Log aggregation           | Structured log viewer      |
-| **Redis**      | Caching & data protection | Session & cache storage    |
-
-### ☁️ Cloud Services
-
-These are third-party external services accessed via API keys:
-
-| Service               | Usage                             | Configuration Key                        |
-| --------------------- | --------------------------------- | ---------------------------------------- |
-| **OpenAI**            | LLM for grading, extraction, chat | `OpenAI:ApiKey`                          |
-| **Groq**              | High-speed LLM inference          | `Groq:ApiKey`                            |
-| **Mux**               | Video hosting & streaming         | `Mux:TokenId`, `Mux:TokenSecret`         |
-| **Backblaze B2** (S3) | File & video storage              | `Storage:AccessKey`, `Storage:SecretKey` |
-| **Paymob**            | Payment processing (Card & Fawry) | `PaymobSettings:SecretKey`               |
-
----
-
-## ☁️ Deployment
-
-The application is deployed as a single unit at:
-
-- **URL**: [https://prisma.runasp.net](https://prisma.runasp.net)
-
-The Angular frontend is built directly into the `Prisma.API/wwwroot/` folder and served as a Single Page Application (SPA) by the ASP.NET Core backend — no separate frontend hosting needed. Both the API and the Angular SPA are hosted together under **monsterasp.net**.
-
-Infrastructure services (PostgreSQL, Seq, Redis) run in Docker containers alongside the application.
-
----
-
-## 📁 Postman Collection
-
-Postman artifacts are included in the `postman/` directory:
-
-```
-postman/
-├── collections/     # API request collections
-├── environments/    # Environment variables
-├── flows/          # Postman Flows
-├── globals/        # Workspace globals
-├── mocks/          # Mock servers
-└── specs/          # API specifications
-```
-
----
-
-## 🧪 Testing
+The application uses PostgreSQL through Entity Framework Core. Database initialization and application data seeding are performed at startup. When migrations are added, use:
 
 ```bash
-# Run unit tests
+dotnet ef migrations add <MigrationName> \
+	--project Prisma.Infrastructure \
+	--startup-project Prisma.API
+
+dotnet ef database update \
+	--project Prisma.Infrastructure \
+	--startup-project Prisma.API
+```
+
+## Testing
+
+```bash
 dotnet test Prisma.Application.Tests
-
-# Run integration tests
 dotnet test Prisma.Integration.Tests
 ```
 
----
-
-## 🛠️ Development
-
-### Useful Commands
+To build the complete solution:
 
 ```bash
-# Add a new migration
-dotnet ef migrations add <MigrationName> --project Prisma.Infrastructure --startup-project Prisma.API
-
-# Apply migrations
-dotnet ef database update --project Prisma.Infrastructure --startup-project Prisma.API
-
-# Watch mode (hot reload)
-dotnet watch run --project Prisma.API
+dotnet build Prisma.sln
 ```
 
-### Feature Flags
+## Postman
 
-Controlled via `FeatureManagement` in `appsettings.json`:
+The `postman/` directory contains collections, environments, flows, globals, mocks, and API specifications for exercising the backend.
 
-| Flag                         | Description                                  |
-| ---------------------------- | -------------------------------------------- |
-| `AiGrading`                  | Enable AI-powered grading of written answers |
-| `AiRagChat`                  | Enable RAG-based AI chat over lesson content |
-| `WeeklyStudentReportUsingAi` | Enable AI-generated weekly reports           |
+## License
 
----
-
-## 📄 License
-
-This project is published **for showcasing purposes only**. All rights are reserved.
-
-No part of this project may be reproduced, distributed, or used in any form without prior written permission from the authors. If you are interested in using this project or any part of it, please contact us to discuss an agreement.
+This project is published for showcasing purposes only. All rights are reserved. No part of the project may be reproduced, distributed, or used without prior written permission from the authors.

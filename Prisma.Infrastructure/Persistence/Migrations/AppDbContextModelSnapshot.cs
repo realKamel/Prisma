@@ -41,7 +41,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DataProtectionKeys");
+                    b.ToTable("DataProtectionKeys", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -199,7 +199,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollment");
+                    b.ToTable("Enrollment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.EnrollmentAggregate.Report", b =>
@@ -245,7 +245,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Report");
+                    b.ToTable("Report", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYear", b =>
@@ -290,7 +290,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYear");
+                    b.ToTable("AcademicYear", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson", b =>
@@ -336,7 +336,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYearLesson");
+                    b.ToTable("AcademicYearLesson", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher", b =>
@@ -382,7 +382,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYearTeacher");
+                    b.ToTable("AcademicYearTeacher", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -435,7 +435,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Assignment");
+                    b.ToTable("Assignment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AssignmentSubmission", b =>
@@ -503,7 +503,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AssignmentSubmission");
+                    b.ToTable("AssignmentSubmission", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
@@ -598,7 +598,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Lesson");
+                    b.ToTable("Lesson", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
@@ -652,7 +652,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonMaterial");
+                    b.ToTable("LessonMaterial", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonTranscriptChunk", b =>
@@ -707,7 +707,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonTranscriptChunk");
+                    b.ToTable("LessonTranscriptChunk", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -784,7 +784,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Section");
+                    b.ToTable("Section", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.SectionProgress", b =>
@@ -837,7 +837,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("SectionProgress");
+                    b.ToTable("SectionProgress", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>
@@ -890,7 +890,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("BatchId", "Code")
                         .IsUnique();
 
-                    b.ToTable("GeneratedCode");
+                    b.ToTable("GeneratedCode", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.Payment", b =>
@@ -956,7 +956,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Payment");
+                    b.ToTable("Payment", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
@@ -1012,7 +1012,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("RedeemCode");
+                    b.ToTable("RedeemCode", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -1078,7 +1078,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AttemptAnswer");
+                    b.ToTable("AttemptAnswer", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Choice", b =>
@@ -1123,7 +1123,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choice");
+                    b.ToTable("Choice", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.ExtractionJob", b =>
@@ -1231,7 +1231,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Question");
+                    b.ToTable("Question", (string)null);
 
                     b.HasDiscriminator<string>("QuestionType").HasValue("Question");
 
@@ -1285,7 +1285,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("QuestionLessonQuiz");
+                    b.ToTable("QuestionLessonQuiz", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Quiz", b =>
@@ -1355,7 +1355,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Quiz");
+                    b.ToTable("Quiz", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizAttempt", b =>
@@ -1429,7 +1429,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuizId", "StudentId");
 
-                    b.ToTable("QuizAttempt");
+                    b.ToTable("QuizAttempt", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
@@ -1465,7 +1465,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TeacherPreferences");
+                    b.ToTable("TeacherPreferences", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.AuditLog", b =>
@@ -1521,7 +1521,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLog");
+                    b.ToTable("AuditLog", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.ChatSession", b =>
@@ -1552,7 +1552,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ChatSession");
+                    b.ToTable("ChatSession", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
@@ -1658,7 +1658,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("TeacherStudent");
+                    b.ToTable("TeacherStudent", (string)null);
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.User", b =>

@@ -53,15 +53,19 @@ public class Program
             }
 
             app.UseRouting();
-
+            
             if (app.Environment.IsDevelopment())
             {
                 app.UseCors("CorsPolicy");
             }
 
+            app.UseLocalization();
+            
             app.UseHangfireUi();
 
             app.UseAuthentication();
+
+            app.UseRateLimiter();
 
             app.UseOutputCache();
 
@@ -70,8 +74,6 @@ public class Program
             app.UseRecurringJobs();
 
             app.MapAppHealthChecks();
-
-            app.UseLocalization();
 
             app.MapControllers();
 

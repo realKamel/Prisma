@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +29,14 @@ public static partial class DependenciesInjection
             nameof(connectionStrings.Valkey)
         );
 
-        var multiplexer = ConnectionMultiplexer.Connect(connectionStrings.Valkey);
+        var multiplexer = ConnectionMultiplexer.Connect(new ConfigurationOptions
+        {
+            EndPoints = { connectionStrings.Valkey },
+            AbortOnConnectFail = false,
+            ConnectRetry = 10,
+            ConnectTimeout = 5000,
+            SyncTimeout = 5000
+        });
 
         services.AddSingleton<IConnectionMultiplexer>(multiplexer);
 

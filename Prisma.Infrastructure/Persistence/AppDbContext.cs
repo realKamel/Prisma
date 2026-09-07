@@ -20,5 +20,5 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
-    public DbSet<DataProtectionKey> DataProtectionKeys { get; }
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }

@@ -34,7 +34,7 @@ public class GetStudentActivitiesQueryHandler(IUnitOfWork unitOfWork) : IRequest
             if (q.CreatedAt.HasValue)
             {
                 activities.Add(new StudentActivityDto(
-                    $"سلّم كويز {q.Quiz?.Title ?? "—"} — نتيجة {(int)q.Degree}%",
+                    $"سلّم كويز {q.Quiz?.Title ?? "—"} — نتيجة {(int)(q.Degree / q.Quiz.TotalDegree * 100)}%",
                     FormatTime(q.CreatedAt.Value),
                     "bg-[var(--star)]"));
             }

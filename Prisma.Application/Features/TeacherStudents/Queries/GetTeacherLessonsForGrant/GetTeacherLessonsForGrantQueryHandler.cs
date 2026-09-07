@@ -31,7 +31,7 @@ public class GetTeacherLessonsForGrantQueryHandler(IUnitOfWork unitOfWork,
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Domain.Entities.LessonAggregate.Lesson, int>();
         
-        var lessons = await lessonRepo.ListAsync(new LessonWithProjectionSpec<LessonForGrantDto>(Guid.Empty, l => new LessonForGrantDto(
+        var lessons = await lessonRepo.ListAsync(new LessonWithProjectionSpec<LessonForGrantDto>(userId.Value, l => new LessonForGrantDto(
             l.Id,
             l.Title ?? "—",
             l.Sections.Count.ToString()

@@ -13,20 +13,37 @@ public class GetStudentDetailsQueryHandler(IUnitOfWork unitOfWork)
     {
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var student = await studentRepo.FirstOrDefaultAsync(
-            new StudentByIdWithDetailsSpec(request.StudentId), cancellationToken);
+            new StudentByIdWithDetailsSpec<StudentInfo>(request.StudentId, s => new StudentInfo(
+              s.Id,
+              s.FirstName,
+              s.SecondName ,
+              s.ThirdName,
+              s.LastName ,
+              s.Email ,
+              s.PhoneNumber,
+              s.ParentPhoneNumber,
+              s.AcademicYear!.Title ,
+              s.AcademicYearId ?? 0,
+               s.Enrollments.Select(e => new EnrollmentInfo(
+                            e.Status,
+                            e.Lesson != null ? e.Lesson.Title : null
+                        ))
+                        .ToList(),
+                    s.QuizAttempts.Select(q => new QuizAttemptInfo(q.Degree, q.Quiz!.TotalDegree)).ToList()
+            )), cancellationToken);
 
         if (student is null)
             return Result.NotFound($"Student with id '{request.StudentId}' was not found");
 
-        var enrollments = student.Enrollments?.ToList() ?? new List<Domain.Entities.EnrollmentAggregate.Enrollment>();
-        var quizAttempts = student.QuizAttempts?.ToList() ?? new List<Domain.Entities.QuizAggregate.QuizAttempt>();
+        var enrollments = student.Enrollments ;
+        var quizAttempts = student.QuizAttempts; ;
 
-        var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => q.Degree) : 0;
+        var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => (q.Degree/q.TotalDegree) * 100) : 0;
         var active = enrollments.Any(e => e.Status == Domain.Enums.EnrollmentStatus.Active);
 
         var lessonTitles = enrollments
-            .Where(e => e.Lesson?.Title != null)
-            .Select(e => e.Lesson!.Title!)
+            .Where(e => e.LessonTitle != null)
+            .Select(e => e.LessonTitle)
             .Distinct()
             .ToList();
 
@@ -40,8 +57,8 @@ public class GetStudentDetailsQueryHandler(IUnitOfWork unitOfWork)
             student.ThirdName ?? string.Empty,
             student.LastName ?? string.Empty,
             student.Email ?? string.Empty,
-            student.AcademicYear?.Title ?? "—",
-            student.AcademicYearId ?? 0,
+            student.AcademicYearTitle ?? "—",
+            student.AcademicYearId,
             "—",
             enrollments.Count,
             avgQuiz,
@@ -50,4 +67,27 @@ public class GetStudentDetailsQueryHandler(IUnitOfWork unitOfWork)
             student.ParentPhoneNumber,
             lessonTitles);
     }
+
+    public record StudentInfo(
+        Guid Id,
+        string FirstName,
+        string SecondName,
+        string ThirdName,
+        string LastName,
+        string Email,
+        string PhoneNumber,
+        string ParentPhoneNumber,
+        string AcademicYearTitle,
+        int AcademicYearId,
+        List<EnrollmentInfo> Enrollments,
+        List<QuizAttemptInfo> QuizAttempts
+        );
+
+    public record EnrollmentInfo(
+        Domain.Enums.EnrollmentStatus Status,
+        string? LessonTitle
+    );
+    public record QuizAttemptInfo(decimal Degree,
+        decimal TotalDegree
+      );
 }

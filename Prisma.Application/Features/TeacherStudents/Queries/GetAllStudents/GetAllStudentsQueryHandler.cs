@@ -56,7 +56,7 @@ public class GetAllStudentsQueryHandler(
                             e.Lesson != null ? e.Lesson.Title : null
                         ))
                         .ToList(),
-                    s.QuizAttempts.Select(q => new QuizAttemptInfo(q.Degree, q.CreatedAt)).ToList()
+                    s.QuizAttempts.Select(q => new QuizAttemptInfo(q.Degree, q.Quiz.TotalDegree, q.CreatedAt)).ToList()
                 )
             ),
             cancellationToken
@@ -66,7 +66,7 @@ public class GetAllStudentsQueryHandler(
         foreach (var student in students)
         {
             var avgQuiz = student.QuizAttempts.Any()
-                ? (int)student.QuizAttempts.Average(q => q.Degree)
+                ? (int)student.QuizAttempts.Average(q => (q.Degree / q.TotalDegree) * 100)
                 : 0;
             var active = student.Enrollments.Any(e =>
                 e.Status == Domain.Enums.EnrollmentStatus.Active
@@ -151,5 +151,5 @@ public class GetAllStudentsQueryHandler(
         string? LessonTitle
     );
 
-    public record QuizAttemptInfo(decimal Degree, DateTimeOffset? CreatedAt);
+    public record QuizAttemptInfo(decimal Degree, decimal TotalDegree, DateTimeOffset? CreatedAt);
 }

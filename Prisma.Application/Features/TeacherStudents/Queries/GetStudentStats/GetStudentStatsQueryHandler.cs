@@ -23,7 +23,7 @@ public class GetStudentStatsQueryHandler(IUnitOfWork unitOfWork) : IRequestHandl
             new StatsAssignmentSubmissionsByStudentSpec(request.StudentId), cancellationToken);
 
         var lessons = enrollments.Count;
-        var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => q.Degree) : 0;
+        var avgQuiz = quizAttempts.Any() ? (int)quizAttempts.Average(q => (q.Degree/q.Quiz.TotalDegree) * 100) : 0;
 
         // Sum of completion percentages as proxy for "hours" (0-100 scale per section)
         var hours = sectionProgresses.Sum(sp => sp.Percentage) / 100;

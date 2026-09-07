@@ -7,6 +7,6 @@ public class StatsQuizAttemptsByStudentSpec : Specification<QuizAttempt>
 {
     public StatsQuizAttemptsByStudentSpec(Guid studentId)
     {
-        Query.Where(q => q.StudentId == studentId);
+        Query.Where(q => q.StudentId == studentId).Include(q => q.Quiz);
     }
 }

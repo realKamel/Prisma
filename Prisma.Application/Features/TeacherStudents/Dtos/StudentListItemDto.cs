@@ -16,4 +16,7 @@ public record StudentListItemDto(
     bool Active,
     string? Phone,
     string? ParentPhone,
-    List<string> LessonTitles);
+    List<string> LessonTitles)
+{
+    public string? PhoneNumber { get; internal set; }
+}

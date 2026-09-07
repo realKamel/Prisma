@@ -42,10 +42,9 @@ public class Program
 
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
-
-                app.UseSwaggerUI(
-                    (options) =>
+                app.MapOpenApi().WithDocumentPerVersion();
+                app.UseDeveloperExceptionPage();
+                app.UseSwaggerUI((options) =>
                     {
                         options.SwaggerEndpoint("/openapi/v1.json", "Prisma API V1");
                         options.RoutePrefix = "swagger";

@@ -5,7 +5,9 @@ using Prisma.API.Filters;
 namespace Prisma.API.Common;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [TranslateResultToActionResult]
 [LocalizeResult]
-public class ApiController : ControllerBase { }
+public class ApiController : ControllerBase
+{
+}

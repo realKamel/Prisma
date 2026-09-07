@@ -11,6 +11,9 @@
 
     <ItemGroup>
         <PackageReference Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
+        <PackageReference Include="Asp.Versioning.Mvc" Version="10.2.1" />
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
+        <PackageReference Include="Asp.Versioning.OpenApi" Version="10.2.3" />
         <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
@@ -22,8 +25,8 @@
         <PackageReference Include="KubernetesClient" Version="17.0.14" />
         <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.13.0-preview.260703.1" />
         <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.13.0-alpha.260703.1" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -51,6 +54,7 @@
 
     <ItemGroup>
         <Folder Include="Extensions\Ai\" />
+        <Folder Include="Logs\" />
         <Folder Include="wwwroot\" />
     </ItemGroup>
 </Project>

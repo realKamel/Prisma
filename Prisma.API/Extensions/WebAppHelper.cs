@@ -1,13 +1,13 @@
 using System.Globalization;
 using System.Text;
 using Ardalis.Result.AspNetCore;
+using Asp.Versioning;
 using Hangfire;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.API.Filters;
 using Prisma.API.Localization;
@@ -47,7 +47,19 @@ public static class WebAppHelper
             services.AddControllers(options =>
                 options.AddDefaultResultConvention());
 
-            services.AddOpenApi();
+            services.AddApiVersioning(options =>
+                {
+                    options.DefaultApiVersion = new ApiVersion(1, 0);
+                    options.AssumeDefaultVersionWhenUnspecified = true;
+                    options.ReportApiVersions = true; // adds api-supported-versions / api-deprecated-versions headers
+                    options.ApiVersionReader = new UrlSegmentApiVersionReader(); // e.g. /api/v1/users
+                })
+                .AddMvc() // or omit for Minimal APIs
+                .AddApiExplorer(options =>
+                {
+                    options.GroupNameFormat = "'v'VVV";
+                    options.SubstituteApiVersionInUrl = true;
+                }).AddOpenApi();
 
             services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -241,11 +253,12 @@ public static class WebAppHelper
             // 2. Readiness Probe (Heavyweight)
             // Kubernetes / Load Balancers use this to know if the app can accept traffic.
             // This includes Postgres, Valkey, and Hangfire (as we tagged them with "ready").
-            app.MapHealthChecks("/health/ready", new HealthCheckOptions
-            {
-                Predicate = check => check.Tags.Contains("ready"),
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-            });
+            app.MapHealthChecks("/health/ready",
+                new HealthCheckOptions
+                {
+                    Predicate = check => check.Tags.Contains("ready"),
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+                });
         }
 
         public void MapOpenAiResponses(IHostEnvironment environment)

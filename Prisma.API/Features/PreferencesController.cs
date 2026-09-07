@@ -9,7 +9,6 @@ using Prisma.Application.Features.TeacherPreferences.Queries.GetAccentColor;
 namespace Prisma.API.Features;
 
 [AllowAnonymous]
-[Route("api/v1/preferences")]
 public class PreferencesController(ISender sender) : ApiController
 {
     [HttpGet("accent")]

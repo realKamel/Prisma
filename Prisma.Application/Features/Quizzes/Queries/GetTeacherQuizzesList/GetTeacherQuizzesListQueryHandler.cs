@@ -1,22 +1,41 @@
 
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 
-public class GetTeacherQuizzesListQueryHandler(IUnitOfWork unitOfWork)
+public class GetTeacherQuizzesListQueryHandler(
+            IUnitOfWork unitOfWork ,
+            ICurrentUserService currentUserService,
+            IIdentityService identityService)
     : IRequestHandler<GetTeacherQuizzesListQuery, Result<TeacherQuizzesListResponseDto>>
 {
     public async Task<Result<TeacherQuizzesListResponseDto>> Handle(GetTeacherQuizzesListQuery request, CancellationToken ct)
     {
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
 
+        var userId = currentUserService.UserId;
+        if (userId is null)
+            return Result.Unauthorized("User is not authenticated.");
+
+        var user = await identityService.FindByIdAsync(userId.Value, ct);
+        if (user is null)
+            return Result.NotFound("User not found.");
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
         var quizzes = await quizRepo.ListAsync(
-                new TeacherQuizzesListSpecification(request.Scope, request.Search), ct);
+                new TeacherQuizzesListSpecification(request.Scope, request.Search, userId.Value), ct);
 
         var items = quizzes.Select(q =>
         {

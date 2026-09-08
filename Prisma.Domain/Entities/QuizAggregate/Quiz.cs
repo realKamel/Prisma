@@ -1,5 +1,6 @@
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.QuizAggregate;
@@ -18,6 +19,9 @@ public class Quiz : BaseEntity
     public int? LessonId { get; set; }
     public Lesson? Lesson { get; set; }
 
+    public Guid? TeacherId { get; set; }
+
+    public Teacher? Teacher { get; set; }
     public int? AcademicYearId { get; set; }
     public AcademicYear? AcademicYear { get; set; }
 

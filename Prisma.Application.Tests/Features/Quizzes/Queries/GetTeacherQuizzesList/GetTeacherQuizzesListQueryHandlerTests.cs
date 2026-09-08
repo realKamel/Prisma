@@ -1,5 +1,6 @@
 
 using NSubstitute;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
 using Prisma.Application.Features.Quizzes.Specifications;
@@ -13,6 +14,9 @@ namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetTeacherQuizzesLis
 public class GetTeacherQuizzesListQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
     private readonly GetTeacherQuizzesListQueryHandler _handler;
 
@@ -21,7 +25,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
     public GetTeacherQuizzesListQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
-        _handler = new GetTeacherQuizzesListQueryHandler(_unitOfWork);
+        _handler = new GetTeacherQuizzesListQueryHandler(_unitOfWork , _currentUserService, _identityService);
     }
 
     #region Helpers

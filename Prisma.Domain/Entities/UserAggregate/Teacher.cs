@@ -1,4 +1,5 @@
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Entities.UserAggregate;
@@ -18,5 +19,8 @@ public class Teacher : User
     public TeacherPreferences Preferences { get; set; } = null!;
 
     public ICollection<TeacherStudent> TeacherStudents { get; set; } = [];
+    public ICollection<Quiz> Quizzes { get; set; } = [];
+
+
     //public ICollection<Student> Students { get; set; } = new List<Student>();
 }

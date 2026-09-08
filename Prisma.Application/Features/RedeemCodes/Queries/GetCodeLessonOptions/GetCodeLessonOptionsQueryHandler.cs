@@ -37,16 +37,21 @@ public class GetCodeLessonOptionsQueryHandler(
         var repo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
 
         var links = await repo.ListAsync(
-            new TeacherAcademicYearLessonsSpecification(userId.Value), ct);
+            new TeacherAcademicYearLessonsSpecification<CodeLessonOptionDto>(userId.Value, x => new CodeLessonOptionDto
+            {
+                Id = x.LessonId,
+                Name = x.Lesson.Title ?? string.Empty,
+                AcademicYearId = x.AcademicYearId
+            }), ct);
 
         // Deduplicate by (LessonId, AcademicYearId) in case of duplicate join rows,
         // then project — one entry per lesson per academic year.
         var result = links
-            .GroupBy(x => new { x.LessonId, x.AcademicYearId })
+            .GroupBy(x => new { x.Id, x.AcademicYearId })
             .Select(g => g.First())
             .Select(x => new CodeLessonOptionDto
             {
-                Id = x.LessonId, Name = x.Lesson.Title ?? string.Empty, AcademicYearId = x.AcademicYearId,
+                Id = x.Id, Name = x.Name, AcademicYearId = x.AcademicYearId,
             })
             .ToList();
 

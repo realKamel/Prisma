@@ -3,6 +3,8 @@
     <File Path=".editorconfig" />
     <File Path=".env" />
     <File Path=".env.example" />
+    <File Path="Directory.Build.targets" />
+    <File Path="Directory.Packages.props" />
   </Folder>
   <Folder Name="/Src/">
     <Project Path="Prisma.API/Prisma.API.csproj" />

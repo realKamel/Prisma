@@ -1,80 +1,80 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Persistence\Migrations\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Persistence\Migrations\"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj" />
-    <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj"/>
+        <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
-    <PackageReference Include="AspNetCore.HealthChecks.Hangfire" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
-    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
-    <PackageReference Include="AWSSDK.S3" Version="4.0.101.4" />
-    <PackageReference Include="Groq.Sdk.Core" Version="2.0.0.11-alpha" />
-    <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" Version="2.0.0.11-alpha" />
-    <PackageReference Include="Hangfire" Version="1.8.24" />
-    <PackageReference Include="Hangfire.Core" Version="1.8.24" />
-    <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
-    <PackageReference Include="MailKit" Version="4.17.0" />
-    <PackageReference Include="Microsoft.Agents.AI" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Abstractions" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Agents.AI.DurableTask" Version="1.13.0-preview.260703.1" />
-    <PackageReference Include="Microsoft.Agents.AI.Foundry" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.13.0-preview.260703.1" />
-    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative" Version="1.13.0" />
-    <PackageReference Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.13.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.9" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.9" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
-    <PackageReference Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis" Version="10.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
-    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.10" />
-    <PackageReference Include="Microsoft.SemanticKernel.Core" Version="1.78.0" />
-    <PackageReference Include="Mux.Csharp.Sdk" Version="2.1.0" />
-    <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.7.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageReference Include="OpenAI" Version="2.12.0" />
-    <PackageReference Include="PdfPig" Version="0.1.15" />
-    <PackageReference Include="Pgvector" Version="0.3.2" />
-    <PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
-    <PackageReference Include="StackExchange.Redis" Version="3.1.3" />
-    <PackageReference Include="ZiggyCreatures.FusionCache" Version="2.6.0" />
-    <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" Version="2.6.0" />
-    <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" Version="2.6.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Ardalis.Specification.EntityFrameworkCore"/>
+        <PackageReference Include="AspNetCore.HealthChecks.Hangfire"/>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+        <PackageReference Include="AspNetCore.HealthChecks.Redis"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage"/>
+        <PackageReference Include="AWSSDK.S3"/>
+        <PackageReference Include="Groq.Sdk.Core"/>
+        <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection"/>
+        <PackageReference Include="Hangfire"/>
+        <PackageReference Include="Hangfire.Core"/>
+        <PackageReference Include="Hangfire.PostgreSql"/>
+        <PackageReference Include="MailKit"/>
+        <PackageReference Include="Microsoft.Agents.AI"/>
+        <PackageReference Include="Microsoft.Agents.AI.Abstractions"/>
+        <PackageReference Include="Microsoft.Agents.AI.DurableTask"/>
+        <PackageReference Include="Microsoft.Agents.AI.Foundry"/>
+        <PackageReference Include="Microsoft.Agents.AI.Hosting"/>
+        <PackageReference Include="Microsoft.Agents.AI.OpenAI"/>
+        <PackageReference Include="Microsoft.Agents.AI.Workflows"/>
+        <PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative"/>
+        <PackageReference Include="Microsoft.Agents.AI.Workflows.Generators">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis"/>
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.AI.OpenAI"/>
+        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Localization"/>
+        <PackageReference Include="Microsoft.SemanticKernel.Core"/>
+        <PackageReference Include="Mux.Csharp.Sdk"/>
+        <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions"/>
+        <PackageReference Include="Newtonsoft.Json"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+        <PackageReference Include="OpenAI"/>
+        <PackageReference Include="PdfPig"/>
+        <PackageReference Include="Pgvector"/>
+        <PackageReference Include="Pgvector.EntityFrameworkCore"/>
+        <PackageReference Include="StackExchange.Redis"/>
+        <PackageReference Include="ZiggyCreatures.FusionCache"/>
+        <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis"/>
+        <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Content Update="Persistence\SeedData\TeacherSettingDataSeed.json">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
-  </ItemGroup>
+    <ItemGroup>
+        <Content Update="Persistence\SeedData\TeacherSettingDataSeed.json">
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
 
 </Project>

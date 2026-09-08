@@ -10,53 +10,53 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
-        <PackageReference Include="Asp.Versioning.Mvc" Version="10.2.1" />
-        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
-        <PackageReference Include="Asp.Versioning.OpenApi" Version="10.2.3" />
-        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Core" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Data" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage" Version="9.0.0" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage" Version="9.0.0" />
-        <PackageReference Include="KubernetesClient" Version="17.0.14" />
-        <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.13.0-preview.260703.1" />
-        <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.13.0-alpha.260703.1" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+        <PackageReference Include="Ardalis.Result.AspNetCore"/>
+        <PackageReference Include="Asp.Versioning.Mvc"/>
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
+        <PackageReference Include="Asp.Versioning.OpenApi"/>
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Core"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Data"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage"/>
+        <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage"/>
+        <PackageReference Include="KubernetesClient"/>
+        <PackageReference Include="Microsoft.Agents.AI.Hosting"/>
+        <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI"/>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.OpenApi" Version="2.9.0" />
-        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
-        <PackageReference Include="RedisRateLimiting" Version="1.2.1" />
-        <PackageReference Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
-        <PackageReference Include="Serilog" Version="4.4.0" />
-        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-        <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-        <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
-        <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
-        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
-        <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.1" />
-        <PackageReference Include="Serilog.Sinks.Async" Version="2.1.0" />
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
-        <PackageReference Include="Serilog.Sinks.Console.Themes" Version="4.0.1" />
-        <PackageReference Include="Serilog.Sinks.Seq" Version="9.1.0" />
-        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+        <PackageReference Include="Microsoft.OpenApi"/>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
+        <PackageReference Include="RedisRateLimiting"/>
+        <PackageReference Include="RedisRateLimiting.AspNetCore"/>
+        <PackageReference Include="Serilog"/>
+        <PackageReference Include="Serilog.AspNetCore"/>
+        <PackageReference Include="Serilog.Enrichers.Environment"/>
+        <PackageReference Include="Serilog.Enrichers.Thread"/>
+        <PackageReference Include="Serilog.Exceptions"/>
+        <PackageReference Include="Serilog.Formatting.Compact"/>
+        <PackageReference Include="Serilog.Settings.Configuration"/>
+        <PackageReference Include="Serilog.Sinks.Async"/>
+        <PackageReference Include="Serilog.Sinks.Console"/>
+        <PackageReference Include="Serilog.Sinks.Console.Themes"/>
+        <PackageReference Include="Serilog.Sinks.Seq"/>
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3"/>
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj" />
-        <ProjectReference Include="..\Prisma.Infrastructure\Prisma.Infrastructure.csproj" />
+        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj"/>
+        <ProjectReference Include="..\Prisma.Infrastructure\Prisma.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Extensions\Ai\" />
-        <Folder Include="Logs\" />
-        <Folder Include="wwwroot\" />
+        <Folder Include="Extensions\Ai\"/>
+        <Folder Include="Logs\"/>
+        <Folder Include="wwwroot\"/>
     </ItemGroup>
 </Project>

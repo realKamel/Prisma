@@ -68,7 +68,7 @@ public class GetTeacherFinancesQueryHandlerTests
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
+            .ListAsync(Arg.Any<TeacherFinancesSpecification<Payment>>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act
@@ -110,7 +110,7 @@ public class GetTeacherFinancesQueryHandlerTests
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification>(), Arg.Any<CancellationToken>())
+            .ListAsync(Arg.Any<TeacherFinancesSpecification<Payment>>(), Arg.Any<CancellationToken>())
             .Returns(fakePaymentsWithNulls);
 
         // Act

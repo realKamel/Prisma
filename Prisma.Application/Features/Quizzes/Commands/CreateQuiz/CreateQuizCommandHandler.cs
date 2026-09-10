@@ -1,22 +1,38 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 
-public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService, IIdentityService identityService)
     : IRequestHandler<CreateQuizCommand, Result<TeacherQuizListItemDto>>
 {
     public async Task<Result<TeacherQuizListItemDto>> Handle(CreateQuizCommand request, CancellationToken ct)
     {
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         Lesson? lesson = null;
+
+        var userId = currentUserService.UserId;
+        if (userId is null)
+            return Result.Unauthorized("User is not authenticated.");
+
+        var user = await identityService.FindByIdAsync(userId.Value, ct);
+        if (user is null)
+            return Result.NotFound("User not found.");
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
 
         // if scope = LessonQuiz => Make sure lesson exsits and doesn't contain a quiz
         if (request.Scope == QuizScope.LessonQuiz)
@@ -29,6 +45,7 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
             if (lesson.QuizId.HasValue)
                 return Result<TeacherQuizListItemDto>.Error("الحصة دي عندها اختبار بالفعل");
         }
+
 
         // بناء الأسئلة + الاختيارات
         var questions = new List<Question>();
@@ -94,6 +111,12 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
         if (request.Scope == QuizScope.LessonQuiz)
         {
             lesson!.QuizId = quiz.Id;
+        }
+        else
+        {
+
+           quiz.TeacherId = userId.Value;
+
         }
 
         await unitOfWork.SaveChangesAsync(ct);

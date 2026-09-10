@@ -56,7 +56,7 @@ public class GetTeacherCodeBatchesQueryHandlerTests
         };
 
         _batchRepo.ListAsync(
-                Arg.Any<TeacherCodeBatchesSpecification>(),
+                Arg.Any<TeacherCodeBatchesSpecification<RedeemCodeEntity>>(),
                 Arg.Any<CancellationToken>())
             .Returns(fakeBatches);
 
@@ -79,7 +79,7 @@ public class GetTeacherCodeBatchesQueryHandlerTests
     {
         // Arrange
         _batchRepo.ListAsync(
-                Arg.Any<TeacherCodeBatchesSpecification>(),
+                Arg.Any<TeacherCodeBatchesSpecification<RedeemCodeEntity>>(),
                 Arg.Any<CancellationToken>())
             .Returns(new List<RedeemCodeEntity>());
 

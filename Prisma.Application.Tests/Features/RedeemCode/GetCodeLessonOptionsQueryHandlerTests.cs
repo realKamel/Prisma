@@ -43,7 +43,7 @@ public class GetCodeLessonOptionsQueryHandlerTests
         };
 
         _repo.ListAsync(
-                Arg.Any<TeacherAcademicYearLessonsSpecification>(),
+                Arg.Any<TeacherAcademicYearLessonsSpecification<AcademicYearLesson>>(),
                 Arg.Any<CancellationToken>())
             .Returns(links);
 
@@ -62,7 +62,7 @@ public class GetCodeLessonOptionsQueryHandlerTests
     {
         // Arrange
         _repo.ListAsync(
-                Arg.Any<TeacherAcademicYearLessonsSpecification>(),
+                Arg.Any<TeacherAcademicYearLessonsSpecification<AcademicYearLesson>>(),
                 Arg.Any<CancellationToken>())
             .Returns(new List<AcademicYearLesson>());
 

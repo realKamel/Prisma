@@ -11,9 +11,10 @@ namespace Prisma.Application.Features.Quizzes.Specifications;
 public class TeacherQuizzesListSpecification
     : Specification<Quiz, TeacherQuizzesListProjection>
 {
-    public TeacherQuizzesListSpecification(QuizScope scope, string? search)
+    public TeacherQuizzesListSpecification(QuizScope scope, string? search , Guid teacherid)
     {
-        Query.Where(q => q.Scope == scope);
+        Query.Where(q => q.Scope == scope &&
+            ( (q.Lesson != null && q.Lesson.TeacherId == teacherid) || q.TeacherId == teacherid ));
 
         if (!string.IsNullOrWhiteSpace(search))
             Query.Where(q => q.Title != null && q.Title.Contains(search));

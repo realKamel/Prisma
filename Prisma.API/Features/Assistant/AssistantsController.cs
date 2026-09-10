@@ -3,7 +3,9 @@ using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 using Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
@@ -27,13 +29,17 @@ public class AssistantsController(ISender mediator) : ApiController
 
     [HttpPost]
     [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> CreateAssistant(CreateAssistantCommand command,
-        CancellationToken ctx)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> CreateAssistant(
+        CreateAssistantCommand command,
+        CancellationToken ctx
+    )
     {
         return await mediator.Send(command, ctx);
     }
 
     [HttpDelete("{id}")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteAssistant(Guid id, CancellationToken ctx)
     {
         var result = await mediator.Send(new DeleteAssistantCommand(id), ctx);
@@ -42,15 +48,23 @@ public class AssistantsController(ISender mediator) : ApiController
 
     [HttpPatch("{id}")]
     [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> UpdateAssistantPermissions(Guid id,
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> UpdateAssistantPermissions(
+        Guid id,
         List<string> permissions,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         return await mediator.Send(new UpdatePermissionCommand(id, permissions), cancellationToken);
     }
 
     [HttpPut("{id}")]
-    public async Task<Result<UpdateAssistantDetailsCommandResponse>> UpdateAssistantDetails([FromRoute] Guid id, UpdateAssistantDetailsCommand UpdateAssistantDetails, CancellationToken cancellationToken)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<UpdateAssistantDetailsCommandResponse>> UpdateAssistantDetails(
+        [FromRoute] Guid id,
+        UpdateAssistantDetailsCommand UpdateAssistantDetails,
+        CancellationToken cancellationToken
+    )
     {
         var command = UpdateAssistantDetails with { Id = id };
         return await mediator.Send(command, cancellationToken);
@@ -64,15 +78,19 @@ public class AssistantsController(ISender mediator) : ApiController
     }
 
     [HttpGet("dashboard")]
-    public async Task<Result<GetAssistantDashboardResponse>> GetAssistantDashboard(CancellationToken ctx)
+    public async Task<Result<GetAssistantDashboardResponse>> GetAssistantDashboard(
+        CancellationToken ctx
+    )
     {
         return await mediator.Send(new GetAssistantDashboardQuery(), ctx);
     }
 
     [HttpGet("detailed-logs")]
     [ExpectedFailures(ResultStatus.Unauthorized, ResultStatus.Error)]
-    public async Task<Result<GetAssistantDetailedLogsResponseDto>> GetAssistantDetailedLogs([FromQuery] int take,
-        CancellationToken token)
+    public async Task<Result<GetAssistantDetailedLogsResponseDto>> GetAssistantDetailedLogs(
+        [FromQuery] int take,
+        CancellationToken token
+    )
     {
         var query = new GetAssistantDetailedLogsQuery(take);
         return await mediator.Send(query, token);

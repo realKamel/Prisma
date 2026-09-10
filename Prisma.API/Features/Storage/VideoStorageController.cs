@@ -1,15 +1,16 @@
 using System.Text.Json;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Ardalis.Result;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Storage.Commands.DeleteVideo;
 using Prisma.Application.Features.Storage.Commands.MuxWebhook;
 using Prisma.Application.Features.Storage.Queries.GetAudioUrl;
 using Prisma.Application.Features.Storage.Queries.GetUploadUrl;
 using Prisma.Application.Features.Storage.Queries.GetVideoUrl;
-
 
 namespace Prisma.API.Features.Storage;
 
@@ -37,14 +38,21 @@ public class VideoStorageController(IMediator mediator) : ApiController
     }
 
     [HttpDelete("delete")]
-    public async Task<Result> Delete([FromQuery] string objectKey, CancellationToken cancellationToken)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result> Delete(
+        [FromQuery] string objectKey,
+        CancellationToken cancellationToken
+    )
     {
         await mediator.Send(new DeleteVideoCommand(objectKey), cancellationToken);
         return Result.Success();
     }
 
     [HttpPost("mux-webhook")]
-    public async Task<Result> Handle([FromBody] JsonElement payload, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        [FromBody] JsonElement payload,
+        CancellationToken cancellationToken
+    )
     {
         var eventType = payload.GetProperty("type").GetString();
 
@@ -59,6 +67,9 @@ public class VideoStorageController(IMediator mediator) : ApiController
         if (!int.TryParse(passthrough, out var sectionId))
             return Result.Error("Invalid passthrough section id.");
 
-        return await mediator.Send(new MuxWebhookCommand(assetId, playbackId, sectionId), cancellationToken);
+        return await mediator.Send(
+            new MuxWebhookCommand(assetId, playbackId, sectionId),
+            cancellationToken
+        );
     }
 }

@@ -2,7 +2,9 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
 using Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
@@ -23,37 +25,46 @@ public class TeacherAssignmentsController(ISender sender) : ApiController
         [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         var result = await sender.Send(
-            new GetAssignmentSubmissionsListQuery(search, lessonId, status, page, pageSize), ct);
+            new GetAssignmentSubmissionsListQuery(search, lessonId, status, page, pageSize),
+            ct
+        );
         return result;
     }
 
     [HttpGet("{submissionId:int}")]
-    public async Task<Result<AssignmentSubmissionDetailDto>> GetDetail(int submissionId, CancellationToken ct)
+    public async Task<Result<AssignmentSubmissionDetailDto>> GetDetail(
+        int submissionId,
+        CancellationToken ct
+    )
     {
-        var result = await sender.Send(
-            new GetAssignmentSubmissionDetailQuery(submissionId), ct);
+        var result = await sender.Send(new GetAssignmentSubmissionDetailQuery(submissionId), ct);
         return result;
     }
 
     [HttpPost("{submissionId:int}/grade")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> Grade(
         int submissionId,
         [FromBody] GradeSubmissionRequest body,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(
-            new GradeAssignmentSubmissionCommand(submissionId, body.Score, body.Note), ct);
+            new GradeAssignmentSubmissionCommand(submissionId, body.Score, body.Note),
+            ct
+        );
         return result;
     }
 
     [HttpPost("{submissionId:int}/release-lock")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> ReleaseLock(int submissionId, CancellationToken ct)
     {
-        var result = await sender.Send(
-            new ReleaseAssignmentGradingLockCommand(submissionId), ct);
+        var result = await sender.Send(new ReleaseAssignmentGradingLockCommand(submissionId), ct);
         return result;
     }
 }

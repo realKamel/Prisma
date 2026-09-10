@@ -1,7 +1,9 @@
 using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.Storage.Commands.DeleteFile;
 using Prisma.Application.Features.Storage.Commands.UploadFile;
 using Prisma.Application.Features.Storage.Queries.GetDownloadUrl;
@@ -11,28 +13,47 @@ namespace Prisma.API.Features.Storage;
 public class StorageController(IMediator mediator) : ApiController
 {
     [HttpPost("upload")]
-    public async Task<Result<string>> Upload(IFormFile file, [FromQuery] string bucketName, [FromQuery] string objectKey,
-        CancellationToken cancellationToken)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<string>> Upload(
+        IFormFile file,
+        [FromQuery] string bucketName,
+        [FromQuery] string objectKey,
+        CancellationToken cancellationToken
+    )
     {
         await using var stream = file.OpenReadStream();
-        var result = await mediator.Send(new UploadFileCommand(bucketName, objectKey, stream, file.ContentType),
-            cancellationToken);
+        var result = await mediator.Send(
+            new UploadFileCommand(bucketName, objectKey, stream, file.ContentType),
+            cancellationToken
+        );
         return Result<string>.Success(result);
     }
 
     [HttpGet("download")]
-    public async Task<Result<string>> GetDownloadUrl([FromQuery] string bucketName, [FromQuery] string objectKey,
-        [FromQuery] int expiryMinutes = 60)
+    public async Task<Result<string>> GetDownloadUrl(
+        [FromQuery] string bucketName,
+        [FromQuery] string objectKey,
+        [FromQuery] int expiryMinutes = 60
+    )
     {
-        var result = await mediator.Send(new GetDownloadUrlQuery(bucketName, objectKey, expiryMinutes));
+        var result = await mediator.Send(
+            new GetDownloadUrlQuery(bucketName, objectKey, expiryMinutes)
+        );
         return Result<string>.Success(result);
     }
 
     [HttpDelete("delete")]
-    public async Task<Result<string>> Delete([FromQuery] string bucketName, [FromQuery] string objectKey,
-        CancellationToken cancellationToken)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<string>> Delete(
+        [FromQuery] string bucketName,
+        [FromQuery] string objectKey,
+        CancellationToken cancellationToken
+    )
     {
-        var result = await mediator.Send(new DeleteFileCommand(bucketName, objectKey), cancellationToken);
+        var result = await mediator.Send(
+            new DeleteFileCommand(bucketName, objectKey),
+            cancellationToken
+        );
         return Result<string>.Success(result);
     }
 }

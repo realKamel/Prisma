@@ -2,13 +2,16 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.TeacherPreferences.Commands.UpdateAccentColor;
 
 namespace Prisma.API.Features.Admins;
 
 [Authorize(Roles = AppRoles.Admin)]
+[EnableRateLimiting(RateLimitPolicies.UserWrite)]
 public class PlatformConfigurationsController(ISender sender) : ApiController
 {
     [HttpPut("accent")]

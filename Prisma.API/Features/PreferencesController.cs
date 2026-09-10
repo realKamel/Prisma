@@ -2,17 +2,23 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.TeacherPreferences.Dtos;
 using Prisma.Application.Features.TeacherPreferences.Queries.GetAccentColor;
 
 namespace Prisma.API.Features;
 
 [AllowAnonymous]
+[EnableRateLimiting(RateLimitPolicies.Public)]
 public class PreferencesController(ISender sender) : ApiController
 {
     [HttpGet("accent")]
-    public async Task<Result<AccentColorDto>> GetAccentColor([FromQuery] string teacherEmail, CancellationToken ct)
+    public async Task<Result<AccentColorDto>> GetAccentColor(
+        [FromQuery] string teacherEmail,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(new GetAccentColorQuery(teacherEmail), ct);
         return result;

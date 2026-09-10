@@ -2,7 +2,9 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.API.Features.Users.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Commands.CreateUser;
@@ -64,30 +66,59 @@ public class UsersController(ISender mediator) : ApiController
     }
 
     [HttpPost]
-    public async Task<Result<UserEditDto>> Create([FromBody] CreateUserRequest request, CancellationToken ct)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<UserEditDto>> Create(
+        [FromBody] CreateUserRequest request,
+        CancellationToken ct
+    )
     {
         var command = new CreateUserCommand(
-            request.FirstName, request.SecondName, request.ThirdName, request.LastName,
-            request.Mobile, request.Email, request.Password, request.Role,
-            request.GradeId, request.TeacherId, request.ParentMobile, request.Subject );
+            request.FirstName,
+            request.SecondName,
+            request.ThirdName,
+            request.LastName,
+            request.Mobile,
+            request.Email,
+            request.Password,
+            request.Role,
+            request.GradeId,
+            request.TeacherId,
+            request.ParentMobile,
+            request.Subject
+        );
 
         var result = await mediator.Send(command, ct);
         return result;
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<Result<UserEditDto>> Update(Guid id, [FromBody] UpdateUserRequest request, CancellationToken ct)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<UserEditDto>> Update(
+        Guid id,
+        [FromBody] UpdateUserRequest request,
+        CancellationToken ct
+    )
     {
         var command = new UpdateUserCommand(
-            id, request.FirstName, request.SecondName, request.ThirdName, request.LastName,
-            request.Mobile, request.Email, request.NewPassword,
-            request.GradeId, request.TeacherId, request.ParentMobile);
+            id,
+            request.FirstName,
+            request.SecondName,
+            request.ThirdName,
+            request.LastName,
+            request.Mobile,
+            request.Email,
+            request.NewPassword,
+            request.GradeId,
+            request.TeacherId,
+            request.ParentMobile
+        );
 
         var result = await mediator.Send(command, ct);
         return result;
     }
 
     [HttpDelete("{id:guid}")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> Delete(Guid id, CancellationToken ct)
     {
         var result = await mediator.Send(new DeleteUserCommand(id), ct);

@@ -3,7 +3,9 @@ using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
@@ -66,7 +68,7 @@ public class TeachersController(ISender mediator) : ApiController
     }
 
     [HttpPut("{id:guid}/activate")]
-    [ProducesResponseType(typeof(Result<bool>), StatusCodes.Status200OK)]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<bool>> ActivateTeacher(Guid id)
     {
         var result = await mediator.Send(new ActivateTeacherCommand(id));
@@ -74,7 +76,7 @@ public class TeachersController(ISender mediator) : ApiController
     }
 
     [HttpPut("{id:guid}/suspend")]
-    [ProducesResponseType(typeof(Result<bool>), StatusCodes.Status200OK)]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<bool>> SuspendTeacher(
         Guid id,
         [FromBody] SuspendTeacherRequest request

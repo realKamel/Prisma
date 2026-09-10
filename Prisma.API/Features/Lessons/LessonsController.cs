@@ -2,7 +2,9 @@ using Ardalis.Result;
 using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
@@ -97,13 +99,7 @@ public class LessonsController(IMediator _mediator) : ApiController
 
     [HttpPost]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(
-        ResultStatus.CriticalError,
-        ResultStatus.Error,
-        ResultStatus.Unauthorized,
-        ResultStatus.Invalid,
-        ResultStatus.Unauthorized
-    )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<CreateLessonResponse>> CreateLesson(
         [FromForm] CreateLessonDetailsCommand command,
         CancellationToken cancellationToken
@@ -114,6 +110,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     }
 
     [HttpDelete("{id:int}")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
         return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
@@ -121,13 +118,7 @@ public class LessonsController(IMediator _mediator) : ApiController
 
     [HttpPut("{id:int}/editor")]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(
-        ResultStatus.CriticalError,
-        ResultStatus.Error,
-        ResultStatus.Unauthorized,
-        ResultStatus.Invalid,
-        ResultStatus.Unauthorized
-    )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(
         [FromRoute] int id,
         [FromForm] UpdateLessonDetailsCommand command,
@@ -149,6 +140,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> ToggleLessonStatus(
         [FromRoute] int id,
         CancellationToken cancellationToken
@@ -161,13 +153,7 @@ public class LessonsController(IMediator _mediator) : ApiController
 
     [HttpPost("{id:int}/materials")]
     [Consumes("multipart/form-data")]
-    [ExpectedFailures(
-        ResultStatus.CriticalError,
-        ResultStatus.Error,
-        ResultStatus.Unauthorized,
-        ResultStatus.Invalid,
-        ResultStatus.Unauthorized
-    )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> UploadMaterials(
         [FromRoute] int id,
         [FromForm] UploadMaterialsRequest request,
@@ -186,6 +172,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteMaterial(
         [FromRoute] int id,
         [FromRoute] int MaterialId,
@@ -222,6 +209,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> SubmitAssignment(
         int lessonId,
         IFormFile file,
@@ -239,6 +227,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         ResultStatus.Invalid,
         ResultStatus.Unauthorized
     )]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
     {
         return await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);

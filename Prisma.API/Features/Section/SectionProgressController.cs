@@ -1,13 +1,16 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Ardalis.Result;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.Sections.Commands.CompleteSection;
 using Prisma.Application.Features.Sections.Commands.CreateSectionProgress;
 using Prisma.Application.Features.Sections.Commands.SaveSectionProgress;
 
 namespace Prisma.API.Features.Section;
 
+[EnableRateLimiting(RateLimitPolicies.UserWrite)]
 public class SectionProgressController(IMediator mediator) : ApiController
 {
     [HttpPost("{sectionId}/progress/start")]
@@ -17,10 +20,16 @@ public class SectionProgressController(IMediator mediator) : ApiController
     }
 
     [HttpPut("{sectionId}/progress")]
-    public async Task<Result> Save(int sectionId, [FromBody] SaveProgressRequest request,
-        CancellationToken cancellationToken)
+    public async Task<Result> Save(
+        int sectionId,
+        [FromBody] SaveProgressRequest request,
+        CancellationToken cancellationToken
+    )
     {
-        return await mediator.Send(new SaveSectionProgressCommand(sectionId, request.WatchedSeconds), cancellationToken);
+        return await mediator.Send(
+            new SaveSectionProgressCommand(sectionId, request.WatchedSeconds),
+            cancellationToken
+        );
     }
 
     [HttpPost("{sectionId}/progress/complete")]

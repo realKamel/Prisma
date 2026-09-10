@@ -3,7 +3,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Quizzes.Commands.GradeWrittenAnswers;
 using Prisma.Application.Features.Quizzes.Commands.OverrideAttemptScore;
@@ -26,38 +28,50 @@ public class GradingController(ISender sender) : ApiController
         [FromQuery] int? quizId,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         var result = await sender.Send(
-            new GetGradingListQuery(scope, search, status, quizId, page, pageSize), ct);
+            new GetGradingListQuery(scope, search, status, quizId, page, pageSize),
+            ct
+        );
         return result;
     }
 
     [HttpGet("{attemptId:int}")]
-    public async Task<Result<GradingAttemptDetailDto>> GetAttemptDetail(int attemptId, CancellationToken ct)
+    public async Task<Result<GradingAttemptDetailDto>> GetAttemptDetail(
+        int attemptId,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(new GetGradingAttemptDetailQuery(attemptId), ct);
         return result;
     }
 
     [HttpPost("{attemptId:int}/grade")]
-    public async Task<Result<GradeWrittenAnswersResultDto>> Grade(int attemptId,
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<GradeWrittenAnswersResultDto>> Grade(
+        int attemptId,
         [FromBody] GradeWrittenAnswersRequest body,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
-        var result = await sender.Send(
-            new GradeWrittenAnswersCommand(attemptId, body.Grades), ct);
+        var result = await sender.Send(new GradeWrittenAnswersCommand(attemptId, body.Grades), ct);
         return result;
     }
 
     [HttpPatch("{attemptId:int}/override-score")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<OverrideScoreResultDto>> OverrideScore(
         int attemptId,
         [FromBody] OverrideScoreRequest body,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(
-            new OverrideAttemptScoreCommand(attemptId, body.PenaltyScore), ct);
+            new OverrideAttemptScoreCommand(attemptId, body.PenaltyScore),
+            ct
+        );
         return result;
     }
 

@@ -2,7 +2,9 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Quizzes.Commands.ReportSecurityEvent;
 using Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
@@ -20,7 +22,10 @@ namespace Prisma.API.Features.Quizzes;
 public class StudentQuizzesController(ISender sender) : ApiController
 {
     [HttpGet]
-    public async Task<Result<StudentQuizzesListResponseDto>> GetList([FromQuery] string? filter, CancellationToken ct)
+    public async Task<Result<StudentQuizzesListResponseDto>> GetList(
+        [FromQuery] string? filter,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(new GetStudentQuizzesListQuery(filter), ct);
         return result;
@@ -41,27 +46,40 @@ public class StudentQuizzesController(ISender sender) : ApiController
     }
 
     [HttpPatch("attempts/{attemptId:int}/answer")]
-    public async Task<Result> SaveAnswer(int attemptId, [FromBody] SaveAnswerRequest body, CancellationToken ct)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result> SaveAnswer(
+        int attemptId,
+        [FromBody] SaveAnswerRequest body,
+        CancellationToken ct
+    )
     {
-        var result =
-            await sender.Send(new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
-                ct);
+        var result = await sender.Send(
+            new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
+            ct
+        );
         return result;
     }
 
     [HttpPost("attempts/{attemptId:int}/submit")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<SubmitQuizResultDto>> Submit(int attemptId, CancellationToken ct)
     {
         var result = await sender.Send(new SubmitQuizAttemptCommand(attemptId), ct);
         return result;
     }
 
-
     [HttpPost("attempts/{attemptId:int}/security-event")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> ReportSecurityEvent(
-        int attemptId, [FromBody] ReportSecurityEventRequest body, CancellationToken ct)
+        int attemptId,
+        [FromBody] ReportSecurityEventRequest body,
+        CancellationToken ct
+    )
     {
-        var result = await sender.Send(new ReportSecurityEventCommand(attemptId, body.EventType), ct);
+        var result = await sender.Send(
+            new ReportSecurityEventCommand(attemptId, body.EventType),
+            ct
+        );
         return result;
     }
 }

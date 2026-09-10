@@ -1,9 +1,11 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -25,7 +27,11 @@ namespace Prisma.API.Features.Quizzes;
 public class TeacherQuizzesController(ISender sender) : ApiController
 {
     [HttpPost]
-    public async Task<Result<TeacherQuizListItemDto>> Create([FromBody] CreateQuizCommand command, CancellationToken ct)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<TeacherQuizListItemDto>> Create(
+        [FromBody] CreateQuizCommand command,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(command, ct);
         return result;
@@ -52,11 +58,15 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         if (!Enum.TryParse<QuizScope>(scope, true, out var quizScope))
             return Result<TeacherQuizzesListResponseDto>.Error("Invalid scope value.");
-        var result = await sender.Send(new GetTeacherQuizzesListQuery(quizScope, search, status, page, pageSize), ct);
+        var result = await sender.Send(
+            new GetTeacherQuizzesListQuery(quizScope, search, status, page, pageSize),
+            ct
+        );
         return result;
     }
 
@@ -74,25 +84,32 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         [FromQuery] string? status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         var result = await sender.Send(
-            new GetQuizStudentsQuery(id, search, status, page, pageSize), ct);
+            new GetQuizStudentsQuery(id, search, status, page, pageSize),
+            ct
+        );
         return result;
     }
 
     [HttpDelete("{quizId:int}")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteQuiz(int quizId, CancellationToken ct)
     {
         var result = await sender.Send(new DeleteQuizCommand(quizId), ct);
         return result;
     }
 
-
     // ========== NEW AI EXTRACTION ENDPOINTS ==========
 
     [HttpPost("extract/upload")]
-    public async Task<Result<ExtractionJobDto>> UploadAndExtract(IFormFile? file, CancellationToken ct)
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<ExtractionJobDto>> UploadAndExtract(
+        IFormFile? file,
+        CancellationToken ct
+    )
     {
         if (file is null || file.Length == 0)
             return Result<ExtractionJobDto>.Error("لم يتم رفع أي ملف");
@@ -111,12 +128,18 @@ public class TeacherQuizzesController(ISender sender) : ApiController
             await file.CopyToAsync(stream, ct);
         }
 
-        var result = await sender.Send(new ExtractQuestionsFromPdfCommand(file.FileName, filePath), ct);
+        var result = await sender.Send(
+            new ExtractQuestionsFromPdfCommand(file.FileName, filePath),
+            ct
+        );
         return result;
     }
 
     [HttpGet("extract/status/{jobId:int}")]
-    public async Task<Result<ExtractionProgressDto>> GetExtractionStatus(int jobId, CancellationToken ct)
+    public async Task<Result<ExtractionProgressDto>> GetExtractionStatus(
+        int jobId,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(new GetExtractionStatusQuery(jobId), ct);
         return result;

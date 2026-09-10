@@ -3,7 +3,9 @@ using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
@@ -82,6 +84,7 @@ public class StudentsController(ISender mediator) : ApiController
     }
 
     [Authorize(Roles = AppRoles.Student)]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     [HttpPut("profile")]
     [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Invalid)]
     public async Task<Result<bool>> UpdateProfile(
@@ -94,6 +97,7 @@ public class StudentsController(ISender mediator) : ApiController
     }
 
     [Authorize(Roles = AppRoles.Student)]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     [HttpPost("change-password")]
     [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.Invalid)]
     public async Task<Result<bool>> ChangePassword(

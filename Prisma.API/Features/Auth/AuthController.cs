@@ -3,7 +3,9 @@ using Ardalis.Result.AspNetCore;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
@@ -15,6 +17,7 @@ using Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
 namespace Prisma.API.Features.Auth;
 
+[EnableRateLimiting(RateLimitPolicies.Auth)]
 public class AuthController(IMediator mediator, IWebHostEnvironment environment) : ApiController
 {
     [HttpPost("login")]

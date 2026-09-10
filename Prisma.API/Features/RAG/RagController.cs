@@ -1,8 +1,10 @@
 using System.Text.Json;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
-using Ardalis.Result;
+using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.RAG.Commands.AskRagQuestion;
 using Prisma.Application.Features.RAG.Commands.DeleteSession;
 using Prisma.Application.Features.RAG.Dto;
@@ -21,7 +23,10 @@ public class RagController(IMediator sender) : ApiController
     }
 
     [HttpGet("{id}")]
-    public async Task<Result<GetDetailedRagSessionQueryResponse>> GetRagSession(Guid id, CancellationToken ct)
+    public async Task<Result<GetDetailedRagSessionQueryResponse>> GetRagSession(
+        Guid id,
+        CancellationToken ct
+    )
     {
         var result = await sender.Send(new GetDetailedRagSessionQuery(id), ct);
         return result;
@@ -38,6 +43,7 @@ public class RagController(IMediator sender) : ApiController
     [Consumes("application/json")]
     [Produces("text/event-stream")]
     [ProducesResponseType<Result<AskRagQuestionCommandResponse>>(StatusCodes.Status200OK)]
+    [EnableRateLimiting(RateLimitPolicies.LlmConcurrency)]
     public async Task AskRagSession(AskRagQuestionCommand command, CancellationToken ct)
     {
         Response.ContentType = "text/event-stream";
@@ -72,6 +78,7 @@ public class RagController(IMediator sender) : ApiController
     // }
 
     [HttpDelete("{id}")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteRagSession(Guid id, CancellationToken ct)
     {
         var result = await sender.Send(new DeleteSessionCommand(id), ct);

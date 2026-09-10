@@ -27,7 +27,7 @@ public class LoginCommandHandler(
 
         if (user is null || !await identityService.CheckPasswordAsync(user, request.Password))
         {
-            return Result.Unauthorized("COMMON.UNAUTHORIZED");
+            return Result.Unauthorized();
         }
 
         if (user is Teacher teacher)

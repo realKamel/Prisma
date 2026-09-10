@@ -19,25 +19,25 @@ internal sealed class RateLimitSettings
 
 public class AuthSettings
 {
-    public int MaxRequestsPerMinute { get; set; } = 10;
+    public int MaxRequestsPerMinute { get; set; }
 }
 
 public class PublicSettings
 {
-    public int BurstLimit { get; set; } = 20; // Max instant requests (TokenLimit)
-    public int SustainedPerMinute { get; set; } = 60; // Refill rate (TokensPerPeriod)
+    public int BurstLimit { get; set; } // Max instant requests (TokenLimit)
+    public int SustainedPerMinute { get; set; } // Refill rate (TokensPerPeriod)
 }
 
 public class UserSettings
 {
-    public int ReadBurstLimit { get; set; } = 50;
-    public int ReadSustainedPerMinute { get; set; } = 300;
+    public int ReadBurstLimit { get; set; }
+    public int ReadSustainedPerMinute { get; set; }
 
-    public int WriteBurstLimit { get; set; } = 5;
-    public int WriteSustainedPerMinute { get; set; } = 30;
+    public int WriteBurstLimit { get; set; }
+    public int WriteSustainedPerMinute { get; set; }
 }
 
 public class LlmSettings
 {
-    public int MaxConcurrentStreams { get; set; } = 2;
+    public int MaxConcurrentStreams { get; set; }
 }

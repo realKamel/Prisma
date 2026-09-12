@@ -308,6 +308,23 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+  
+  postgres-exporter:
+    profiles: [ "observability" ]
+    image: prometheuscommunity/postgres-exporter:v0.20.1
+    container_name: prisma-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 32m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   postgres-data:

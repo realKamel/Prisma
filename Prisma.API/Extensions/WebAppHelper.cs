@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.API.Filters;
 using Prisma.API.Localization;
@@ -118,6 +120,8 @@ public static class WebAppHelper
 
             services.AddLocalizationServices();
             services.AddRateLimiterConfiguration(configuration);
+
+            services.AddObservabilityServices();
         }
 
         private void AddJwtAuthentication(IConfiguration configuration,
@@ -339,6 +343,26 @@ public static class WebAppHelper
                 };
             });
         }
+
+        private void AddObservabilityServices()
+        {
+            services.AddOpenTelemetry()
+                .WithMetrics(m =>
+                    m.AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddRuntimeInstrumentation()
+                        .AddMeter("Microsoft.AspNetCore.Hosting")
+                        .AddPrometheusExporter())
+                .WithTracing(tracing => tracing
+                    .AddAspNetCoreInstrumentation() // Tracks incoming HTTP requests
+                    .AddHttpClientInstrumentation() // Tracks outbound calls (Paymob, Groq, etc.)
+                    .AddEntityFrameworkCoreInstrumentation() // Tracks DB queries (if using EF Core)
+                    .AddOtlpExporter(options =>
+                    {
+                        // 'tempo' is the Docker Compose service name. 4317 is the gRPC port.
+                        options.Endpoint = new Uri("http://tempo:4317");
+                    }));
+        }
     }
 
     extension(WebApplication app)
@@ -374,7 +398,7 @@ public static class WebAppHelper
         {
             // 1. Liveness Probe (Lightweight)
             // Kubernetes uses this to know if the app process is alive. 
-            // We exclude heavy checks (like DB) so a temporary DB blip doesn't restart the whole pod.
+            // We exclude heavy checks (like DB), so a temporary DB blip doesn't restart the whole pod.
             app.MapHealthChecks("/health/live", new HealthCheckOptions
             {
                 Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag

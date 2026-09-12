@@ -5,8 +5,9 @@ services:
       context: .
       dockerfile: Prisma.API/Dockerfile
     environment:
-      ConnectionStrings__DefaultSqlConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=true;SSL Mode=Disable;"
-      ConnectionStrings__DefaultSqlConnection2: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};No Reset On Close=true;Max Auto Prepare=0;Include Error Detail=true;SSL Mode=Disable;"
+      #ConnectionStrings__DefaultSqlConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=false;SSL Mode=Disable;"
+      #ConnectionStrings__DefaultSqlConnection: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=false;SSL Mode=Disable;GSS Encryption Mode=Disable;"
+      ConnectionStrings__DefaultSqlConnection: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};No Reset On Close=true;Max Auto Prepare=0;Include Error Detail=true;SSL Mode=Disable;GSS Encryption Mode=Disable;"
       ConnectionStrings__Valkey: "cache:6379"
       IdentitySeed__AdminEmail: ${IDENTITY_SEED_ADMIN_EMAIL}
       IdentitySeed__AdminPassword: ${IDENTITY_SEED_ADMIN_PASSWORD}
@@ -29,22 +30,30 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       Groq__ApiKey: ${GROQ_API_KEY}
+
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
-    
+
     mem_limit: 3072m
-    
+
+    restart: unless-stopped
+
     depends_on:
       db:
         condition: service_healthy
       cache:
         condition: service_healthy
       connection-pooler:
-        condition: service_started
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   db:
     image: pgvector/pgvector:pg18
@@ -63,13 +72,18 @@ services:
       retries: 5
     mem_limit: 3072m
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   cache:
-    image: valkey/valkey:latest
+    image: valkey/valkey:9.0-alpine
     container_name: prisma-cache
     volumes:
       - cache-data:/data
-    command: ["valkey-server", "--maxmemory", "900mb", "--maxmemory-policy", "allkeys-lru"]
+    command: [ "valkey-server", "--maxmemory", "900mb", "--maxmemory-policy", "allkeys-lru" ]
     healthcheck:
       test: [ "CMD", "valkey-cli", "ping" ]
       interval: 5s
@@ -77,26 +91,228 @@ services:
       retries: 5
     mem_limit: 1024m
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   connection-pooler:
-    image: edoburu/pgbouncer:latest
+    image: edoburu/pgbouncer:v1.25.2-p0
     container_name: prisma-pgbouncer
     environment:
       DB_HOST: ${PGBOUNCER_DB_HOST}
       DB_PORT: ${PGBOUNCER_DB_PORT}
-      DB_USER: ${PGBOUNCER_DB_USER}
-      DB_PASSWORD: ${PGBOUNCER_DB_PASSWORD}
-      DB_NAME: ${PGBOUNCER_DB_NAME}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
       POOL_MODE: ${PGBOUNCER_POOL_MODE}
       MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN}
       DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE}
-      ADMIN_USERS: ${PGBOUNCER_ADMIN_USERS}
+      ADMIN_USERS: ${POSTGRES_USER}
+      AUTH_TYPE: scram-sha-256
     depends_on:
       db:
         condition: service_healthy
     mem_limit: 256m
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  prometheus:
+    profiles: [ "observability" ]
+    image: prom/prometheus:v3.14.0
+    container_name: prisma-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=5GB
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    mem_limit: 512m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  node-exporter:
+    profiles: [ "observability" ]
+    image: prom/node-exporter:v1.12.1
+    container_name: prisma-node-exporter
+    command: [ "--path.rootfs=/host" ]
+    pid: host
+    volumes:
+      - /:/host:ro
+    mem_limit: 64m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  cadvisor:
+    profiles: [ "observability" ]
+    image: ghcr.io/google/cadvisor:0.60.5
+    container_name: prisma-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    mem_limit: 256m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  loki:
+    profiles: [ "observability" ]
+    image: grafana/loki:3.7.7
+    container_name: prisma-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./docker/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    mem_limit: 512m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  alloy:
+    profiles: [ "observability" ]
+    image: grafana/alloy:v1.19.2
+    container_name: prisma-alloy
+    command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    volumes:
+      - ./docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      loki:
+        condition: service_started
+    mem_limit: 256m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  grafana:
+    profiles: [ "observability" ]
+    image: grafana/grafana:13.0.8
+    container_name: prisma-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+    mem_limit: 512m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  pgbouncer-exporter:
+    profiles: [ "observability" ]
+    image: prometheuscommunity/pgbouncer-exporter:v0.12.1
+    container_name: prisma-pgbouncer-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${PGBOUNCER_DB_USER}:${PGBOUNCER_DB_PASSWORD}@connection-pooler:5432/pgbouncer?sslmode=disable
+    depends_on:
+      connection-pooler:
+        condition: service_healthy
+    mem_limit: 32m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  valkey-exporter:
+    profiles: [ "observability" ]
+    image: oliver006/redis_exporter:v1.91.1
+    container_name: prisma-valkey-exporter
+    environment:
+      - REDIS_ADDR=cache:6379
+    depends_on:
+      cache:
+        condition: service_healthy
+    mem_limit: 32m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  tempo-init:
+    profiles: [ "observability" ]
+    image: busybox
+    container_name: prisma-tempo-init
+    command: [ "sh", "-c", "chown -R 10001:10001 /tmp/tempo" ]
+    volumes:
+      - tempo-data:/tmp/tempo
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  tempo:
+    profiles: [ "observability" ]
+    image: grafana/tempo:3.0.3
+    user: "10001:10001"
+    container_name: prisma-tempo
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/tmp/tempo
+    mem_limit: 512m
+    depends_on:
+      tempo-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
 
 volumes:
   postgres-data:
   cache-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
+  tempo-data:

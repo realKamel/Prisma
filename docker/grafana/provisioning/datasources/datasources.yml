@@ -1,0 +1,24 @@
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200  # Tempo's internal API port
+    isDefault: false
+    jsonData:
+      httpMethod: GET
+      # Optional: Link traces to logs in Loki!
+      tracesToLogs:
+        datasourceUid: 'loki' #this matches your Loki datasource UID
+        filterByTraceID: true
+        filterBySpanID: false
+        tags: [ 'job', 'instance', 'pod', 'namespace' ]

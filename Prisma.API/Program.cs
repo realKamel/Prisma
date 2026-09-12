@@ -72,7 +72,9 @@ public class Program
             app.UseAuthorization();
 
             app.UseRecurringJobs();
-
+            
+            app.MapPrometheusScrapingEndpoint();
+            
             app.MapAppHealthChecks();
 
             app.MapControllers();

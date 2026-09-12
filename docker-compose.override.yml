@@ -1,13 +1,13 @@
 services:
   prisma.api:
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_HTTP_PORTS=8080
-      - ASPNETCORE_HTTPS_PORTS=8081
-      - Mux__TokenId=${MUX_TOKEN_ID}
-      - Mux__TokenSecret=${MUX_TOKEN_SECRET}
-      - Mux__SigningKeyId=${MUX_SIGNING_KEY_ID}
-      - Mux__SigningPrivateKey=${MUX_SIGNING_PRIVATE_KEY}
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_HTTPS_PORTS: "8081"
+      Mux__TokenId: ${MUX_TOKEN_ID}
+      Mux__TokenSecret: ${MUX_TOKEN_SECRET}
+      Mux__SigningKeyId: ${MUX_SIGNING_KEY_ID}
+      Mux__SigningPrivateKey: ${MUX_SIGNING_PRIVATE_KEY}
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -19,6 +19,7 @@ services:
     depends_on:
       object-storage:
         condition: service_healthy
+  
   object-storage:
     image: minio/minio:latest
     container_name: prisma-minio
@@ -37,6 +38,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+  
   db:
     ports:
       - "5432:5432"
@@ -48,5 +50,9 @@ services:
   connection-pooler:
     ports:
       - "6432:5432"
+
+  grafana:
+    ports:
+      - "3000:3000"
 volumes:
   minio-data:

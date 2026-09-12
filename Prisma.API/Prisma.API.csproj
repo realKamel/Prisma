@@ -29,6 +29,11 @@
         </PackageReference>
         <PackageReference Include="Microsoft.OpenApi"/>
         <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+        <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
         <PackageReference Include="RedisRateLimiting"/>
         <PackageReference Include="RedisRateLimiting.AspNetCore"/>
         <PackageReference Include="Serilog"/>
@@ -42,6 +47,7 @@
         <PackageReference Include="Serilog.Sinks.Console"/>
         <PackageReference Include="Serilog.Sinks.Console.Themes"/>
         <PackageReference Include="Serilog.Sinks.Seq"/>
+        <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"/>
         <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3"/>
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"/>
     </ItemGroup>

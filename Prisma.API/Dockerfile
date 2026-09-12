@@ -16,6 +16,8 @@ COPY ["Prisma.API/Prisma.API.csproj", "Prisma.API/"]
 COPY ["Prisma.Application/Prisma.Application.csproj", "Prisma.Application/"]
 COPY ["Prisma.Domain/Prisma.Domain.csproj", "Prisma.Domain/"]
 COPY ["Prisma.Infrastructure/Prisma.Infrastructure.csproj", "Prisma.Infrastructure/"]
+COPY ["Directory.Build.props", "./"]
+COPY ["Directory.Packages.props", "./"]
 RUN dotnet restore "./Prisma.API/Prisma.API.csproj"
 COPY . .
 WORKDIR "/src/Prisma.API"
@@ -28,6 +30,9 @@ RUN dotnet publish "./Prisma.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends curl libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+USER app
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "Prisma.API.dll"]

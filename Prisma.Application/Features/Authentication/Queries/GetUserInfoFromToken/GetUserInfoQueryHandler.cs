@@ -19,7 +19,7 @@ public class GetUserInfoQueryHandler(
     {
         if (!currentUserService.IsAuthenticated || currentUserService.Email is null)
         {
-            return Result.Unauthorized("COMMON.UNAUTHORIZED");
+            return Result.Unauthorized();
         }
 
         string userEmail = currentUserService.Email;
@@ -27,20 +27,19 @@ public class GetUserInfoQueryHandler(
         string cacheKey = $"user-info:{userEmail}";
 
         // HybridCache handles L1 memory cache, L2 Valkey cache, and DB Stampede Protection
-        var credentials = await cache.GetOrCreateAsync(
-            cacheKey,
-            async token => await FetchUserInfoFromDatabaseAsync(userEmail),
+        var credentials = await cache.GetOrCreateAsync(cacheKey,
+            state: userEmail,
+            async (email, _) => await FetchUserInfoFromDatabaseAsync(email),
             options: new HybridCacheEntryOptions
             {
                 Expiration = TimeSpan.FromMinutes(15), // Max lifetime in cache
                 LocalCacheExpiration = TimeSpan.FromMinutes(5), // In-memory L1 cache duration
             },
-            cancellationToken: cancellationToken
-        );
+            cancellationToken: cancellationToken);
 
         if (credentials is null)
         {
-            return Result.Unauthorized("COMMON.UNAUTHORIZED");
+            return Result.Unauthorized();
         }
 
         return credentials;

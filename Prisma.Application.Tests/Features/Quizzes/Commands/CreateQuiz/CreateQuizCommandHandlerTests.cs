@@ -16,6 +16,10 @@ public class CreateQuizCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
+
+    private readonly IIdentityService _identityService =
+    Substitute.For<IIdentityService>();
+
     private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<IRepository<Lesson, int>>();
     private readonly IRepository<Question, int> _questionRepository = Substitute.For<IRepository<Question, int>>();
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
@@ -41,7 +45,7 @@ public class CreateQuizCommandHandlerTests
         _quizRepository.When(x => x.Add(Arg.Any<Quiz>()))
             .Do(ci => ci.Arg<Quiz>().Id = _quizIdCounter++);
 
-        _handler = new CreateQuizCommandHandler(_unitOfWork, _currentUser);
+        _handler = new CreateQuizCommandHandler(_unitOfWork, _currentUser, _identityService);
     }
 
     #region Helpers

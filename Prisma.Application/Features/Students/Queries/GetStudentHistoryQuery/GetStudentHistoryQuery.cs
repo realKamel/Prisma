@@ -18,5 +18,7 @@ public record HistoryDto(
     DateTimeOffset? FinishAt,
     DateTimeOffset? ExpiresAt,
     decimal? QuizDegree,
+    decimal? QuizScore,
+
     double? LessonPercentage
 );

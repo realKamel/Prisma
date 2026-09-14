@@ -11,6 +11,7 @@ public record EnrollmentHistoryDto(
     DateTimeOffset? CompletedAt,
     DateTimeOffset? ExpiresAt,
     decimal TotalDegree,
+    decimal? QuizScore,
     bool IsCompleted,
     int SectionsCount,
     double TotalProgress

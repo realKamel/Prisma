@@ -141,6 +141,7 @@ public static class QuizFinalizer
         if (enrollment is { IsCompleted: false })
         {
             enrollment.IsCompleted = true;
+            enrollment.Status = EnrollmentStatus.Done;
             enrollment.CompletedAt = DateTimeOffset.UtcNow;
         }
     }

@@ -14,6 +14,11 @@ public class PaginatedEnrollmentHistorySpecification<TSelector>
         Expression<Func<Enrollment, TSelector>> selector
     )
     {
-        Query.Where(s => s.StudentId == id).AsNoTracking().Skip(skip).Take(take).Select(selector);
+        var skipAmount = (skip - 1) * take;
+        Query.Where(s => s.StudentId == id)
+            .AsNoTracking()
+            .Skip(skipAmount < 0 ? 0 : skipAmount)
+            .Take(take)
+            .Select(selector);
     }
 }

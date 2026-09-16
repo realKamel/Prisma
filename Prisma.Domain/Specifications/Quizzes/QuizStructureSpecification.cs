@@ -3,9 +3,9 @@ using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Domain.Specifications.Quizzes;
 
-public class QuizForTakingSpecification : Specification<Quiz>
+public class QuizStructureSpecification : Specification<Quiz>
 {
-    public QuizForTakingSpecification(int quizId)
+    public QuizStructureSpecification(int quizId)
     {
         Query
             .Where(q => q.Id == quizId)

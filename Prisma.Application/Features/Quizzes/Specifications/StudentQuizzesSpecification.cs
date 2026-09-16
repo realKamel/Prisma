@@ -37,7 +37,9 @@ public class StudentQuizzesSpecification : Specification<Quiz, StudentQuizzesLis
                             Id = a.Id,
                             Status = a.Status,
                             Degree = a.Degree,
-                            SubmittedAt = a.SubmittedAt
+                            SubmittedAt = a.SubmittedAt,
+                            StartedAt = a.StartedAt
+                            
                         })
                         .FirstOrDefault()
             });

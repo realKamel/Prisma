@@ -99,7 +99,7 @@ public class GetQuizForTakingQueryHandlerTests
 
     private void SetupQuiz(Quiz? quiz) =>
         _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizForTakingSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(Arg.Any<QuizStructureSpecification>(), Arg.Any<CancellationToken>())
             .Returns(quiz);
 
     private void SetupExistingAttempt(QuizAttempt? attempt) =>

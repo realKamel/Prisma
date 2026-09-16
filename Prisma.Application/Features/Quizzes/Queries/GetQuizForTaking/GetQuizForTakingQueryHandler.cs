@@ -1,8 +1,10 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Features.Quizzes.Commands.StartOrGetQuizAttempt;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
+using Prisma.Application.Features.Quizzes.Queries.GetQuizStructure;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -11,100 +13,44 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
 
-public class GetQuizForTakingQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+public class GetQuizForTakingQueryHandler(ISender sender)
     : IRequestHandler<GetQuizForTakingQuery, Result<QuizTakingDto>>
 {
     public async Task<Result<QuizTakingDto>> Handle(GetQuizForTakingQuery request, CancellationToken ct)
     {
-        var studentId = currentUser.UserId!.Value;
 
-        var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
-        var quiz = await quizRepo
-            .FirstOrDefaultAsync(new QuizForTakingSpecification(request.QuizId), ct);
+        var attemptResult = await sender.Send(new StartOrGetQuizAttemptCommand(request.QuizId), ct);
+        if (!attemptResult.IsSuccess)
+            return Result<QuizTakingDto>.Error(string.Join(" | ", attemptResult.Errors));
 
-        if (quiz is null)
-            return Result<QuizTakingDto>.Error("الاختبار غير موجود");
+        var structureResult = await sender.Send(new GetQuizStructureQuery(request.QuizId), ct);
+        if (!structureResult.IsSuccess)
+            return Result<QuizTakingDto>.Error(string.Join(" | ", structureResult.Errors));
 
-        var now = DateTimeOffset.UtcNow;
-
-        if (quiz.AvailableFrom.HasValue && quiz.AvailableFrom > now)
-            return Result<QuizTakingDto>.Error("الاختبار غير متاح حاليًا");
-
-        var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-
-        var attempt = await attemptRepo.FirstOrDefaultAsync(
-    new StudentAttemptWithAnswersSpecification(quiz.Id, studentId), ct);
-
-        if (attempt is not null && attempt.Status == QuizAttemptStatus.InProgress)
-        {
-            var deadline = attempt.StartedAt + quiz.TimeInMinutes;
-            var hardDeadline = deadline + TimeSpan.FromSeconds(10);
-            if (now >= hardDeadline)
-            {
-                await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
-                return Result<QuizTakingDto>.Error("انتهى وقت هذه المحاولة");
-
-            }
-        }
-
-        if (attempt is not null && attempt.Status != QuizAttemptStatus.InProgress)
-            return Result<QuizTakingDto>.Error("سبق أن قمت بتسليم هذا الاختبار");
-
-        if (attempt is null)
-        {
-            if (quiz.DueDate.HasValue && quiz.DueDate < now)
-                return Result<QuizTakingDto>.Error("انتهى موعد هذا الاختبار");
-
-            attempt = new QuizAttempt
-            {
-                QuizId = quiz.Id,
-                StudentId = studentId,
-                StartedAt = now,
-                Status = QuizAttemptStatus.InProgress
-            };
-            attemptRepo.Add(attempt);
-            await unitOfWork.SaveChangesAsync(ct);
-        }
-
-        var savedAnswers = attempt.Answers.ToDictionary(a => a.QuestionId);
+        var structure = structureResult.Value;
+        var attempt = attemptResult.Value;
 
         var dto = new QuizTakingDto
         {
-            AttemptId = attempt.Id,
-            QuizId = quiz.Id,
-            Title = quiz.Title ?? string.Empty,
-            TeacherName =
-            quiz.Lesson?.Teacher is not null
-                ? $"{quiz.Lesson.Teacher.FirstName} {quiz.Lesson.Teacher.LastName}"
-                : string.Empty,
-
-            Subject = quiz.Lesson?.Teacher?.Subject ?? string.Empty,
-            Instructions = quiz.Description ?? "لا يوجد تعليمات لهذا الإختبار",
-            DurationMinutes = (int)quiz.TimeInMinutes.TotalMinutes,
-            RemainingSeconds = Math.Max(0, (int)((attempt.StartedAt + quiz.TimeInMinutes - now).TotalSeconds)),
-            Questions = quiz.Questions.Select(ql =>
+            AttemptId = attempt.AttemptId,
+            QuizId = structure.QuizId,
+            Title = structure.Title,
+            TeacherName = structure.TeacherName,
+            Subject = structure.Subject,
+            Instructions = structure.Instructions,
+            DurationMinutes = structure.DurationMinutes,
+            RemainingSeconds = attempt.RemainingSeconds,
+            Questions = structure.Questions.Select(q =>
             {
-                var q = ql.Question;
-                savedAnswers.TryGetValue(q.Id, out var saved);
-
-                List<QuizChoiceDto>? choices = null;
-                if (q is MCQQuestion mcq)
-                {
-                    choices = mcq.Choices.Select(c => new QuizChoiceDto
-                    {
-                        ChoiceId = c.Id,
-                        Text = c.Text ?? string.Empty
-                    }).ToList();
-                }
-
+                attempt.SavedAnswers.TryGetValue(q.QuestionId, out var saved);
                 return new QuizQuestionTakingDto
                 {
-                    QuestionId = q.Id,
-                    Text = q.Title,
+                    QuestionId = q.QuestionId,
+                    Text = q.Text,
                     Type = q.Type,
-                    Degree = ql.Degree,
-                    Choices = choices,
-                    SelectedChoiceId = saved?.ChoiceId,
+                    Degree = q.Degree,
+                    Choices = q.Choices,
+                    SelectedChoiceId = saved?.SelectedChoiceId,
                     SavedTextAnswer = saved?.TextAnswer
                 };
             }).ToList()

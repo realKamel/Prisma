@@ -106,17 +106,23 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
+      AUTH_USER: ${POSTGRES_USER}
+      PGBOUNCER_AUTH_USER: ${POSTGRES_USER}
+      STATS_USERS: ${POSTGRES_USER}
       POOL_MODE: ${PGBOUNCER_POOL_MODE}
       MAX_CLIENT_CONN: ${PGBOUNCER_MAX_CLIENT_CONN}
       DEFAULT_POOL_SIZE: ${PGBOUNCER_DEFAULT_POOL_SIZE}
       ADMIN_USERS: ${POSTGRES_USER}
       AUTH_TYPE: scram-sha-256
+      LOG_CONNECTIONS: "0"
+      LOG_DISCONNECTIONS: "0"
+      LOG_POOLER_ERRORS: "1"
     depends_on:
       db:
         condition: service_healthy
     mem_limit: 256m
     healthcheck:
-      test: [ "CMD", "pg_isready", "-h", "127.0.0.1", "-p", "5432" ]
+      test: [ "CMD-SHELL", "PGPASSWORD=${POSTGRES_PASSWORD} pg_isready -h 127.0.0.1 -p 5432 -U ${POSTGRES_USER} -d pgbouncer" ]
       interval: 3s
       timeout: 3s
       retries: 5
@@ -147,7 +153,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   node-exporter:
     profiles: [ "observability" ]
     image: prom/node-exporter:v1.12.1
@@ -163,7 +169,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   cadvisor:
     profiles: [ "observability" ]
     image: ghcr.io/google/cadvisor:0.60.5
@@ -180,7 +186,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   loki:
     profiles: [ "observability" ]
     image: grafana/loki:3.7.7
@@ -196,7 +202,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   alloy:
     profiles: [ "observability" ]
     image: grafana/alloy:v1.19.2
@@ -216,7 +222,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   grafana:
     profiles: [ "observability" ]
     image: grafana/grafana:13.0.8
@@ -240,7 +246,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   pgbouncer-exporter:
     profiles: [ "observability" ]
     image: prometheuscommunity/pgbouncer-exporter:v0.12.1
@@ -274,7 +280,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   tempo-init:
     profiles: [ "observability" ]
     image: busybox
@@ -288,7 +294,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   tempo:
     profiles: [ "observability" ]
     image: grafana/tempo:3.0.3
@@ -308,7 +314,7 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-  
+
   postgres-exporter:
     profiles: [ "observability" ]
     image: prometheuscommunity/postgres-exporter:v0.20.1

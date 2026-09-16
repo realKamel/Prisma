@@ -62,6 +62,7 @@ internal class GetStudentHistoryQueryHandler(
                     e.CompletedAt,
                     e.ExpiresAt,
                     e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.TotalDegree : 0,
+                    e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.Attempts.FirstOrDefault(e => e.StudentId == userId.Value)!.Degree : 0,
                     e.IsCompleted,
                     e.Lesson != null ? e.Lesson.Sections.Count : 0,
                     e.Lesson != null
@@ -86,6 +87,7 @@ internal class GetStudentHistoryQueryHandler(
                 raw.CompletedAt,
                 raw.ExpiresAt,
                 raw.TotalDegree,
+                raw.QuizScore,
                 CalculateProgressPercentage(raw.IsCompleted, raw.SectionsCount, raw.TotalProgress)
             ))
             .ToList();

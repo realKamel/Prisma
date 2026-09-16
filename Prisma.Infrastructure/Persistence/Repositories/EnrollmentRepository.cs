@@ -34,7 +34,8 @@ public class EnrollmentRepository : Repository<Enrollment, int>, IEnrollmentRepo
                 // 4. Average quiz degree (null-safe to avoid skewing results)
                 g.Average(e =>
                     e.Lesson != null && e.Lesson.Quiz != null
-                        ? e.Lesson.Quiz.TotalDegree
+                        ?( e.Lesson.Quiz.Attempts.FirstOrDefault(a => a.StudentId == userId).Degree
+                        / e.Lesson.Quiz.TotalDegree) * 100
                         : (decimal?)null
                 ) ?? 0m
             ))

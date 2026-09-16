@@ -1,9 +1,9 @@
 <Project>
     <PropertyGroup>
         <!-- Code Quality & Analysis -->
-        <AnalysisLevel>latest-recommended</AnalysisLevel>
+        <AnalysisLevel>latest</AnalysisLevel>
         <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-        <AnalysisMode>Recommended</AnalysisMode>
+        <AnalysisMode>All</AnalysisMode>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">

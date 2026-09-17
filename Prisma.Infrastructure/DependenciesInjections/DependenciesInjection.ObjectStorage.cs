@@ -19,14 +19,12 @@ public static partial class DependenciesInjection
 
         ArgumentNullException.ThrowIfNull(storageConfig);
 
-        services.AddSingleton<IAmazonS3>(sp =>
+        services.AddSingleton<IAmazonS3>(_ =>
         {
             var config = new AmazonS3Config
             {
-                ServiceURL = storageConfig.ServiceUrl,
-                ForcePathStyle = storageConfig.ForcePathStyle,
+                ServiceURL = storageConfig.ServiceUrl, ForcePathStyle = storageConfig.ForcePathStyle, UseHttp = true
             };
-
             return new AmazonS3Client(storageConfig.AccessKey, storageConfig.SecretKey, config);
         });
 

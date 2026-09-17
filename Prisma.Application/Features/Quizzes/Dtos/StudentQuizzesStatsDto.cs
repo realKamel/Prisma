@@ -10,5 +10,6 @@ public class StudentQuizzesStatsDto
     public int DoneCount { get; set; }
     public int MissedCount { get; set; }
     public int UpcomingCount { get; set; }
+    public  int InProgressCount { get; set; }
 
 }

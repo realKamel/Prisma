@@ -4,7 +4,7 @@ public class StudentQuizListItemDto
 {
     public int QuizId { get; set; }
     public string Title { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty; // "new" | "pending" | "done" | "missed"
+    public string Status { get; set; } = string.Empty; // "new" | "pending" | "done" | "missed" | "in_pprogress"
     public DateTimeOffset? AvailableFrom { get; set; }
     public DateTimeOffset? DueDate { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }

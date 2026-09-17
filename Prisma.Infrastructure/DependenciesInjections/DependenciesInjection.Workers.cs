@@ -58,5 +58,7 @@ public static partial class DependenciesInjection
             client.BaseAddress = new Uri("https://stream.mux.com");
             client.DefaultRequestHeaders.Accept.Clear();
         });
+
+        services.AddScoped<IQuizAttemptFinalizationJob, QuizAttemptFinalizationJob>();
     }
 }

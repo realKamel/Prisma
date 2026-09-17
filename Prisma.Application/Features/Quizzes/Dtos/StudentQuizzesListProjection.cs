@@ -21,4 +21,6 @@ public class AttemptProjection
     public QuizAttemptStatus Status { get; init; }
     public decimal? Degree { get; init; }
     public DateTimeOffset? SubmittedAt { get; init; }
+    public DateTimeOffset? StartedAt { get; init; }
+
 }

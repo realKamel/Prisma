@@ -50,6 +50,12 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
                 else
                     status = "new";
             }
+            else if (q.Attempt.Status == QuizAttemptStatus.InProgress)
+            {
+                var deadline = q.Attempt.StartedAt + TimeSpan.FromMinutes(q.DurationMinutes);
+                status = now < deadline ? "in_progress" : "pending"; 
+            }
+
             else if (q.Attempt.Status == QuizAttemptStatus.Graded && dueDatePassed)
             {
                 status = "done";
@@ -90,6 +96,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
             DoneCount = items.Count(i => i.Status == "done"),
             MissedCount = items.Count(i => i.Status == "missed"),
             UpcomingCount = items.Count(i => i.Status == "upcoming"),
+            InProgressCount = items.Count(i => i.Status == "in_progress"),
             AverageScorePercent = doneScores.Count > 0 ? Math.Round(doneScores.Average(), 1) : 0,
             BestScorePercent = doneScores.Count > 0 ? Math.Round(doneScores.Max(), 1) : 0
         };

@@ -47,8 +47,9 @@ public static class QuizFinalizer
     {
         // Check if all written answers are graded
         if (attempt.Answers.Any(a => a.Score is null))
+        {
             return;
-
+        }
 
         attempt.Degree = attempt.Answers.Sum(a => a.Score ?? 0);
 
@@ -105,13 +106,16 @@ public static class QuizFinalizer
             else // WrittenQuestion
             {
                 if (answer is null || answer.Score is null)
+                {
                     hasPendingWritten = true;
+                }
                 else
+                {
                     totalScore += answer.Score.Value;
+                }
             }
         }
         return (totalScore, hasPendingWritten);
-
 
     }
 
@@ -122,7 +126,9 @@ public static class QuizFinalizer
         CancellationToken ct)
     {
         if (quiz.Scope != QuizScope.LessonQuiz || !quiz.LessonId.HasValue)
+        {
             return;
+        }
 
         await MarkEnrollmentCompleted(
             studentId,
@@ -130,7 +136,6 @@ public static class QuizFinalizer
             unitOfWork,
             ct);
     }
-
 
     private static async Task MarkEnrollmentCompleted(Guid studentId, int lessonId, IUnitOfWork unitOfWork, CancellationToken ct)
     {

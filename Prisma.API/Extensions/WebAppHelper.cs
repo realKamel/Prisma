@@ -104,7 +104,14 @@ public static partial class WebAppHelper
                 JobQueues.Reports,
                 x => x.GenerateWeekly(),
                 Cron.Weekly(DayOfWeek.Friday, 22, 0));
-        }
+
+            // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
+            jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
+                JobQueues.QuizAttemptFinalization,
+                x => x.FinalizeExpiredAttempts(CancellationToken.None),
+                Cron.Minutely());
+        
+    }
 
         public void UseHangfireUi()
         {

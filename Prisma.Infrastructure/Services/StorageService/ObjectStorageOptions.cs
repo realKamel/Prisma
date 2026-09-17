@@ -21,4 +21,6 @@ public sealed class ObjectStorageOptions
 
     //"ForcePathStyle": true
     public bool ForcePathStyle { get; set; } = true;
+
+    public bool UseHttp { get; set; } = true;
 }

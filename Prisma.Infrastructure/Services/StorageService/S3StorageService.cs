@@ -1,11 +1,18 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
-public class S3StorageService(IAmazonS3 s3, IConfiguration configuration) : IStorageService
+public class S3StorageService(
+    IAmazonS3 s3,
+    IConfiguration configuration,
+    IHostEnvironment environment,
+    IOptions<ObjectStorageOptions> objectStorageOptions)
+    : IStorageService
 {
     private readonly IAmazonS3 _s3 = s3;
     private readonly IConfiguration _config = configuration;
@@ -53,7 +60,10 @@ public class S3StorageService(IAmazonS3 s3, IConfiguration configuration) : ISto
         var storageConfig = _config.GetSection("ObjectStorage");
 
         if (storageConfig["ServiceUrl"]!.StartsWith("http://"))
+        {
             url = url.Replace("https://", "http://");
+        }
+
         return url;
     }
 

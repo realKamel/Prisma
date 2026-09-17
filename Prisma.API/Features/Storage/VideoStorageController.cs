@@ -17,10 +17,9 @@ namespace Prisma.API.Features.Storage;
 public class VideoStorageController(IMediator mediator) : ApiController
 {
     [HttpGet("upload-url")]
-    public async Task<Result<VideoUploadResult>> GetUploadUrl([FromQuery] int sectionId)
+    public async Task<Result<VideoUploadResult>> GetUploadUrl([FromQuery] int sectionId, [FromQuery] string? guidId)
     {
-        var result = await mediator.Send(new GetUploadUrlQuery(sectionId));
-        return Result<VideoUploadResult>.Success(result);
+        return await mediator.Send(new GetUploadUrlQuery(sectionId, guidId));
     }
 
     [HttpGet("video-url")]

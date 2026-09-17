@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
-using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
+using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;

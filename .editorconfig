@@ -256,3 +256,5 @@ dotnet_diagnostic.CA1852.severity = warning
 
 # Optional: Auto-fix these on save in supported IDEs
 dotnet_diagnostic.IDE0040.severity = warning
+
+dotnet_diagnostic.CA2007.severity = none

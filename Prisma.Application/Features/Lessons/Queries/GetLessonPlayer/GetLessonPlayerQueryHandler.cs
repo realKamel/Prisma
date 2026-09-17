@@ -18,7 +18,9 @@ public class GetLessonPlayerQueryHandler(
     {
         var studentId = currentUserService.UserId;
         if (studentId == null)
-            return Result.Unauthorized("User must be authenticated to access lesson player");
+        {
+            return Result.Unauthorized();
+        }
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var spec = new LessonPlayerWithDetailsSpecification(request.id, studentId.Value);
@@ -82,32 +84,31 @@ public class GetLessonPlayerQueryHandler(
             Description = lesson.Description ?? string.Empty,
             Teacher = teacher,
             VideoPoster = lesson.ImageThumbnailUrl ?? string.Empty,
-
             ValidityDays = expiryDays > 0 ? expiryDays : 30,
             Outcomes = lesson.Outcomes,
             Materials = materials,
-
-            Quiz = lesson.Quiz is null ? null : new QuizDto
-            {
-                Id = lesson.Quiz.Id,
-                QuestionsCount = lesson.Quiz.QuestionsCount,
-                DurationMinutes = (int)lesson.Quiz.TimeInMinutes.TotalMinutes,
-                PassingScore = (int)lesson.Quiz.TotalDegree,
-                IsAttempted = lesson.Quiz.IsAttempted,
-            },
-
+            Quiz = lesson.Quiz is null
+                ? null
+                : new QuizDto
+                {
+                    Id = lesson.Quiz.Id,
+                    QuestionsCount = lesson.Quiz.QuestionsCount,
+                    DurationMinutes = (int)lesson.Quiz.TimeInMinutes.TotalMinutes,
+                    PassingScore = (int)lesson.Quiz.TotalDegree,
+                    IsAttempted = lesson.Quiz.IsAttempted,
+                },
             Assignment = lesson.Assignment is null
                 ? null
                 : new AssignmentDto
                 {
                     Id = lesson.Assignment.Id,
                     ContentURL = lesson.Assignment.ContentURL != null
-                        ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lesson.Assignment.ContentURL)
+                        ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
+                            lesson.Assignment.ContentURL)
                         : string.Empty,
                     DueDate = lesson.Assignment.DueDate.ToString("yyyy-MM-dd"),
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },
-
             Sections = sections
         };
 

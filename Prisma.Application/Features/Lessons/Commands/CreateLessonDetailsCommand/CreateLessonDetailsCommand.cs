@@ -1,8 +1,8 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Http;
-using Ardalis.Result;
 
-namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
+namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
 public record CreateLessonDetailsCommand(
     string Title,
@@ -14,7 +14,7 @@ public record CreateLessonDetailsCommand(
     IFormFile? AssignmentFile,
     DateTimeOffset? AssignmentDueDate,
     bool IsPublished,
-    List<int> AcademicYearIds ,
+    List<int> AcademicYearIds,
     List<string> Outcomes,
     IFormFile? ImageFile,
     Guid? TeacherId

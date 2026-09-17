@@ -23,9 +23,10 @@ public class GetStudentDashboardQueryHandler(
         CancellationToken cancellationToken)
     {
         if (currentUserService.UserId is not { } userId)
-            return Result.Unauthorized("Login First");
+            return Result.Unauthorized();
 
         var user = await identityService.FindByIdAsync(userId);
+        
         if (user is not Student)
             return Result.Error("Something went wrong");
 
@@ -60,7 +61,7 @@ public class GetStudentDashboardQueryHandler(
             cancellationToken);
 
         var score = await quizAttemptRepo.FirstOrDefaultAsync(
-            new QuizAttemptWithProjectionSpec<TopQuizInfo>(userId, a => new TopQuizInfo(a.Degree,a.Quiz.TotalDegree)),
+            new QuizAttemptWithProjectionSpec<TopQuizInfo>(userId, a => new TopQuizInfo(a.Degree, a.Quiz.TotalDegree)),
             cancellationToken);
 
         var topScore = score is not null ? (score.StudentScore / score.TopScore) * 100 : null;
@@ -126,7 +127,8 @@ public class GetStudentDashboardQueryHandler(
                 CurrentChapter = currentChapter,
                 TotalChapters = totalSections,
                 PosterUrl = lastActiveEnrollment.LessonThumbnailUrl != null
-                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, lastActiveEnrollment.LessonThumbnailUrl)
+                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
+                        lastActiveEnrollment.LessonThumbnailUrl)
                     : string.Empty
             };
         }
@@ -147,7 +149,8 @@ public class GetStudentDashboardQueryHandler(
                     : string.Empty,
                 Duration = enrollment.LessonDuration,
                 PosterUrl = enrollment.LessonThumbnailUrl != null
-                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, enrollment.LessonThumbnailUrl)
+                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
+                        enrollment.LessonThumbnailUrl)
                     : string.Empty,
                 Status = status.ToString().ToLower(),
                 ExpiresInDays = status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
@@ -183,9 +186,11 @@ public class GetStudentDashboardQueryHandler(
 
         return LessonStatus.New;
     }
+
     public sealed record StudentBasicInfo(string? FirstName, string? AcademicYearTitle, int StreakDays);
 
     public sealed record SectionProgressInfo(TimeSpan Duration, bool IsCompletedByStudent);
+
     public sealed record TopQuizInfo(decimal? StudentScore, decimal? TopScore);
 
     public sealed record EnrollmentDashboardInfo(
@@ -194,8 +199,8 @@ public class GetStudentDashboardQueryHandler(
         string? LessonTitle,
         string? LessonThumbnailUrl,
         TimeSpan LessonDuration,
-        string? TeacherName,   
-        string? Subject,       
+        string? TeacherName,
+        string? Subject,
         bool IsCompleted,
         DateTimeOffset? ExpiresAt,
         DateTimeOffset? CreatedAt,

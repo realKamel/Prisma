@@ -3,7 +3,6 @@ using MediatR;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -13,30 +12,30 @@ using Prisma.Domain.Specifications.Lessons;
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
 public class CreateLessonDetailsCommandHandler(
-    IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService,
-    IIdentityService _userManager,
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
+    IIdentityService userManager,
     IStorageService storageService,
     IBackgroundJobService backgroundJobService)
-    : IRequestHandler<CreateLessonDetails.CreateLessonDetailsCommand, Result<CreateLessonResponse>>
+    : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
-    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetails.CreateLessonDetailsCommand request,
+    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetailsCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
+        var userId = currentUserService.UserId;
 
         if (userId is null)
         {
             return Result.Unauthorized();
         }
 
-        var user = await _userManager.FindByIdAsync(userId.Value);
+        var user = await userManager.FindByIdAsync(userId.Value);
         if (user is null)
         {
             return Result.Unauthorized();
         }
 
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
             return Result.Unauthorized("Only teachers and assistants can create lessons.");
 
@@ -61,7 +60,7 @@ public class CreateLessonDetailsCommandHandler(
             if (request.TeacherId is null)
                 return Result.Error("Admin-created lessons require an explicit teacher.");
 
-            var teacherExists = await _userManager.FindByIdAsync(request.TeacherId.Value) is Teacher;
+            var teacherExists = await userManager.FindByIdAsync(request.TeacherId.Value) is Teacher;
             if (!teacherExists)
                 return Result.Error("Specified teacher does not exist.");
 
@@ -96,8 +95,9 @@ public class CreateLessonDetailsCommandHandler(
                 lesson.Sections.Add(new Section
                 {
                     Title = ch.Name,
-                    ContentURL = ch.VideoFileName,
-                    SortOrder = order++
+                    ContentURL = ch.VideoFileName?.Split('.')[0],
+                    SortOrder = order++,
+                    PlaybackId = ch.VideoFileName?.Split('.')[0]
                 });
             }
         }
@@ -121,7 +121,7 @@ public class CreateLessonDetailsCommandHandler(
         if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
         {
             var academicYearIds = request.AcademicYearIds.Distinct().ToList();
-            var academicYearRepository = _unitOfWork.GetOrCreateRepository<AcademicYear, int>();
+            var academicYearRepository = unitOfWork.GetOrCreateRepository<AcademicYear, int>();
 
             var validYears = await academicYearRepository.ListAsync(
                 new AcademicYearsByIdsSpecification(academicYearIds), cancellationToken);
@@ -135,9 +135,9 @@ public class CreateLessonDetailsCommandHandler(
             }
         }
 
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
         lessonRepository.Add(lesson);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         List<int> sectionIds = lesson.Sections.Select(s => s.Id).ToList();
 
@@ -146,6 +146,6 @@ public class CreateLessonDetailsCommandHandler(
         //backgroundJobService.Enqueue<ILessonTranscriptAndSummarizationJob>(job =>
         //    job.TranscriptAndSummarize(lesson.Id, cancellationToken));
 
-        return Result<CreateLessonResponse>.Success(response);
+        return response;
     }
 }

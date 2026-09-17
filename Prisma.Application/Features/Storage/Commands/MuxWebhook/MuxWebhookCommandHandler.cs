@@ -16,8 +16,7 @@ public class MuxWebhookCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<
 
         section.AssetId = request.AssetId;
         section.PlaybackId = request.PlaybackId;
-        sectionRepo.Update(section);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await sectionRepo.UpdateAsync(section, cancellationToken);
 
         return Result.Success();
     }

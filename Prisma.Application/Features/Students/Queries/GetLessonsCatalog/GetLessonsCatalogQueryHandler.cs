@@ -22,19 +22,24 @@ public class GetLessonsCatalogQueryHandler(
     {
         if (currentUser.UserId is null)
         {
-            return Result.Unauthorized("Unauthorized");
+            return Result.Unauthorized();
         }
 
         var studentId = currentUser.UserId.Value;
 
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+
         var student = await studentRepo.GetByIdAsync(studentId, cancellationToken);
 
         if (student is null)
-            return Result.Unauthorized("Unauthorized");
+        {
+            return Result.Unauthorized();
+        }
 
         if (student.AcademicYearId is null)
-            return Result.Error($"Student {studentId} has no academic year assigned.");
+        {
+            return Result.NotFound($"Student {studentId} has no academic year assigned.");
+        }
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 

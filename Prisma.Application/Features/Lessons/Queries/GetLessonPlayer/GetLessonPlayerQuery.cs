@@ -5,7 +5,7 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
 public record GetLessonPlayerQuery(int id) : IRequest<Result<LessonPlayerResult>>;
 
-public class LessonPlayerResult
+public record LessonPlayerResult
 {
     public int Id { get; set; } //
     public string Title { get; set; } = string.Empty; //
@@ -24,20 +24,16 @@ public class LessonPlayerResult
     public List<SectionDto> Sections { get; set; } = new(); //
 
     public List<string> Outcomes { get; set; } = new(); //
-
-
 }
 
-
-
-public class MaterialDto
+public record MaterialDto
 {
     public string Title { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string DownloadUrl { get; set; } = string.Empty;
 }
 
-public class QuizDto
+public record QuizDto
 {
     public int Id { get; set; }
     public int QuestionsCount { get; set; }
@@ -46,15 +42,15 @@ public class QuizDto
     public bool IsAttempted { get; set; }
 }
 
-public class AssignmentDto
+public record AssignmentDto
 {
     public int Id { get; set; }
     public string ContentURL { get; set; } = string.Empty;
     public string DueDate { get; set; } = string.Empty;
-    public string FileName { get; set;} = string.Empty;
+    public string FileName { get; set; } = string.Empty;
 }
 
-public class SectionDto
+public record SectionDto
 {
     public int Id { get; set; }
     public int SectionId { get; set; }

@@ -6,6 +6,7 @@ public class GetVideoUrlQueryHandler(IVideoStorageService videoStorage) : IReque
 {
     public async Task<string> Handle(GetVideoUrlQuery request, CancellationToken cancellationToken)
     {
-        return await videoStorage.GetVideoUrlAsync(request.ObjectKey);
+        var key = request.ObjectKey.Split('.')[0];
+        return await videoStorage.GetVideoUrlAsync(key);
     }
 }

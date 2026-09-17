@@ -2,7 +2,9 @@ namespace Prisma.Application.Abstractions.Services;
 
 public interface IVideoStorageService
 {
-    Task<VideoUploadResult> GetUploadUrlAsync(int sectionId, CancellationToken cancellationToken = default);
+    Task<VideoUploadResult> GetUploadUrlAsync(int sectionId, string? guidId,
+        CancellationToken cancellationToken = default);
+
     Task<string> GetVideoUrlAsync(string playbackId);
     Task<string> GetAudioUrlAsync(string playbackId);
     Task DeleteVideoAsync(string assetId, CancellationToken cancellationToken = default);

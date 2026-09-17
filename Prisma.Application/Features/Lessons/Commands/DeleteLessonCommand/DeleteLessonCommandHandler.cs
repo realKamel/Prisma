@@ -10,8 +10,8 @@ using Prisma.Domain.Specifications.Lessons;
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 
 public class DeleteLessonCommandHandler(
-    IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService,
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
     IIdentityService identityService,
     IStorageService storageService,
     IVideoStorageService videoStorageService
@@ -22,7 +22,7 @@ public class DeleteLessonCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var userId = _currentUserService.UserId;
+        var userId = currentUserService.UserId;
 
         if (userId is null)
         {
@@ -36,8 +36,8 @@ public class DeleteLessonCommandHandler(
             return Result.Unauthorized();
         }
 
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var enrollmentRepository = unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
         var lessonInfo = await lessonRepository.FirstOrDefaultAsync(
             new LessonWithProjectionSpec<LessonDeletionInfo>(
@@ -73,12 +73,14 @@ public class DeleteLessonCommandHandler(
         }
 
         foreach (var assetId in lessonInfo.SectionAssetIds.Where(a => a != null))
+        {
             await videoStorageService.DeleteVideoAsync(assetId!, cancellationToken);
+        }
 
         var lessonStub = new Lesson { Id = lessonInfo.Id };
         lessonRepository.Delete(lessonStub);
 
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.NoContent();
     }
@@ -89,6 +91,7 @@ public class DeleteLessonCommandHandler(
         {
             return false;
         }
+
         return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
     }
 

@@ -10,6 +10,5 @@ public record CreateAssistantCommand(
     string Email,
     string PhoneNumber,
     string Password,
-    string[] Policies
+    IList<string> Policies
 ) : IRequest<Result<CreateOrUpdatedAssistantCommandResponse>>;
-

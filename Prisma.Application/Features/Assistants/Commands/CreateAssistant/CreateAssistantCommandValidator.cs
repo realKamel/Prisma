@@ -23,7 +23,7 @@ public class CreateAssistantCommandValidator : AbstractValidator<CreateAssistant
             .WithMessage("Email is invalid.");
 
         RuleFor(command => command.Policies)
-            .Must(permissions => permissions.Length > 0)
+            .Must(permissions => permissions.Count > 0)
             .WithMessage("You must specify at least one permission.");
 
         RuleForEach(command => command.Policies)

@@ -24,7 +24,7 @@ public class UpdateAssistantDetailsCommandValidator : AbstractValidator<CreateAs
             .WithMessage("Email is invalid.");
 
         RuleFor(command => command.Policies)
-            .Must(permissions => permissions.Length > 0)
+            .Must(permissions => permissions.Count > 0)
             .WithMessage("You must specify at least one permission.");
 
         RuleForEach(command => command.Policies)
@@ -60,16 +60,16 @@ public class UpdateAssistantDetailsCommandValidator : AbstractValidator<CreateAs
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Email is invalid.");
 
-        When(command => command.Policies is not null && command.Policies.Length > 0, () =>
-        {
-            RuleForEach(command => command.Policies)
-                .Must(singlePolicies => AppClaims.Policies.All.Contains(singlePolicies))
-                .WithMessage("Policies '{PropertyValue}' is invalid.");
-        })
-        .Otherwise(() =>
-        {
-            RuleFor(command => command.Policies)
-                .NotEmpty().WithMessage("You must specify at least one permission.");
-        });
+        When(command => command.Policies.Count > 0, () =>
+            {
+                RuleForEach(command => command.Policies)
+                    .Must(singlePolicies => AppClaims.Policies.All.Contains(singlePolicies))
+                    .WithMessage("Policies '{PropertyValue}' is invalid.");
+            })
+            .Otherwise(() =>
+            {
+                RuleFor(command => command.Policies)
+                    .NotEmpty().WithMessage("You must specify at least one permission.");
+            });
     }
 }

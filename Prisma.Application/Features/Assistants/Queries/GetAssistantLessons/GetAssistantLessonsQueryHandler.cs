@@ -2,26 +2,41 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assistants;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 
-public class GetAssistantLessonsQueryHandler(
-    IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService)
+internal sealed class GetAssistantLessonsQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetAssistantLessonsQuery, Result<List<AssistantLessonDto>>>
 {
     public async Task<Result<List<AssistantLessonDto>>> Handle(
         GetAssistantLessonsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
-        if (userId is null)
-            return Result.Unauthorized("User is not authenticated.");
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var isAuthenticated = currentUserService.IsAuthenticated;
 
-        var spec = new AssistantLessonsSpec();
+        if (!isAuthenticated || currentUserService.UserId is null)
+        {
+            return Result.Unauthorized();
+        }
+
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+        // var assistant = await identityService.FindByIdAsync(currentUserService.UserId!.Value, cancellationToken);
+        var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
+        var assistant = await assistantRepo.GetByIdAsync(currentUserService.UserId!.Value, cancellationToken);
+
+        if (assistant?.TeacherId is null)
+        {
+            return Result.Error("Assistant not found");
+        }
+
+        var spec = new AssistantLessonsSpec(assistant.TeacherId.Value);
+
         var lessons = await lessonRepository.ListAsync(spec, cancellationToken);
 
         var result = lessons.Select(lesson =>
@@ -31,13 +46,13 @@ public class GetAssistantLessonsQueryHandler(
                 Id = lesson.Id,
                 Title = lesson.Title ?? string.Empty,
                 Price = lesson.Price,
-                StudentsCount = lesson.Enrollments?.Count ?? 0,
-                ChaptersCount = lesson.Sections?.Count ?? 0,
+                StudentsCount = lesson.Enrollments.Count,
+                ChaptersCount = lesson.Sections.Count,
                 LastUpdatedAt = lesson.UpdatedAt ?? lesson.CreatedAt,
                 Status = lesson.Status.ToString().ToLowerInvariant()
             };
         }).ToList();
 
-        return Result<List<AssistantLessonDto>>.Success(result);
+        return result;
     }
 }

@@ -21,7 +21,7 @@ using Prisma.Application.Features.Users.Queries.GetUserById;
 namespace Prisma.API.Features.Users;
 
 [Authorize(Roles = AppRoles.Admin)]
-public class UsersController(ISender mediator) : ApiController
+internal sealed class UsersController(ISender mediator) : ApiController
 {
     [HttpGet]
     public async Task<Result<List<UserListItemDto>>> GetAll(CancellationToken ct)

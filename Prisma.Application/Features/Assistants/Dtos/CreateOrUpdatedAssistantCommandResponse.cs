@@ -6,4 +6,4 @@ public record CreateOrUpdatedAssistantCommandResponse(
     string SecondName,
     string PhoneNumber,
     string Email,
-    List<string> Policies);
+    IReadOnlyList<string> Policies);

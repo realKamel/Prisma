@@ -5,24 +5,23 @@ using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.Auth;
 
-public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
+internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
+    private ClaimsPrincipal User => httpContextAccessor.HttpContext?.User ?? throw new InvalidOperationException(
+        "CurrentUserService cannot be used out of context. Pass the Data explicitly.");
+
     public Guid? UserId
     {
         get
         {
-            string? value = httpContextAccessor
-                                .HttpContext?.User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
-                            httpContextAccessor.HttpContext?
-                                .User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            // If UserId is not defined as JwtRegisteredClaimNames.Sub we search for NameIdentifier
+            string? value = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+                            User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             return Guid.TryParse(value, out Guid id) ? id : null;
         }
     }
 
-    public string? Email { get; } = httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Email);
+    public string? Email => User.FindFirstValue(ClaimTypes.Email);
 
-    public bool IsAuthenticated { get; } = httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+    public bool IsAuthenticated => User.Identity?.IsAuthenticated ?? false;
 }

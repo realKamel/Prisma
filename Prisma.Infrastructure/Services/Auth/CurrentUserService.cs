@@ -7,21 +7,20 @@ namespace Prisma.Infrastructure.Services.Auth;
 
 internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {
-    private ClaimsPrincipal User => httpContextAccessor.HttpContext?.User ?? throw new InvalidOperationException(
-        "CurrentUserService cannot be used out of context. Pass the Data explicitly.");
+    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
     public Guid? UserId
     {
         get
         {
-            string? value = User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
-                            User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string? value = User?.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+                            User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
             return Guid.TryParse(value, out Guid id) ? id : null;
         }
     }
 
-    public string? Email => User.FindFirstValue(ClaimTypes.Email);
+    public string? Email => User?.FindFirstValue(ClaimTypes.Email);
 
-    public bool IsAuthenticated => User.Identity?.IsAuthenticated ?? false;
+    public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 }

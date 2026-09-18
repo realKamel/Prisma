@@ -5,7 +5,7 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Infrastructure.Persistence.Interceptors;
 
-public class AuditInterceptor(ICurrentUserService currentUserService) : SaveChangesInterceptor
+internal sealed class AuditInterceptor(ICurrentUserService currentUserService) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,

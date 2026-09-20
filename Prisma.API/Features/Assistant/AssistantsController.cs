@@ -18,7 +18,7 @@ using Prisma.Application.Features.Assistants.Queries.GetAssistants;
 
 namespace Prisma.API.Features.Assistant;
 
-public class AssistantsController(ISender mediator) : ApiController
+public sealed class AssistantsController(ISender mediator) : ApiController
 {
     [HttpGet]
     [Authorize(Roles = AppRoles.Teacher)]

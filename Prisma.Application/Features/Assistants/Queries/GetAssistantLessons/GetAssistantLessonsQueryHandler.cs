@@ -1,10 +1,11 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assistants;
+using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 
@@ -35,13 +36,9 @@ internal sealed class GetAssistantLessonsQueryHandler(
             return Result.Error("Assistant not found");
         }
 
-        var spec = new AssistantLessonsSpec(assistant.TeacherId.Value);
-
-        var lessons = await lessonRepository.ListAsync(spec, cancellationToken);
-
-        var result = lessons.Select(lesson =>
-        {
-            return new AssistantLessonDto
+        var spec = new LessonWithProjectionSpec<AssistantLessonDto>( assistant.TeacherId.Value,
+            lesson =>  
+             new AssistantLessonDto
             {
                 Id = lesson.Id,
                 Title = lesson.Title ?? string.Empty,
@@ -50,9 +47,12 @@ internal sealed class GetAssistantLessonsQueryHandler(
                 ChaptersCount = lesson.Sections.Count,
                 LastUpdatedAt = lesson.UpdatedAt ?? lesson.CreatedAt,
                 Status = lesson.Status.ToString().ToLowerInvariant()
-            };
-        }).ToList();
+            });
 
-        return result;
+
+        var lessons = await lessonRepository.ListAsync(spec, cancellationToken);
+
+
+        return lessons;
     }
 }

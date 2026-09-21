@@ -16,6 +16,7 @@ public class GetAssistantLessonsQueryHandlerTests
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
     private readonly IRepository<Lesson, int> _lessonRepo;
+    private readonly IIdentityService _identityService;
     private readonly GetAssistantLessonsQueryHandler _handler;
 
     public GetAssistantLessonsQueryHandlerTests()
@@ -23,11 +24,16 @@ public class GetAssistantLessonsQueryHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _currentUserService = Substitute.For<ICurrentUserService>();
         _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+        _identityService = Substitute.For<IIdentityService>();
 
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _currentUserService.UserId.Returns(Guid.NewGuid());
 
-        _handler = new GetAssistantLessonsQueryHandler(_unitOfWork, _currentUserService);
+        _handler = new GetAssistantLessonsQueryHandler(
+            _unitOfWork,
+            _currentUserService,
+            _identityService
+        );
     }
 
     [Fact]
@@ -63,11 +69,12 @@ public class GetAssistantLessonsQueryHandlerTests
                 UpdatedAt = lastUpdated,
                 CreatedAt = lastUpdated.AddDays(-10),
                 Enrollments = new List<Enrollment> { new(), new(), new() },
-                Sections = new List<Section> { new(), new() }
-            }
+                Sections = new List<Section> { new(), new() },
+            },
         };
 
-        _lessonRepo.ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
             .Returns(lessons);
 
         // Act
@@ -92,7 +99,8 @@ public class GetAssistantLessonsQueryHandlerTests
     public async Task Handle_WhenNoLessonsExist_ReturnsEmptyList()
     {
         // Arrange
-        _lessonRepo.ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
             .Returns(new List<Lesson>());
 
         // Act
@@ -118,11 +126,12 @@ public class GetAssistantLessonsQueryHandlerTests
                 UpdatedAt = null,
                 CreatedAt = DateTimeOffset.UtcNow,
                 Enrollments = null!,
-                Sections = null!
-            }
+                Sections = null!,
+            },
         };
 
-        _lessonRepo.ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
             .Returns(lessons);
 
         // Act
@@ -151,11 +160,12 @@ public class GetAssistantLessonsQueryHandlerTests
                 UpdatedAt = null,
                 CreatedAt = createdAt,
                 Enrollments = new List<Enrollment>(),
-                Sections = new List<Section>()
-            }
+                Sections = new List<Section>(),
+            },
         };
 
-        _lessonRepo.ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .ListAsync(Arg.Any<AssistantLessonsSpec>(), Arg.Any<CancellationToken>())
             .Returns(lessons);
 
         // Act

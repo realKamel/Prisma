@@ -7,59 +7,58 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Ardalis.Result.AspNetCore"/>
-        <PackageReference Include="Asp.Versioning.Mvc"/>
-        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer"/>
-        <PackageReference Include="Asp.Versioning.OpenApi"/>
-        <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Client"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Core"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Data"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage"/>
-        <PackageReference Include="KubernetesClient"/>
-        <PackageReference Include="Microsoft.Agents.AI.Hosting"/>
-        <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI"/>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Ardalis.Result.AspNetCore" />
+        <PackageReference Include="Asp.Versioning.Mvc" />
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+        <PackageReference Include="Asp.Versioning.OpenApi" />
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Core" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Data" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.SQLite.Storage" />
+        <PackageReference Include="KubernetesClient" />
+        <PackageReference Include="Microsoft.Agents.AI.Hosting" />
+        <PackageReference Include="Microsoft.Agents.AI.Hosting.OpenAI" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.OpenApi"/>
-        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"/>
+        <PackageReference Include="Microsoft.OpenApi" />
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
         <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
         <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" />
         <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
         <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
-        <PackageReference Include="RedisRateLimiting"/>
-        <PackageReference Include="RedisRateLimiting.AspNetCore"/>
-        <PackageReference Include="Serilog"/>
-        <PackageReference Include="Serilog.AspNetCore"/>
-        <PackageReference Include="Serilog.Enrichers.Environment"/>
-        <PackageReference Include="Serilog.Enrichers.Thread"/>
-        <PackageReference Include="Serilog.Exceptions"/>
-        <PackageReference Include="Serilog.Formatting.Compact"/>
-        <PackageReference Include="Serilog.Settings.Configuration"/>
-        <PackageReference Include="Serilog.Sinks.Async"/>
-        <PackageReference Include="Serilog.Sinks.Console"/>
-        <PackageReference Include="Serilog.Sinks.Console.Themes"/>
-        <PackageReference Include="Serilog.Sinks.Seq"/>
-        <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"/>
-        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3"/>
-        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI"/>
+        <PackageReference Include="RedisRateLimiting" />
+        <PackageReference Include="RedisRateLimiting.AspNetCore" />
+        <PackageReference Include="Serilog" />
+        <PackageReference Include="Serilog.AspNetCore" />
+        <PackageReference Include="Serilog.Enrichers.Environment" />
+        <PackageReference Include="Serilog.Enrichers.Thread" />
+        <PackageReference Include="Serilog.Exceptions" />
+        <PackageReference Include="Serilog.Formatting.Compact" />
+        <PackageReference Include="Serilog.Settings.Configuration" />
+        <PackageReference Include="Serilog.Sinks.Async" />
+        <PackageReference Include="Serilog.Sinks.Console" />
+        <PackageReference Include="Serilog.Sinks.Console.Themes" />
+        <PackageReference Include="Serilog.Sinks.Seq" />
+        <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj"/>
-        <ProjectReference Include="..\Prisma.Infrastructure\Prisma.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj" />
+        <ProjectReference Include="..\Prisma.Infrastructure\Prisma.Infrastructure.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Extensions\Ai\"/>
-        <Folder Include="Logs\"/>
-        <Folder Include="wwwroot\"/>
+        <Folder Include="Extensions\Ai\" />
+        <Folder Include="wwwroot\" />
     </ItemGroup>
 </Project>

@@ -3,7 +3,8 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Interfaces;
 
-public interface IRepository<TEntity, TKey> : IRepositoryBase<TEntity> where TEntity : class, IEntity<TKey>
+public interface IRepository<TEntity, TKey> : IRepositoryBase<TEntity>
+    where TEntity : class, IEntity<TKey>
 {
     TEntity Add(TEntity entity);
     IEnumerable<TEntity> AddRange(IEnumerable<TEntity> entities);

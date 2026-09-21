@@ -5,7 +5,8 @@ using Prisma.Domain.Interfaces;
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
 public class Repository<TEntity, TKey>(AppDbContext dbContext)
-    : RepositoryBase<TEntity>(dbContext), IRepository<TEntity, TKey>
+    : RepositoryBase<TEntity>(dbContext),
+        IRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
 {
     public TEntity Add(TEntity entity)

@@ -6,7 +6,6 @@ using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Ardalis.Result;
-using Prisma.Application.Features.Lessons.Commands.CreateLessonDetails;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -140,7 +139,7 @@ public class CreateLessonDetailsCommandHandlerTests
             new List<int>(),
             new List<string>(),
             null,
-            null), CancellationToken.None); 
+            null), CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeFalse();

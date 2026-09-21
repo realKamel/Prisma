@@ -11,16 +11,18 @@ using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
-public class CreateLessonDetailsCommandHandler(
+internal sealed class CreateLessonDetailsCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IIdentityService userManager,
     IStorageService storageService,
-    IBackgroundJobService backgroundJobService)
-    : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
+    IBackgroundJobService backgroundJobService
+) : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
-    public async Task<Result<CreateLessonResponse>> Handle(CreateLessonDetailsCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<CreateLessonResponse>> Handle(
+        CreateLessonDetailsCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = currentUserService.UserId;
 
@@ -29,14 +31,18 @@ public class CreateLessonDetailsCommandHandler(
             return Result.Unauthorized();
         }
 
-        var user = await userManager.FindByIdAsync(userId.Value);
+        var user = await userManager.FindByIdAsync(userId.Value, cancellationToken);
         if (user is null)
         {
             return Result.Unauthorized();
         }
 
         var roles = await userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
+        if (
+            !roles.Contains(AppRoles.Teacher)
+            && !roles.Contains(AppRoles.Assistant)
+            && !roles.Contains(AppRoles.Admin)
+        )
             return Result.Unauthorized("Only teachers and assistants can create lessons.");
 
         Guid? teacherId;
@@ -48,21 +54,33 @@ public class CreateLessonDetailsCommandHandler(
         else if (roles.Contains(AppRoles.Assistant))
         {
             if (user is not Assistant assistant)
+            {
                 return Result.Error("Assistant record is missing teacher assignment.");
+            }
 
             if (assistant.TeacherId is null)
+            {
                 return Result.Error("This assistant is not assigned to a teacher.");
+            }
 
             teacherId = assistant.TeacherId;
         }
         else // Admin
         {
-            if (request.TeacherId is null)
+            if (request.TeacherId is not null) { }
+            else
+            {
                 return Result.Error("Admin-created lessons require an explicit teacher.");
+            }
 
-            var teacherExists = await userManager.FindByIdAsync(request.TeacherId.Value) is Teacher;
+            var teacherExists =
+                await userManager.FindByIdAsync(request.TeacherId.Value, cancellationToken)
+                is Teacher;
+
             if (!teacherExists)
+            {
                 return Result.Error("Specified teacher does not exist.");
+            }
 
             teacherId = request.TeacherId;
         }
@@ -75,15 +93,21 @@ public class CreateLessonDetailsCommandHandler(
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
             Outcomes = request.Outcomes ?? new List<string>(),
-            TeacherId = teacherId
+            TeacherId = teacherId,
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)
         {
-            var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
+            var storageKey =
+                $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
             await using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
-                request.ImageFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(
+                storageService.DefaultBucketName,
+                storageKey,
+                stream,
+                request.ImageFile.ContentType,
+                cancellationToken
+            );
             lesson.ImageThumbnailUrl = storageKey;
         }
 
@@ -92,39 +116,55 @@ public class CreateLessonDetailsCommandHandler(
             int order = 1;
             foreach (var ch in request.Chapters)
             {
-                lesson.Sections.Add(new Section
-                {
-                    Title = ch.Name,
-                    ContentURL = ch.VideoFileName?.Split('.')[0],
-                    SortOrder = order++,
-                    PlaybackId = ch.VideoFileName?.Split('.')[0]
-                });
+                lesson.Sections.Add(
+                    new Section
+                    {
+                        Title = ch.Name,
+                        ContentURL = ch.VideoFileName?.Split('.')[0],
+                        SortOrder = order++,
+                        PlaybackId = ch.VideoFileName?.Split('.')[0],
+                    }
+                );
             }
         }
 
-        if (request.AssignmentEnabled && request.AssignmentFile != null && request.AssignmentFile.Length > 0)
+        if (
+            request.AssignmentEnabled
+            && request.AssignmentFile != null
+            && request.AssignmentFile.Length > 0
+        )
         {
-            var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
+            var storageKey =
+                $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
             await using var stream = request.AssignmentFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
-                request.AssignmentFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(
+                storageService.DefaultBucketName,
+                storageKey,
+                stream,
+                request.AssignmentFile.ContentType,
+                cancellationToken
+            );
 
             lesson.Assignment = new Assignment
             {
                 Title = Path.GetFileNameWithoutExtension(request.AssignmentFile.FileName),
                 ContentURL = storageKey,
-                DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
-                Grade = 10
+                DueDate =
+                    request.AssignmentDueDate?.ToUniversalTime()
+                    ?? DateTimeOffset.UtcNow.AddDays(7),
+                Grade = 10,
             };
         }
 
-        if (request.AcademicYearIds != null && request.AcademicYearIds.Any())
+        if (request.AcademicYearIds != null && request.AcademicYearIds.Count != 0)
         {
             var academicYearIds = request.AcademicYearIds.Distinct().ToList();
             var academicYearRepository = unitOfWork.GetOrCreateRepository<AcademicYear, int>();
 
             var validYears = await academicYearRepository.ListAsync(
-                new AcademicYearsByIdsSpecification(academicYearIds), cancellationToken);
+                new AcademicYearsByIdsSpecification(academicYearIds),
+                cancellationToken
+            );
 
             if (validYears.Count != academicYearIds.Count)
                 return Result.Error("invalid academic year");

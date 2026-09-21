@@ -1,17 +1,17 @@
+using Ardalis.Result;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.AddStudent;
 
-public class AddStudentCommandHandler(
+internal sealed class AddStudentCommandHandler(
     IIdentityService identityService,
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork) : IRequestHandler<AddStudentCommand, Result>
+    IUnitOfWork unitOfWork
+) : IRequestHandler<AddStudentCommand, Result>
 {
     // private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
 
@@ -19,7 +19,11 @@ public class AddStudentCommandHandler(
     {
         var TeacherId = currentUserService.UserId;
 
-        var existingUser = await identityService.FindByEmailOrPhoneAsync(request.Email, request.Mobile);
+        var existingUser = await identityService.FindByEmailOrPhoneAsync(
+            request.Email,
+            request.Mobile,
+            cancellationToken
+        );
         if (existingUser is not null)
         {
             return Result.Error("Student with this email or phone already exists.");
@@ -39,15 +43,12 @@ public class AddStudentCommandHandler(
             ParentPhoneNumber = request.ParentMobile,
             CreatedAt = DateTimeOffset.UtcNow,
             IsBlocked = false,
-            IsOnline = false
+            IsOnline = false,
         };
-        if (TeacherId.HasValue) {
-            student.TeacherStudents.Add(new TeacherStudent
-            {
-                TeacherId = TeacherId.Value,
-            });
+        if (TeacherId.HasValue)
+        {
+            student.TeacherStudents.Add(new TeacherStudent { TeacherId = TeacherId.Value });
         }
-        
 
         var result = await identityService.CreateAsync(student, request.Password);
         if (!result.Succeeded)

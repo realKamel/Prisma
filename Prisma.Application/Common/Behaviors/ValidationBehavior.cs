@@ -4,7 +4,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
 
-namespace Prisma.Application.Behaviours;
+namespace Prisma.Application.Common.Behaviors;
 
 public sealed class ValidationBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators
@@ -17,6 +17,8 @@ public sealed class ValidationBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken
     )
     {
+        ArgumentNullException.ThrowIfNull(next, nameof(next));
+
         if (!validators.Any())
         {
             return await next(cancellationToken);

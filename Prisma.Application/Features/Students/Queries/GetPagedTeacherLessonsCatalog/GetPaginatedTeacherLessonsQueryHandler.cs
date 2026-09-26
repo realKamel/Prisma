@@ -24,7 +24,7 @@ public class GetPaginatedTeacherLessonsQueryHandler(
     {
         if (currentUser.UserId is null)
         {
-            return Result.Unauthorized("Unauthorized");
+            return Result.Unauthorized();
         }
 
         var studentId = currentUser.UserId.Value;
@@ -33,7 +33,7 @@ public class GetPaginatedTeacherLessonsQueryHandler(
         var student = await studentRepo.GetByIdAsync(studentId, cancellationToken);
 
         if (student is null)
-            return Result.Unauthorized("Unauthorized");
+            return Result.Unauthorized();
 
         if (student.AcademicYearId is null)
             return Result.Error($"Student {studentId} has no academic year assigned.");

@@ -7,15 +7,18 @@ using Prisma.Domain.Specifications.Sections;
 
 namespace Prisma.Application.Features.Sections.Commands.CompleteSection;
 
-public class CompleteSectionCommandHandler(
+internal sealed class CompleteSectionCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : IRequestHandler<CompleteSectionCommand, Result>
 {
     public async Task<Result> Handle(CompleteSectionCommand request, CancellationToken cancellationToken)
     {
         var studentId = currentUserService.UserId;
+
         if (studentId is null)
-            return Result.Unauthorized("User must be authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         var progressRepo = unitOfWork.GetOrCreateRepository<SectionProgress, int>();
 
@@ -24,12 +27,12 @@ public class CompleteSectionCommandHandler(
             cancellationToken);
 
         if (progress is null)
+        {
             return Result.NotFound($"SectionProgress with id '{request.SectionId}' was not found");
+        }
 
-        progress.IsCompleted = true;
-        progress.Percentage = 100;
+        progress.CompleteSection();
 
-        progressRepo.Update(progress);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.Success();

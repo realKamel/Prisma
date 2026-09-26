@@ -13,4 +13,10 @@ public class SectionProgress : BaseEntity
 
     public int SectionId { get; set; }
     public Section Section { get; set; }
+
+    public void CompleteSection()
+    {
+        IsCompleted = true;
+        Percentage = 100;
+    }
 }

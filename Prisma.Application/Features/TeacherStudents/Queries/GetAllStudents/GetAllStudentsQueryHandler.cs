@@ -21,11 +21,15 @@ public class GetAllStudentsQueryHandler(
     {
         var userId = currentUserService.UserId;
         if (userId is null)
-            return Result.Unauthorized("User is not authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
         if (user is null)
-            return Result.NotFound("User not found.");
+        {
+            return Result.NotFound();
+        }
 
         if (user is Assistant assistant)
         {
@@ -41,8 +45,8 @@ public class GetAllStudentsQueryHandler(
                 userId.Value,
                 s => new StudentInfo(
                     s.Id,
-                    s.FirstName ?? string.Empty,
-                    s.SecondName ?? string.Empty,
+                    s.FirstName,
+                    s.SecondName,
                     s.ThirdName ?? string.Empty,
                     s.LastName ?? string.Empty,
                     s.Email ?? string.Empty,
@@ -65,35 +69,27 @@ public class GetAllStudentsQueryHandler(
         var result = new List<StudentListItemDto>();
         foreach (var student in students)
         {
-            var avgQuiz = student.QuizAttempts.Any()
+            var avgQuiz = student.QuizAttempts.Count != 0
                 ? (int)student.QuizAttempts.Average(q => (q.Degree / q.TotalDegree) * 100)
                 : 0;
+
             var active = student.Enrollments.Any(e =>
                 e.Status == Domain.Enums.EnrollmentStatus.Active
             );
 
-            var lastActivity = "—";
             var lastQuiz = student
                 .QuizAttempts.OrderByDescending(q => q.CreatedAt)
                 .FirstOrDefault();
+
             var lastEnrollment = student
                 .Enrollments.OrderByDescending(e => e.CreatedAt)
                 .FirstOrDefault();
+
+            DateTimeOffset lastActivity = DateTimeOffset.UtcNow;
+
             if (lastQuiz != null || lastEnrollment != null)
             {
-                var latest = new[] { lastQuiz?.CreatedAt, lastEnrollment?.CreatedAt }.Max();
-                if (latest.HasValue)
-                {
-                    var diff = DateTimeOffset.UtcNow - latest.Value;
-                    lastActivity =
-                        diff.TotalMinutes < 1 ? "الآن"
-                        : diff.TotalHours < 1 ? $"منذ {diff.Minutes} د"
-                        : diff.TotalDays < 1 ? $"منذ {diff.Hours} س"
-                        : diff.TotalDays < 2 ? "منذ يوم"
-                        : diff.TotalDays < 7 ? $"منذ {diff.Days} أيام"
-                        : diff.TotalDays < 14 ? "منذ أسبوع"
-                        : "منذ فترة";
-                }
+                lastActivity = new[] { lastQuiz?.CreatedAt, lastEnrollment?.CreatedAt }.Max().Value;
             }
 
             var lessonTitles = student

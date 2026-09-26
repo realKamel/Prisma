@@ -3,61 +3,61 @@ using Ardalis.Result;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
-public record GetLessonPlayerQuery(int id) : IRequest<Result<LessonPlayerResult>>;
+public record GetLessonPlayerQuery(int Id) : IRequest<Result<LessonPlayerResult>>;
 
 public record LessonPlayerResult
 {
-    public int Id { get; set; } //
-    public string Title { get; set; } = string.Empty; //
-    public string Category { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty; //
+    public int Id { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Category { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
+    public Guid EnrollmentId { get; init; }
+    public string Description { get; init; } = string.Empty;
+    public string Teacher { get; init; } = string.Empty;
 
-    public string Description { get; set; } = string.Empty; //
-    public string Teacher { get; set; } = string.Empty; //
+    public int ValidityDays { get; init; }
 
-    public int ValidityDays { get; set; } //
+    public string VideoPoster { get; init; } = string.Empty;
+    public IList<MaterialDto> Materials { get; init; } = [];
+    public QuizDto? Quiz { get; init; }
+    public AssignmentDto? Assignment { get; init; }
+    public IList<SectionDto> Sections { get; init; } = [];
 
-    public string VideoPoster { get; set; } = string.Empty;
-    public List<MaterialDto> Materials { get; set; } = new(); //
-    public QuizDto? Quiz { get; set; } //
-    public AssignmentDto? Assignment { get; set; } //
-    public List<SectionDto> Sections { get; set; } = new(); //
-
-    public List<string> Outcomes { get; set; } = new(); //
+    public IList<string> Outcomes { get; init; } = [];
 }
 
 public record MaterialDto
 {
-    public string Title { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
-    public string DownloadUrl { get; set; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string Type { get; init; } = string.Empty;
+    public string DownloadUrl { get; init; } = string.Empty;
 }
 
 public record QuizDto
 {
-    public int Id { get; set; }
-    public int QuestionsCount { get; set; }
-    public int DurationMinutes { get; set; }
-    public int PassingScore { get; set; }
-    public bool IsAttempted { get; set; }
+    public int Id { get; init; }
+    public int QuestionsCount { get; init; }
+    public int DurationMinutes { get; init; }
+    public int PassingScore { get; init; }
+    public bool IsAttempted { get; init; }
 }
 
 public record AssignmentDto
 {
-    public int Id { get; set; }
-    public string ContentURL { get; set; } = string.Empty;
-    public string DueDate { get; set; } = string.Empty;
-    public string FileName { get; set; } = string.Empty;
+    public int Id { get; init; }
+    public string ContentURL { get; init; } = string.Empty;
+    public DateTimeOffset DueDate { get; init; }
+    public string FileName { get; init; } = string.Empty;
 }
 
 public record SectionDto
 {
-    public int Id { get; set; }
-    public int SectionId { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-    public bool IsCompleted { get; set; }
-    public string? ContentUrl { get; set; }
-    public int Progress { get; set; }
-    public double WatchedSeconds { get; set; }
+    public int Id { get; init; }
+    public int SectionId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Duration { get; init; } = string.Empty;
+    public bool IsCompleted { get; init; }
+    public string? ContentUrl { get; init; }
+    public int Progress { get; init; }
+    public double WatchedSeconds { get; init; }
 }

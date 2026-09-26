@@ -23,11 +23,11 @@ public class GetLessonPlayerQueryHandler(
         }
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        var spec = new LessonPlayerWithDetailsSpecification(request.id, studentId.Value);
+        var spec = new LessonPlayerWithDetailsSpecification(request.Id, studentId.Value);
         var lesson = await lessonRepo.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
-            return Result.NotFound($"Lesson with id '{request.id}' was not found");
+            return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
         var teacher = lesson.TeacherName ?? string.Empty;
         var subject = lesson.Subject ?? string.Empty;
@@ -80,6 +80,7 @@ public class GetLessonPlayerQueryHandler(
             Id = lesson.Id,
             Title = lesson.Title ?? string.Empty,
             Category = $"{subject} · {lesson.Title}",
+            EnrollmentId = lesson.EnrollmentId,
             Subject = subject,
             Description = lesson.Description ?? string.Empty,
             Teacher = teacher,
@@ -106,12 +107,12 @@ public class GetLessonPlayerQueryHandler(
                         ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
                             lesson.Assignment.ContentURL)
                         : string.Empty,
-                    DueDate = lesson.Assignment.DueDate.ToString("yyyy-MM-dd"),
+                    DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },
             Sections = sections
         };
 
-        return Result<LessonPlayerResult>.Success(result);
+        return result;
     }
 }

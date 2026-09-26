@@ -23,7 +23,7 @@ using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 
 namespace Prisma.API.Features.Lessons;
 
-public class LessonsController(IMediator _mediator) : ApiController
+public class LessonsController(IMediator mediator) : ApiController
 {
     [HttpGet("{id:int}/details")]
     public async Task<Result<LessonDetailsDto>> GetLessonDetails(
@@ -32,7 +32,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonDetailsQuery(id);
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("{id:int}/watch")]
@@ -42,7 +42,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonPlayerQuery(id);
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("{id:int}/status")]
@@ -52,7 +52,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonStatusQuery(id);
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("options")]
@@ -61,7 +61,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonFormOptionsQuery();
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("{id:int}/expired-details")]
@@ -78,7 +78,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonExpiredQuery(id);
-        return await _mediator.Send(query, cancellationToken);
+        return await mediator.Send(query, cancellationToken);
     }
 
     [HttpGet("{id:int}/editor")]
@@ -94,7 +94,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        return await _mediator.Send(new GetLessonEditorDetailsQuery(id), cancellationToken);
+        return await mediator.Send(new GetLessonEditorDetailsQuery(id), cancellationToken);
     }
 
     [HttpPost]
@@ -105,7 +105,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await mediator.Send(command, cancellationToken);
         return result;
     }
 
@@ -113,7 +113,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
-        return await _mediator.Send(new DeleteLessonCommand(id), cancellationToken);
+        return await mediator.Send(new DeleteLessonCommand(id), cancellationToken);
     }
 
     [HttpPut("{id:int}/editor")]
@@ -127,7 +127,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     {
         var finalCommand = command with { Id = id };
 
-        var result = await _mediator.Send(finalCommand, cancellationToken);
+        var result = await mediator.Send(finalCommand, cancellationToken);
 
         return result;
     }
@@ -146,7 +146,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        var result = await _mediator.Send(new ToggleLessonStatusCommand(id), cancellationToken);
+        var result = await mediator.Send(new ToggleLessonStatusCommand(id), cancellationToken);
 
         return result;
     }
@@ -161,7 +161,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var command = new UploadLessonMaterialsCommand(id, request.Files);
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [HttpDelete("{id:int}/materials/{materialId:int}")]
@@ -180,7 +180,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var command = new DeleteLessonMaterialCommand(id, MaterialId);
-        return await _mediator.Send(command, cancellationToken);
+        return await mediator.Send(command, cancellationToken);
     }
 
     [HttpGet("{id:int}/materials")]
@@ -197,7 +197,7 @@ public class LessonsController(IMediator _mediator) : ApiController
     )
     {
         var query = new GetLessonMaterialQuery(id);
-        var result = await _mediator.Send(query, cancellationToken);
+        var result = await mediator.Send(query, cancellationToken);
         return result;
     }
 
@@ -216,7 +216,7 @@ public class LessonsController(IMediator _mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        return await _mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
+        return await mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
     }
 
     [HttpDelete("{lessonId:int}/assignments/submission")]
@@ -230,11 +230,11 @@ public class LessonsController(IMediator _mediator) : ApiController
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
     {
-        return await _mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
+        return await mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
     }
 }
 
-public class UploadMaterialsRequest
+public sealed record UploadMaterialsRequest
 {
-    public List<IFormFile> Files { get; set; } = new();
+    public IList<IFormFile> Files { get; init; } = [];
 }

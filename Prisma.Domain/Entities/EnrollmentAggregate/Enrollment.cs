@@ -8,6 +8,7 @@ namespace Prisma.Domain.Entities.EnrollmentAggregate;
 
 public class Enrollment : BaseEntity
 {
+    public Guid? PublicId { get; init; } = Guid.CreateVersion7();
     public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
     public EnrollmentMethod EnrollmentMethod { get; set; }
     public DateTimeOffset? ExpiresAt { get; set; }
@@ -25,4 +26,11 @@ public class Enrollment : BaseEntity
 
     public int? GeneratedCodeId { get; set; } // set when EnrollmentMethod == RedeemCode
     public GeneratedCode? GeneratedCode { get; set; }
+
+    public void CompleteEnrollment()
+    {
+        IsCompleted = true;
+        CompletedAt = DateTimeOffset.UtcNow;
+        Status = EnrollmentStatus.Done;
+    }
 }

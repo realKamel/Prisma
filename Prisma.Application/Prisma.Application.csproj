@@ -12,6 +12,7 @@
         <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
         <PackageReference Include="Newtonsoft.Json" />
+        <PackageReference Include="Serilog" />
     </ItemGroup>
 
     <ItemGroup>

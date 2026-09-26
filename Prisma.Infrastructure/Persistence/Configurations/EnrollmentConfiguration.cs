@@ -28,6 +28,10 @@ internal sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollm
             .HasForeignKey<Enrollment>(x => x.GeneratedCodeId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasIndex(x => x.PublicId)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false");
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

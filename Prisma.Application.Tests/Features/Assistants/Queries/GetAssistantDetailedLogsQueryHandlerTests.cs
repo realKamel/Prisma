@@ -2,7 +2,6 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -13,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Assistants.Queries;

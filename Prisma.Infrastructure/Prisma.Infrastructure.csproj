@@ -1,66 +1,66 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-        <Folder Include="Persistence\Migrations\"/>
+        <Folder Include="Persistence\Migrations\" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj"/>
-        <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj"/>
+        <ProjectReference Include="..\Prisma.Application\Prisma.Application.csproj" />
+        <ProjectReference Include="..\Prisma.Domain\Prisma.Domain.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Ardalis.Specification.EntityFrameworkCore"/>
-        <PackageReference Include="AspNetCore.HealthChecks.Hangfire"/>
-        <PackageReference Include="AspNetCore.HealthChecks.NpgSql"/>
-        <PackageReference Include="AspNetCore.HealthChecks.Redis"/>
-        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage"/>
-        <PackageReference Include="AWSSDK.S3"/>
-        <PackageReference Include="Groq.Sdk.Core"/>
-        <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection"/>
-        <PackageReference Include="Hangfire"/>
-        <PackageReference Include="Hangfire.Core"/>
-        <PackageReference Include="Hangfire.PostgreSql"/>
-        <PackageReference Include="MailKit"/>
-        <PackageReference Include="Microsoft.Agents.AI"/>
-        <PackageReference Include="Microsoft.Agents.AI.Abstractions"/>
-        <PackageReference Include="Microsoft.Agents.AI.DurableTask"/>
-        <PackageReference Include="Microsoft.Agents.AI.Foundry"/>
-        <PackageReference Include="Microsoft.Agents.AI.Hosting"/>
-        <PackageReference Include="Microsoft.Agents.AI.OpenAI"/>
-        <PackageReference Include="Microsoft.Agents.AI.Workflows"/>
-        <PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative"/>
+        <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+        <PackageReference Include="AspNetCore.HealthChecks.Hangfire" />
+        <PackageReference Include="AspNetCore.HealthChecks.NpgSql" />
+        <PackageReference Include="AspNetCore.HealthChecks.Redis" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
+        <PackageReference Include="AWSSDK.S3" />
+        <PackageReference Include="Groq.Sdk.Core" />
+        <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" />
+        <PackageReference Include="Hangfire" />
+        <PackageReference Include="Hangfire.Core" />
+        <PackageReference Include="Hangfire.PostgreSql" />
+        <PackageReference Include="MailKit" />
+        <PackageReference Include="Microsoft.Agents.AI" />
+        <PackageReference Include="Microsoft.Agents.AI.Abstractions" />
+        <PackageReference Include="Microsoft.Agents.AI.DurableTask" />
+        <PackageReference Include="Microsoft.Agents.AI.Foundry" />
+        <PackageReference Include="Microsoft.Agents.AI.Hosting" />
+        <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+        <PackageReference Include="Microsoft.Agents.AI.Workflows" />
+        <PackageReference Include="Microsoft.Agents.AI.Workflows.Declarative" />
         <PackageReference Include="Microsoft.Agents.AI.Workflows.Generators">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer"/>
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"/>
-        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis"/>
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"/>
-        <PackageReference Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.AI.OpenAI"/>
-        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis"/>
-        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions"/>
-        <PackageReference Include="Microsoft.Extensions.Localization"/>
-        <PackageReference Include="Microsoft.SemanticKernel.Core"/>
-        <PackageReference Include="Mux.Csharp.Sdk"/>
-        <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions"/>
-        <PackageReference Include="Newtonsoft.Json"/>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
-        <PackageReference Include="OpenAI"/>
-        <PackageReference Include="PdfPig"/>
-        <PackageReference Include="Pgvector"/>
-        <PackageReference Include="Pgvector.EntityFrameworkCore"/>
-        <PackageReference Include="StackExchange.Redis"/>
-        <PackageReference Include="ZiggyCreatures.FusionCache"/>
-        <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis"/>
-        <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson"/>
+        <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+        <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+        <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+        <PackageReference Include="Microsoft.Extensions.Localization" />
+        <PackageReference Include="Microsoft.SemanticKernel.Core" />
+        <PackageReference Include="Mux.Csharp.Sdk" />
+        <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" />
+        <PackageReference Include="Newtonsoft.Json" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+        <PackageReference Include="OpenAI" />
+        <PackageReference Include="PdfPig" />
+        <PackageReference Include="Pgvector" />
+        <PackageReference Include="Pgvector.EntityFrameworkCore" />
+        <PackageReference Include="StackExchange.Redis" />
+        <PackageReference Include="ZiggyCreatures.FusionCache" />
+        <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" />
+        <PackageReference Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson" />
     </ItemGroup>
 
     <ItemGroup>

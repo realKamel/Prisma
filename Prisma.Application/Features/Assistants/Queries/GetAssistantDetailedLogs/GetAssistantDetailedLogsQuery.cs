@@ -1,11 +1,13 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+
+namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 
 public record GetAssistantDetailedLogsQuery(int Take) : IRequest<Result<GetAssistantDetailedLogsResponseDto>>;
 
 public record GetAssistantDetailedLogsResponseDto(
     DashboardMetaDto Meta,
-    List<DetailedLogItemDto> Logs
+    IList<DetailedLogItemDto> Logs
 );
 
 public record DashboardMetaDto(
@@ -22,7 +24,6 @@ public record DetailedLogItemDto(
     string Sub,
     string Student,
     string Grade,
-    string Time,
-    string Date,
+    DateTimeOffset Time,
     bool Ok
 );

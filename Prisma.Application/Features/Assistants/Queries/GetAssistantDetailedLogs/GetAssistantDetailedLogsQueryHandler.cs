@@ -1,41 +1,41 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AuditLogs;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 
-public class GetAssistantDetailedLogsQueryHandler(
-    IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService
+internal sealed class GetAssistantDetailedLogsQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetAssistantDetailedLogsQuery, Result<GetAssistantDetailedLogsResponseDto>>
 {
     public async Task<Result<GetAssistantDetailedLogsResponseDto>> Handle(
         GetAssistantDetailedLogsQuery request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
+        var userId = currentUserService.UserId;
+
         if (userId is null)
-            return Result.Unauthorized("User is not authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
-        var userEmail = _currentUserService.Email ?? string.Empty;
+        var userEmail = currentUserService.Email ?? string.Empty;
 
-        var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var auditLogRepository = unitOfWork.GetOrCreateRepository<AuditLog, int>();
 
         var spec = new RecentAssistantLogsSpec(userEmail, request.Take);
+
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);
 
-        var studentRepository = _unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var studentRepository = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var enrollmentRepository = unitOfWork.GetOrCreateRepository<Enrollment, int>();
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var logItems = new List<DetailedLogItemDto>();
 
@@ -49,15 +49,23 @@ public class GetAssistantDetailedLogsQueryHandler(
 
             if (log.Action != null)
             {
-                if (log.Action.Contains("Grant", StringComparison.OrdinalIgnoreCase)) { type = "grant"; subText = "صلاحية نظام"; }
-                else if (log.Action.Contains("Revoke", StringComparison.OrdinalIgnoreCase)) { type = "revoke"; subText = "إلغاء المنح"; }
+                if (log.Action.Contains("Grant", StringComparison.OrdinalIgnoreCase))
+                {
+                    type = "grant";
+                    subText = "صلاحية نظام";
+                }
+                else if (log.Action.Contains("Revoke", StringComparison.OrdinalIgnoreCase))
+                {
+                    type = "revoke";
+                    subText = "إلغاء المنح";
+                }
                 else if (log.Action.Contains("Search", StringComparison.OrdinalIgnoreCase)) { type = "search"; }
             }
 
             if (!string.IsNullOrEmpty(log.EntityId))
             {
-
-                if (log.TableName?.Equals("Enrollment", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(log.EntityId, out int enrollmentId))
+                if (log.TableName?.Equals("Enrollment", StringComparison.OrdinalIgnoreCase) == true &&
+                    int.TryParse(log.EntityId, out int enrollmentId))
                 {
                     var enrollmentSpec = new EnrollmentWithStudentAndLessonSpec(enrollmentId);
                     var enrollment = await enrollmentRepository.FirstOrDefaultAsync(enrollmentSpec, cancellationToken);
@@ -82,7 +90,8 @@ public class GetAssistantDetailedLogsQueryHandler(
                         }
                     }
                 }
-                else if (log.TableName?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true && Guid.TryParse(log.EntityId, out Guid studentGuid))
+                else if (log.TableName?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true &&
+                         Guid.TryParse(log.EntityId, out Guid studentGuid))
                 {
                     var studentSpec = new StudentWithAcademicYearSpec(studentGuid);
                     var student = await studentRepository.FirstOrDefaultAsync(studentSpec, cancellationToken);
@@ -100,11 +109,7 @@ public class GetAssistantDetailedLogsQueryHandler(
                 }
             }
 
-            var logTime = log.CreatedAt?.AddHours(3) ?? DateTimeOffset.UtcNow;
-            string timeString = logTime.ToString("hh:mm tt");
-            string dateString = logTime.Date == DateTimeOffset.UtcNow.Date ? "اليوم" :
-                                logTime.Date == DateTimeOffset.UtcNow.AddDays(-1).Date ? "أمس" :
-                                logTime.ToString("yyyy-MM-dd");
+            var logTime = log.CreatedAt ?? DateTimeOffset.UtcNow;
 
             logItems.Add(new DetailedLogItemDto(
                 Id: log.Id,
@@ -113,8 +118,7 @@ public class GetAssistantDetailedLogsQueryHandler(
                 Sub: subText,
                 Student: studentName,
                 Grade: gradeName,
-                Time: timeString,
-                Date: dateString,
+                Time: logTime,
                 Ok: true
             ));
         }

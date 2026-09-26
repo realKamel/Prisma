@@ -13,6 +13,7 @@ using Prisma.Application.Features.Assistants.Commands.UpdateAssistantDetails;
 using Prisma.Application.Features.Assistants.Commands.UpdatePermissions;
 using Prisma.Application.Features.Assistants.Dtos;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
+using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 using Prisma.Application.Features.Assistants.Queries.GetAssistants;
 

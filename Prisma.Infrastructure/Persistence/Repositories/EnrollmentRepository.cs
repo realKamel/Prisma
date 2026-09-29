@@ -5,15 +5,10 @@ using Prisma.Domain.Repositories;
 
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
-public class EnrollmentRepository : Repository<Enrollment, int>, IEnrollmentRepository
+internal sealed class EnrollmentRepository(AppDbContext dbContext)
+    : Repository<Enrollment, int>(dbContext), IEnrollmentRepository
 {
-    private readonly AppDbContext _dbContext;
-
-    public EnrollmentRepository(AppDbContext dbContext)
-        : base(dbContext)
-    {
-        _dbContext = dbContext;
-    }
+    private readonly AppDbContext _dbContext = dbContext;
 
     public async Task<StudentPerformanceReadModel?> GetPerformanceStatsAsync(
         Guid userId,
@@ -34,9 +29,9 @@ public class EnrollmentRepository : Repository<Enrollment, int>, IEnrollmentRepo
                 // 4. Average quiz degree (null-safe to avoid skewing results)
                 g.Average(e =>
                     e.Lesson != null && e.Lesson.Quiz != null
-                        ?( e.Lesson.Quiz.Attempts.FirstOrDefault(a => a.StudentId == userId).Degree
-                        / e.Lesson.Quiz.TotalDegree) * 100
-                        : (decimal?)null
+                        ? e.Lesson.Quiz.Attempts.FirstOrDefault(a => a.StudentId == userId)!.Degree
+                          / e.Lesson.Quiz.TotalDegree
+                        : null
                 ) ?? 0m
             ))
             .FirstOrDefaultAsync(cancellationToken);

@@ -1,6 +1,6 @@
 namespace Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
 
-public class LessonCatalogDto
+public record LessonCatalogDto
 {
     public int Id { get; init; }
     public string? Title { get; init; }
@@ -12,5 +12,5 @@ public class LessonCatalogDto
     public string? Subject { get; init; }
     public int DurationHours { get; init; }
     public string? ImageThumbnailUrl { get; init; }
-    public string Currency { get; init; } = "جنيه";
+    public string Currency { get; init; } = "EGP";
 }

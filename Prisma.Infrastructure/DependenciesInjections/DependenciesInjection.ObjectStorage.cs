@@ -28,6 +28,12 @@ public static partial class DependenciesInjection
             return new AmazonS3Client(storageConfig.AccessKey, storageConfig.SecretKey, config);
         });
 
+        services
+            .AddOptions<ObjectStorageOptions>()
+            .Bind(configuration.GetSection(ObjectStorageOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IStorageService, S3StorageService>();
     }
 }

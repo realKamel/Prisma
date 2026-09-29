@@ -1,22 +1,16 @@
 using Amazon.S3;
 using Amazon.S3.Model;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
-public class S3StorageService(
+internal sealed class S3StorageService(
     IAmazonS3 s3,
-    IConfiguration configuration,
-    IHostEnvironment environment,
     IOptions<ObjectStorageOptions> objectStorageOptions)
     : IStorageService
 {
-    private readonly IAmazonS3 _s3 = s3;
-    private readonly IConfiguration _config = configuration;
-    public string DefaultBucketName => _config.GetSection("ObjectStorage")["BucketName"]!;
+    public string DefaultBucketName => objectStorageOptions.Value.BucketName;
 
     public async Task UploadFileAsync(
         string bucketName,
@@ -35,7 +29,13 @@ public class S3StorageService(
             AutoCloseStream = false,
         };
 
-        await _s3.PutObjectAsync(request, cancellationToken);
+        await s3.PutObjectAsync(request, cancellationToken);
+    }
+
+    public async Task UploadFileAsync(string objectKey, Stream content, string contentType,
+        CancellationToken cancellationToken = default)
+    {
+        await UploadFileAsync(DefaultBucketName, objectKey, content, contentType, cancellationToken);
     }
 
     // public string GetPublicUrl(string bucketName, string objectKey)
@@ -49,6 +49,11 @@ public class S3StorageService(
         int expiryMinutes = 60
     )
     {
+        if (string.IsNullOrWhiteSpace(bucketName))
+        {
+            bucketName = DefaultBucketName;
+        }
+
         var request = new GetPreSignedUrlRequest
         {
             BucketName = bucketName,
@@ -56,15 +61,24 @@ public class S3StorageService(
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
             Verb = HttpVerb.GET,
         };
-        var url = await _s3.GetPreSignedURLAsync(request);
-        var storageConfig = _config.GetSection("ObjectStorage");
+        var url = await s3.GetPreSignedURLAsync(request);
+        // var storageConfig = _config.GetSection("ObjectStorage");
+        // var serviceUrl = objectStorageOptions.Value.ServiceUrl;
 
-        if (storageConfig["ServiceUrl"]!.StartsWith("http://"))
+        if (url.StartsWith(@"https://", StringComparison.InvariantCultureIgnoreCase))
         {
-            url = url.Replace("https://", "http://");
+            url = url.Replace(@"https://", @"http://", StringComparison.InvariantCultureIgnoreCase);
         }
 
         return url;
+    }
+
+    public async Task<string> GetDownloadUrlAsync(
+        string objectKey,
+        int expiryMinutes = 60
+    )
+    {
+        return await GetDownloadUrlAsync(DefaultBucketName, objectKey, expiryMinutes);
     }
 
     // public async Task SetPublicReadPolicyAsync(string bucketName, params string[] publicPrefixes)
@@ -90,6 +104,14 @@ public class S3StorageService(
     {
         var request = new DeleteObjectRequest { BucketName = bucketName, Key = objectKey };
 
-        await _s3.DeleteObjectAsync(request, cancellationToken);
+        await s3.DeleteObjectAsync(request, cancellationToken);
+    }
+
+    public async Task DeleteFileAsync(
+        string objectKey,
+        CancellationToken cancellationToken = default
+    )
+    {
+        await DeleteFileAsync(DefaultBucketName, objectKey, cancellationToken);
     }
 }

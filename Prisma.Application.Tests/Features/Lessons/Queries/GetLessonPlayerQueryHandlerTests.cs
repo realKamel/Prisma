@@ -189,7 +189,7 @@ public class GetLessonPlayerQueryHandlerTests
         result.Value.Assignment!.Id.Should().Be(9);
         result.Value.Assignment.ContentURL.Should().Be("https://download.com/task1.pdf");
         result.Value.Assignment.FileName.Should().Be("حل الطالب للواجب.pdf");
-        result.Value.Assignment.DueDate.Should().Be(fakeAssignment.DueDate.ToString("yyyy-MM-dd"));
+        result.Value.Assignment.DueDate.Should().Be(fakeAssignment.DueDate);
     }
 
     [Fact]

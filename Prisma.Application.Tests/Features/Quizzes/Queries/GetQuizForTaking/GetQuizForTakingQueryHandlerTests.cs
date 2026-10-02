@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
@@ -15,6 +16,7 @@ public class GetQuizForTakingQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
+    private readonly ISender _sender = Substitute.For<ISender>();
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
     private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
     private readonly GetQuizForTakingQueryHandler _handler;
@@ -35,7 +37,7 @@ public class GetQuizForTakingQueryHandlerTests
 
         
 
-        _handler = new GetQuizForTakingQueryHandler(_unitOfWork, _currentUser);
+        _handler = new GetQuizForTakingQueryHandler(_sender);
     }
 
     #region Helpers

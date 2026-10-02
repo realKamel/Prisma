@@ -111,7 +111,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         logItem.Grade.Should().Be("الصف الثالث الإعدادي");
         logItem.Detail.Should().Be("مراجعة الجبر الجملية");
         logItem.Sub.Should().Be("صلاحية 4 أيام");
-        logItem.Date.Should().Be("اليوم");
+        logItem.Time.Should().Be(DateTimeOffset.UtcNow);
 
         // التأكد من الـ Meta الإحصائية
         result.Value.Meta.TotalThisMonth.Should().Be(1);
@@ -166,7 +166,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         logItem.Detail.Should().Be("ملف الطالب");
         logItem.Sub.Should().Be("ViewProfile");
         logItem.Grade.Should().Be("الصف الأول الثانوي");
-        logItem.Date.Should().Be("أمس");
+        logItem.Time.Should().Be(DateTimeOffset.UtcNow.AddDays(-1));
     }
 
     [Fact]

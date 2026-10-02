@@ -71,7 +71,11 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                             .Select(sub => sub.Title)
                             .FirstOrDefault()
                     }
-                    : null
+                    : null,
+                IsEnrollmentCompleted = lesson.Enrollments
+                    .Where(e => e.StudentId == studentId)
+                    .Select(e => e.IsCompleted)
+                    .FirstOrDefault()
             });
     }
 }
@@ -92,6 +96,8 @@ public class LessonPlayerProjection
     public List<PlayerMaterialProjection> Materials { get; set; } = [];
     public PlayerQuizProjection? Quiz { get; set; }
     public PlayerAssignmentProjection? Assignment { get; set; }
+    public bool IsEnrollmentCompleted { get; set; }
+
 }
 
 public class PlayerSectionProjection

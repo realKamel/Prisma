@@ -37,7 +37,8 @@ public class GetLessonPlayerQueryHandler(
             : 0;
 
         var sections = new List<SectionDto>();
-        foreach (var s in lesson.Sections)
+
+        foreach (var s in lesson.Sections.OrderBy(x => x.SortOrder))
         {
             var contentUrl = s.PlaybackId != null
                 ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)

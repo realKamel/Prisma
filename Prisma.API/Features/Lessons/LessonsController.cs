@@ -200,38 +200,6 @@ public class LessonsController(IMediator mediator) : ApiController
         var result = await mediator.Send(query, cancellationToken);
         return result;
     }
-
-    [HttpPost("{lessonId:int}/assignments")]
-    [ExpectedFailures(
-        ResultStatus.CriticalError,
-        ResultStatus.Error,
-        ResultStatus.Unauthorized,
-        ResultStatus.Invalid,
-        ResultStatus.Unauthorized
-    )]
-    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
-    public async Task<Result> SubmitAssignment(
-        int lessonId,
-        IFormFile file,
-        CancellationToken cancellationToken
-    )
-    {
-        return await mediator.Send(new SubmitAssignmentCommand(lessonId, file), cancellationToken);
-    }
-
-    [HttpDelete("{lessonId:int}/assignments/submission")]
-    [ExpectedFailures(
-        ResultStatus.CriticalError,
-        ResultStatus.Error,
-        ResultStatus.Unauthorized,
-        ResultStatus.Invalid,
-        ResultStatus.Unauthorized
-    )]
-    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
-    public async Task<Result> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
-    {
-        return await mediator.Send(new DeleteSubmissionCommand(lessonId), cancellationToken);
-    }
 }
 
 public sealed record UploadMaterialsRequest

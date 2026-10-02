@@ -29,6 +29,11 @@ internal sealed class MarkEnrollmentCompletedCommandHandler(IUnitOfWork uow, ICu
             return Result.NotFound($"Enrollment with ID {request.EnrollmentId} not found.");
         }
 
+        if (enrollment.IsCompleted)
+        {
+            return Result.Success();
+        }
+
         enrollment.CompleteEnrollment();
 
         await uow.SaveChangesAsync(cancellationToken);

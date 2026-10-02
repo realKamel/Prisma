@@ -4,6 +4,7 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Sections;
+
 namespace Prisma.Application.Features.Sections.Commands.SaveSectionProgress;
 
 public class SaveSectionProgressCommandHandler(
@@ -26,12 +27,12 @@ public class SaveSectionProgressCommandHandler(
             return Result.NotFound($"SectionProgress with id '{request.SectionId}' was not found");
 
         var sectionRepo = unitOfWork.GetOrCreateRepository<Section, int>();
-        var section = await sectionRepo.GetByIdAsync(request.SectionId, cancellationToken);
-        if (section is null)
-            return Result.NotFound($"Section with id '{request.SectionId}' was not found");
-
+        var sectionDuration = await sectionRepo.FirstOrDefaultAsync(
+            new SectionWithProjectionSpec<int>(
+                request.SectionId, s => (int)s.Duration.TotalSeconds), cancellationToken);
+         
         progress.WatchedSeconds = request.WatchedSeconds;
-        progress.Percentage = (int)(request.WatchedSeconds / section.Duration.TotalSeconds * 100);
+        progress.Percentage = (int)(request.WatchedSeconds / sectionDuration * 100);
 
         progressRepo.Update(progress);
         await unitOfWork.SaveChangesAsync(cancellationToken);

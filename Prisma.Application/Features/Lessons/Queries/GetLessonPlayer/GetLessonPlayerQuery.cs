@@ -24,6 +24,7 @@ public record LessonPlayerResult
     public IList<SectionDto> Sections { get; init; } = [];
 
     public IList<string> Outcomes { get; init; } = [];
+    public bool IsEnrollmentCompleted { get; init; }
 }
 
 public record MaterialDto

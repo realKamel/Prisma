@@ -123,6 +123,8 @@ internal sealed class CreateLessonDetailsCommandHandler(
                         ContentURL = ch.VideoFileName?.Split('.')[0],
                         SortOrder = order++,
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
+                        AssetId = ch.VideoFileName?.Split('.')[0],
+                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds)
                     }
                 );
             }
@@ -174,6 +176,8 @@ internal sealed class CreateLessonDetailsCommandHandler(
                 lesson.AcademicYears.Add(new AcademicYearLesson { AcademicYearId = yearId });
             }
         }
+
+        lesson.Duration = TimeSpan.FromSeconds(request.Chapters?.Sum(ch => ch.VideoDurationSeconds) ?? 0);
 
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
         lessonRepository.Add(lesson);

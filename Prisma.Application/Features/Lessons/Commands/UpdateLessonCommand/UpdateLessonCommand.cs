@@ -22,4 +22,4 @@ public record UpdateLessonDetailsCommand(
 public record UpdateLessonResponse(List<NewSectionResult> NewSections);
 public record NewSectionResult(int SectionId, int ChapterIndex);
 
-public record ChapterCommandDto(string Name, string? VideoFileName);
+public record ChapterCommandDto(string Name, string? VideoFileName, double VideoDurationSeconds);

@@ -12,9 +12,9 @@ using Prisma.Domain.Specifications.Lessons;
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
 public class UpdateLessonDetailsCommandHandler(
-    IUnitOfWork _unitOfWork,
-    ICurrentUserService _currentUserService,
-    UserManager<User> _userManager,
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
+    UserManager<User> userManager,
     IStorageService storageService,
     IVideoStorageService videoStorageService)
     : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
@@ -22,20 +22,20 @@ public class UpdateLessonDetailsCommandHandler(
     public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUserService.UserId;
+        var userId = currentUserService.UserId;
         if (userId is null)
             return Result.Unauthorized("User must be authenticated.");
 
-        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null)
             return Result.Unauthorized("User not found.");
 
-        var roles = await _userManager.GetRolesAsync(user);
+        var roles = await userManager.GetRolesAsync(user);
         if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
             return Result.Unauthorized("Only teachers, assistants, and admins can modify lesson structures.");
         var storageKeysToDelete = new List<string>();
         var assetsToDelete = new List<string>();
-        var lessonRepository = _unitOfWork.GetOrCreateRepository<Lesson, int>();
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var spec = new UpdateLessonDetailsSpecification(request.Id);
 
@@ -73,7 +73,12 @@ public class UpdateLessonDetailsCommandHandler(
                 {
                     var newSection = new Section
                     {
-                        Title = ch.Name, ContentURL = ch.VideoFileName, SortOrder = order++
+                        Title = ch.Name,
+                        ContentURL = ch.VideoFileName?.Split('.')[0],
+                        SortOrder = order++,
+                        PlaybackId = ch.VideoFileName?.Split('.')[0],
+                        AssetId = ch.VideoFileName?.Split('.')[0],
+                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds)
                     };
                     lesson.Sections.Add(newSection);
                     newSections.Add((newSection, chapterIndex));
@@ -161,9 +166,11 @@ public class UpdateLessonDetailsCommandHandler(
                 lesson.AcademicYears.Add(new AcademicYearLesson { AcademicYearId = yearId, LessonId = lesson.Id });
             }
         }
+        lesson.Duration = TimeSpan.FromSeconds(lesson.Sections?.Sum(s => s.Duration.TotalSeconds) ?? 0);
 
         lessonRepository.Update(lesson);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
         foreach (var asset in assetsToDelete)
         {
             try

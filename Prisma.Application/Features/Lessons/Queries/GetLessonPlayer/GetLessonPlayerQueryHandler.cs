@@ -110,7 +110,7 @@ public class GetLessonPlayerQueryHandler(
                     Id = lesson.Assignment.Id,
                     ContentURL = lesson.Assignment.ContentURL != null
                         ? await storageService.GetDownloadUrlAsync(lesson.Assignment.ContentURL)
-
+                        : null,
                     DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },

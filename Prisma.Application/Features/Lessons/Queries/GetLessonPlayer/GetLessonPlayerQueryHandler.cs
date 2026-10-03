@@ -64,7 +64,7 @@ public class GetLessonPlayerQueryHandler(
             {
                 Title = m.Title ?? string.Empty,
                 DownloadUrl = m.DownloadUrl != null
-                    ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName, m.DownloadUrl)
+                    ? await storageService.GetDownloadUrlAsync(m.DownloadUrl)
                     : string.Empty,
                 Type = m.Type switch
                 {
@@ -76,6 +76,10 @@ public class GetLessonPlayerQueryHandler(
             });
         }
 
+        var videoPoster = lesson.ImageThumbnailUrl is not null
+            ? await storageService.GetDownloadUrlAsync(lesson.ImageThumbnailUrl)
+            : null;
+
         var result = new LessonPlayerResult
         {
             Id = lesson.Id,
@@ -85,7 +89,7 @@ public class GetLessonPlayerQueryHandler(
             Subject = subject,
             Description = lesson.Description ?? string.Empty,
             Teacher = teacher,
-            VideoPoster = lesson.ImageThumbnailUrl ?? string.Empty,
+            VideoPoster = videoPoster,
             ValidityDays = expiryDays > 0 ? expiryDays : 30,
             Outcomes = lesson.Outcomes,
             Materials = materials,
@@ -105,9 +109,8 @@ public class GetLessonPlayerQueryHandler(
                 {
                     Id = lesson.Assignment.Id,
                     ContentURL = lesson.Assignment.ContentURL != null
-                        ? await storageService.GetDownloadUrlAsync(storageService.DefaultBucketName,
-                            lesson.Assignment.ContentURL)
-                        : string.Empty,
+                        ? await storageService.GetDownloadUrlAsync(lesson.Assignment.ContentURL)
+
                     DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },

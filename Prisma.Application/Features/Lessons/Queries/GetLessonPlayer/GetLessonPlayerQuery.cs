@@ -17,7 +17,7 @@ public record LessonPlayerResult
 
     public int ValidityDays { get; init; }
 
-    public string VideoPoster { get; init; } = string.Empty;
+    public string? VideoPoster { get; init; }
     public IList<MaterialDto> Materials { get; init; } = [];
     public QuizDto? Quiz { get; init; }
     public AssignmentDto? Assignment { get; init; }
@@ -46,7 +46,7 @@ public record QuizDto
 public record AssignmentDto
 {
     public int Id { get; init; }
-    public string ContentURL { get; init; } = string.Empty;
+    public string? ContentURL { get; init; }
     public DateTimeOffset DueDate { get; init; }
     public string FileName { get; init; } = string.Empty;
 }

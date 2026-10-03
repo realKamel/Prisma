@@ -10,7 +10,8 @@ namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 
 internal class GetStudentHistoryQueryHandler(
     ICurrentUserService currentUserService,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IStorageService storageService
 ) : IRequestHandler<GetPaginatedStudentHistoryQuery, Result<PaginatedList<HistoryDto>>>
 {
     public async Task<Result<PaginatedList<HistoryDto>>> Handle(
@@ -56,13 +57,15 @@ internal class GetStudentHistoryQueryHandler(
                         ? $"{e.Lesson.Teacher.FirstName} {e.Lesson.Teacher.SecondName}"
                         : string.Empty,
                     e.Lesson != null && e.Lesson.Teacher != null
-                        ? (e.Lesson.Teacher.Subject ?? string.Empty)
+                        ? (e.Lesson.Teacher.Subject)
                         : string.Empty,
                     e.CreatedAt,
                     e.CompletedAt,
                     e.ExpiresAt,
                     e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.TotalDegree : 0,
-                    e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.Attempts.FirstOrDefault(e => e.StudentId == userId.Value)!.Degree : 0,
+                    e.Lesson != null && e.Lesson.Quiz != null
+                        ? e.Lesson.Quiz.Attempts.FirstOrDefault(ex => ex.StudentId == userId.Value)!.Degree
+                        : 0,
                     e.IsCompleted,
                     e.Lesson != null ? e.Lesson.Sections.Count : 0,
                     e.Lesson != null
@@ -75,10 +78,10 @@ internal class GetStudentHistoryQueryHandler(
             cancellationToken: cancellationToken
         );
 
-        var result = rawData
-            .Select(raw => new HistoryDto(
+        var tasks = rawData
+            .Select(async (raw) => new HistoryDto(
                 raw.PublicId,
-                raw.ImageThumbnailUrl,
+                await storageService.GetDownloadUrlAsync(raw.ImageThumbnailUrl),
                 raw.Title,
                 raw.Status,
                 raw.TeacherName,
@@ -89,8 +92,9 @@ internal class GetStudentHistoryQueryHandler(
                 raw.TotalDegree,
                 raw.QuizScore,
                 CalculateProgressPercentage(raw.IsCompleted, raw.SectionsCount, raw.TotalProgress)
-            ))
-            .ToList();
+            ));
+        var result = await Task.WhenAll(tasks);
+
         return new PaginatedList<HistoryDto>(
             result,
             totalCount,

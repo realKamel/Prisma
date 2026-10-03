@@ -5,7 +5,7 @@ using Prisma.Domain.Repositories;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentPerformanceStatus;
 
-internal class GetStudentPerformanceStatusQueryHandler(
+internal sealed class GetStudentPerformanceStatusQueryHandler(
     ICurrentUserService currentUserService,
     IEnrollmentRepository repository
 ) : IRequestHandler<GetStudentPerformanceStatusQuery, Result<StatusDto>>

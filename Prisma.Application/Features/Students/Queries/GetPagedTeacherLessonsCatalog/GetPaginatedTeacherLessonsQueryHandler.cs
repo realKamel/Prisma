@@ -124,13 +124,12 @@ public class GetPaginatedTeacherLessonsQueryHandler(
             ImageThumbnailUrl =
                 lesson.ImageThumbnailUrl != null
                     ? await storageService.GetDownloadUrlAsync(
-                        storageService.DefaultBucketName,
                         lesson.ImageThumbnailUrl
                     )
                     : string.Empty,
             // ImageThumbnailUrl = lesson.ImageThumbnailUrl != null ?
             //      storageService.GetPublicUrl(storageService.DefaultBucketName, lesson.ImageThumbnailUrl) : string.Empty,
-            Currency = "جنيه",
+            Currency = "EGP",
         };
     }
 

@@ -71,16 +71,20 @@ public static partial class DependenciesInjection
                 // Prevents thousands of cache entries from expiring simultaneously.
                 options.JitterMaxDuration = TimeSpan.FromSeconds(30);
             })
+            .WithOptions(options =>
+            {
+                options.CacheKeyPrefix = "prisma_cache_";
+            })
             // Serializer for L2 Valkey Cache
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
             // Backplane: Syncs all API nodes so no server returns old data
-            .WithBackplane(
+            .WithBackplane(sp =>
                 new RedisBackplane(
                     new RedisBackplaneOptions
                     {
                         ConnectionMultiplexerFactory = () =>
-                            Task.FromResult<IConnectionMultiplexer>(multiplexer),
+                            Task.FromResult(sp.GetRequiredService<IConnectionMultiplexer>())
                     }
                 )
             )

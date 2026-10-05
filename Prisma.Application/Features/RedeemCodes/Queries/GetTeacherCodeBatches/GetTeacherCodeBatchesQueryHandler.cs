@@ -9,9 +9,9 @@ using Prisma.Domain.Specifications.RedeemCodes;
 
 namespace Prisma.Application.Features.RedeemCodes.Queries.GetTeacherCodeBatches;
 
-public class GetTeacherCodeBatchesQueryHandler(
+internal sealed class GetTeacherCodeBatchesQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser ,
+    ICurrentUserService currentUser,
     IIdentityService identityService)
     : IRequestHandler<GetTeacherCodeBatchesQuery, Result<List<CodeBatchListItemDto>>>
 {
@@ -21,7 +21,7 @@ public class GetTeacherCodeBatchesQueryHandler(
     {
         var userId = currentUser.UserId;
         if (userId is null)
-            return Result.Unauthorized("User is not authenticated.");
+            return Result.Unauthorized();
 
         var user = await identityService.FindByIdAsync(userId.Value, ct);
         if (user is null)
@@ -39,17 +39,17 @@ public class GetTeacherCodeBatchesQueryHandler(
 
         var batches = await repo.ListAsync(
             new TeacherCodeBatchesSpecification<CodeBatchinfo>(userId.Value,
-            b => new CodeBatchinfo
-            (
-                b.Id,
-                b.AcademicYearId,
-                b.AcademicYear.Title,
-                b.LessonId,
-                b.Lesson.Title ?? string.Empty,
-                b.CreatedAt ,
-                b.TotalCodes,
-                b.GeneratedCodes.Count(c => c.RedeemedByStudentId != null)
-            ), request.AcademicYearId, request.LessonId), ct);
+                b => new CodeBatchinfo
+                (
+                    b.Id,
+                    b.AcademicYearId,
+                    b.AcademicYear.Title,
+                    b.LessonId,
+                    b.Lesson.Title ?? string.Empty,
+                    b.CreatedAt,
+                    b.TotalCodes,
+                    b.GeneratedCodes.Count(c => c.RedeemedByStudentId != null)
+                ), request.AcademicYearId, request.LessonId), ct);
 
         var result = batches.Select(b => new CodeBatchListItemDto
         {
@@ -58,7 +58,7 @@ public class GetTeacherCodeBatchesQueryHandler(
             AcademicYear = b.AcademicYear,
             LessonId = b.LessonId,
             Lesson = b.Lesson,
-            CreatedAt = b.CreatedAt?.ToString("yyyy/MM/dd") ?? string.Empty,
+            CreatedAt = b.CreatedAt,
             TotalCodes = b.TotalCodes,
             UsedCodes = b.UsedCodes,
         }).ToList();
@@ -66,13 +66,14 @@ public class GetTeacherCodeBatchesQueryHandler(
         return result;
     }
 }
+
 public record CodeBatchinfo(
     int Id,
     int AcademicYearId,
     string AcademicYear,
     int LessonId,
     string Lesson,
- DateTimeOffset? CreatedAt,
+    DateTimeOffset? CreatedAt,
     int TotalCodes,
     int UsedCodes
 );

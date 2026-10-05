@@ -18,7 +18,7 @@ namespace Prisma.API.Features.Quizzes;
 
 [Route("api/v1/teacher/grading")]
 [Authorize(Roles = $"{AppRoles.Teacher},{AppRoles.Assistant}")]
-public class GradingController(ISender sender) : ApiController
+public sealed class GradingController(ISender sender) : ApiController
 {
     [HttpGet]
     public async Task<Result<GradingListResponseDto>> GetList(

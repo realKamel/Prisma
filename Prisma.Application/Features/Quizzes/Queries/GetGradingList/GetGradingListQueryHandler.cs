@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using MediatR;
 using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
@@ -11,7 +8,7 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetGradingList;
 
-public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
+internal sealed class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetGradingListQuery, Result<GradingListResponseDto>>
 {
     public async Task<Result<GradingListResponseDto>> Handle(GetGradingListQuery request, CancellationToken ct)
@@ -30,7 +27,7 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
                 $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}"
                     .Contains(search, StringComparison.OrdinalIgnoreCase)
                 || (a.Quiz.Title ?? string.Empty)
-                    .Contains(search, StringComparison.OrdinalIgnoreCase));
+                .Contains(search, StringComparison.OrdinalIgnoreCase));
         }
 
         // Apply status filter
@@ -58,8 +55,9 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
             {
                 AttemptId = a.Id,
                 StudentId = a.StudentId,
-                StudentName = string.Join(" ", new[] { a.Student.FirstName, a.Student.SecondName, a.Student.ThirdName, a.Student.LastName }
-                                    .Where(s => !string.IsNullOrWhiteSpace(s))),
+                StudentName = string.Join(" ",
+                    new[] { a.Student.FirstName, a.Student.SecondName, a.Student.ThirdName, a.Student.LastName }
+                        .Where(s => !string.IsNullOrWhiteSpace(s))),
                 QuizId = a.QuizId,
                 QuizTitle = a.Quiz.Title ?? string.Empty,
                 SubmittedAt = a.SubmittedAt,
@@ -74,19 +72,12 @@ public class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
                 // Show 0 if no attempt exists
                 TabSwitchCount = a?.TabSwitchCount ?? 0,
                 CopyPasteAttemptCount = a?.CopyPasteAttemptCount ?? 0,
-
                 HeldForSecurityReview = a?.Status == QuizAttemptStatus.Submitted
-                && a.Answers.All(ans => ans.Score != null) 
-                && (a.TabSwitchCount + a.CopyPasteAttemptCount) > 0 
+                                        && a.Answers.All(ans => ans.Score != null)
+                                        && (a.TabSwitchCount + a.CopyPasteAttemptCount) > 0
             })
             .ToList();
 
-        return new GradingListResponseDto
-        {
-            Items = items,
-            TotalCount = totalCount,
-            Page = page,
-            PageSize = pageSize
-        };
+        return new GradingListResponseDto { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize };
     }
 }

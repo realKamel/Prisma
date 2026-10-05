@@ -56,30 +56,8 @@ internal sealed class GetAllUsersQueryHandler(IUnitOfWork unitOfWork)
             user.Email ?? string.Empty,
             role,
             !user.IsBlocked,
-            (user.CreatedAt ?? DateTimeOffset.UtcNow).ToString("yyyy-MM-dd"),
-            HumanizeLastActive(user.UpdatedAt ?? user.CreatedAt)
+            user.CreatedAt,
+            user.UpdatedAt ?? user.CreatedAt
         );
-    }
-
-    // NOTE: there's no LastLoginAt/LastActiveAt column, so this approximates
-    // "activity" from UpdatedAt. It's a stand-in, not a real activity signal.
-    private static string HumanizeLastActive(DateTimeOffset? dt)
-    {
-        if (dt is null)
-            return "—";
-        var diff = DateTimeOffset.UtcNow - dt.Value;
-        if (diff.TotalMinutes < 1)
-            return "الآن";
-        if (diff.TotalHours < 1)
-            return $"منذ {(int)diff.TotalMinutes} دقيقة";
-        if (diff.TotalDays < 1)
-            return $"منذ {(int)diff.TotalHours} ساعة";
-        if (diff.TotalDays < 2)
-            return "منذ يوم";
-        if (diff.TotalDays < 7)
-            return $"منذ {(int)diff.TotalDays} أيام";
-        if (diff.TotalDays < 30)
-            return "منذ أسبوع";
-        return "منذ فترة";
     }
 }

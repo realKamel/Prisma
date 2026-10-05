@@ -8,7 +8,7 @@ using Prisma.Domain.Specifications.RedeemCodes;
 
 namespace Prisma.Application.Features.RedeemCodes.Queries.GetCodeBatchDetail;
 
-public class GetCodeBatchDetailQueryHandler(
+internal sealed class GetCodeBatchDetailQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser)
     : IRequestHandler<GetCodeBatchDetailQuery, Result<CodeBatchDetailDto>>
@@ -18,7 +18,9 @@ public class GetCodeBatchDetailQueryHandler(
         CancellationToken ct)
     {
         if (currentUser.UserId is not { } teacherId)
-            return Result.Unauthorized("User is not authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         var repo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
 
@@ -38,7 +40,7 @@ public class GetCodeBatchDetailQueryHandler(
             AcademicYear = batchWithDetails.AcademicYear.Title,
             LessonId = batchWithDetails.LessonId,
             Lesson = batchWithDetails.Lesson.Title ?? string.Empty,
-            CreatedAt = batchWithDetails.CreatedAt?.ToString("yyyy/MM/dd") ?? string.Empty,
+            CreatedAt = batchWithDetails.CreatedAt,
             TotalCodes = batchWithDetails.TotalCodes,
             UsedCodes = batchWithDetails.GeneratedCodes.Count(c => c.RedeemedByStudentId != null),
             Codes = batchWithDetails.GeneratedCodes
@@ -55,7 +57,7 @@ public class GetCodeBatchDetailQueryHandler(
                             c.RedeemedByStudent.ThirdName,
                             c.RedeemedByStudent.LastName)
                         : string.Empty,
-                    UsedAt = c.RedeemedAt?.ToString("yyyy/MM/dd") ?? string.Empty,
+                    UsedAt = c.RedeemedAt,
                 })
                 .ToList(),
         };

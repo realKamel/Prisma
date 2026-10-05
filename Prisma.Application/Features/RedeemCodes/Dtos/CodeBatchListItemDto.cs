@@ -7,7 +7,7 @@ public class CodeBatchListItemDto
     public string AcademicYear { get; set; } = string.Empty;
     public int LessonId { get; set; }
     public string Lesson { get; set; } = string.Empty;
-    public string CreatedAt { get; set; } = string.Empty;
+    public DateTimeOffset? CreatedAt { get; set; }
     public int TotalCodes { get; set; }
     public int UsedCodes { get; set; }
 }

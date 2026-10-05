@@ -10,7 +10,8 @@ namespace Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
 public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
     : IRequestHandler<GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
 {
-    public async Task<Result<List<AdminActivityDto>>> Handle(GetAdminActivitiesQuery request, CancellationToken cancellationToken)
+    public async Task<Result<List<AdminActivityDto>>> Handle(GetAdminActivitiesQuery request,
+        CancellationToken cancellationToken)
     {
         var enrollmentRepo = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
@@ -47,7 +48,7 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
                 Id: $"act-pay-{pay.Id}",
                 Type: "payment",
                 EntityId: pay.StudentId.ToString(),
-                Details: $"{pay.Amount} {pay.Currency}",
+                Details: $"{pay.Money.Amount} {pay.Money.Currency}",
                 MetaInfo: $"{pay.Provider} - {pay.ProviderRef}",
                 ActivityDate: timeStamp
             );

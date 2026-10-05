@@ -1,20 +1,21 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
+using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 
-public class GetTeacherFinancesQueryHandler(
+internal sealed class GetTeacherFinancesQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
-) : IRequestHandler<GetTeacherFinances.GetTeacherFinancesQuery, Result<List<RawTransactionDto>>>
+) : IRequestHandler<GetTeacherFinancesQuery, Result<List<RawTransactionDto>>>
 {
     public async Task<Result<List<RawTransactionDto>>> Handle(
-        GetTeacherFinances.GetTeacherFinancesQuery request,
+        GetTeacherFinancesQuery request,
         CancellationToken cancellationToken
     )
     {
@@ -22,14 +23,14 @@ public class GetTeacherFinancesQueryHandler(
 
         if (userId is null)
         {
-            return Result.Unauthorized("User is not authenticated.");
+            return Result.Unauthorized();
         }
 
         var paymentRepository = unitOfWork.GetOrCreateRepository<Payment, int>();
-        
+
         var spec = new TeacherFinancesSpecification<Financesinfo>(userId.Value, p => new Financesinfo(
             Id: p.Id,
-            Amount: p.Amount,
+            Amount: p.Money,
             PaidAt: p.PaidAt,
             StudentFirstName: p.Student.FirstName,
             StudentLastName: p.Student.SecondName,
@@ -46,8 +47,8 @@ public class GetTeacherFinancesQueryHandler(
                     ? $"{p.StudentFirstName} {p.StudentLastName}".Trim()
                     : "طالب غير معروف",
                 LessonTitle: p.LessonTitle ?? "درس غير معروف",
-                Amount: p.Amount,
-                Date: p.PaidAt?.ToString("yyyy-MM-dd") ?? string.Empty
+                Amount: p.Amount.ToDto(),
+                Date: p.PaidAt
             ))
             .ToList();
 
@@ -57,10 +58,9 @@ public class GetTeacherFinancesQueryHandler(
 
 public record Financesinfo(
     int Id,
-    decimal Amount,
+    Money Amount,
     DateTimeOffset? PaidAt,
     string? StudentFirstName,
     string? StudentLastName,
     string? LessonTitle
 );
-

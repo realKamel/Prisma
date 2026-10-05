@@ -55,17 +55,18 @@ public class GetTeacherDashboardStatusQueryHandler(
             new ActiveStudentSpecification(teacherId), cancellationToken);
 
         var activeLessonsCount = await lessonRepo.CountAsync(
-            new ActiveLessonsSpecification(teacherId), cancellationToken); 
+            new ActiveLessonsSpecification(teacherId), cancellationToken);
 
         var logs = (await auditRepo.ListAsync(logsSpec, cancellationToken)).ToArray();
 
         var sixtyDayEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithProjectionSpec<EnrollmentEarningInfo>(
                 e => e.CreatedAt >= now.AddDays(-60)
-                     && (teacherId == null || e.Student.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked)),
+                     && (teacherId == null ||
+                         e.Student.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked)),
                 e => new EnrollmentEarningInfo(
                     e.CreatedAt,
-                    e.Payment != null ? e.Payment.Amount : 0,
+                    e.Payment != null ? e.Payment.Money.Amount : 0,
                     e.IsCompleted,
                     e.CompletedAt)),
             cancellationToken);
@@ -73,10 +74,11 @@ public class GetTeacherDashboardStatusQueryHandler(
         var bestSalesEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithProjectionSpec<EnrollmentLessonSaleInfo>(
                 e => e.Lesson!.Status == LessonStatus.Active
-                     && (teacherId == null || e.Student.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked)),
+                     && (teacherId == null ||
+                         e.Student.TeacherStudents.Any(ts => ts.TeacherId == teacherId && !ts.IsKicked)),
                 e => new EnrollmentLessonSaleInfo(
                     e.Lesson!.Id,
-                    e.Payment != null ? e.Payment.Amount : 0)),
+                    e.Payment != null ? e.Payment.Money.Amount : 0)),
             cancellationToken);
 
         var thisMonthEarning = sixtyDayEnrollments
@@ -133,6 +135,7 @@ public class GetTeacherDashboardStatusQueryHandler(
             bestSales,
             logs);
     }
+
     public sealed record EnrollmentEarningInfo(
         DateTimeOffset? CreatedAt,
         decimal PaymentAmount,

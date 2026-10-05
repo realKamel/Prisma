@@ -7,10 +7,11 @@ using Prisma.Domain.Specifications.Admin;
 
 namespace Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
 
-public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
+internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
     : IRequestHandler<GetAdminStatsQuery, Result<AdminStatsResponseDto>>
 {
-    public async Task<Result<AdminStatsResponseDto>> Handle(GetAdminStatsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<AdminStatsResponseDto>> Handle(GetAdminStatsQuery request,
+        CancellationToken cancellationToken)
     {
         var studentRepo = _unitOfWork.GetOrCreateRepository<Student, Guid>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
@@ -40,12 +41,13 @@ public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
 
         var paymentsThisMonth = successfulPayments
             .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfThisMonth).ToList();
-        decimal revenueThisMonth = paymentsThisMonth.Sum(p => p.Amount);
+        decimal revenueThisMonth = paymentsThisMonth.Sum(p => p.Money.Amount);
         int lessonsSoldThisMonth = paymentsThisMonth.Count;
 
         var paymentsLastMonth = successfulPayments
-            .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfLastMonth && p.PaidAt.Value < startOfThisMonth).ToList();
-        decimal revenueLastMonth = paymentsLastMonth.Sum(p => p.Amount);
+            .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfLastMonth && p.PaidAt.Value < startOfThisMonth)
+            .ToList();
+        decimal revenueLastMonth = paymentsLastMonth.Sum(p => p.Money.Amount);
         int lessonsSoldLastMonth = paymentsLastMonth.Count;
 
         decimal revenueDelta = 0;
@@ -61,7 +63,8 @@ public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
         decimal lessonsDelta = 0;
         if (lessonsSoldLastMonth > 0)
         {
-            lessonsDelta = Math.Round(((decimal)(lessonsSoldThisMonth - lessonsSoldLastMonth) / lessonsSoldLastMonth) * 100, 1);
+            lessonsDelta =
+                Math.Round(((decimal)(lessonsSoldThisMonth - lessonsSoldLastMonth) / lessonsSoldLastMonth) * 100, 1);
         }
         else if (lessonsSoldThisMonth > 0)
         {
@@ -71,7 +74,7 @@ public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
         var kpis = new List<KpiDto>
         {
             new("students", totalStudents, studentsDelta),
-            new("revenue", successfulPayments.Sum(p => p.Amount), revenueDelta),
+            new("revenue", successfulPayments.Sum(p => p.Money.Amount), revenueDelta),
             new("lessons-sold", successfulPayments.Count, lessonsDelta),
             new("uptime", 99.9m, 0)
         };
@@ -85,7 +88,7 @@ public class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
 
             decimal dayAmount = successfulPayments
                 .Where(p => p.PaidAt.HasValue && p.PaidAt.Value.Date == currentDayDate)
-                .Sum(p => p.Amount);
+                .Sum(p => p.Money.Amount);
 
             revenueWeek.Add(new RevenueWeekDto(
                 Date: new DateTimeOffset(currentDayDate, now.Offset),

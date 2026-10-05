@@ -1,29 +1,26 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
 
-namespace Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
+namespace Prisma.Application.Features.Students.Queries.GetStudentPaymentHistoryQuery;
 
-public class GetStudentPaymentHistoryQueryHandler(
+internal sealed class GetStudentPaymentHistoryQueryHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService
-) : IRequestHandler<GetStudentPaymentHistoryQuery, Result<StudentPaymentHistoryResponseDto>>
+) : IRequestHandler<GetStudentPaymentHistory.GetStudentPaymentHistoryQuery, Result<StudentPaymentHistoryResponseDto>>
 {
     public async Task<Result<StudentPaymentHistoryResponseDto>> Handle(
-        GetStudentPaymentHistoryQuery request,
+        GetStudentPaymentHistory.GetStudentPaymentHistoryQuery request,
         CancellationToken cancellationToken)
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
-            return Result.Unauthorized("User is not authenticated.");
+            return Result.Unauthorized();
 
         var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
@@ -53,12 +50,12 @@ public class GetStudentPaymentHistoryQueryHandler(
 
             decimal amountPaid = isPaidViaCode
                 ? 0
-                : enrollment.Payment?.Amount ?? 0;
+                : enrollment.Payment?.Money.Amount ?? 0;
 
             DateTimeOffset paymentDate = enrollment.Payment?.PaidAt
-                 ?? enrollment.Payment?.CreatedAt
-                 ?? enrollment.CreatedAt
-                 ?? DateTimeOffset.UtcNow;
+                                         ?? enrollment.Payment?.CreatedAt
+                                         ?? enrollment.CreatedAt
+                                         ?? DateTimeOffset.UtcNow;
 
             paymentList.Add(new StudentPaymentDetailsDto(
                 Id: enrollment.Payment?.ProviderRef ?? enrollment.PaymentId?.ToString() ?? $"enr-{enrollment.Id}",

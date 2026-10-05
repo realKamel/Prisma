@@ -14,7 +14,7 @@ using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
 using Prisma.Application.Features.Teachers.Queries.GetPublicTeacherProfile;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;

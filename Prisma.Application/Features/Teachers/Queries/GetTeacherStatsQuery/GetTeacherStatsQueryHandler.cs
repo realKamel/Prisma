@@ -6,15 +6,9 @@ using Prisma.Domain.Specifications.Teachers;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
 
-public class GetTeacherStatsQueryHandler : IRequestHandler<GetTeacherStatsQuery, TeacherStatsDto>
+internal sealed class GetTeacherStatsQueryHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<GetTeacherStatsQuery, TeacherStatsDto>
 {
-    private readonly IUnitOfWork _unitOfWork;
-
-    public GetTeacherStatsQueryHandler(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task<TeacherStatsDto> Handle(
         GetTeacherStatsQuery request,
         CancellationToken cancellationToken
@@ -24,9 +18,9 @@ public class GetTeacherStatsQueryHandler : IRequestHandler<GetTeacherStatsQuery,
         var startOfMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
         var startOfLastMonth = startOfMonth.AddMonths(-1);
 
-        var teacherRepo = _unitOfWork.GetOrCreateRepository<Teacher, Guid>();
-        var studentRepo = _unitOfWork.GetOrCreateRepository<Student, Guid>();
-        var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
+        var teacherRepo = unitOfWork.GetOrCreateRepository<Teacher, Guid>();
+        var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+        var paymentRepo = unitOfWork.GetOrCreateRepository<Payment, int>();
 
         var totalTeachers = await teacherRepo.CountAsync(cancellationToken);
 
@@ -46,13 +40,13 @@ public class GetTeacherStatsQueryHandler : IRequestHandler<GetTeacherStatsQuery,
             new CurrentMonthPaymentsSpecification(startOfMonth),
             cancellationToken
         );
-        var monthRevenue = currentMonthPayments.Sum(p => p.Amount);
+        var monthRevenue = currentMonthPayments.Sum(p => p.Money.Amount);
 
         var lastMonthPayments = await paymentRepo.ListAsync(
             new LastMonthPaymentsSpecification(startOfMonth, startOfLastMonth),
             cancellationToken
         );
-        var lastMonthRevenue = lastMonthPayments.Sum(p => p.Amount);
+        var lastMonthRevenue = lastMonthPayments.Sum(p => p.Money.Amount);
 
         double revenueChangePercent =
             lastMonthRevenue > 0

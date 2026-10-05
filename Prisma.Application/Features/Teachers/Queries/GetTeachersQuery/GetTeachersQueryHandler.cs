@@ -8,7 +8,7 @@ using TeacherEntity = Prisma.Domain.Entities.UserAggregate.Teacher;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 
-public class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
+internal sealed class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetTeachersQuery, Result<List<TeacherDto>>>
 {
     public async Task<Result<List<TeacherDto>>> Handle(
@@ -38,7 +38,7 @@ public class GetTeachersQueryHandler(IUnitOfWork unitOfWork)
 
             decimal revenue = payments
                 .Where(p => teacherLessonIds.Contains(p.LessonId))
-                .Sum(p => p.Amount);
+                .Sum(p => p.Money.Amount);
 
             string status = teacher.Status == TeacherStatus.Suspended ? "suspended" : "active";
 

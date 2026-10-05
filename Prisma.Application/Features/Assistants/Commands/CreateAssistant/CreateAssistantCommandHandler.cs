@@ -32,18 +32,25 @@ internal sealed class CreateAssistantCommandHandler(
             return Result.Conflict();
         }
 
-        var assistant = new Assistant
-        {
-            Id = Guid.CreateVersion7(),
-            FirstName = request.FirstName,
-            SecondName = request.SecondName,
-            UserName = request.Email,
-            PhoneNumber = request.PhoneNumber,
-            Email = request.Email,
-            TeacherId = teacherId
-        };
+        var assistantResult = Assistant.Create(request.FirstName, request.SecondName, request.Email,
+            request.PhoneNumber, teacherId);
 
-        var result = await identityService.CreateAsync(assistant, request.Password);
+        if (!assistantResult.IsSuccess)
+        {
+            return Result.Invalid(assistantResult.ValidationErrors);
+        }
+        // var assistant = new Assistant
+        // {
+        //     Id = Guid.CreateVersion7(),
+        //     FirstName = request.FirstName,
+        //     SecondName = request.SecondName,
+        //     UserName = request.Email,
+        //     PhoneNumber = request.PhoneNumber,
+        //     Email = request.Email,
+        //     TeacherId = teacherId
+        // };
+
+        var result = await identityService.CreateAsync(assistantResult.Value, request.Password);
 
         // var permissions = request
         //     .Policies
@@ -60,14 +67,14 @@ internal sealed class CreateAssistantCommandHandler(
             return Result.Error(string.Join("\n", result.Errors.Select(e => e.Code)));
         }
 
-        var claimsResult = await identityService.AddClaimsAsync(assistant, permissions);
+        var claimsResult = await identityService.AddClaimsAsync(assistantResult.Value, permissions);
 
         if (!claimsResult.Succeeded)
         {
             return Result.Error(string.Join("\n", claimsResult.Errors.Select(e => e.Code)));
         }
 
-        var roleResult = await identityService.AddToRoleAsync(assistant, AppRoles.Assistant);
+        var roleResult = await identityService.AddToRoleAsync(assistantResult.Value, AppRoles.Assistant);
 
         if (!roleResult.Succeeded)
         {
@@ -75,11 +82,11 @@ internal sealed class CreateAssistantCommandHandler(
         }
 
         return new CreateOrUpdatedAssistantCommandResponse
-        (assistant.Id,
-            assistant.FirstName,
-            assistant.SecondName,
-            assistant.PhoneNumber,
-            assistant.Email,
+        (assistantResult.Value.Id,
+            assistantResult.Value.FirstName,
+            assistantResult.Value.SecondName,
+            assistantResult.Value.PhoneNumber,
+            assistantResult.Value.Email,
             [.. request.Policies]);
     }
 }

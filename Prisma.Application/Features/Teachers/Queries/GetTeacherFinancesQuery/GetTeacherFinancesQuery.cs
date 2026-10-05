@@ -1,8 +1,8 @@
-using System.Collections.Generic;
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
 
-namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
+namespace Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 
 public record GetTeacherFinancesQuery : IRequest<Result<List<RawTransactionDto>>>;
 
@@ -10,6 +10,6 @@ public record RawTransactionDto(
     string Id,
     string StudentName,
     string LessonTitle,
-    decimal Amount,
-    string Date
+    MoneyDto Amount,
+    DateTimeOffset? Date
 );

@@ -10,7 +10,8 @@ public record InitiatePaymentCommand(
     string LastName,
     PaymentMethod Method,
     Guid StudentId,
-    int LessonId
+    int LessonId,
+    string Currency = "EGP"
 ) : IRequest<InitiatePaymentResult>;
 
 public record InitiatePaymentResult(string ClientSecret, string PublicKey);

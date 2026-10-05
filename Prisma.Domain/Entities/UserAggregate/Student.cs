@@ -16,7 +16,7 @@ public class Student : User
     public string ParentPhoneNumber { get; set; }
 
     public int? AcademicYearId { get; set; }
-    public AcademicYear? AcademicYear { get; private set; }
+    public AcademicYear? AcademicYear { get; set; }
 
     public ICollection<Enrollment> Enrollments { get; private set; } = new List<Enrollment>();
     public ICollection<SectionProgress> SectionProgresses { get; private set; } = new List<SectionProgress>();

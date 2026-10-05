@@ -10,6 +10,6 @@ public record RawTransactionDto(
     string Id,
     string StudentName,
     string LessonTitle,
-    MoneyDto Amount,
+    MoneyDto Money,
     DateTimeOffset? Date
 );

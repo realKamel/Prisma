@@ -47,7 +47,7 @@ internal sealed class GetTeacherFinancesQueryHandler(
                     ? $"{p.StudentFirstName} {p.StudentLastName}".Trim()
                     : "طالب غير معروف",
                 LessonTitle: p.LessonTitle ?? "درس غير معروف",
-                Amount: p.Amount.ToDto(),
+                Money: p.Amount.ToDto(),
                 Date: p.PaidAt
             ))
             .ToList();

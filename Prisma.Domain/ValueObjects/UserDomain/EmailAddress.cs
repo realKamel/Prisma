@@ -27,7 +27,7 @@ public sealed partial record EmailAddress
             });
         }
 
-        string normalized = email.Trim().ToUpperInvariant();
+        string normalized = email.Trim().ToLowerInvariant();
 
         if (normalized.Length > 255)
         {

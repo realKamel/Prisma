@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005211439_UserValueObjects")]
+    partial class UserValueObjects
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,17 +193,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "ValidityDateRange", "Prisma.Domain.Entities.EnrollmentAggregate.Enrollment.ValidityDateRange#DateRange", b1 =>
-                        {
-                            b1.Property<DateTimeOffset>("EndDate")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("DateRange_EndDate");
-
-                            b1.Property<DateTimeOffset>("StartDate")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("DateRange_StartDate");
-                        });
 
                     b.HasKey("Id");
 
@@ -919,11 +911,19 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -959,23 +959,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
-
-                    b.ComplexProperty(typeof(Dictionary<string, object>), "Money", "Prisma.Domain.Entities.PaymentAggregate.Payment.Money#Money", b1 =>
-                        {
-                            b1.IsRequired();
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("numeric(18,2)")
-                                .HasColumnName("Money_Amount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("character(3)")
-                                .HasColumnName("Money_Currency")
-                                .IsFixedLength();
-                        });
 
                     b.HasKey("Id");
 
@@ -1947,7 +1930,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("ParentPhoneNumber")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("StreakDays")

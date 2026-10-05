@@ -1,6 +1,7 @@
 ﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Specifications.Admin;
 
@@ -15,8 +16,7 @@ public sealed class AdminSuccessfulPaymentsSpec : Specification<Payment, Payment
             .Select(p => new PaymentActivityProjection(
                 p.Id,
                 p.StudentId,
-                p.Amount,
-                p.Currency,
+                p.Money,
                 p.Provider,
                 p.ProviderRef,
                 p.PaidAt,
@@ -24,11 +24,11 @@ public sealed class AdminSuccessfulPaymentsSpec : Specification<Payment, Payment
             ));
     }
 }
+
 public sealed record PaymentActivityProjection(
     int Id,
     Guid StudentId,
-    decimal Amount,
-    string Currency,
+    Money Money,
     string Provider,
     string ProviderRef,
     DateTimeOffset? PaidAt,

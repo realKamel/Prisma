@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.EnrollmentAggregate;
+using Prisma.Infrastructure.Persistence.Configurations.ValueObjectConfigurations;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -9,6 +10,8 @@ internal sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollm
     public void Configure(EntityTypeBuilder<Enrollment> builder)
     {
         builder.HasKey(x => x.Id);
+        builder.ComplexProperty(e => e.ValidityDateRange)
+            .ConfigureDateRange<Enrollment>();
 
         builder
             .HasOne(x => x.Student)

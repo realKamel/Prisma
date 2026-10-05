@@ -2,6 +2,7 @@ using Prisma.Domain.Common;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Entities.PaymentAggregate;
 
@@ -10,9 +11,11 @@ public class Payment : BaseEntity
     public string Provider { get; set; } = default!; // "Fawry" | "Paymob"
     public string ProviderRef { get; set; } = default!; // external order/intent ID
 
-    public decimal Amount { get; set; }
+    // public decimal Amount { get; set; }
 
-    public string Currency { get; set; } = "EGP"; // ISO 4217
+    // public string Currency { get; set; } = "EGP"; // ISO 4217
+
+    public Money Money { get; set; } = default!;
 
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public DateTimeOffset? PaidAt { get; set; }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.PaymentAggregate;
+using Prisma.Infrastructure.Persistence.Configurations.ValueObjectConfigurations;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -21,8 +22,9 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         //     .HasForeignKey(x => x.LessonId)
         //     .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Property(p => p.Amount).HasPrecision(12, 2);
-
+        builder.ComplexProperty(p => p.Money)
+            .ConfigureMoney<Payment>();
+        
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

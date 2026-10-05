@@ -202,8 +202,8 @@ public class CreateLessonDetailsCommandHandlerTests
             42,
             new List<ChapterCreateDto>
             {
-                new ChapterCreateDto("Limits Intro", "vid1.mp4"),
-                new ChapterCreateDto("Derivatives Intro", "vid2.mp4")
+                new ChapterCreateDto("Limits Intro", "vid1.mp4", 100),
+                new ChapterCreateDto("Derivatives Intro", "vid2.mp4", 400)
             },
             true,
             mockAssignment,

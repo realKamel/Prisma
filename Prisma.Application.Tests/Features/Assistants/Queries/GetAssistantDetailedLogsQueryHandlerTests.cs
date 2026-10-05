@@ -84,6 +84,8 @@ public class GetAssistantDetailedLogsQueryHandlerTests
             AcademicYear = new() { Title = "الصف الثالث الإعدادي" }
         };
 
+        // fakeStudent.UpdateAcademicYear();
+
         var fakeEnrollment = new Enrollment
         {
             Id = 100,
@@ -144,9 +146,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
 
         var fakeStudent = new Student
         {
-            FirstName = "سارة",
-            LastName = "أحمد",
-            AcademicYear = new() { Title = "الصف الأول الثانوي" }
+            FirstName = "سارة", LastName = "أحمد", AcademicYear = new() { Title = "الصف الأول الثانوي" }
         };
 
         _auditLogRepo.ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())

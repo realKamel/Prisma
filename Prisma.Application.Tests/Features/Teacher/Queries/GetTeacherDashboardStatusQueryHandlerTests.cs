@@ -13,6 +13,7 @@ using Prisma.Domain.Specifications.AuditLogs;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Students;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 
 namespace Prisma.Application.Tests.Features.Teacher.Queries;
@@ -61,7 +62,7 @@ public class GetTeacherDashboardStatusQueryHandlerTests
             IsCompleted = isCompleted,
             CompletedAt = completedAt,
             Lesson = lesson,
-            Payment = paymentAmount.HasValue ? new Payment { Amount = paymentAmount.Value } : null
+            Payment = paymentAmount.HasValue ? new Payment { Money = Money.Create(paymentAmount.Value) } : null
         };
     }
 

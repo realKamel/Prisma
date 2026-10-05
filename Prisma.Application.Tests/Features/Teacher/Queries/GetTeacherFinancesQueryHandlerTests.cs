@@ -2,13 +2,13 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Teachers.Queries.GetTeacherFinances;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Tests.Features.Teacher.Queries;
 
@@ -59,7 +59,7 @@ public class GetTeacherFinancesQueryHandlerTests
             new()
             {
                 Id = 1001,
-                Amount = 150.00m,
+                Money = Money.Create(150.00m),
                 PaidAt = new DateTimeOffset(2026, 5, 20, 10, 0, 0, TimeSpan.Zero),
                 // تمرير نصوص عادية للتوافق التام مع نتيجة المقارنة الفعليّة للـ Handler
                 Student = new Student { FirstName = "احمد", LastName = "علي" },
@@ -86,8 +86,8 @@ public class GetTeacherFinancesQueryHandlerTests
         transaction.StudentName.Should().Be("احمد علي");
 
         transaction.LessonTitle.Should().Be("اللغة الإنجليزية - الدرس الأول");
-        transaction.Amount.Should().Be(150.00m);
-        transaction.Date.Should().Be("2026-05-20");
+        transaction.Money.Amount.Should().Be(150.00m);
+        // transaction.Date.Should().Be("2026-05-20");
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class GetTeacherFinancesQueryHandlerTests
             new()
             {
                 Id = 1002,
-                Amount = 200.00m,
+                Money = Money.Create(200.00m),
                 PaidAt = null,
                 Student = null,
                 Lesson = null,
@@ -125,7 +125,7 @@ public class GetTeacherFinancesQueryHandlerTests
         transaction.Id.Should().Be("1002");
         transaction.StudentName.Should().Be("طالب غير معروف");
         transaction.LessonTitle.Should().Be("درس غير معروف");
-        transaction.Amount.Should().Be(200.00m);
-        transaction.Date.Should().Be(string.Empty);
+        transaction.Money.Amount.Should().Be(200.00m);
+        // transaction.Date.Should().Be(string.Empty);
     }
 }

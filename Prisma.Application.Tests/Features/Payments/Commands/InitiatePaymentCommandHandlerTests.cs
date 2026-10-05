@@ -118,8 +118,8 @@ public class InitiatePaymentCommandHandlerTests
         _paymentRepo.Received(1).Add(Arg.Is<Payment>(p =>
             p.Provider == "Paymob" &&
             p.ProviderRef == "paymob-order-99" &&
-            p.Amount == 200m &&
-            p.Currency == "EGP" &&
+            p.Money.Amount == 200m &&
+            p.Money.Currency == "EGP" &&
             p.Status == PaymentStatus.Pending &&
             p.StudentId == studentId &&
             p.LessonId == 9));

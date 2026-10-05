@@ -7,12 +7,14 @@ using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
+using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistoryQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Tests.Features.Students.Queries;
 
@@ -54,7 +56,10 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         {
             Id = 1,
             EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment { Status = PaymentStatus.Pending, Amount = 100m, Provider = "online" }
+            Payment = new Payment
+            {
+                Status = PaymentStatus.Pending, Money = Money.Create(100m), Provider = "online"
+            }
         };
 
         _currentUserService.UserId.Returns(userId);
@@ -113,16 +118,14 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var payment = new Payment
         {
             Status = PaymentStatus.Completed,
-            Amount = 250m,
+            Money = Money.Create(250m),
             Provider = "Online",
             ProviderRef = "ref-123",
             PaidAt = DateTimeOffset.UtcNow.AddDays(-1)
         };
         var enrollment = new Enrollment
         {
-            Id = 1,
-            EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = payment
+            Id = 1, EnrollmentMethod = EnrollmentMethod.OnlinePayment, Payment = payment
         };
 
         _currentUserService.UserId.Returns(userId);
@@ -148,9 +151,7 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var userId = Guid.NewGuid();
         var enrollment = new Enrollment
         {
-            Id = 1,
-            EnrollmentMethod = EnrollmentMethod.TeacherGrant,
-            CreatedAt = DateTimeOffset.UtcNow
+            Id = 1, EnrollmentMethod = EnrollmentMethod.TeacherGrant, CreatedAt = DateTimeOffset.UtcNow
         };
 
         _currentUserService.UserId.Returns(userId);
@@ -201,15 +202,16 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         var userId = Guid.NewGuid();
         var activeCodeEnrollment = new Enrollment
         {
-            Id = 1,
-            EnrollmentMethod = EnrollmentMethod.RedeemCode,
-            CreatedAt = DateTimeOffset.UtcNow
+            Id = 1, EnrollmentMethod = EnrollmentMethod.RedeemCode, CreatedAt = DateTimeOffset.UtcNow
         };
         var activeOnlineEnrollment = new Enrollment
         {
             Id = 2,
             EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment { Status = PaymentStatus.Completed, Amount = 300m, Provider = "online" }
+            Payment = new Payment
+            {
+                Status = PaymentStatus.Completed, Money = Money.Create(300m), Provider = "online"
+            }
         };
         var expiredEnrollment = new Enrollment
         {
@@ -222,7 +224,10 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         {
             Id = 4,
             EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment { Status = PaymentStatus.Pending, Amount = 500m, Provider = "online" }
+            Payment = new Payment
+            {
+                Status = PaymentStatus.Pending, Money = Money.Create(500m), Provider = "online"
+            }
         };
 
         _currentUserService.UserId.Returns(userId);

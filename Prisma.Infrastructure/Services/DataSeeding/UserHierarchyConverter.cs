@@ -8,7 +8,8 @@ public class UserHierarchyConverter : JsonConverter
 {
     public override bool CanConvert(Type objectType) => objectType == typeof(User);
 
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue,
+        JsonSerializer serializer)
     {
         // Load the JSON object into memory
         var jsonObject = JObject.Load(reader);

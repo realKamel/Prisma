@@ -197,7 +197,7 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto> { new("Kept Chapter", "kept.mp4") }
+            Chapters = new List<ChapterCommandDto> { new("Kept Chapter", "kept.mp4", 1000) }
         };
 
         // Act
@@ -228,7 +228,7 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto> { new("Brand New Chapter", "new-video.mp4") }
+            Chapters = new List<ChapterCommandDto> { new("Brand New Chapter", "new-video.mp4", 2000) }
         };
 
         // Act

@@ -6,6 +6,7 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Tests.Features.Admin.Queries;
 
@@ -42,13 +43,14 @@ public class GetAdminActivitiesQueryHandlerTests
             )
         };
 
+
+        var moneyResult = Money.Create(150);
         var fakePayments = new List<PaymentActivityProjection>
         {
             new PaymentActivityProjection(
                 100,
                 studentId,
-                150,
-                "EGP",
+                moneyResult.Value,
                 "Fawry",
                 "REF123",
                 baseTime.AddMinutes(-5),
@@ -98,8 +100,7 @@ public class GetAdminActivitiesQueryHandlerTests
         (
             i,
             Guid.CreateVersion7(),
-            100,
-            "EGP",
+            Money.Create(100).Value,
             "Fawry",
             $"REF{i}",
             DateTimeOffset.UtcNow.AddHours(-i),

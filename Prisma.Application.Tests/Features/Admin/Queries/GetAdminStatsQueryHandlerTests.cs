@@ -5,6 +5,7 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Tests.Features.Admin.Queries;
 
@@ -48,8 +49,7 @@ public class GetAdminStatsQueryHandlerTests
             new PaymentActivityProjection(
                 1,
                 Guid.CreateVersion7(),
-                100,
-                "EGP",
+                Money.Create(100),
                 "Fawry",
                 "REF1",
                 startOfLastMonth.AddDays(5),
@@ -59,8 +59,7 @@ public class GetAdminStatsQueryHandlerTests
             new PaymentActivityProjection(
                 2,
                 Guid.CreateVersion7(),
-                200,
-                "EGP",
+                Money.Create(200),
                 "Fawry",
                 "REF2",
                 now.Date.AddHours(10),

@@ -26,7 +26,7 @@ namespace Prisma.API.Features.TeacherStudents;
 
 [Authorize(Roles = $"{AppRoles.Teacher},{AppRoles.Admin},{AppRoles.Assistant}")]
 [ApiController]
-public class TeacherStudentsController(IMediator mediator) : ApiController
+public sealed class TeacherStudentsController(IMediator mediator) : ApiController
 {
     [HttpGet]
     public async Task<Result<List<StudentListItemDto>>> GetAll(CancellationToken cancellationToken)

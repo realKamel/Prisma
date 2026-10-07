@@ -103,8 +103,8 @@ public class GetLessonsCatalogQueryHandler(
                     ? $"{lesson.Teacher.FirstName} {lesson.Teacher.LastName}"
                     : null,
             Subject = lesson.Teacher?.Subject,
-            DurationHours = (int)
-                Math.Round(lesson.Duration.TotalHours, MidpointRounding.AwayFromZero),
+            DurationMinutes = (int)
+                Math.Round(lesson.Duration.TotalMinutes, MidpointRounding.AwayFromZero),
             ImageThumbnailUrl =
                 lesson.ImageThumbnailUrl != null
                     ? await storageService.GetDownloadUrlAsync(

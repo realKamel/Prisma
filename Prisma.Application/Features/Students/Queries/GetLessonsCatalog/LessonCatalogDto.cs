@@ -10,7 +10,7 @@ public record LessonCatalogDto
     public string? ExpiredDate { get; init; }
     public string? TeacherName { get; init; }
     public string? Subject { get; init; }
-    public int DurationHours { get; init; }
+    public int DurationMinutes { get; init; }
     public string? ImageThumbnailUrl { get; init; }
     public string Currency { get; init; } = "EGP";
 }

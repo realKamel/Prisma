@@ -112,7 +112,7 @@ public class GetStudentDashboardQueryHandler(
             var totalSections = lastActiveEnrollment.Sections.Count;
 
             var currentChapter = completedSectionsCount < totalSections
-                ? completedSectionsCount + 1
+                ? completedSectionsCount
                 : totalSections;
 
             nextLessonDto = new NextLessonDto

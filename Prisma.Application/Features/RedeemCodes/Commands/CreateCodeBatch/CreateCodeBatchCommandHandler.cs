@@ -1,11 +1,13 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
-
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 namespace Prisma.Application.Features.RedeemCodes.Commands.CreateCodeBatch;
 
@@ -23,6 +25,45 @@ public class CreateCodeBatchCommandHandler(
         if (currentUser.UserId is not { } teacherId)
             return Result.Unauthorized("User is not authenticated.");
 
+        if (userId is null)
+        {
+            return Result.Unauthorized();
+        }
+
+        var user = await userManager.FindByIdAsync(userId.Value, ct);
+        if (user is null)
+        {
+            return Result.Unauthorized();
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        if (
+            !roles.Contains(AppRoles.Teacher)
+            && !roles.Contains(AppRoles.Assistant)
+        )
+            return Result.Unauthorized();
+
+        Guid teacherId = Guid.Empty;
+
+        if (roles.Contains(AppRoles.Teacher))
+        {
+            teacherId = user.Id;
+        }
+        else if (roles.Contains(AppRoles.Assistant))
+        {
+            if (user is not Assistant assistant)
+            {
+                return Result.Error("Assistant record is missing teacher assignment.");
+            }
+
+            if (assistant.TeacherId is null)
+            {
+                return Result.Error("This assistant is not assigned to a teacher.");
+            }
+
+            teacherId = assistant.TeacherId.Value;
+        }
+       
         // Verify lesson belongs to the requested academic year
         var academicYearLessonRepo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
         var lessonLinked = await academicYearLessonRepo.AnyAsync(

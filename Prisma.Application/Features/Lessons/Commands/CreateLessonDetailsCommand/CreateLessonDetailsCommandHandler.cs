@@ -8,6 +8,7 @@ using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
@@ -38,6 +39,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
         }
 
         var roles = await userManager.GetRolesAsync(user);
+
         if (
             !roles.Contains(AppRoles.Teacher)
             && !roles.Contains(AppRoles.Assistant)
@@ -75,7 +77,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
 
             var teacherExists =
                 await userManager.FindByIdAsync(request.TeacherId.Value, cancellationToken)
-                is Teacher;
+                    is Teacher;
 
             if (!teacherExists)
             {
@@ -90,9 +92,10 @@ internal sealed class CreateLessonDetailsCommandHandler(
             Title = request.Title,
             Description = request.Description,
             Price = request.Price,
+            Money = Money.Create(request.Price, request.Currency),
             PrerequisiteId = request.PrerequisiteLessonId,
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            Outcomes = request.Outcomes ?? new List<string>(),
+            Outcomes = request.Outcomes,
             TeacherId = teacherId,
         };
 

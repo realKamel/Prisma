@@ -8,14 +8,15 @@ public record CreateLessonDetailsCommand(
     string Title,
     string? Description,
     decimal Price,
+    string Currency,
     int? PrerequisiteLessonId,
-    List<ChapterCreateDto> Chapters,
+    IList<ChapterCreateDto> Chapters,
     bool AssignmentEnabled,
     IFormFile? AssignmentFile,
     DateTimeOffset? AssignmentDueDate,
     bool IsPublished,
-    List<int> AcademicYearIds,
-    List<string> Outcomes,
+    IList<int> AcademicYearIds,
+    IList<string> Outcomes,
     IFormFile? ImageFile,
     Guid? TeacherId) : IRequest<Result<CreateLessonResponse>>;
 

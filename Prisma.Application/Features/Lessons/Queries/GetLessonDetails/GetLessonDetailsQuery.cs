@@ -1,5 +1,6 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
@@ -7,22 +8,23 @@ public record GetLessonDetailsQuery(int LessonId) : IRequest<Result<LessonDetail
 
 public record LessonDetailsDto
 {
-    public int Id { get; set; }
-    public string Url { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string Teacher { get; set; } = string.Empty;
-    public string Duration { get; set; } = string.Empty;
-    public int ChaptersCount { get; set; }
-    public int StudentsCount { get; set; }
-    public decimal Price { get; set; }
-    public int ValidityDays { get; set; }
-    public string AboutText { get; set; } = string.Empty;
-    public List<string> Outcomes { get; set; } = [];
-    public List<PrerequisiteDto> Prerequisites { get; set; } = [];
-    public List<ChapterDto> Chapters { get; set; } = [];
+    public int Id { get; init; }
+    public string Url { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
+    public string Teacher { get; init; } = string.Empty;
+    public TimeDurationDto Duration { get; init; }
+    public int ChaptersCount { get; init; }
+    public int StudentsCount { get; init; }
+    public MoneyDto Money { get; init; }
+    public int ValidityDays { get; init; }
+    public DateRangeDto? ValidityDateRange { get; set; }
+    public string AboutText { get; init; } = string.Empty;
+    public IList<string> Outcomes { get; init; } = [];
+    public IList<PrerequisiteDto> Prerequisites { get; init; } = [];
+    public IList<ChapterDto> Chapters { get; init; } = [];
 }
 
 public record PrerequisiteDto(string Title, bool IsDone);
 
-public record ChapterDto(int Id, string Title, string Duration, bool IsPreview);
+public record ChapterDto(int Id, string Title, TimeDurationDto Duration, bool IsPreview);

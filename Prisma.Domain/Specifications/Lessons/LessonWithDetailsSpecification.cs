@@ -1,5 +1,7 @@
 ﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Domain.Specifications.Lessons;
 
@@ -8,7 +10,8 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
     public LessonWithDetailsSpecification(int lessonId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId).AsNoTracking()
+            .Where(lesson => lesson.Id == lessonId)
+            .AsNoTracking()
             .Select(lesson => new LessonDetailsProjection
             {
                 Id = lesson.Id,
@@ -17,41 +20,50 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
                 Price = lesson.Price,
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
                 EnrollmentsCount = lesson.Enrollments.Count,
+                Money = lesson.Money,
+                TimeDuration = lesson.TimeDuration,
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.LastName,
+                ValidityRange = lesson.ValidityRange,
                 TeacherSubject = lesson.Teacher.Subject,
                 Outcomes = lesson.Outcomes.ToList(),
-                Sections = lesson.Sections.Select(s => new SectionProjection
-                {
-                    Id = s.Id,
-                    Title = s.Title,
-                    Duration = s.Duration,
-                    IsPreview = s.IsPreview
-                }).ToList(),
+                Sections = lesson
+                    .Sections.Select(s => new SectionProjection
+                    {
+                        Id = s.Id,
+                        Title = s.Title,
+                        Duration = s.Duration,
+                        IsPreview = s.IsPreview,
+                    })
+                    .ToList(),
                 PrerequisiteId = lesson.Prerequisite != null ? lesson.Prerequisite.Id : (int?)null,
-                PrerequisiteTitle = lesson.Prerequisite != null ? lesson.Prerequisite.Title : null
+                PrerequisiteTitle = lesson.Prerequisite != null ? lesson.Prerequisite.Title : null,
             });
-    } }
-    public class LessonDetailsProjection
-    {
-        public int Id { get; set; }
-        public string? Title { get; set; }
-        public string? Description { get; set; }
-        public decimal Price { get; set; }
-        public string? ImageThumbnailUrl { get; set; }
-        public int EnrollmentsCount { get; set; }
-        public List<string> Outcomes { get; set; } = [];
-        public List<SectionProjection> Sections { get; set; } = [];
-        public int? PrerequisiteId { get; set; }
-        public string? PrerequisiteTitle { get; set; }
-    public string TeacherName { get; set; }
-    public string TeacherSubject { get; set; }
+    }
 }
 
-    public class SectionProjection
-    {
-        public int Id { get; set; }
-        public string? Title { get; set; }
-        public TimeSpan Duration { get; set; }
-        public bool IsPreview { get; set; }
-    }
+public record LessonDetailsProjection
+{
+    public int Id { get; init; }
+    public string? Title { get; init; }
+    public string? Description { get; init; }
+    public decimal Price { get; init; }
+    public string? ImageThumbnailUrl { get; init; }
+    public int EnrollmentsCount { get; init; }
+    public Money Money { get; init; }
+    public TimeDuration TimeDuration { get; init; }
+    public DateRange? ValidityRange { get; init; }
+    public List<string> Outcomes { get; init; } = [];
+    public List<SectionProjection> Sections { get; init; } = [];
+    public int? PrerequisiteId { get; init; }
+    public string? PrerequisiteTitle { get; init; }
+    public string TeacherName { get; init; }
+    public string TeacherSubject { get; init; }
+}
 
+public record SectionProjection
+{
+    public int Id { get; init; }
+    public string? Title { get; init; }
+    public TimeSpan Duration { get; init; }
+    public bool IsPreview { get; init; }
+}

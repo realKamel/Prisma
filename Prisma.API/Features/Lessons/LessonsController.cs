@@ -49,8 +49,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        var result = await mediator.Send(new GetLessonStatusQuery(id), cancellationToken);
-        return result;
+        return await mediator.Send(new GetLessonStatusQuery(id), cancellationToken);
     }
 
     [HttpGet("options")]

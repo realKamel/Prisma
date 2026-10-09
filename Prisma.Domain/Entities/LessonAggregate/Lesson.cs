@@ -68,15 +68,15 @@ public class Lesson : BaseEntity
     /// <summary>
     /// Factory method to create a lesson in valid state
     /// </summary>
-    /// <param name="title"></param>
+    /// <param name="title">Lesson Title</param>
     /// <param name="description"></param>
     /// <param name="prerequisiteId"></param>
     /// <param name="isPublished"></param>
     /// <param name="outcomes"></param>
     /// <param name="teacherId"></param>
-    /// <param name="price"></param>
-    /// <param name="currency"></param>
-    /// <param name="durationInSeconds"></param>
+    /// <param name="price">Amount of Money</param>
+    /// <param name="currency">The Currency Used</param>
+    /// <param name="durationInSeconds">Lesson Total Duration in Seconds</param>
     /// <returns></returns>
     public static Result<Lesson> Create(
         string title,
@@ -97,6 +97,13 @@ public class Lesson : BaseEntity
             return Result.Invalid(moneyResult.ValidationErrors);
         }
 
+        var timeDurationResult = TimeDuration.Create(durationInSeconds);
+
+        if (!timeDurationResult.IsSuccess)
+        {
+            return Result.Invalid(timeDurationResult.ValidationErrors);
+        }
+
         var lessonStatus = isPublished ? LessonStatus.Active : LessonStatus.Drafted;
 
         var lesson = new Lesson
@@ -105,10 +112,76 @@ public class Lesson : BaseEntity
             Description = description,
             Money = moneyResult.Value,
             PrerequisiteId = prerequisiteId,
-            TimeDuration = TimeDuration.Create(durationInSeconds),
+            TimeDuration = timeDurationResult,
             Status = lessonStatus,
             Outcomes = [.. outcomes],
             TeacherId = teacherId,
+        };
+
+        return Result.Success(lesson);
+    }
+
+    /// <summary>
+    /// Factory method to create a lesson in valid state
+    /// </summary>
+    /// <param name="title">Lesson Title</param>
+    /// <param name="description"></param>
+    /// <param name="prerequisiteId"></param>
+    /// <param name="isPublished"></param>
+    /// <param name="outcomes"></param>
+    /// <param name="teacherId"></param>
+    /// <param name="price">Amount of Money</param>
+    /// <param name="currency">The Currency Used</param>
+    /// <param name="durationInSeconds">Lesson Total Duration in Seconds</param>
+    /// <param name="validTill">DateTime with offset to represent how long will the lesson be valid for student </param>
+    /// <returns></returns>
+    public static Result<Lesson> Create(
+        string title,
+        string? description,
+        int prerequisiteId,
+        bool isPublished,
+        IReadOnlyList<string> outcomes,
+        Guid teacherId,
+        decimal price,
+        string currency,
+        int durationInSeconds,
+        DateTimeOffset validTill
+    )
+    {
+        var moneyResult = Money.Create(price, currency);
+
+        if (!moneyResult.IsSuccess)
+        {
+            return Result.Invalid(moneyResult.ValidationErrors);
+        }
+
+        var validityResult = DateRange.Create(DateTimeOffset.Now, validTill);
+
+        if (!validityResult.IsSuccess)
+        {
+            return Result.Invalid(validityResult.ValidationErrors);
+        }
+
+        var timeDurationResult = TimeDuration.Create(durationInSeconds);
+
+        if (!timeDurationResult.IsSuccess)
+        {
+            return Result.Invalid(timeDurationResult.ValidationErrors);
+        }
+
+        var lessonStatus = isPublished ? LessonStatus.Active : LessonStatus.Drafted;
+
+        var lesson = new Lesson
+        {
+            Title = title,
+            Description = description,
+            Money = moneyResult.Value,
+            PrerequisiteId = prerequisiteId,
+            TimeDuration = timeDurationResult,
+            Status = lessonStatus,
+            Outcomes = [.. outcomes],
+            TeacherId = teacherId,
+            ValidityRange = validityResult,
         };
 
         return Result.Success(lesson);

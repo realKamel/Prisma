@@ -23,4 +23,14 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
     public string? Email => User?.FindFirstValue(ClaimTypes.Email);
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
+
+    public bool IsInAnyRole(IReadOnlyList<string>? roles, CancellationToken cancellationToken = default)
+    {
+        if (User is null || roles is null || roles.Count == 0)
+        {
+            return false;
+        }
+
+        return roles.Any(User.IsInRole);
+    }
 }

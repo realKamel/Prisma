@@ -4,7 +4,7 @@ using Prisma.Domain.Enums;
 
 namespace Prisma.Domain.Specifications.Lessons;
 
-public class LessonsCatalogSpecification : Specification<Lesson>
+public sealed class LessonsCatalogSpecification : Specification<Lesson>
 {
     public LessonsCatalogSpecification(int academicYearId)
     {

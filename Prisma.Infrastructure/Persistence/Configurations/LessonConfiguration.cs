@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Infrastructure.Persistence.Configurations.ValueObjectConfigurations;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -12,6 +13,10 @@ internal sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Price).HasPrecision(12, 2);
+
+        builder.ComplexProperty(x => x.Money).ConfigureMoney<Lesson>();
+        builder.ComplexProperty(x => x.ValidityRange).ConfigureDateRange<Lesson>();
+        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Lesson>();
 
         builder.HasMany(l => l.RedeemCodes).WithOne(r => r.Lesson).HasForeignKey(r => r.LessonId);
 

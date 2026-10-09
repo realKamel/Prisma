@@ -36,10 +36,12 @@ public sealed class TeachersController(ISender mediator) : ApiController
 
     [HttpGet("lessons")]
     [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Unauthorized)]
-    public async Task<Result<List<TeacherLessonDto>>> GetTeacherLessons(CancellationToken token)
+    public async Task<Result<PaginatedList<TeacherLessonDto>>> GetTeacherLessons(
+        [FromQuery] PaginationParams paginationParams,
+        CancellationToken token
+    )
     {
-        var result = await mediator.Send(new GetTeacherLessonsQuery(), token);
-        return result;
+        return await mediator.Send(new GetTeacherLessonsQuery(paginationParams), token);
     }
 
     [HttpGet("finances")]

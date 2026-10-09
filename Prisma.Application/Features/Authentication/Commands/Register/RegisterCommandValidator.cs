@@ -4,7 +4,7 @@ using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
-public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
+public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
     public RegisterCommandValidator()
     {

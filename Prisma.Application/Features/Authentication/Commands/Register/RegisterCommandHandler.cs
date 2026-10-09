@@ -3,11 +3,11 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 using Ardalis.Result;
-using Prisma.Domain.Exceptions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
-public class RegisterCommandHandler(IIdentityService identityService) : IRequestHandler<RegisterCommand, Result>
+internal sealed class RegisterCommandHandler(IIdentityService identityService)
+    : IRequestHandler<RegisterCommand, Result>
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
@@ -39,14 +39,9 @@ public class RegisterCommandHandler(IIdentityService identityService) : IRequest
         {
             var errors = result.Errors
                 .GroupBy(e => e.Code)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g
-                        .Select(e => e.Description)
-                        .ToArray()
-                );
-
-            return Result.Error("Error happen. Try again later.");
+                .Select(e =>
+                    new ValidationError(e.Key, string.Join(",", e.Select(y => y.Description))));
+            return Result.Invalid(errors);
         }
 
         await identityService.AddToRoleAsync(user, AppRoles.Student);

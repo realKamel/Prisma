@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Pgvector;
@@ -13,9 +14,11 @@ using Prisma.Infrastructure.Persistence;
 namespace Prisma.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008213807_UpdateLessonToSupportVo")]
+    partial class UpdateLessonToSupportVo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -608,8 +611,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Money", "Prisma.Domain.Entities.LessonAggregate.Lesson.Money#Money", b1 =>
                         {
-                            b1.IsRequired();
-
                             b1.Property<decimal>("Amount")
                                 .HasPrecision(18, 2)
                                 .HasColumnType("numeric(18,2)")
@@ -625,8 +626,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "TimeDuration", "Prisma.Domain.Entities.LessonAggregate.Lesson.TimeDuration#TimeDuration", b1 =>
                         {
-                            b1.IsRequired();
-
                             b1.Property<int>("Seconds")
                                 .HasColumnType("integer")
                                 .HasColumnName("TimeDuration_Seconds");

@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Identity;
@@ -167,5 +169,43 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     )
     {
         return await userManager.ResetPasswordAsync(user, token, newPassword);
+    }
+
+
+    /// <summary>
+    /// Checks whether a user possesses all specified permissions.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user.</param>
+    /// <param name="permissions">The list of permission strings to check against.</param>
+    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <returns>
+    /// <see cref="Result.Success()"/> if the user has all requested permissions;
+    /// <see cref="Result.NotFound()"/> if the user does not exist;
+    /// <see cref="Result.Unauthorized()"/> otherwise.
+    /// </returns>
+    public async Task<Result> HasPermissionsAsync(Guid userId, IReadOnlyList<string>? permissions,
+        CancellationToken cancellationToken = default)
+    {
+        if (permissions is null || permissions.Count == 0)
+        {
+            return Result.Unauthorized();
+        }
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+
+        if (user is null)
+        {
+            return Result.NotFound();
+        }
+
+        var claims = await userManager.GetClaimsAsync(user);
+
+        var userPermissions = claims
+            .Where(c => c.Type == AppClaims.PermissionsClaim)
+            .Select(c => c.Value)
+            .ToHashSet();
+
+        // Ensures user holds EVERY requested permission in the input list
+        return permissions.All(userPermissions.Contains) ? Result.Success() : Result.Unauthorized();
     }
 }

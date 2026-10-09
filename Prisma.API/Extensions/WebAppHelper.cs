@@ -40,7 +40,13 @@ public static partial class WebAppHelper
         });
 
         services.AddControllers(options =>
-            options.AddDefaultResultConvention());
+                options.AddDefaultResultConvention())
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+                );
+            });
 
         services.AddApiVersioningConfiguration();
 

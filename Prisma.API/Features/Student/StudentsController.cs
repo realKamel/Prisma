@@ -10,7 +10,7 @@ using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
 using Prisma.Application.Features.Students.Commands.UpdateStudentProfileCommand;
-using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
+using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
 using Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
@@ -20,14 +20,14 @@ using Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
 
 namespace Prisma.API.Features.Student;
 
-public class StudentsController(ISender mediator) : ApiController
+public sealed class StudentsController(ISender mediator) : ApiController
 {
-    //[Authorize(Roles = AppRoles.Student)]
+    [Authorize(Roles = AppRoles.Student)]
     [HttpGet("catalog")]
-    public async Task<Result<ICollection<LessonCatalogDto>>> GetLessonsCatalog(CancellationToken c)
+    public async Task<Result<PaginatedList<LessonCatalogDto>>> GetLessonsCatalog([FromQuery] string? keyword,
+        [FromQuery] PaginationParams paginationParams, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetLessonsCatalogQuery(), c);
-        return result;
+        return await mediator.Send(new GetPaginatedLessonsCatalogQuery(paginationParams), cancellationToken);
     }
 
     [Authorize(Roles = AppRoles.Student)]

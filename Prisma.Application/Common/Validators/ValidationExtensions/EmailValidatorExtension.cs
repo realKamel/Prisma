@@ -1,4 +1,5 @@
 using FluentValidation;
+using Prisma.Domain.Errors;
 
 namespace Prisma.Application.Common.Validators.ValidationExtensions;
 
@@ -10,6 +11,7 @@ public static class EmailValidatorExtension
         return ruleBuilder
             .NotEmpty()
             .WithMessage("Email is required.")
+            .WithErrorCode(DomainErrors.AuthenticationErrors.EmailAddressIsRequired)
             .EmailAddress()
             .WithMessage("Please enter a valid email address.")
             .MaximumLength(maxLength);

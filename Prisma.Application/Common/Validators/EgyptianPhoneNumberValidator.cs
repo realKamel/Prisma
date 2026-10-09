@@ -3,10 +3,8 @@ using FluentValidation;
 
 namespace Prisma.Application.Common.Validators;
 
-public class EgyptianPhoneNumberValidator : AbstractValidator<string>
+public partial class EgyptianPhoneNumberValidator : AbstractValidator<string>
 {
-    private static readonly Regex PhoneRegex = new(@"^(010|011|012|015)\d{8}$");
-
     public EgyptianPhoneNumberValidator()
     {
         RuleFor(x => x)
@@ -18,4 +16,9 @@ public class EgyptianPhoneNumberValidator : AbstractValidator<string>
     {
         return !string.IsNullOrWhiteSpace(phone) && PhoneRegex.IsMatch(phone);
     }
+
+    [GeneratedRegex(@"^(\+20|0)1[0125]\d{8}$")]
+    private static partial Regex MyRegex();
+
+    private static readonly Regex PhoneRegex = MyRegex();
 }

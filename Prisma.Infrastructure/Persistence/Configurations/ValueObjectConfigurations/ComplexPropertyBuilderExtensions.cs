@@ -46,6 +46,17 @@ internal static class ComplexPropertyBuilderExtensions
         return builder;
     }
 
+    public static ComplexPropertyBuilder<TimeDuration> ConfigureTimeDuration<TEntity>(
+        this ComplexPropertyBuilder<TimeDuration> builder,
+        string prefix = "TimeDuration") where TEntity : class
+    {
+        builder.Property(m => m.Seconds)
+            .HasColumnName($"{prefix}_Seconds")
+            .IsRequired();
+
+        return builder;
+    }
+
     public static ComplexPropertyBuilder<EmailAddress> ConfigureEmailAddress<TEntity>(
         this ComplexPropertyBuilder<EmailAddress> builder,
         string columnName = "Email") where TEntity : class

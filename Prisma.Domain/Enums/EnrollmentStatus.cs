@@ -5,5 +5,7 @@ public enum EnrollmentStatus
     Active = 0,
     Suspended = 2,
     Expired = 1,
-    Done = 3
+    Done = 3,
+    Locked = 4,
+    Available = 5
 }

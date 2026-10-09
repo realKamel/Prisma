@@ -15,7 +15,8 @@ public class PaginatedEnrollmentHistorySpecification<TSelector>
     )
     {
         var skipAmount = (skip - 1) * take;
-        Query.Where(s => s.StudentId == id)
+        Query
+            .Where(s => s.StudentId == id)
             .AsNoTracking()
             .Skip(skipAmount < 0 ? 0 : skipAmount)
             .Take(take)

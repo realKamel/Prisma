@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Ardalis.Result;
+using Prisma.Domain.Errors;
 
 namespace Prisma.Domain.ValueObjects.UserDomain;
 
@@ -28,7 +29,9 @@ public sealed partial record PhoneNumber
         {
             return Result.Invalid(new ValidationError
             {
-                Identifier = nameof(PhoneNumber), ErrorMessage = "Phone number cannot be empty."
+                Identifier = nameof(PhoneNumber),
+                ErrorMessage = "Phone number cannot be empty.",
+                ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.IsRequired
             });
         }
 
@@ -40,7 +43,8 @@ public sealed partial record PhoneNumber
             return Result.Invalid(new ValidationError
             {
                 Identifier = nameof(PhoneNumber),
-                ErrorMessage = $"'{rawNumber}' is not a valid E.164 phone number (e.g. +14155552671)."
+                ErrorMessage = $"'{rawNumber}' is not a valid E.164 phone number (e.g. +14155552671).",
+                ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.Invalid
             });
         }
 

@@ -1,3 +1,5 @@
+using Hangfire.Annotations;
+
 namespace Prisma.Application.Common.DTOs;
 
 public record PaginatedList<T>
@@ -17,6 +19,9 @@ public record PaginatedList<T>
         TotalCount = totalCount < 0 ? 0 : totalCount;
         Items = (IReadOnlyCollection<T>)items.ToList().AsReadOnly() ?? [];
     }
+
+    public PaginatedList(IEnumerable<T> items, int totalCount, PaginationParams paginationParams)
+        : this(items, totalCount, paginationParams.PageSize, paginationParams.PageSize) { }
 
     /// <summary>
     /// Parameterless constructor required for JSON deserialization (System.Text.Json / Newtonsoft)

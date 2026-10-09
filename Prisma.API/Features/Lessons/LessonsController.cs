@@ -6,10 +6,8 @@ using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
-using Prisma.Application.Features.Lessons.Commands.DeleteAssignmentSubmissionCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
-using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
@@ -23,7 +21,7 @@ using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 
 namespace Prisma.API.Features.Lessons;
 
-public class LessonsController(IMediator mediator) : ApiController
+public sealed class LessonsController(IMediator mediator) : ApiController
 {
     [HttpGet("{id:int}/details")]
     public async Task<Result<LessonDetailsDto>> GetLessonDetails(
@@ -51,8 +49,8 @@ public class LessonsController(IMediator mediator) : ApiController
         CancellationToken cancellationToken
     )
     {
-        var query = new GetLessonStatusQuery(id);
-        return await mediator.Send(query, cancellationToken);
+        var result = await mediator.Send(new GetLessonStatusQuery(id), cancellationToken);
+        return result;
     }
 
     [HttpGet("options")]

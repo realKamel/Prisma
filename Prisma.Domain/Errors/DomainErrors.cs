@@ -4,280 +4,169 @@ public static class DomainErrors
 {
     public static class CommonErrors
     {
-        public static string Unauthorized(string message = "You are not authenticated.")
-            => message;
-
-        public static string Forbidden(string message = "You are not authorized to perform this action.")
-            => message;
-
-        public static string BadRequest(string message)
-            => message;
-
-        public static string Conflict(string message)
-            => message;
-
-        public static string Invalid(string message)
-            => message;
+        public const string Unauthorized = "COMMON.UNAUTHORIZED";
+        public const string Forbidden = "COMMON.FORBIDDEN";
+        public const string BadRequest = "COMMON.BAD_REQUEST";
+        public const string Conflict = "COMMON.CONFLICT";
+        public const string Invalid = "COMMON.INVALID";
     }
 
     public static class UserErrors
     {
-        public static string NotFound(string userId)
-            => $"User with id '{userId}' was not found.";
-
-        public static string EmailOrPhoneInUse(string emailOrPhone)
-            => $"A user with this email or phone '{emailOrPhone}' already exists.";
-
-        public static string EmailInUse(string email)
-            => $"This email '{email}' is already in use by another account.";
-
-        public static string UnknownRole(string role)
-            => $"Unknown role '{role}'.";
+        public const string NotFound = "USERS.NOT_FOUND";
+        public const string EmailOrPhoneInUse = "USERS.EMAIL_OR_PHONE_IN_USE";
+        public const string EmailInUse = "USERS.EMAIL_IN_USE";
+        public const string UnknownRole = "USERS.UNKNOWN_ROLE";
     }
 
     public static class StudentErrors
     {
-        public static string NotFound(Guid id)
-            => $"Student with id '{id}' was not found.";
-
-        public static string AcademicYearNotSet(Guid studentId)
-            => $"Student {studentId} has no academic year assigned.";
-
-        public static string AlreadyExists(string emailOrPhone)
-            => "Student with this email or phone already exists.";
-
-        public static string PasswordChangeFailed(string details)
-            => $"فشلت عملية تغيير كلمة المرور: {details}";
+        public const string NotFound = "STUDENTS.NOT_FOUND";
+        public const string AcademicYearNotSet = "STUDENTS.ACADEMIC_YEAR_NOT_SET";
+        public const string AlreadyExists = "STUDENTS.ALREADY_EXISTS";
+        public const string PasswordChangeFailed = "STUDENTS.PASSWORD_CHANGE_FAILED";
     }
 
     public static class TeacherErrors
     {
-        public static string NotFound(Guid id)
-            => $"Teacher with id '{id}' was not found.";
-
-        public static string NotFound(string email)
-            => $"Teacher with email '{email}' was not found.";
+        public const string NotFound = "TEACHERS.NOT_FOUND";
     }
 
     public static class AssistantErrors
     {
-        public static string NotFound(Guid id)
-            => $"Assistant with id '{id}' was not found.";
+        public const string NotFound = "ASSISTANTS.NOT_FOUND";
     }
 
-    public static class AdminErrorErrors
+    public static class AdminErrors
     {
-        public static string NotFound(Guid id)
-            => $"Admin with id '{id}' was not found.";
+        public const string NotFound = "ADMINS.NOT_FOUND";
     }
 
     public static class LessonErrors
     {
-        public static string NotFound(int id)
-            => $"Lesson with id '{id}' was not found.";
-
-        public static string AlreadyEnrolled
-            => "Student is already enrolled in this lesson.";
-
-        public static string InvalidAcademicYear
-            => "Invalid academic year.";
-
-        public static string CannotToggleDraftedLesson
-            => "Cannot toggle status for a drafted lesson.";
+        public const string NotFound = "LESSONS.NOT_FOUND";
+        public const string AlreadyEnrolled = "LESSONS.ALREADY_ENROLLED";
+        public const string InvalidAcademicYear = "LESSONS.INVALID_ACADEMIC_YEAR";
+        public const string CannotToggleDraftedLesson = "LESSONS.CANNOT_TOGGLE_DRAFTED";
     }
 
     public static class LessonMaterialErrors
     {
-        public static string NotFound(int materialId)
-            => $"Lesson material with id '{materialId}' was not found.";
+        public const string NotFound = "LESSON_MATERIALS.NOT_FOUND";
     }
 
     public static class EnrollmentErrors
     {
-        public static string NotFound(string studentId, int lessonId)
-            => $"Enrollment for student '{studentId}' and lesson '{lessonId}' was not found.";
+        public const string NotFound = "ENROLLMENTS.NOT_FOUND";
     }
 
     public static class SectionErrors
     {
-        public static string NotFound(int id)
-            => $"Section with id '{id}' was not found.";
+        public const string NotFound = "SECTIONS.NOT_FOUND";
     }
 
     public static class SectionProgressErrors
     {
-        public static string NotFound(int sectionId)
-            => $"Section progress for section '{sectionId}' was not found.";
+        public const string NotFound = "SECTION_PROGRESS.NOT_FOUND";
     }
 
     public static class AssignmentErrors
     {
-        public static string NotFound(int lessonId)
-            => $"Assignment for lesson '{lessonId}' was not found.";
-
-        public static string NoAssignmentForLesson
-            => "لا يوجد واجب لهذا الدرس";
+        public const string NotFound = "ASSIGNMENTS.NOT_FOUND";
+        public const string NoAssignmentForLesson = "ASSIGNMENTS.NO_ASSIGNMENT_FOR_LESSON";
     }
 
     public static class AssignmentSubmissionErrors
     {
-        public static string NotFound(int lessonId)
-            => $"Assignment submission for lesson '{lessonId}' was not found.";
-
-        public static string AlreadySubmitted
-            => "لقد سلمت هذا الواجب مسبقاً";
-
-        public static string NotAuthorized
-            => "غير مصرح لك بتسليم هذا الواجب";
-
-        public static string DeadlinePassed
-            => "انتهى الموعد النهائي للتسليم";
-
-        public static string CurrentlyBeingGraded
-            => "التسليم ده بيتصحح دلوقتي من شخص تاني";
-
-        public static string CannotReleaseOthersGradingLock
-            => "مينفعش تفكي قفل تصحيح شخص تاني";
-
-        public static string ScoreExceedsMax(decimal score, decimal max)
-            => $"الدرجة ({score}) أكبر من الدرجة الكاملة ({max})";
+        public const string NotFound = "ASSIGNMENT_SUBMISSIONS.NOT_FOUND";
+        public const string AlreadySubmitted = "ASSIGNMENT_SUBMISSIONS.ALREADY_SUBMITTED";
+        public const string NotAuthorized = "ASSIGNMENT_SUBMISSIONS.NOT_AUTHORIZED";
+        public const string DeadlinePassed = "ASSIGNMENT_SUBMISSIONS.DEADLINE_PASSED";
+        public const string CurrentlyBeingGraded = "ASSIGNMENT_SUBMISSIONS.CURRENTLY_BEING_GRADED";
+        public const string CannotReleaseOthersGradingLock = "ASSIGNMENT_SUBMISSIONS.CANNOT_RELEASE_LOCK";
+        public const string ScoreExceedsMax = "ASSIGNMENT_SUBMISSIONS.SCORE_EXCEEDS_MAX";
     }
 
     public static class QuizErrors
     {
-        public static string NotFound(int id)
-            => "الاختبار غير موجود";
-
-        public static string NotAvailable
-            => "الاختبار غير متاح حاليًا";
-
-        public static string DueDatePassed
-            => "انتهى موعد هذا الاختبار";
-
-        public static string LessonAlreadyHasQuiz
-            => "الحصة دي عندها اختبار بالفعل";
-
-        public static string CannotDeleteWithSubmittedAttempts
-            => "مينفعش تحذف/ي اختبار عنده محاولات مسلمة أو متصححة";
+        public const string NotFound = "QUIZZES.NOT_FOUND";
+        public const string NotAvailable = "QUIZZES.NOT_AVAILABLE";
+        public const string DueDatePassed = "QUIZZES.DUE_DATE_PASSED";
+        public const string LessonAlreadyHasQuiz = "QUIZZES.LESSON_ALREADY_HAS_QUIZ";
+        public const string CannotDeleteWithSubmittedAttempts = "QUIZZES.CANNOT_DELETE_WITH_ATTEMPTS";
     }
 
     public static class QuizAttemptErrors
     {
-        public static string NotFound
-            => "المحاولة غير موجودة";
-
-        public static string AlreadySubmitted
-            => "تم تسليم هذا الاختبار من قبل";
-
-        public static string AlreadyGraded
-            => "المحاولة دي متصححة بالفعل";
-
-        public static string StillInProgress
-            => "الطالب لسه في الاختبار";
-
-        public static string NotYetSubmitted
-            => "لم يتم تسليم هذا الاختبار بعد";
-
-        public static string TimeExpired
-            => "انتهى وقت هذه المحاولة";
-
-        public static string CannotModifyAfterSubmission
-            => "لا يمكن تعديل الإجابات بعد التسليم";
-
-        public static string TimeUpCannotSave
-            => "انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات";
-
-        public static string AnswerNotFound(int answerId)
-            => $"الإجابة رقم {answerId} غير موجودة في هذه المحاولة";
-
-        public static string McqAnswerDoesNotNeedManualGrading
-            => $"الإجابة MCQ ومش محتاجة تصحيح يدوي";
-
-        public static string ScoreExceedsQuestionDegree(decimal degree)
-            => $"الدرجة المدخلة أكبر من الدرجة الكاملة للسؤال ({degree})";
-
-        public static string PenaltyExceedsStudentDegree(decimal penalty, decimal degree)
-            => $"الخصم ({penalty}) أكبر من درجة الطالب الحالية ({degree})";
+        public const string NotFound = "QUIZ_ATTEMPTS.NOT_FOUND";
+        public const string AlreadySubmitted = "QUIZ_ATTEMPTS.ALREADY_SUBMITTED";
+        public const string AlreadyGraded = "QUIZ_ATTEMPTS.ALREADY_GRADED";
+        public const string StillInProgress = "QUIZ_ATTEMPTS.STILL_IN_PROGRESS";
+        public const string NotYetSubmitted = "QUIZ_ATTEMPTS.NOT_YET_SUBMITTED";
+        public const string TimeExpired = "QUIZ_ATTEMPTS.TIME_EXPIRED";
+        public const string CannotModifyAfterSubmission = "QUIZ_ATTEMPTS.CANNOT_MODIFY_AFTER_SUBMISSION";
+        public const string TimeUpCannotSave = "QUIZ_ATTEMPTS.TIME_UP_CANNOT_SAVE";
+        public const string AnswerNotFound = "QUIZ_ATTEMPTS.ANSWER_NOT_FOUND";
+        public const string McqAnswerDoesNotNeedManualGrading = "QUIZ_ATTEMPTS.MCQ_NO_MANUAL_GRADING";
+        public const string ScoreExceedsQuestionDegree = "QUIZ_ATTEMPTS.SCORE_EXCEEDS_QUESTION_DEGREE";
+        public const string PenaltyExceedsStudentDegree = "QUIZ_ATTEMPTS.PENALTY_EXCEEDS_STUDENT_DEGREE";
     }
 
     public static class CodeBatchErrors
     {
-        public static string NotFound(int id)
-            => $"CodeBatch with id '{id}' was not found.";
-
-        public static string LessonDoesNotBelongToAcademicYear
-            => "This lesson does not belong to the selected academic year.";
-
-        public static string NoAccessToAcademicYear
-            => "You do not have access to this academic year.";
+        public const string NotFound = "CODE_BATCHES.NOT_FOUND";
+        public const string LessonDoesNotBelongToAcademicYear = "CODE_BATCHES.LESSON_NOT_IN_ACADEMIC_YEAR";
+        public const string NoAccessToAcademicYear = "CODE_BATCHES.NO_ACCESS_TO_ACADEMIC_YEAR";
     }
 
     public static class GeneratedCodeErrors
     {
-        public static string NotValid
-            => "الكود غلط — تأكد إنك كتبته صح";
-
-        public static string AlreadyRedeemed
-            => "الكود ده اتستخدم قبل كده — لو في مشكلة تواصل مع المدرسة";
-
-        public static string DoesNotMatchLesson
-            => "الكود ده صح بس مش للدرس ده — تأكد إنك بتستخدم الكود الصح للدرس الصح";
-
-        public static string DoesNotMatchAcademicYear
-            => "الكود ده مش للسنة الدراسية بتاعتك";
+        public const string NotValid = "GENERATED_CODES.NOT_VALID";
+        public const string AlreadyRedeemed = "GENERATED_CODES.ALREADY_REDEEMED";
+        public const string DoesNotMatchLesson = "GENERATED_CODES.DOES_NOT_MATCH_LESSON";
+        public const string DoesNotMatchAcademicYear = "GENERATED_CODES.DOES_NOT_MATCH_ACADEMIC_YEAR";
     }
 
     public static class AuthenticationErrors
     {
-        public static string RegistrationFailed
-            => "Registration Failed";
+        public const string RegistrationFailed = "AUTH.REGISTRATION_FAILED";
+        public const string InvalidCredentials = "AUTH.INVALID_CREDENTIALS";
+        public const string MustLogin = "AUTH.MUST_LOGIN";
+        public const string MustProvideEmailOrPhone = "AUTH.MUST_PROVIDE_EMAIL_OR_PHONE";
+        public const string InvalidPhoneNumber = "AUTH.INVALID_PHONE_NUMBER";
+        public const string PhoneNumberIsRequired = "AUTH.IS_REQUIRED";
+        public const string PleaseLogin = "AUTH.PLEASE_LOGIN";
+        public const string InvalidResetCode = "AUTH.INVALID_RESET_CODE";
+        public const string UnexpectedError = "AUTH.UNEXPECTED_ERROR";
+        public const string EmailVerificationFailed = "AUTH.EMAIL_VERIFICATION_FAILED";
+        public const string EmailAddressIsRequired = "AUTH.EMAIL_IS_REQUIRED";
+        public const string InvalidEmailVerificationToken = "AUTH.INVALID_EMAIL_VERIFICATION_TOKEN";
+    }
 
-        public static string InvalidCredentials
-            => "Invalid credentials";
-
-        public static string MustLogin
-            => "Login First";
-
-        public static string PleaseLogin
-            => "Please Login";
-
-        public static string InvalidResetCode
-            => "Code Invalid";
-
-        public static string UnexpectedError
-            => "something went wrong";
-
-        public static string EmailVerificationFailed
-            => "Something Went Wrong";
-
-        public static string InvalidEmailVerificationToken
-            => "Invalid token.";
+    public static class DomainValdtionErrors
+    {
+        public static class PhoneNumber
+        {
+            public const string Invalid = "DOMAIN.INVALID_PHONE_NUMBER";
+            public const string IsRequired = "DOMAIN.PHONE_NUMBER_IS_REQUIRED";
+        }
     }
 
     public static class ChatSessionErrors
     {
-        public static string NotFound(Guid id)
-            => $"ChatSession with id '{id}' was not found.";
-
-        public static string SessionNotFound
-            => "Session not found";
+        public const string NotFound = "CHAT_SESSIONS.NOT_FOUND";
+        public const string SessionNotFound = "CHAT_SESSIONS.SESSION_NOT_FOUND";
     }
 
     public static class StorageErrors
     {
-        public static string NoFilesProvided
-            => "No files provided for upload.";
-
-        public static string FileEmpty
-            => "لم يتم رفع أي ملف";
-
-        public static string OnlyPdfAllowed
-            => "يسمح فقط بملفات PDF";
+        public const string NoFilesProvided = "STORAGE.NO_FILES_PROVIDED";
+        public const string FileEmpty = "STORAGE.FILE_EMPTY";
+        public const string OnlyPdfAllowed = "STORAGE.ONLY_PDF_ALLOWED";
     }
 
-    public static class ExtractionJob
+    public static class ExtractionJobErrors
     {
-        public static string NotFound
-            => "لم يتم العثور على المهمة";
+        public const string NotFound = "EXTRACTION_JOBS.NOT_FOUND";
     }
 }

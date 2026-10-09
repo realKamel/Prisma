@@ -8,8 +8,8 @@ using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
-using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
-using Prisma.Application.Features.Students.Queries.GetPagedTeacherLessonsCatalog;
+using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
+using Prisma.Application.Features.Students.Queries.GetPaginatedTeacherLessonsCatalog;
 using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
 using Prisma.Application.Features.Teachers.Queries.GetPublicTeacherProfile;
@@ -21,7 +21,7 @@ using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
 
 namespace Prisma.API.Features.Teacher;
 
-public class TeachersController(ISender mediator) : ApiController
+public sealed class TeachersController(ISender mediator) : ApiController
 {
     [HttpGet("dashboard")]
     [ExpectedFailures(ResultStatus.CriticalError)]
@@ -36,10 +36,12 @@ public class TeachersController(ISender mediator) : ApiController
 
     [HttpGet("lessons")]
     [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Unauthorized)]
-    public async Task<Result<List<TeacherLessonDto>>> GetTeacherLessons(CancellationToken token)
+    public async Task<Result<PaginatedList<TeacherLessonDto>>> GetTeacherLessons(
+        [FromQuery] PaginationParams paginationParams,
+        CancellationToken token
+    )
     {
-        var result = await mediator.Send(new GetTeacherLessonsQuery(), token);
-        return result;
+        return await mediator.Send(new GetTeacherLessonsQuery(paginationParams), token);
     }
 
     [HttpGet("finances")]

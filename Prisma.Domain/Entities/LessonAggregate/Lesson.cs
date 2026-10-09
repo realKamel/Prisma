@@ -16,9 +16,9 @@ public class Lesson : BaseEntity
     public string? Title { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
-    public Money? Money { get; set; }
+    public Money Money { get; set; }
     public TimeSpan Duration { get; set; }
-    public TimeDuration? TimeDuration { get; set; }
+    public TimeDuration TimeDuration { get; set; } = TimeDuration.Zero;
     public string? ImageThumbnailUrl { get; set; }
 
     public string? VideoUrl { get; set; }
@@ -61,13 +61,12 @@ public class Lesson : BaseEntity
     public int? PrerequisiteId { get; set; }
     public Lesson? Prerequisite { get; set; }
 
-
     //TODO:complete the impl
 
     // private Lesson() { }
 
     /// <summary>
-    /// Factory method to create a lesson in valid state 
+    /// Factory method to create a lesson in valid state
     /// </summary>
     /// <param name="title"></param>
     /// <param name="description"></param>
@@ -88,7 +87,8 @@ public class Lesson : BaseEntity
         Guid teacherId,
         decimal price,
         string currency,
-        int durationInSeconds)
+        int durationInSeconds
+    )
     {
         var moneyResult = Money.Create(price, currency);
 
@@ -108,7 +108,7 @@ public class Lesson : BaseEntity
             TimeDuration = TimeDuration.Create(durationInSeconds),
             Status = lessonStatus,
             Outcomes = [.. outcomes],
-            TeacherId = teacherId
+            TeacherId = teacherId,
         };
 
         return Result.Success(lesson);

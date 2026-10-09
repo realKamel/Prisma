@@ -10,16 +10,19 @@ public record UpdateLessonDetailsCommand(
     string? Description,
     decimal Price,
     int? PrerequisiteLessonId,
-    List<ChapterCommandDto> Chapters,
+    IList<ChapterCommandDto> Chapters,
     bool AssignmentEnabled,
     IFormFile? AssignmentFile,
     DateTimeOffset? AssignmentDueDate,
     bool IsPublished,
-    List<int> AcademicYearIds,
-    List<string> Outcomes,
-    IFormFile? ImageFile
+    IList<int> AcademicYearIds,
+    IList<string> Outcomes,
+    IFormFile? ImageFile,
+    string Currency = "EGP"
 ) : IRequest<Result<UpdateLessonResponse>>;
-public record UpdateLessonResponse(List<NewSectionResult> NewSections);
+
+public record UpdateLessonResponse(IList<NewSectionResult> NewSections);
+
 public record NewSectionResult(int SectionId, int ChapterIndex);
 
 public record ChapterCommandDto(string Name, string? VideoFileName, double VideoDurationSeconds);

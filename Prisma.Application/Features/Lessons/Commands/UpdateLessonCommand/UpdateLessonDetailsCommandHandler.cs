@@ -1,13 +1,14 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
@@ -16,11 +17,13 @@ public class UpdateLessonDetailsCommandHandler(
     ICurrentUserService currentUserService,
     UserManager<User> userManager,
     IStorageService storageService,
-    IVideoStorageService videoStorageService)
-    : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
+    IVideoStorageService videoStorageService
+) : IRequestHandler<UpdateLessonDetailsCommand, Result<UpdateLessonResponse>>
 {
-    public async Task<Result<UpdateLessonResponse>> Handle(UpdateLessonDetailsCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<UpdateLessonResponse>> Handle(
+        UpdateLessonDetailsCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -31,8 +34,14 @@ public class UpdateLessonDetailsCommandHandler(
             return Result.Unauthorized("User not found.");
 
         var roles = await userManager.GetRolesAsync(user);
-        if (!roles.Contains(AppRoles.Teacher) && !roles.Contains(AppRoles.Assistant) && !roles.Contains(AppRoles.Admin))
-            return Result.Unauthorized("Only teachers, assistants, and admins can modify lesson structures.");
+        if (
+            !roles.Contains(AppRoles.Teacher)
+            && !roles.Contains(AppRoles.Assistant)
+            && !roles.Contains(AppRoles.Admin)
+        )
+            return Result.Unauthorized(
+                "Only teachers, assistants, and admins can modify lesson structures."
+            );
         var storageKeysToDelete = new List<string>();
         var assetsToDelete = new List<string>();
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
@@ -46,6 +55,7 @@ public class UpdateLessonDetailsCommandHandler(
         lesson.Title = request.Title;
         lesson.Description = request.Description;
         lesson.Price = request.Price;
+        lesson.Money = Money.Create(request.Price, request.Currency);
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
         lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
         lesson.Outcomes = request.Outcomes ?? new List<string>();
@@ -67,7 +77,9 @@ public class UpdateLessonDetailsCommandHandler(
             int chapterIndex = 0;
             foreach (var ch in request.Chapters)
             {
-                var section = existingSections.FirstOrDefault(x => x.ContentURL == ch.VideoFileName);
+                var section = existingSections.FirstOrDefault(x =>
+                    x.ContentURL == ch.VideoFileName
+                );
 
                 if (section is null)
                 {
@@ -78,7 +90,7 @@ public class UpdateLessonDetailsCommandHandler(
                         SortOrder = order++,
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
                         AssetId = ch.VideoFileName?.Split('.')[0],
-                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds)
+                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
                     };
                     lesson.Sections.Add(newSection);
                     newSections.Add((newSection, chapterIndex));
@@ -97,10 +109,16 @@ public class UpdateLessonDetailsCommandHandler(
         {
             if (request.AssignmentFile != null && request.AssignmentFile.Length > 0)
             {
-                var storageKey = $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
+                var storageKey =
+                    $"assignments/{Guid.NewGuid()}{Path.GetExtension(request.AssignmentFile.FileName)}";
                 using var stream = request.AssignmentFile.OpenReadStream();
-                await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
-                    request.AssignmentFile.ContentType, cancellationToken);
+                await storageService.UploadFileAsync(
+                    storageService.DefaultBucketName,
+                    storageKey,
+                    stream,
+                    request.AssignmentFile.ContentType,
+                    cancellationToken
+                );
 
                 if (lesson.Assignment is null)
                 {
@@ -108,18 +126,23 @@ public class UpdateLessonDetailsCommandHandler(
                     {
                         Title = Path.GetFileNameWithoutExtension(request.AssignmentFile.FileName),
                         ContentURL = storageKey,
-                        DueDate = request.AssignmentDueDate?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(7),
-                        Grade = 10
+                        DueDate =
+                            request.AssignmentDueDate?.ToUniversalTime()
+                            ?? DateTimeOffset.UtcNow.AddDays(7),
+                        Grade = 10,
                     };
                 }
                 else
                 {
                     if (lesson.Assignment.ContentURL != null)
                         storageKeysToDelete.Add(lesson.Assignment.ContentURL);
-                    lesson.Assignment.Title = Path.GetFileNameWithoutExtension(request.AssignmentFile.FileName);
+                    lesson.Assignment.Title = Path.GetFileNameWithoutExtension(
+                        request.AssignmentFile.FileName
+                    );
                     lesson.Assignment.ContentURL = storageKey;
                     if (request.AssignmentDueDate.HasValue)
-                        lesson.Assignment.DueDate = request.AssignmentDueDate.Value.ToUniversalTime();
+                        lesson.Assignment.DueDate =
+                            request.AssignmentDueDate.Value.ToUniversalTime();
                 }
             }
             else if (lesson.Assignment != null)
@@ -138,10 +161,16 @@ public class UpdateLessonDetailsCommandHandler(
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)
         {
-            var storageKey = $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
+            var storageKey =
+                $"lessons/thumbnails/{Guid.NewGuid()}{Path.GetExtension(request.ImageFile.FileName)}";
             using var stream = request.ImageFile.OpenReadStream();
-            await storageService.UploadFileAsync(storageService.DefaultBucketName, storageKey, stream,
-                request.ImageFile.ContentType, cancellationToken);
+            await storageService.UploadFileAsync(
+                storageService.DefaultBucketName,
+                storageKey,
+                stream,
+                request.ImageFile.ContentType,
+                cancellationToken
+            );
 
             if (!string.IsNullOrEmpty(lesson.ImageThumbnailUrl))
                 storageKeysToDelete.Add(lesson.ImageThumbnailUrl);
@@ -154,8 +183,8 @@ public class UpdateLessonDetailsCommandHandler(
             var existingYearIds = lesson.AcademicYears.Select(ay => ay.AcademicYearId).ToHashSet();
             var incomingYearIds = request.AcademicYearIds.ToHashSet();
 
-            var toRemove = lesson.AcademicYears
-                .Where(ay => !incomingYearIds.Contains(ay.AcademicYearId))
+            var toRemove = lesson
+                .AcademicYears.Where(ay => !incomingYearIds.Contains(ay.AcademicYearId))
                 .ToList();
             foreach (var ay in toRemove)
                 lesson.AcademicYears.Remove(ay);
@@ -163,10 +192,15 @@ public class UpdateLessonDetailsCommandHandler(
             var toAdd = incomingYearIds.Except(existingYearIds);
             foreach (var yearId in toAdd)
             {
-                lesson.AcademicYears.Add(new AcademicYearLesson { AcademicYearId = yearId, LessonId = lesson.Id });
+                lesson.AcademicYears.Add(
+                    new AcademicYearLesson { AcademicYearId = yearId, LessonId = lesson.Id }
+                );
             }
         }
-        lesson.Duration = TimeSpan.FromSeconds(lesson.Sections?.Sum(s => s.Duration.TotalSeconds) ?? 0);
+
+        lesson.Duration = TimeSpan.FromSeconds(
+            lesson.Sections?.Sum(s => s.Duration.TotalSeconds) ?? 0
+        );
 
         lessonRepository.Update(lesson);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -187,7 +221,11 @@ public class UpdateLessonDetailsCommandHandler(
         {
             try
             {
-                await storageService.DeleteFileAsync(storageService.DefaultBucketName, key, cancellationToken);
+                await storageService.DeleteFileAsync(
+                    storageService.DefaultBucketName,
+                    key,
+                    cancellationToken
+                );
             }
             catch
             {
@@ -197,6 +235,8 @@ public class UpdateLessonDetailsCommandHandler(
 
         return Result<UpdateLessonResponse>.Success(
             new UpdateLessonResponse(
-                newSections.Select(x => new NewSectionResult(x.Section.Id, x.ChapterIndex)).ToList()));
+                newSections.Select(x => new NewSectionResult(x.Section.Id, x.ChapterIndex)).ToList()
+            )
+        );
     }
 }

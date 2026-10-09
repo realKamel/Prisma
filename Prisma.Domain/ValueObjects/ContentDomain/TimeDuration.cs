@@ -16,19 +16,16 @@ public sealed record TimeDuration : IComparable<TimeDuration>
     }
 
     /// <summary>
+    /// Generic/default factory method accepting total seconds.
+    /// </summary>
+    public static Result<TimeDuration> Create(int seconds) => FromSeconds(seconds);
+
+    /// <summary>
     /// Factory method accepting total seconds.
     /// </summary>
     public static Result<TimeDuration> FromSeconds(int seconds)
     {
-        if (seconds < 0)
-        {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(Seconds), ErrorMessage = "Duration seconds cannot be negative."
-            });
-        }
-
-        return Result.Success(new TimeDuration(seconds));
+        return ValidateAndCreate(seconds);
     }
 
     /// <summary>
@@ -57,8 +54,18 @@ public sealed record TimeDuration : IComparable<TimeDuration>
     }
 
     public static TimeDuration Zero => new(0);
-    public static Result<TimeDuration> FromMinutes(int minutes) => FromSeconds(minutes * 60);
-    public static Result<TimeDuration> FromHours(int hours) => FromSeconds(hours * 3600);
+
+    public static Result<TimeDuration> FromMinutes(int minutes)
+    {
+        long totalSeconds = (long)minutes * 60;
+        return ValidateAndCreate(totalSeconds);
+    }
+
+    public static Result<TimeDuration> FromHours(int hours)
+    {
+        long totalSeconds = (long)hours * 3600;
+        return ValidateAndCreate(totalSeconds);
+    }
 
     // Arithmetic operators for aggregating course sections
     public static Result<TimeDuration> operator +(TimeDuration left, TimeDuration right)
@@ -67,16 +74,7 @@ public sealed record TimeDuration : IComparable<TimeDuration>
         ArgumentNullException.ThrowIfNull(right);
 
         long sum = (long)left.Seconds + right.Seconds;
-        if (sum > int.MaxValue)
-        {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(TimeDuration),
-                ErrorMessage = "Combined duration exceeds maximum supported limit."
-            });
-        }
-
-        return Result.Success(new TimeDuration((int)sum));
+        return ValidateAndCreate(sum, "Combined duration exceeds maximum supported limit.");
     }
 
     public static Result<TimeDuration> Add(TimeDuration left, TimeDuration right) => left + right;
@@ -118,5 +116,27 @@ public sealed record TimeDuration : IComparable<TimeDuration>
     public int CompareTo(TimeDuration? other)
     {
         return other is null ? 1 : Seconds.CompareTo(other.Seconds);
+    }
+
+    private static Result<TimeDuration> ValidateAndCreate(long totalSeconds,
+        string overflowMessage = "Duration exceeds maximum supported limit.")
+    {
+        if (totalSeconds < 0)
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = nameof(TimeDuration), ErrorMessage = "Duration seconds cannot be negative."
+            });
+        }
+
+        if (totalSeconds > int.MaxValue)
+        {
+            return Result.Invalid(new ValidationError
+            {
+                Identifier = nameof(TimeDuration), ErrorMessage = overflowMessage
+            });
+        }
+
+        return Result.Success(new TimeDuration((int)totalSeconds));
     }
 }

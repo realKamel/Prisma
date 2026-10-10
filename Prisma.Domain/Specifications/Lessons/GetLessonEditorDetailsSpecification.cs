@@ -26,7 +26,8 @@ public class GetLessonEditorDetailsSpecification : Specification<Lesson, LessonE
             AssignmentDueDate = lesson.Assignment != null ? lesson.Assignment.DueDate : null,
             AssignmentTitle = lesson.Assignment != null ? lesson.Assignment.Title : null,
             Outcomes = lesson.Outcomes.ToList(),
-            AcademicYearIds = lesson.AcademicYears.Select(ay => ay.AcademicYearId).ToList()
+            AcademicYearIds = lesson.AcademicYears.Select(ay => ay.AcademicYearId).ToList(),
+            TeacherId = lesson.TeacherId!.Value
         });
 
     }
@@ -45,6 +46,7 @@ public class LessonEditorDetailsProjection
     public string? AssignmentTitle { get; set; }
     public List<string> Outcomes { get; set; } = [];
     public List<int> AcademicYearIds { get; set; } = [];
+    public Guid TeacherId { get; set; }
 }
 
 public class EditorSectionProjection

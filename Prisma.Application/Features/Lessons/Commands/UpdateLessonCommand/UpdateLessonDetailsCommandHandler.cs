@@ -30,8 +30,15 @@ public class UpdateLessonDetailsCommandHandler(
             return Result.Unauthorized("User must be authenticated.");
 
         var user = await userManager.FindByIdAsync(userId.Value.ToString());
+
         if (user is null)
             return Result.Unauthorized("User not found.");
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
 
         var roles = await userManager.GetRolesAsync(user);
         if (
@@ -52,7 +59,10 @@ public class UpdateLessonDetailsCommandHandler(
         if (lesson is null)
             return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
-        lesson.Title = request.Title;
+        if (userId != lesson.TeacherId)
+            return Result.Forbidden("You are not the owner of this lesson.");
+
+            lesson.Title = request.Title;
         lesson.Description = request.Description;
         lesson.Price = request.Price;
         lesson.Money = Money.Create(request.Price, request.Currency);

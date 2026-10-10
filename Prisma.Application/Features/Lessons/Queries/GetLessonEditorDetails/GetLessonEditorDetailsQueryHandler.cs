@@ -44,6 +44,9 @@ public class GetLessonEditorDetailsQueryHandler(
         if (lesson is null)
             return Result.NotFound($"Lesson with id '{request.Id}' was not found");
 
+        if (userId != lesson.TeacherId)
+            return Result.Forbidden("You are not the owner of this lesson.");
+
         var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id, userId.Value);
         var prerequisitesOptions = (await lessonRepository.ListAsync(prerequisiteSpec, cancellationToken))
             .Select(l => new LessonDto(l.Title ?? string.Empty, l.Id))

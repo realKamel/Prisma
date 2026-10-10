@@ -16,7 +16,7 @@ public class Lesson : BaseEntity
     public string? Title { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
-    public Money Money { get; set; }
+    public Money Money { get; set; } = Money.Zero();
     public TimeSpan Duration { get; set; }
     public TimeDuration TimeDuration { get; set; } = TimeDuration.Zero;
     public string? ImageThumbnailUrl { get; set; }

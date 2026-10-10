@@ -12,7 +12,7 @@ using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
-public class UpdateLessonDetailsCommandHandler(
+internal sealed class UpdateLessonDetailsCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     UserManager<User> userManager,
@@ -27,12 +27,17 @@ public class UpdateLessonDetailsCommandHandler(
     {
         var userId = currentUserService.UserId;
         if (userId is null)
-            return Result.Unauthorized("User must be authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         var user = await userManager.FindByIdAsync(userId.Value.ToString());
 
         if (user is null)
-            return Result.Unauthorized("User not found.");
+        {
+            return Result.NotFound("User not found.");
+        }
+
         if (user is Assistant assistant)
         {
             if (assistant.TeacherId is null)
@@ -62,7 +67,7 @@ public class UpdateLessonDetailsCommandHandler(
         if (userId != lesson.TeacherId)
             return Result.Forbidden("You are not the owner of this lesson.");
 
-            lesson.Title = request.Title;
+        lesson.Title = request.Title;
         lesson.Description = request.Description;
         lesson.Price = request.Price;
         lesson.Money = Money.Create(request.Price, request.Currency);

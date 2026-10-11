@@ -114,7 +114,8 @@ public class GetLessonPlayerQueryHandler(
                     DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
                 },
-            Sections = sections
+            Sections = sections,
+            IsEnrollmentCompleted = lesson.IsEnrollmentCompleted
         };
 
         return result;

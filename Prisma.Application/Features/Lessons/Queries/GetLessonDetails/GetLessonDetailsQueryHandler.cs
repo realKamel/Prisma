@@ -37,7 +37,7 @@ internal sealed class GetLessonDetailsQueryHandler(
             return Result.NotFound($"Lesson with id '{request.LessonId}' was not found");
         }
 
-        int totalSeconds = (int)lesson.Sections.Sum(s => s.Duration.TotalSeconds);
+        int totalSeconds = lesson.Sections.Sum(s => s.Duration?.Seconds ?? 0);
 
         bool isPrerequisiteCompleted = true;
 
@@ -81,7 +81,7 @@ internal sealed class GetLessonDetailsQueryHandler(
                 .. lesson.Sections.Select(s => new ChapterDto(
                     s.Id,
                     s.Title ?? "",
-                    new TimeDurationDto((int)s.Duration.TotalSeconds),
+                    s.Duration?.ToDto() ?? new TimeDurationDto(0),
                     s.IsPreview
                 )),
             ],

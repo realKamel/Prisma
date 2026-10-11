@@ -9,6 +9,7 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
@@ -74,7 +75,7 @@ internal sealed class UpdateLessonDetailsCommandHandler(
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
         lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
         lesson.Outcomes = request.Outcomes ?? new List<string>();
-
+        lesson.ValidityRange = DateRange.StartingNow(request.ValidityUnTill);
         var newSections = new List<(Section Section, int ChapterIndex)>();
         if (request.Chapters != null)
         {
@@ -106,6 +107,7 @@ internal sealed class UpdateLessonDetailsCommandHandler(
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
                         AssetId = ch.VideoFileName?.Split('.')[0],
                         Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
+                        TimeDuration = TimeDuration.Create((int)ch.VideoDurationSeconds),
                     };
                     lesson.Sections.Add(newSection);
                     newSections.Add((newSection, chapterIndex));
@@ -213,11 +215,14 @@ internal sealed class UpdateLessonDetailsCommandHandler(
             }
         }
 
-        lesson.Duration = TimeSpan.FromSeconds(
-            lesson.Sections?.Sum(s => s.Duration.TotalSeconds) ?? 0
-        );
+        var lessonDurationInSeconds = lesson.Sections.Sum(s => s.TimeDuration?.Seconds ?? 0);
+
+        lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
+
+        lesson.TimeDuration = TimeDuration.Create((int)lessonDurationInSeconds);
 
         lessonRepository.Update(lesson);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         foreach (var asset in assetsToDelete)

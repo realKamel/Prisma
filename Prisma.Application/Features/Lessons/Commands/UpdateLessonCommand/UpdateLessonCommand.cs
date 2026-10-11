@@ -18,6 +18,7 @@ public record UpdateLessonDetailsCommand(
     IList<int> AcademicYearIds,
     IList<string> Outcomes,
     IFormFile? ImageFile,
+    DateTimeOffset ValidityUnTill,
     string Currency = "EGP"
 ) : IRequest<Result<UpdateLessonResponse>>;
 

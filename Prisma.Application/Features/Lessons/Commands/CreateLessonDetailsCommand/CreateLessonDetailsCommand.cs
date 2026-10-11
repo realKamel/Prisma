@@ -1,6 +1,8 @@
 using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
@@ -18,7 +20,9 @@ public record CreateLessonDetailsCommand(
     IList<int> AcademicYearIds,
     IList<string> Outcomes,
     IFormFile? ImageFile,
-    Guid? TeacherId) : IRequest<Result<CreateLessonResponse>>;
+    Guid? TeacherId,
+    DateTimeOffset ValidityUnTill
+) : IRequest<Result<CreateLessonResponse>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName, double VideoDurationSeconds);
 

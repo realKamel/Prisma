@@ -1,35 +1,33 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
 
 public record GetLessonExpiredQuery(int LessonId) : IRequest<Result<LessonExpiredDto>>;
-public class LessonExpiredDto
+
+public record LessonExpiredDto
 {
+    public int Id { get; init; }
+    public string Url { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
 
-    public int Id { get; set; }
-    public string Url { get; set; }
-    public string Title { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string Description { get; set; }= string.Empty;
+    public int ChaptersCount { get; init; }
+    public decimal Price { get; init; }
 
-    public int ChaptersCount { get; set; }
-    public decimal Price { get; set; }
+    public MoneyDto MoneyDto { get; init; }
 
-    public int MaterialsCount { get; set; }
+    public int MaterialsCount { get; init; }
 
-    public double totalprogress { get; set; }
+    public double totalprogress { get; init; }
 
-    public decimal Degree { get; set; }
+    public decimal Degree { get; init; }
 
-
-    public DateTimeOffset? ExpiredDate { get; set; }
-    public int ValidityDays { get; set; }
-    public List<ChapterDto> Chapters { get; set; } = [];
+    public DateTimeOffset? ExpiredDate { get; init; }
+    public int ValidityDays { get; init; }
+    public IList<ChapterDto> Chapters { get; init; } = [];
 }
 
-public record ChapterDto(int Id, string Title, string Duration);
-
+public record ChapterDto(int Id, string Title, TimeDurationDto Duration);

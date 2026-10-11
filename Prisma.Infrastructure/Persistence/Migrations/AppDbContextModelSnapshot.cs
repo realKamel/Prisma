@@ -550,11 +550,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<TimeSpan>("Duration")
+                    b.Property<TimeSpan?>("Duration")
                         .HasColumnType("interval");
-
-                    b.Property<DateTimeOffset?>("EndDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("ImageThumbnailUrl")
                         .HasColumnType("text");
@@ -791,7 +788,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<TimeSpan>("Duration")
+                    b.Property<TimeSpan?>("Duration")
                         .HasColumnType("interval");
 
                     b.Property<bool>("IsDeleted")
@@ -830,6 +827,13 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("UploadId")
                         .HasColumnType("text");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "TimeDuration", "Prisma.Domain.Entities.LessonAggregate.Section.TimeDuration#TimeDuration", b1 =>
+                        {
+                            b1.Property<int>("Seconds")
+                                .HasColumnType("integer")
+                                .HasColumnName("TimeDuration_Seconds");
+                        });
 
                     b.HasKey("Id");
 

@@ -35,19 +35,25 @@ public sealed record TimeDuration : IComparable<TimeDuration>
     {
         if (timeSpan < TimeSpan.Zero)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(timeSpan), ErrorMessage = "Duration cannot be negative."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(timeSpan),
+                    ErrorMessage = "Duration cannot be negative.",
+                }
+            );
         }
 
         if (timeSpan.TotalSeconds > int.MaxValue)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(timeSpan),
-                ErrorMessage = $"Duration exceeds maximum supported limit of {int.MaxValue} seconds."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(timeSpan),
+                    ErrorMessage =
+                        $"Duration exceeds maximum supported limit of {int.MaxValue} seconds.",
+                }
+            );
         }
 
         return Result.Success(new TimeDuration((int)Math.Round(timeSpan.TotalSeconds)));
@@ -87,16 +93,20 @@ public sealed record TimeDuration : IComparable<TimeDuration>
         int result = left.Seconds - right.Seconds;
         if (result < 0)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(TimeDuration), ErrorMessage = "Resulting duration cannot be negative."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(TimeDuration),
+                    ErrorMessage = "Resulting duration cannot be negative.",
+                }
+            );
         }
 
         return Result.Success(new TimeDuration(result));
     }
 
-    public static Result<TimeDuration> Subtract(TimeDuration left, TimeDuration right) => left - right;
+    public static Result<TimeDuration> Subtract(TimeDuration left, TimeDuration right) =>
+        left - right;
 
     public static explicit operator int(TimeDuration duration)
     {
@@ -118,25 +128,53 @@ public sealed record TimeDuration : IComparable<TimeDuration>
         return other is null ? 1 : Seconds.CompareTo(other.Seconds);
     }
 
-    private static Result<TimeDuration> ValidateAndCreate(long totalSeconds,
-        string overflowMessage = "Duration exceeds maximum supported limit.")
+    private static Result<TimeDuration> ValidateAndCreate(
+        long totalSeconds,
+        string overflowMessage = "Duration exceeds maximum supported limit."
+    )
     {
         if (totalSeconds < 0)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(TimeDuration), ErrorMessage = "Duration seconds cannot be negative."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(TimeDuration),
+                    ErrorMessage = "Duration seconds cannot be negative.",
+                }
+            );
         }
 
         if (totalSeconds > int.MaxValue)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(TimeDuration), ErrorMessage = overflowMessage
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(TimeDuration),
+                    ErrorMessage = overflowMessage,
+                }
+            );
         }
 
         return Result.Success(new TimeDuration((int)totalSeconds));
+    }
+
+    public static bool operator <(TimeDuration? left, TimeDuration? right)
+    {
+        return left is not null && right is not null && left.Value.CompareTo(right.Value) < 0;
+    }
+
+    public static bool operator <=(TimeDuration? left, TimeDuration? right)
+    {
+        return left is not null && right is not null && left.Value.CompareTo(right.Value) <= 0;
+    }
+
+    public static bool operator >(TimeDuration? left, TimeDuration? right)
+    {
+        return left is not null && right is not null && left.Value.CompareTo(right.Value) > 0;
+    }
+
+    public static bool operator >=(TimeDuration? left, TimeDuration? right)
+    {
+        return left is not null && right is not null && left.Value.CompareTo(right.Value) >= 0;
     }
 }

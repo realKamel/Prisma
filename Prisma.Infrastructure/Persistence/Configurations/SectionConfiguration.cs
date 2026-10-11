@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Infrastructure.Persistence.Configurations.ValueObjectConfigurations;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -10,6 +11,7 @@ internal sealed class SectionConfiguration : IEntityTypeConfiguration<Section>
     {
         builder.HasKey(x => x.Id);
 
+        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Section>();
         builder
             .HasOne(x => x.Lesson)
             .WithMany(x => x.Sections)

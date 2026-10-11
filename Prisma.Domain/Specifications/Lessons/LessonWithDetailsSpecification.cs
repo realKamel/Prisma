@@ -21,7 +21,6 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
                 EnrollmentsCount = lesson.Enrollments.Count,
                 Money = lesson.Money,
-                TimeDuration = lesson.TimeDuration,
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.LastName,
                 ValidityRange = lesson.ValidityRange,
                 TeacherSubject = lesson.Teacher.Subject,
@@ -31,7 +30,7 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
                     {
                         Id = s.Id,
                         Title = s.Title,
-                        Duration = s.Duration,
+                        Duration = s.TimeDuration,
                         IsPreview = s.IsPreview,
                     })
                     .ToList(),
@@ -50,7 +49,7 @@ public record LessonDetailsProjection
     public string? ImageThumbnailUrl { get; init; }
     public int EnrollmentsCount { get; init; }
     public Money Money { get; init; }
-    public TimeDuration TimeDuration { get; init; }
+    public TimeDuration Duration { get; init; }
     public DateRange? ValidityRange { get; init; }
     public List<string> Outcomes { get; init; } = [];
     public List<SectionProjection> Sections { get; init; } = [];
@@ -64,6 +63,6 @@ public record SectionProjection
 {
     public int Id { get; init; }
     public string? Title { get; init; }
-    public TimeSpan Duration { get; init; }
+    public TimeDuration? Duration { get; init; }
     public bool IsPreview { get; init; }
 }

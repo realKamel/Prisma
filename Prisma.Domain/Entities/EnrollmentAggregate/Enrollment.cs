@@ -50,43 +50,55 @@ public class Enrollment : BaseEntity
         int? paymentId = null,
         int? generatedCodeId = null,
         DateTimeOffset? startDate = null,
-        DateTimeOffset? endDate = null)
+        DateTimeOffset? endDate = null
+    )
     {
         var validationErrors = new List<ValidationError>();
 
         // 1. Validate mandatory references
         if (studentId == Guid.Empty)
         {
-            validationErrors.Add(new ValidationError
-            {
-                Identifier = nameof(StudentId), ErrorMessage = "StudentId is required to create an enrollment."
-            });
+            validationErrors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(StudentId),
+                    ErrorMessage = "StudentId is required to create an enrollment.",
+                }
+            );
         }
 
         if (lessonId <= 0)
         {
-            validationErrors.Add(new ValidationError
-            {
-                Identifier = nameof(LessonId), ErrorMessage = "A valid LessonId is required."
-            });
+            validationErrors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(LessonId),
+                    ErrorMessage = "A valid LessonId is required.",
+                }
+            );
         }
 
         // 2. Validate Method-Specific Domain Rules
         switch (method)
         {
             case EnrollmentMethod.RedeemCode when generatedCodeId is not > 0:
-                validationErrors.Add(new ValidationError
-                {
-                    Identifier = nameof(GeneratedCodeId),
-                    ErrorMessage = "GeneratedCodeId is required when EnrollmentMethod is RedeemCode."
-                });
+                validationErrors.Add(
+                    new ValidationError
+                    {
+                        Identifier = nameof(GeneratedCodeId),
+                        ErrorMessage =
+                            "GeneratedCodeId is required when EnrollmentMethod is RedeemCode.",
+                    }
+                );
                 break;
             case EnrollmentMethod.OnlinePayment when paymentId is not > 0:
-                validationErrors.Add(new ValidationError
-                {
-                    Identifier = nameof(PaymentId),
-                    ErrorMessage = "PaymentId is required when EnrollmentMethod is Payment."
-                });
+                validationErrors.Add(
+                    new ValidationError
+                    {
+                        Identifier = nameof(PaymentId),
+                        ErrorMessage = "PaymentId is required when EnrollmentMethod is Payment.",
+                    }
+                );
                 break;
             case EnrollmentMethod.TeacherGrant:
                 break;
@@ -127,16 +139,43 @@ public class Enrollment : BaseEntity
             ValidityDateRange = validityDateRange,
             ExpiresAt = endDate,
             Status = EnrollmentStatus.Active,
-            IsCompleted = false
+            IsCompleted = false,
         };
 
         return Result.Success(enrollment);
     }
 
-
-    //TODO:Why not ? 
+    //TODO:Why not ?
     // public void CancelEnrollment()
     // {
     //     Status = EnrollmentStatus.Cancelled;
     // }
+
+
+    /// <summary>
+    /// Checks whether the enrollment has expired based on the provided current time.
+    /// </summary>
+    public bool IsExpired(DateTimeOffset currentDateTime)
+    {
+        return ExpiresAt.HasValue && currentDateTime > ExpiresAt.Value;
+    }
+
+    /// <summary>
+    /// Transitions the enrollment status to expired if the expiration time has been reached.
+    /// </summary>
+    public Result Expire(DateTimeOffset currentDateTime)
+    {
+        if (Status == EnrollmentStatus.Expired)
+        {
+            return Result.Success();
+        }
+
+        if (!IsExpired(currentDateTime))
+        {
+            return Result.Error("Enrollment has not reached its expiration date yet.");
+        }
+
+        Status = EnrollmentStatus.Expired;
+        return Result.Success();
+    }
 }

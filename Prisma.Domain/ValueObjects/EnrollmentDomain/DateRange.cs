@@ -24,12 +24,14 @@ public sealed record DateRange
     {
         if (endDate < startDate)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(EndDate),
-                ErrorMessage =
-                    $"End date ({endDate:yyyy-MM-dd HH:mm:ss zzz}) cannot be earlier than start date ({startDate:yyyy-MM-dd HH:mm:ss zzz})."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(EndDate),
+                    ErrorMessage =
+                        $"End date ({endDate:yyyy-MM-dd HH:mm:ss zzz}) cannot be earlier than start date ({startDate:yyyy-MM-dd HH:mm:ss zzz}).",
+                }
+            );
         }
 
         return Result.Success(new DateRange(startDate, endDate));
@@ -42,18 +44,24 @@ public sealed record DateRange
     {
         if (duration < TimeSpan.Zero)
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(duration), ErrorMessage = "Duration cannot be negative."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(duration),
+                    ErrorMessage = "Duration cannot be negative.",
+                }
+            );
         }
 
         return Create(startDate, startDate.Add(duration));
     }
 
     // Expressive Domain Factories
-    public static Result<DateRange> StartingNow(TimeSpan duration)
-        => CreateFromDuration(DateTimeOffset.UtcNow, duration);
+    public static Result<DateRange> StartingNow(TimeSpan duration) =>
+        CreateFromDuration(DateTimeOffset.UtcNow, duration);
+
+    public static Result<DateRange> StartingNow(DateTimeOffset endDateTime) =>
+        Create(DateTimeOffset.UtcNow, endDateTime);
 
     public bool Includes(DateTimeOffset dateTime) => dateTime >= StartDate && dateTime <= EndDate;
 
@@ -77,10 +85,13 @@ public sealed record DateRange
 
         if (!OverlapsWith(other))
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(other), ErrorMessage = "Cannot intersect non-overlapping date ranges."
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(other),
+                    ErrorMessage = "Cannot intersect non-overlapping date ranges.",
+                }
+            );
         }
 
         var maxStart = StartDate > other.StartDate ? StartDate : other.StartDate;
@@ -89,5 +100,6 @@ public sealed record DateRange
         return Create(maxStart, minEnd);
     }
 
-    public override string ToString() => $"{StartDate:yyyy-MM-dd HH:mm:ss zzz} to {EndDate:yyyy-MM-dd HH:mm:ss zzz}";
+    public override string ToString() =>
+        $"{StartDate:yyyy-MM-dd HH:mm:ss zzz} to {EndDate:yyyy-MM-dd HH:mm:ss zzz}";
 };

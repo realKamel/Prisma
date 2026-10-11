@@ -1,4 +1,5 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
@@ -17,8 +18,8 @@ public class Section : BaseEntity
 
     public ICollection<SectionProgress> Progresses { get; set; } = new List<SectionProgress>();
 
-    public TimeSpan Duration { get; set; }
-
+    public TimeSpan? Duration { get; set; }
+    public TimeDuration? TimeDuration { get; set; }
     public bool IsPreview { get; set; } = false;
 
     //video streaming

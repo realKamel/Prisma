@@ -17,7 +17,7 @@ public class Lesson : BaseEntity
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public Money Money { get; set; } = Money.Zero();
-    public TimeSpan Duration { get; set; }
+    public TimeSpan? Duration { get; set; }
     public TimeDuration TimeDuration { get; set; } = TimeDuration.Zero;
     public string? ImageThumbnailUrl { get; set; }
 
@@ -25,7 +25,7 @@ public class Lesson : BaseEntity
 
     public LessonStatus Status { get; set; }
 
-    public DateTimeOffset? EndDate { get; set; }
+    // public DateTimeOffset? EndDate { get; set; }
     public DateRange? ValidityRange { get; set; }
 
     public bool IsEligible { get; set; }

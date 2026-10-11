@@ -1,5 +1,6 @@
 ﻿using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Specifications.Lessons;
 
@@ -7,7 +8,8 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
 {
     public LessonPlayerWithDetailsSpecification(int lessonId, Guid studentId)
     {
-        Query.Where(lesson => lesson.Id == lessonId)
+        Query
+            .Where(lesson => lesson.Id == lessonId)
             .AsNoTracking()
             .AsSplitQuery()
             .Select(lesson => new LessonPlayerProjection
@@ -17,65 +19,70 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                 Description = lesson.Description,
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
                 Subject = lesson.Teacher.Subject,
-                EnrollmentId = lesson.Enrollments
-                    .Where(e => e.StudentId == studentId)
+                EnrollmentId = lesson
+                    .Enrollments.Where(e => e.StudentId == studentId)
                     .Select(e => e.PublicId.Value)
                     .FirstOrDefault(),
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.SecondName,
                 Outcomes = lesson.Outcomes.ToList(),
-                EnrollmentExpiresAt = lesson.Enrollments
-                    .Where(e => e.StudentId == studentId)
+                EnrollmentExpiresAt = lesson
+                    .Enrollments.Where(e => e.StudentId == studentId)
                     .Select(e => e.ExpiresAt)
                     .FirstOrDefault(),
-                Sections = lesson.Sections.Select(s => new PlayerSectionProjection
-                {
-                    Id = s.Id,
-                    SortOrder = s.SortOrder,
-                    Title = s.Title,
-                    Duration = s.Duration,
-                    PlaybackId = s.PlaybackId,
-                    IsCompleted = s.Progresses
-                        .Where(p => p.StudentId == studentId)
-                        .Select(p => (bool?)p.IsCompleted)
-                        .FirstOrDefault() ?? false,
-                    WatchedSeconds = s.Progresses
-                        .Where(p => p.StudentId == studentId)
-                        .Select(p => (int?)p.WatchedSeconds)
-                        .FirstOrDefault() ?? 0
-                }).ToList(),
-                Materials =
-                    lesson.LessonMaterials.Select(m =>
-                            new PlayerMaterialProjection
-                            {
-                                Title = m.Title, DownloadUrl = m.DownloadUrl, Type = (int)m.Type
-                            })
-                        .ToList(),
-                Quiz = lesson.Quiz != null
-                    ? new PlayerQuizProjection
+                Sections = lesson
+                    .Sections.Select(s => new PlayerSectionProjection
                     {
-                        Id = lesson.Quiz.Id,
-                        QuestionsCount = lesson.Quiz.Questions.Count,
-                        TimeInMinutes = lesson.Quiz.TimeInMinutes,
-                        TotalDegree = lesson.Quiz.TotalDegree,
-                        IsAttempted = lesson.Quiz.Attempts.Any(a => a.StudentId == studentId)
-                    }
-                    : null,
-                Assignment = lesson.Assignment != null
-                    ? new PlayerAssignmentProjection
+                        Id = s.Id,
+                        SortOrder = s.SortOrder,
+                        Title = s.Title,
+                        Duration = s.TimeDuration,
+                        PlaybackId = s.PlaybackId,
+                        IsCompleted =
+                            s.Progresses.Where(p => p.StudentId == studentId)
+                                .Select(p => (bool?)p.IsCompleted)
+                                .FirstOrDefault() ?? false,
+                        WatchedSeconds =
+                            s.Progresses.Where(p => p.StudentId == studentId)
+                                .Select(p => (int?)p.WatchedSeconds)
+                                .FirstOrDefault() ?? 0,
+                    })
+                    .ToList(),
+                Materials = lesson
+                    .LessonMaterials.Select(m => new PlayerMaterialProjection
                     {
-                        Id = lesson.Assignment.Id,
-                        ContentURL = lesson.Assignment.ContentURL,
-                        DueDate = lesson.Assignment.DueDate,
-                        SubmissionTitle = lesson.Assignment.Submissions
-                            .Where(sub => sub.StudentId == studentId)
-                            .Select(sub => sub.Title)
-                            .FirstOrDefault()
-                    }
-                    : null,
-                IsEnrollmentCompleted = lesson.Enrollments
-                    .Where(e => e.StudentId == studentId)
+                        Title = m.Title,
+                        DownloadUrl = m.DownloadUrl,
+                        Type = (int)m.Type,
+                    })
+                    .ToList(),
+                Quiz =
+                    lesson.Quiz != null
+                        ? new PlayerQuizProjection
+                        {
+                            Id = lesson.Quiz.Id,
+                            QuestionsCount = lesson.Quiz.Questions.Count,
+                            TimeInMinutes = lesson.Quiz.TimeInMinutes,
+                            TotalDegree = lesson.Quiz.TotalDegree,
+                            IsAttempted = lesson.Quiz.Attempts.Any(a => a.StudentId == studentId),
+                        }
+                        : null,
+                Assignment =
+                    lesson.Assignment != null
+                        ? new PlayerAssignmentProjection
+                        {
+                            Id = lesson.Assignment.Id,
+                            ContentURL = lesson.Assignment.ContentURL,
+                            DueDate = lesson.Assignment.DueDate,
+                            SubmissionTitle = lesson
+                                .Assignment.Submissions.Where(sub => sub.StudentId == studentId)
+                                .Select(sub => sub.Title)
+                                .FirstOrDefault(),
+                        }
+                        : null,
+                IsEnrollmentCompleted = lesson
+                    .Enrollments.Where(e => e.StudentId == studentId)
                     .Select(e => e.IsCompleted)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
             });
     }
 }
@@ -97,7 +104,6 @@ public class LessonPlayerProjection
     public PlayerQuizProjection? Quiz { get; set; }
     public PlayerAssignmentProjection? Assignment { get; set; }
     public bool IsEnrollmentCompleted { get; set; }
-
 }
 
 public class PlayerSectionProjection
@@ -105,7 +111,7 @@ public class PlayerSectionProjection
     public int Id { get; set; }
     public int SortOrder { get; set; }
     public string? Title { get; set; }
-    public TimeSpan Duration { get; set; }
+    public TimeDuration? Duration { get; set; }
     public string? PlaybackId { get; set; }
     public bool IsCompleted { get; set; }
     public int WatchedSeconds { get; set; }

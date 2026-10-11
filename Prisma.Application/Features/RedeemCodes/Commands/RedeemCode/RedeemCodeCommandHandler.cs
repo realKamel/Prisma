@@ -3,6 +3,7 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.TeacherStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
+using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
@@ -14,8 +15,10 @@ using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
 namespace Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 
-public class RedeemCodeCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
-    : IRequestHandler<RedeemCodeCommand, Result<RedeemCodeResponse>>
+internal sealed class RedeemCodeCommandHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser
+) : IRequestHandler<RedeemCodeCommand, Result<RedeemCodeResponse>>
 {
     public async Task<Result<RedeemCodeResponse>> Handle(
         RedeemCodeCommand request,
@@ -23,32 +26,54 @@ public class RedeemCodeCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
     )
     {
         if (currentUser.UserId is not { } studentId)
-            return Result.Unauthorized("User is not authenticated.");
+        {
+            return Result.Unauthorized();
+        }
 
         // ── 1. Load the student (need AcademicYearId) ──
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
+
         var student = await studentRepo.GetByIdAsync(studentId, ct);
+
         if (student is null)
+        {
             return Result.NotFound($"Student with id '{studentId}' was not found");
+        }
 
         if (student.AcademicYearId is null)
-            return Result.Error("Student is not assigned to an academic year.");
+        {
+            return Result.Invalid(
+                new ValidationError(
+                    "AcademicYearId",
+                    "Student is not assigned to an academic year.",
+                    "REDEEM_CODE.NOT_ACADEMIC_ID",
+                    ValidationSeverity.Error
+                )
+            );
+        }
 
-        // ── 2. Find the GeneratedCode by code value ──
         var generatedCodeRepo = unitOfWork.GetOrCreateRepository<GeneratedCode, int>();
+
         var generatedCode = await generatedCodeRepo.FirstOrDefaultAsync(
             new GeneratedCodeByValueSpecification(request.Code),
             ct
         );
         if (generatedCode is null)
-            return Result.Error("الكود غلط — تأكد إنك كتبته صح");
+        {
+            var error = new ValidationError(
+                "Code",
+                "Code is Invalid",
+                "REDEEM_CODE.NOT_ACADEMIC_ID",
+                ValidationSeverity.Error
+            );
+            return Result.Invalid(error);
+        }
 
-        // ── 3. Already used? ──
         if (generatedCode.RedeemedByStudentId is not null)
             return Result.Error("الكود ده اتستخدم قبل كده — لو في مشكلة تواصل مع المدرسة");
 
-        // ── 4. Load the batch projection (lesson id, academic year, teacher id — nothing else) ──
         var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
+
         var batch = await batchRepo.FirstOrDefaultAsync(
             new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(
                 generatedCode.BatchId,
@@ -56,20 +81,26 @@ public class RedeemCodeCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
             ),
             ct
         );
-        if (batch is null)
-            return Result.NotFound($"CodeBatch with id '{generatedCode.BatchId}' was not found");
 
-        // ── 5. Validate lesson matches ──
+        if (batch is null)
+        {
+            return Result.NotFound($"CodeBatch with id '{generatedCode.BatchId}' was not found");
+        }
+
         if (batch.LessonId != request.LessonId)
+        {
             return Result.Error(
                 "الكود ده صح بس مش للدرس ده — تأكد إنك بتستخدم الكود الصح للدرس الصح"
             );
+        }
 
-        // ── 6. Validate student academic year matches batch academic year ──
         if (batch.AcademicYearId != student.AcademicYearId)
+        {
             return Result.Error("الكود ده مش للسنة الدراسية بتاعتك");
+        }
 
         // ── 7. Check student not already enrolled ──
+        var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var existing = await enrollmentRepo.FirstOrDefaultAsync(
             new EnrollmentByStudentAndLessonSpec(studentId, request.LessonId),
@@ -77,25 +108,22 @@ public class RedeemCodeCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
         );
 
         if (existing is not null && !existing.IsDeleted)
-            return Result.Error("انت عندك الدرس ده بالفعل");
+        {
+            return Result.Conflict("انت عندك الدرس ده بالفعل");
+        }
 
-        // ── 8. Mark the code as redeemed ──
+        var lesson = await lessonRepo.GetByIdAsync(request.LessonId);
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
 
-        // ── 9. Create or restore enrollment ──
-        var expiresAt = DateTimeOffset.UtcNow.AddDays(30);
+        var expiresAt = DateTimeOffset.UtcNow.Add(lesson.ValidityRange.Duration);
 
         Enrollment enrollment;
         if (existing is not null && existing.IsDeleted)
         {
-            existing.IsDeleted = false;
-            existing.DeletedAt = null;
-            existing.DeletedBy = null;
             existing.Status = EnrollmentStatus.Active;
             existing.EnrollmentMethod = EnrollmentMethod.RedeemCode;
             existing.ExpiresAt = expiresAt;
-            existing.UpdatedAt = DateTimeOffset.UtcNow;
             existing.GeneratedCodeId = generatedCode.Id;
             enrollment = existing;
         }

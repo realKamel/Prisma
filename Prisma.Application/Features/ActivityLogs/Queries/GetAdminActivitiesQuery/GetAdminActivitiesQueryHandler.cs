@@ -1,28 +1,34 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
+namespace Prisma.Application.Features.ActivityLogs.Queries.GetAdminActivitiesQuery;
 
 public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
     : IRequestHandler<GetAdminActivitiesQuery, Result<List<AdminActivityDto>>>
 {
-    public async Task<Result<List<AdminActivityDto>>> Handle(GetAdminActivitiesQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<List<AdminActivityDto>>> Handle(
+        GetAdminActivitiesQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var enrollmentRepo = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
 
         var rawActivities = new List<(DateTimeOffset TimeStamp, AdminActivityDto Activity)>();
 
-        var latestEnrollments = await enrollmentRepo.ListAsync(new AdminLatestEnrollmentsSpec(), cancellationToken);
+        var latestEnrollments = await enrollmentRepo.ListAsync(
+            new AdminLatestEnrollmentsSpec(),
+            cancellationToken
+        );
 
         foreach (var enroll in latestEnrollments)
         {
-            if (enroll == null) continue;
+            if (enroll == null)
+                continue;
 
             DateTimeOffset enrollDate = enroll.CreatedAt ?? DateTimeOffset.UtcNow;
 
@@ -38,7 +44,10 @@ public class GetAdminActivitiesQueryHandler(IUnitOfWork _unitOfWork)
             rawActivities.Add((enrollDate, activityDto));
         }
 
-        var latestPayments = await paymentRepo.ListAsync(new AdminSuccessfulPaymentsSpec(), cancellationToken);
+        var latestPayments = await paymentRepo.ListAsync(
+            new AdminSuccessfulPaymentsSpec(),
+            cancellationToken
+        );
 
         foreach (var pay in latestPayments)
         {

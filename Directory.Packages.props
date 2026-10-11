@@ -35,6 +35,7 @@
     <PackageVersion Include="KubernetesClient" Version="17.0.14" />
     <PackageVersion Include="MailKit" Version="4.17.0" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
+    <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
     <PackageVersion Include="Microsoft.Agents.AI" Version="1.13.0" />
     <PackageVersion Include="Microsoft.Agents.AI.Abstractions" Version="1.13.0" />
     <PackageVersion Include="Microsoft.Agents.AI.DurableTask" Version="1.13.0-preview.260703.1" />

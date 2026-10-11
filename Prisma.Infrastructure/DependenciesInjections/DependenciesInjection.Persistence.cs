@@ -22,10 +22,17 @@ public static partial class DependenciesInjection
         IHostEnvironment environment
     )
     {
-        services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        services.AddDbContext<AppDbContext>(
+            (serviceProvider, options) =>
             {
                 options.UseNpgsql(
-                    configuration.GetConnectionString("DefaultSqlConnection"),
+                    connectionStrings.DefaultSqlConnection,
                     npgSqlOptions =>
                     {
                         npgSqlOptions.EnableRetryOnFailure(
@@ -39,7 +46,8 @@ public static partial class DependenciesInjection
 
                 options.AddInterceptors(
                     serviceProvider.GetRequiredService<AuditInterceptor>(),
-                    serviceProvider.GetRequiredService<AuditLogInterceptor>()
+                    serviceProvider.GetRequiredService<AuditLogInterceptor>(),
+                    serviceProvider.GetRequiredService<DomainEventDispatcherInterceptor>()
                 );
 
                 if (environment.IsDevelopment())
@@ -48,14 +56,12 @@ public static partial class DependenciesInjection
 
                     // ONLY uncomment the line below when you actively need to see SQL parameter values
                     // to debug a specific query. NEVER leave it uncommented in Production.
-                    // options.EnableSensitiveDataLogging();
+                    options.EnableSensitiveDataLogging();
                 }
             }
         );
 
-        services
-            .AddDataProtection()
-            .PersistKeysToDbContext<AppDbContext>();
+        services.AddDataProtection().PersistKeysToDbContext<AppDbContext>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));

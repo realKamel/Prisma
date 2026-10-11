@@ -28,6 +28,11 @@ public static partial class DependenciesInjection
 
         ArgumentNullException.ThrowIfNull(connectionStrings);
 
+        //interceptors
+        services.AddScoped<AuditInterceptor>();
+        services.AddScoped<AuditLogInterceptor>();
+        services.AddScoped<DomainEventDispatcherInterceptor>();
+
         services.AddDbContext<AppDbContext>(
             (serviceProvider, options) =>
             {
@@ -63,14 +68,11 @@ public static partial class DependenciesInjection
 
         services.AddDataProtection().PersistKeysToDbContext<AppDbContext>();
 
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
-
-        services.AddScoped<AuditInterceptor>();
-        services.AddScoped<AuditLogInterceptor>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
-        services.AddScoped<IDataSeeder, DataSeeder>();
-
         //Custom Repositories
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
     }

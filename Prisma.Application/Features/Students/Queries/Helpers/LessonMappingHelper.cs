@@ -57,7 +57,7 @@ internal static class LessonMappingHelper
             ExpiresAt = enrollment.ExpiresAt,
             TeacherName = teacherName,
             Subject = lesson.Teacher?.Subject,
-            Duration = new TimeDurationDto((int)lesson.Duration.TotalSeconds),
+            Duration = new TimeDurationDto(lesson.Duration.Value.Seconds),
             ImageThumbnailUrl = imageThumbnailUrl,
         };
     }

@@ -3,12 +3,10 @@ using Prisma.Domain.Entities.EnrollmentAggregate;
 
 namespace Prisma.Application.Features.TeacherStudents;
 
-public class EnrollmentByStudentAndLessonSpec : Specification<Enrollment>
+public sealed class EnrollmentByStudentAndLessonSpec : Specification<Enrollment>
 {
     public EnrollmentByStudentAndLessonSpec(Guid studentId, int lessonId)
     {
-        Query
-            .Where(e => e.StudentId == studentId && e.LessonId == lessonId)
-            .IgnoreQueryFilters();
+        Query.Where(e => e.StudentId == studentId && e.LessonId == lessonId).IgnoreQueryFilters();
     }
 }

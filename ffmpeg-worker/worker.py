@@ -27,46 +27,69 @@ def transcode(object_name: str, guid: str):
     os.makedirs(hls_dir, exist_ok=True)
 
     try:
-        print(f"[{guid}] 1/4 Downloading {object_name} from MinIO...")
+        print(f"[{guid}] 1/5 Downloading {object_name} from MinIO...")
         client.fget_object(BUCKET, object_name, input_path)
 
-        print(f"[{guid}] 2/4 Transcoding to HLS (this may take a moment)...")
-        # Added stderr=subprocess.PIPE to capture exact FFmpeg errors if it fails
-        video_result = subprocess.run([
-            "ffmpeg", "-y", "-i", input_path,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
-            "-c:a", "aac", "-b:a", "128k",
-            "-hls_time", "6", "-hls_playlist_type", "vod",
-            "-hls_segment_filename", os.path.join(hls_dir, "segment_%03d.ts"),
-            os.path.join(hls_dir, "index.m3u8")
-        ], capture_output=True, text=True)
+        # Define qualities: Name, Scale filter, Video Bitrate, Maxrate, Bufsize, CRF
+        qualities = [
+            {"name": "1080p", "scale": "scale=-2:1080", "b:v": "5000k", "maxrate": "5350k", "bufsize": "7500k",
+             "crf": "20"},
+            {"name": "720p", "scale": "scale=-2:720", "b:v": "2800k", "maxrate": "2996k", "bufsize": "4200k",
+             "crf": "23"},
+            {"name": "480p", "scale": "scale=-2:480", "b:v": "1400k", "maxrate": "1498k", "bufsize": "2100k",
+             "crf": "25"}
+        ]
 
-        if video_result.returncode != 0:
-            raise Exception(f"FFmpeg video transcode failed:\n{video_result.stderr}")
+        print(f"[{guid}] 2/5 Transcoding to multiple qualities (1080p, 720p, 480p)...")
 
-        print(f"[{guid}] 3/4 Extracting audio-only rendition...")
-        audio_result = subprocess.run([
-            "ffmpeg", "-y", "-i", input_path,
-            "-vn", "-c:a", "aac", "-b:a", "128k",
-            os.path.join(hls_dir, "audio.m4a")
-        ], capture_output=True, text=True)
+        for q in qualities:
+            q_dir = os.path.join(hls_dir, q["name"])
+            os.makedirs(q_dir, exist_ok=True)
 
-        if audio_result.returncode != 0:
-            raise Exception(f"FFmpeg audio extract failed:\n{audio_result.stderr}")
+            variant_result = subprocess.run([
+                "ffmpeg", "-y", "-i", input_path,
+                "-vf", q["scale"],
+                "-c:v", "libx264", "-preset", "fast", "-crf", q["crf"],
+                "-b:v", q["b:v"], "-maxrate", q["maxrate"], "-bufsize", q["bufsize"],
+                "-c:a", "aac", "-b:a", "128k",
+                "-hls_time", "6", "-hls_playlist_type", "vod",
+                "-hls_segment_filename", os.path.join(q_dir, "segment_%03d.ts"),
+                os.path.join(q_dir, "index.m3u8")
+            ], capture_output=True, text=True)
 
-        print(f"[{guid}] 4/4 Uploading HLS files to videos/{guid}/...")
-        for filename in os.listdir(hls_dir):
-            file_path = os.path.join(hls_dir, filename)
-            target = f"videos/{guid}/{filename}"
+            if variant_result.returncode != 0:
+                raise Exception(f"FFmpeg transcode failed for {q['name']}:\n{variant_result.stderr}")
 
-            content_type = "application/vnd.apple.mpegurl" if filename.endswith(".m3u8") \
-                else "video/mp2t" if filename.endswith(".ts") else "audio/mp4"
+        print(f"[{guid}] 3/5 Creating Master Playlist (master.m3u8)...")
+        master_playlist_path = os.path.join(hls_dir, "master.m3u8")
+        with open(master_playlist_path, "w") as f:
+            f.write("#EXTM3U\n")
+            f.write("#EXT-X-VERSION:3\n")
+            f.write('#EXT-X-STREAM-INF:BANDWIDTH=5500000,RESOLUTION=1920x1080\n1080p/index.m3u8\n')
+            f.write('#EXT-X-STREAM-INF:BANDWIDTH=3100000,RESOLUTION=1280x720\n720p/index.m3u8\n')
+            f.write('#EXT-X-STREAM-INF:BANDWIDTH=1600000,RESOLUTION=854x480\n480p/index.m3u8\n')
 
-            client.fput_object(BUCKET, target, file_path, content_type=content_type)
+        print(f"[{guid}] 4/5 Uploading all HLS files to videos/{guid}/...")
+        # Walk through the temporary directory and upload everything maintaining structure
+        for root, dirs, files in os.walk(hls_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                # Compute relative path from hls_dir to keep nested folders like 1080p/, 720p/
+                rel_path = os.path.relpath(file_path, hls_dir)
+                target = f"videos/{guid}/{rel_path.replace(os.sep, '/')}"
+
+                if file.endswith(".m3u8"):
+                    content_type = "application/vnd.apple.mpegurl"
+                elif file.endswith(".ts"):
+                    content_type = "video/mp2t"
+                else:
+                    content_type = "application/octet-stream"
+
+                client.fput_object(BUCKET, target, file_path, content_type=content_type)
 
         # Clean up the original raw upload to save space
         client.remove_object(BUCKET, object_name)
-        print(f"[{guid}] ✅ SUCCESS: HLS available at videos/{guid}/index.m3u8")
+        print(f"[{guid}] ✅ SUCCESS: Adaptive HLS available at videos/{guid}/master.m3u8")
 
     except S3Error as e:
         print(f"[{guid}] ❌ MinIO Error: {e}")
@@ -78,23 +101,18 @@ def transcode(object_name: str, guid: str):
 
 
 def main():
-    print(f"FFmpeg Worker started.", flush=True)
+    print(f"FFmpeg Multi-Quality Worker started.", flush=True)
     print(f"Target Endpoint: {ENDPOINT}", flush=True)
     print(f"Target Bucket: {BUCKET}", flush=True)
 
     # --- CRITICAL CONNECTION TEST ---
     print("Testing connection to MinIO...", flush=True)
     try:
-        # This will timeout in 3 seconds if the hostname is wrong or MinIO is down
         urllib.request.urlopen(f"http://{ENDPOINT}/minio/health/live", timeout=3)
         print("✅ MinIO is reachable!\n", flush=True)
     except Exception as e:
         print(f"❌ FATAL: Cannot reach MinIO at http://{ENDPOINT}", flush=True)
         print(f"Error: {e}", flush=True)
-        print("\n💡 FIX:", flush=True)
-        print("   - If running LOCALLY (outside Docker), run: set S3_ENDPOINT=127.0.0.1:9000", flush=True)
-        print("   - If running IN DOCKER, ensure 'object-storage' matches your docker-compose service name.",
-              flush=True)
         sys.exit(1)
     # --------------------------------
 
@@ -103,11 +121,7 @@ def main():
             print(f"[+] Polling MinIO for new files in '{BUCKET}/uploads/'...", flush=True)
 
             objects = list(client.list_objects(BUCKET, prefix="uploads/", recursive=True))
-
-            print(f"    -> Found {len(objects)} total object(s) in bucket.", flush=True)
-
             mp4_files = [obj for obj in objects if obj.object_name.endswith(".mp4")]
-            print(f"    -> Found {len(mp4_files)} .mp4 file(s) ready to process.", flush=True)
 
             for obj in mp4_files:
                 print(f"\n📥 New upload detected: {obj.object_name}", flush=True)

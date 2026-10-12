@@ -15,6 +15,7 @@ public sealed class GetLessonEditorDetailsSpecification
             .Select(lesson => new LessonEditorDetailsProjection
             {
                 Id = lesson.Id,
+                PublicId = lesson.PublicId,
                 Title = lesson.Title,
                 Description = lesson.Description,
                 Money = lesson.Money,
@@ -34,6 +35,7 @@ public sealed class GetLessonEditorDetailsSpecification
                 Outcomes = lesson.Outcomes.ToList(),
                 AcademicYearIds = lesson.AcademicYears.Select(ay => ay.AcademicYearId).ToList(),
                 TeacherId = lesson.TeacherId!.Value,
+                ValidityDuration = lesson.ValidityDuration,
             });
     }
 }
@@ -56,6 +58,7 @@ public record LessonEditorDetailsProjection
     public IList<string> Outcomes { get; init; } = [];
     public IList<int> AcademicYearIds { get; init; } = [];
     public Guid TeacherId { get; init; }
+    public TimeDuration ValidityDuration { get; set; }
 }
 
 public record EditorSectionProjection

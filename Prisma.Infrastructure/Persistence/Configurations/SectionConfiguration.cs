@@ -11,7 +11,7 @@ internal sealed class SectionConfiguration : IEntityTypeConfiguration<Section>
     {
         builder.HasKey(x => x.Id);
 
-        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Section>();
+        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Section>("TimeDuration");
         builder
             .HasOne(x => x.Lesson)
             .WithMany(x => x.Sections)

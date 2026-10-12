@@ -158,9 +158,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int>("EnrollmentMethod")
                         .HasColumnType("integer");
 
-                    b.Property<DateTimeOffset?>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<int?>("GeneratedCodeId")
                         .HasColumnType("integer");
 
@@ -176,7 +173,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("PaymentId")
                         .HasColumnType("integer");
 
-                    b.Property<Guid?>("PublicId")
+                    b.Property<Guid>("PublicId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Status")
@@ -550,9 +547,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<TimeSpan?>("Duration")
-                        .HasColumnType("interval");
-
                     b.Property<string>("ImageThumbnailUrl")
                         .HasColumnType("text");
 
@@ -624,9 +618,18 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         {
                             b1.IsRequired();
 
-                            b1.Property<int>("Seconds")
-                                .HasColumnType("integer")
+                            b1.Property<long>("Seconds")
+                                .HasColumnType("bigint")
                                 .HasColumnName("TimeDuration_Seconds");
+                        });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "ValidityDuration", "Prisma.Domain.Entities.LessonAggregate.Lesson.ValidityDuration#TimeDuration", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<long>("Seconds")
+                                .HasColumnType("bigint")
+                                .HasColumnName("ValidityDuration_Seconds");
                         });
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "ValidityRange", "Prisma.Domain.Entities.LessonAggregate.Lesson.ValidityRange#DateRange", b1 =>
@@ -788,9 +791,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<TimeSpan?>("Duration")
-                        .HasColumnType("interval");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -830,8 +830,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "TimeDuration", "Prisma.Domain.Entities.LessonAggregate.Section.TimeDuration#TimeDuration", b1 =>
                         {
-                            b1.Property<int>("Seconds")
-                                .HasColumnType("integer")
+                            b1.Property<long>("Seconds")
+                                .HasColumnType("bigint")
                                 .HasColumnName("TimeDuration_Seconds");
                         });
 

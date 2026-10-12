@@ -22,8 +22,8 @@ public class CreateLessonDetailsCommandValidator : AbstractValidator<CreateLesso
             .NotEmpty()
             .WithMessage("At least one academic year ID is required.");
 
-        RuleFor(x => x.ValidityUnTill)
-            .GreaterThan(DateTimeOffset.UtcNow)
+        RuleFor(x => x.ValidityDurationInSeconds)
+            .GreaterThan(0)
             .WithMessage("{PropertyName} must be in the future");
 
         RuleFor(x => x.Outcomes).NotEmpty().WithMessage("At least one outcome is required.");

@@ -16,8 +16,11 @@ public record LessonDetailsDto
     public TimeDurationDto Duration { get; init; }
     public int ChaptersCount { get; init; }
     public int StudentsCount { get; init; }
+
     public MoneyDto Money { get; init; }
-    public int ValidityDays { get; init; }
+
+    // public int ValidityDays { get; init; }
+    public TimeDurationDto ValidityDuration { get; init; }
     public DateRangeDto? ValidityDateRange { get; set; }
     public string AboutText { get; init; } = string.Empty;
     public IList<string> Outcomes { get; init; } = [];

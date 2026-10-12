@@ -37,11 +37,15 @@ internal sealed class GetLessonEditorDetailsQueryHandler(
         if (user is Assistant assistant)
         {
             if (assistant.TeacherId is null)
+            {
                 return Result.Unauthorized("Assistant is not associated with a teacher.");
+            }
+
             userId = assistant.TeacherId;
         }
 
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+
         var academicYearRepository = unitOfWork.GetOrCreateRepository<AcademicYear, int>();
 
         var spec = new GetLessonEditorDetailsSpecification(request.Id);
@@ -49,10 +53,14 @@ internal sealed class GetLessonEditorDetailsQueryHandler(
         var lesson = await lessonRepository.FirstOrDefaultAsync(spec, cancellationToken);
 
         if (lesson is null)
+        {
             return Result.NotFound($"Lesson with id '{request.Id}' was not found");
+        }
 
         if (userId != lesson.TeacherId)
+        {
             return Result.Forbidden("You are not the owner of this lesson.");
+        }
 
         var prerequisiteSpec = new LessonPrerequisiteOptionsSpecification(request.Id, userId.Value);
         var prerequisitesOptions = (
@@ -77,7 +85,7 @@ internal sealed class GetLessonEditorDetailsQueryHandler(
         var response = new LessonEditorResponseDto(
             Id: lesson.Id,
             PublicId: lesson.PublicId,
-            lesson.Title,
+            Title: lesson.Title,
             Description: lesson.Description,
             Money: lesson.Money.ToDto(),
             lesson.PrerequisiteId,
@@ -92,7 +100,8 @@ internal sealed class GetLessonEditorDetailsQueryHandler(
             lesson.Outcomes,
             lesson.AcademicYearIds,
             prerequisitesOptions,
-            allAcademicYearsOptions
+            allAcademicYearsOptions,
+            lesson.ValidityDuration.ToDto()
         );
 
         return Result<LessonEditorResponseDto>.Success(response);

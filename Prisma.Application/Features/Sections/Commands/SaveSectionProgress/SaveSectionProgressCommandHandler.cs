@@ -7,7 +7,7 @@ using Prisma.Domain.Specifications.Sections;
 
 namespace Prisma.Application.Features.Sections.Commands.SaveSectionProgress;
 
-public class SaveSectionProgressCommandHandler(
+internal sealed class SaveSectionProgressCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService
 ) : IRequestHandler<SaveSectionProgressCommand, Result>
@@ -36,7 +36,7 @@ public class SaveSectionProgressCommandHandler(
 
         var sectionRepo = unitOfWork.GetOrCreateRepository<Section, int>();
         var sectionDuration = await sectionRepo.FirstOrDefaultAsync(
-            new SectionWithProjectionSpec<int>(request.SectionId, s => s.TimeDuration.Seconds),
+            new SectionWithProjectionSpec<long>(request.SectionId, s => s.TimeDuration.Seconds),
             cancellationToken
         );
 

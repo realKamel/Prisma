@@ -74,9 +74,10 @@ internal sealed class UpdateLessonDetailsCommandHandler(
         lesson.Money = Money.Create(request.Price, request.Currency);
         lesson.PrerequisiteId = request.PrerequisiteLessonId;
         lesson.Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
-        lesson.Outcomes = request.Outcomes ?? new List<string>();
-        lesson.ValidityRange = DateRange.StartingNow(request.ValidityUnTill);
+        lesson.Outcomes = request.Outcomes;
+        lesson.ValidityDuration = TimeDuration.Create(request.ValidityDurationInSeconds);
         var newSections = new List<(Section Section, int ChapterIndex)>();
+
         if (request.Chapters != null)
         {
             var existingSections = lesson.Sections.ToList();
@@ -106,8 +107,8 @@ internal sealed class UpdateLessonDetailsCommandHandler(
                         SortOrder = order++,
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
                         AssetId = ch.VideoFileName?.Split('.')[0],
-                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
-                        TimeDuration = TimeDuration.Create((int)ch.VideoDurationSeconds),
+                        // Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
+                        TimeDuration = TimeDuration.Create(ch.VideoDurationSeconds),
                     };
                     lesson.Sections.Add(newSection);
                     newSections.Add((newSection, chapterIndex));
@@ -217,9 +218,9 @@ internal sealed class UpdateLessonDetailsCommandHandler(
 
         var lessonDurationInSeconds = lesson.Sections.Sum(s => s.TimeDuration?.Seconds ?? 0);
 
-        lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
+        // lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
 
-        lesson.TimeDuration = TimeDuration.Create((int)lessonDurationInSeconds);
+        lesson.TimeDuration = TimeDuration.Create(lessonDurationInSeconds);
 
         lessonRepository.Update(lesson);
 

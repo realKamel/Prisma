@@ -21,7 +21,7 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                 Subject = lesson.Teacher.Subject,
                 EnrollmentId = lesson
                     .Enrollments.Where(e => e.StudentId == studentId)
-                    .Select(e => e.PublicId.Value)
+                    .Select(e => e.PublicId)
                     .FirstOrDefault(),
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.SecondName,
                 Outcomes = lesson.Outcomes.ToList(),
@@ -40,11 +40,13 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                         IsCompleted =
                             s.Progresses.Where(p => p.StudentId == studentId)
                                 .Select(p => (bool?)p.IsCompleted)
-                                .FirstOrDefault() ?? false,
+                                .FirstOrDefault()
+                            ?? false,
                         WatchedSeconds =
                             s.Progresses.Where(p => p.StudentId == studentId)
                                 .Select(p => (int?)p.WatchedSeconds)
-                                .FirstOrDefault() ?? 0,
+                                .FirstOrDefault()
+                            ?? 0,
                     })
                     .ToList(),
                 Materials = lesson

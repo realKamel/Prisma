@@ -2,7 +2,7 @@ using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Common.DTOs;
 
-public sealed record TimeDurationDto(int Seconds = 0);
+public sealed record TimeDurationDto(long Seconds = 0);
 
 public static class TimeDurationExtensions
 {

@@ -95,7 +95,7 @@ internal sealed class GetStudentDashboardQueryHandler(
 
         int completedLessonsCount = enrollments.Count(e => e.IsCompleted);
 
-        int totalStudyMinutes = enrollments
+        var totalStudyMinutes = enrollments
             .SelectMany(e => e.Sections)
             .Where(s => s.IsCompletedByStudent)
             .Sum(s => s.Duration?.Seconds ?? 0);

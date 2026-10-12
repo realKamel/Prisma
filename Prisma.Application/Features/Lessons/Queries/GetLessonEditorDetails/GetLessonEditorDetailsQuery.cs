@@ -21,7 +21,8 @@ public record LessonEditorResponseDto(
     IList<string>? Outcomes,
     IList<int> SelectedAcademicYears,
     IList<LessonDto> PrerequisitesOptions,
-    IList<AcademicYearResponseDto> AllAcademicYearsOptions
+    IList<AcademicYearResponseDto> AllAcademicYearsOptions,
+    TimeDurationDto ValidityDuration
 );
 
 public record LessonDto(string Name, int Id);

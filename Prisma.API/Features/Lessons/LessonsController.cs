@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
+using Prisma.API.Filters;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
@@ -95,6 +96,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpPost]
+    [Idempotent]
     [Consumes("multipart/form-data")]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<CreateLessonResponse>> CreateLesson(
@@ -107,6 +109,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpDelete("{id:int}")]
+    [Idempotent]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
@@ -114,6 +117,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpPut("{id:int}/editor")]
+    [Idempotent]
     [Consumes("multipart/form-data")]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(

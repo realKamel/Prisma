@@ -23,6 +23,7 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
                 Money = lesson.Money,
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.LastName,
                 ValidityRange = lesson.ValidityRange,
+                ValidityDuration = lesson.ValidityDuration,
                 TeacherSubject = lesson.Teacher.Subject,
                 Outcomes = lesson.Outcomes.ToList(),
                 Sections = lesson
@@ -57,6 +58,7 @@ public record LessonDetailsProjection
     public string? PrerequisiteTitle { get; init; }
     public string TeacherName { get; init; }
     public string TeacherSubject { get; init; }
+    public TimeDuration ValidityDuration { get; init; }
 }
 
 public record SectionProjection

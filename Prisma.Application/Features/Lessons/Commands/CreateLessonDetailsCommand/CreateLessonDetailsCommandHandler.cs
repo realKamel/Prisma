@@ -17,8 +17,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IIdentityService userManager,
-    IStorageService storageService,
-    IBackgroundJobService backgroundJobService
+    IStorageService storageService
 ) : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
     public async Task<Result<CreateLessonResponse>> Handle(
@@ -99,7 +98,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
             Outcomes = request.Outcomes,
             TeacherId = teacherId,
-            ValidityRange = DateRange.StartingNow(request.ValidityUnTill),
+            ValidityDuration = TimeDuration.Create(request.ValidityDurationInSeconds),
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)
@@ -130,8 +129,8 @@ internal sealed class CreateLessonDetailsCommandHandler(
                         SortOrder = order++,
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
                         AssetId = ch.VideoFileName?.Split('.')[0],
-                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
-                        TimeDuration = TimeDuration.Create((int)ch.VideoDurationSeconds),
+                        // Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
+                        TimeDuration = TimeDuration.Create(ch.VideoDurationSeconds),
                     }
                 );
             }
@@ -186,8 +185,8 @@ internal sealed class CreateLessonDetailsCommandHandler(
 
         var lessonDurationInSeconds = request.Chapters?.Sum(ch => ch.VideoDurationSeconds) ?? 0;
 
-        lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
-        lesson.TimeDuration = TimeDuration.Create((int)lessonDurationInSeconds);
+        // lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
+        lesson.TimeDuration = TimeDuration.Create(lessonDurationInSeconds);
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         lessonRepository.Add(lesson);

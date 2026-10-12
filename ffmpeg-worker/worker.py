@@ -27,10 +27,10 @@ def transcode(object_name: str, guid: str):
     os.makedirs(hls_dir, exist_ok=True)
 
     try:
-        print(f"[{guid}] 1/5 Downloading {object_name} from MinIO...")
+        print(f"[{guid}] 1/6 Downloading {object_name} from MinIO...")
         client.fget_object(BUCKET, object_name, input_path)
 
-        # Define qualities: Name, Scale filter, Video Bitrate, Maxrate, Bufsize, CRF
+        # Define qualities for ABR
         qualities = [
             {"name": "1080p", "scale": "scale=-2:1080", "b:v": "5000k", "maxrate": "5350k", "bufsize": "7500k",
              "crf": "20"},
@@ -40,8 +40,7 @@ def transcode(object_name: str, guid: str):
              "crf": "25"}
         ]
 
-        print(f"[{guid}] 2/5 Transcoding to multiple qualities (1080p, 720p, 480p)...")
-
+        print(f"[{guid}] 2/6 Transcoding video to multiple qualities (1080p, 720p, 480p)...")
         for q in qualities:
             q_dir = os.path.join(hls_dir, q["name"])
             os.makedirs(q_dir, exist_ok=True)
@@ -60,7 +59,17 @@ def transcode(object_name: str, guid: str):
             if variant_result.returncode != 0:
                 raise Exception(f"FFmpeg transcode failed for {q['name']}:\n{variant_result.stderr}")
 
-        print(f"[{guid}] 3/5 Creating Master Playlist (master.m3u8)...")
+        print(f"[{guid}] 3/6 Extracting standalone audio-only rendition (audio.m4a)...")
+        audio_result = subprocess.run([
+            "ffmpeg", "-y", "-i", input_path,
+            "-vn", "-c:a", "aac", "-b:a", "128k",
+            os.path.join(hls_dir, "audio.m4a")
+        ], capture_output=True, text=True)
+
+        if audio_result.returncode != 0:
+            raise Exception(f"FFmpeg audio extract failed:\n{audio_result.stderr}")
+
+        print(f"[{guid}] 4/6 Creating Master Playlist (master.m3u8)...")
         master_playlist_path = os.path.join(hls_dir, "master.m3u8")
         with open(master_playlist_path, "w") as f:
             f.write("#EXTM3U\n")
@@ -69,19 +78,21 @@ def transcode(object_name: str, guid: str):
             f.write('#EXT-X-STREAM-INF:BANDWIDTH=3100000,RESOLUTION=1280x720\n720p/index.m3u8\n')
             f.write('#EXT-X-STREAM-INF:BANDWIDTH=1600000,RESOLUTION=854x480\n480p/index.m3u8\n')
 
-        print(f"[{guid}] 4/5 Uploading all HLS files to videos/{guid}/...")
-        # Walk through the temporary directory and upload everything maintaining structure
+        print(f"[{guid}] 5/6 Uploading all files to videos/{guid}/...")
+        # Walk through temp directory and upload maintaining nested/flat structure
         for root, dirs, files in os.walk(hls_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                # Compute relative path from hls_dir to keep nested folders like 1080p/, 720p/
                 rel_path = os.path.relpath(file_path, hls_dir)
                 target = f"videos/{guid}/{rel_path.replace(os.sep, '/')}"
 
+                # Assign appropriate MIME types
                 if file.endswith(".m3u8"):
                     content_type = "application/vnd.apple.mpegurl"
                 elif file.endswith(".ts"):
                     content_type = "video/mp2t"
+                elif file.endswith(".m4a"):
+                    content_type = "audio/mp4"
                 else:
                     content_type = "application/octet-stream"
 
@@ -89,7 +100,8 @@ def transcode(object_name: str, guid: str):
 
         # Clean up the original raw upload to save space
         client.remove_object(BUCKET, object_name)
-        print(f"[{guid}] ✅ SUCCESS: Adaptive HLS available at videos/{guid}/master.m3u8")
+        print(
+            f"[{guid}] ✅ SUCCESS: ABR HLS available at videos/{guid}/master.m3u8 and audio at videos/{guid}/audio.m4a")
 
     except S3Error as e:
         print(f"[{guid}] ❌ MinIO Error: {e}")
@@ -101,7 +113,7 @@ def transcode(object_name: str, guid: str):
 
 
 def main():
-    print(f"FFmpeg Multi-Quality Worker started.", flush=True)
+    print(f"FFmpeg ABR + Audio Worker started.", flush=True)
     print(f"Target Endpoint: {ENDPOINT}", flush=True)
     print(f"Target Bucket: {BUCKET}", flush=True)
 

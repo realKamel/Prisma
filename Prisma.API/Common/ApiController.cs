@@ -9,6 +9,6 @@ namespace Prisma.API.Common;
 [ApiController]
 [Route("api/v{version:apiVersion}/[controller]")]
 [TranslateResultToActionResult]
-[LocalizeResult]
+// [LocalizeResult]
 [EnableRateLimiting(RateLimitPolicies.UserRead)]
 public class ApiController : ControllerBase { }

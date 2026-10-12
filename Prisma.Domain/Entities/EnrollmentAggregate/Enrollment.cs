@@ -8,16 +8,18 @@ using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Domain.Entities.EnrollmentAggregate;
 
-public class Enrollment : BaseEntity
+public sealed class Enrollment : BaseEntity
 {
-    public Guid? PublicId { get; init; } = Guid.CreateVersion7();
+    public Guid PublicId { get; init; } = Guid.CreateVersion7();
     public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
     public EnrollmentMethod EnrollmentMethod { get; set; }
-    public DateTimeOffset? ExpiresAt { get; set; }
+
+    public DateTimeOffset? ExpiresAt => ValidityDateRange?.EndDate;
+
+    public DateRange? ValidityDateRange { get; set; }
     public bool IsCompleted { get; set; }
     public DateTimeOffset? CompletedAt { get; set; }
 
-    public DateRange? ValidityDateRange { get; set; }
     public int? LessonId { get; set; }
     public Lesson? Lesson { get; set; }
 
@@ -137,7 +139,7 @@ public class Enrollment : BaseEntity
             PaymentId = paymentId,
             GeneratedCodeId = generatedCodeId,
             ValidityDateRange = validityDateRange,
-            ExpiresAt = endDate,
+            // ExpiresAt = endDate,
             Status = EnrollmentStatus.Active,
             IsCompleted = false,
         };
@@ -150,7 +152,6 @@ public class Enrollment : BaseEntity
     // {
     //     Status = EnrollmentStatus.Cancelled;
     // }
-
 
     /// <summary>
     /// Checks whether the enrollment has expired based on the provided current time.

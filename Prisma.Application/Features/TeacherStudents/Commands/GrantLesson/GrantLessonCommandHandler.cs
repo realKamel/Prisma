@@ -7,10 +7,11 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.GrantLesson;
 
-public class GrantLessonCommandHandler(IUnitOfWork unitOfWork)
+internal sealed class GrantLessonCommandHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GrantLessonCommand, Result>
 {
     public async Task<Result> Handle(
@@ -51,8 +52,10 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork)
             existing.DeletedBy = null;
             existing.Status = EnrollmentStatus.Active;
             existing.EnrollmentMethod = EnrollmentMethod.TeacherGrant;
-            existing.ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays);
-            existing.UpdatedAt = DateTimeOffset.UtcNow;
+            // existing.ExpiresAt = DateTimeOffset.UtcNow.AddDays();
+            existing.ValidityDateRange = DateRange.StartingNow(
+                TimeSpan.FromDays(request.ValidityDays)
+            );
         }
         else
         {
@@ -60,7 +63,8 @@ public class GrantLessonCommandHandler(IUnitOfWork unitOfWork)
             {
                 Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.TeacherGrant,
-                ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays),
+                // ExpiresAt = DateTimeOffset.UtcNow.AddDays(request.ValidityDays),
+                ValidityDateRange = DateRange.StartingNow(TimeSpan.FromDays(request.ValidityDays)),
                 LessonId = request.LessonId,
                 StudentId = request.StudentId,
                 CreatedAt = DateTimeOffset.UtcNow,

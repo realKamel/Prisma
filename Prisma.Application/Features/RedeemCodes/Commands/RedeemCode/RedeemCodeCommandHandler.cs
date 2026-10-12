@@ -10,6 +10,7 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 // Alias to avoid collision with Prisma.Application.Features.RedeemCodes namespace
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
@@ -116,14 +117,15 @@ internal sealed class RedeemCodeCommandHandler(
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
 
-        var expiresAt = DateTimeOffset.UtcNow.Add(lesson.ValidityRange.Duration);
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(lesson.ValidityDuration.Seconds);
 
-        Enrollment enrollment;
+        Enrollment enrollment = default!;
         if (existing is not null && existing.IsDeleted)
         {
             existing.Status = EnrollmentStatus.Active;
             existing.EnrollmentMethod = EnrollmentMethod.RedeemCode;
-            existing.ExpiresAt = expiresAt;
+            // existing.ExpiresAt = expiresAt;
+            enrollment.ValidityDateRange = DateRange.StartingNow(expiresAt);
             existing.GeneratedCodeId = generatedCode.Id;
             enrollment = existing;
         }
@@ -133,7 +135,8 @@ internal sealed class RedeemCodeCommandHandler(
             {
                 Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.RedeemCode,
-                ExpiresAt = expiresAt,
+                // ExpiresAt = expiresAt,
+                ValidityDateRange = DateRange.StartingNow(expiresAt),
                 LessonId = request.LessonId,
                 StudentId = studentId,
                 GeneratedCodeId = generatedCode.Id,

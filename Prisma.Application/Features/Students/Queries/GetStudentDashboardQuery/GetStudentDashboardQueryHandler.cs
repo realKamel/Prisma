@@ -11,6 +11,7 @@ using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.QuizAttemptSpecs;
 using Prisma.Domain.Specifications.Students;
 using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 
@@ -51,7 +52,8 @@ internal sealed class GetStudentDashboardQueryHandler(
                 userId,
                 e => new EnrollmentDashboardInfo(
                     e.Id,
-                    e.Lesson!.Id,
+                    e.Lesson.Id,
+                    e.Lesson.PublicId,
                     e.Lesson.Title,
                     e.Lesson.ImageThumbnailUrl,
                     e.Lesson.TimeDuration,
@@ -67,7 +69,8 @@ internal sealed class GetStudentDashboardQueryHandler(
                             s.TimeDuration,
                             s.Progresses.Any(p => p.StudentId == userId && p.IsCompleted)
                         ))
-                        .ToList()
+                        .ToList(),
+                    e.ValidityDateRange
                 )
             ),
             cancellationToken
@@ -162,13 +165,14 @@ internal sealed class GetStudentDashboardQueryHandler(
             return new LessonCardDto
             {
                 Id = enrollment.LessonId,
+                PublicId = enrollment.PublicLessonId,
                 Title = enrollment.LessonTitle ?? string.Empty,
                 Subject = enrollment.Subject ?? string.Empty,
                 TeacherName = enrollment.TeacherName ?? string.Empty,
                 TeacherInitial = !string.IsNullOrEmpty(enrollment.TeacherName)
                     ? enrollment.TeacherName[0].ToString()
                     : string.Empty,
-                Duration = enrollment.Duration.ToDto(),
+                Duration = enrollment.Duration?.ToDto(),
                 PosterUrl =
                     enrollment.LessonThumbnailUrl != null
                         ? await storageService.GetDownloadUrlAsync(
@@ -177,10 +181,11 @@ internal sealed class GetStudentDashboardQueryHandler(
                         )
                         : string.Empty,
                 Status = status.ToString().ToLower(),
-                ExpiresInDays =
-                    status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
-                        ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
-                        : null,
+                ValidityDateRange = enrollment.ValidityDateRange?.ToDto(),
+                // ExpiresInDays =
+                //     status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
+                //         ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
+                //         : null,
             };
         });
         var lessons = (await Task.WhenAll(lessonTasks)).ToList();
@@ -230,6 +235,7 @@ internal sealed class GetStudentDashboardQueryHandler(
     public sealed record EnrollmentDashboardInfo(
         int EnrollmentId,
         int LessonId,
+        Guid PublicLessonId,
         string? LessonTitle,
         string? LessonThumbnailUrl,
         TimeDuration? Duration,
@@ -239,6 +245,7 @@ internal sealed class GetStudentDashboardQueryHandler(
         DateTimeOffset? ExpiresAt,
         DateTimeOffset? CreatedAt,
         DateTimeOffset? CompletedAt,
-        List<SectionProgressInfo> Sections
+        List<SectionProgressInfo> Sections,
+        DateRange? ValidityDateRange
     );
 }

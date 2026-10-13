@@ -47,9 +47,11 @@ public record LessonCardDto
     public string TeacherName { get; init; } = string.Empty;
     public string TeacherInitial { get; init; } = string.Empty;
     public TimeDurationDto? Duration { get; init; }
+
+    public DateRangeDto? ValidityDateRange { get; init; }
     public string Status { get; init; }
     public string PosterUrl { get; init; } = string.Empty;
-    public int? ExpiresInDays { get; init; }
+    public int? ExpiresInDays => (int?)ValidityDateRange?.Duration.TotalDays;
 }
 
 public record StatsDto

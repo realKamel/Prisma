@@ -4,4 +4,4 @@ using Microsoft.AspNetCore.Http;
 
 namespace Prisma.Application.Features.AssignmentSubmissions.Commands.SubmitAssignment;
 
-public record SubmitAssignmentCommand(int LessonId, IFormFile File) : IRequest<Result>;
+public record SubmitAssignmentCommand(Guid LessonId, IFormFile File) : IRequest<Result>;

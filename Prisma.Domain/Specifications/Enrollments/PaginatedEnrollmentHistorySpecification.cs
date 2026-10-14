@@ -18,6 +18,7 @@ public class PaginatedEnrollmentHistorySpecification<TSelector>
         Query
             .Where(s => s.StudentId == id)
             .AsNoTracking()
+            .OrderByDescending(s => s.CreatedAt)
             .Skip(skipAmount < 0 ? 0 : skipAmount)
             .Take(take)
             .Select(selector);

@@ -47,7 +47,6 @@ internal static class LessonMappingHelper
 
         return new LessonCatalogDto
         {
-            Id = lesson.Id,
             PublicId = lesson.PublicId,
             Title = lesson.Title,
             Money = status == EnrollmentStatus.Available ? enrollment.Payment?.Money.ToDto() : null,

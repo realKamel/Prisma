@@ -5,6 +5,10 @@ namespace Prisma.Application.Features.TeacherStudents;
 
 public sealed class EnrollmentByStudentAndLessonSpec : Specification<Enrollment>
 {
+    public EnrollmentByStudentAndLessonSpec(Guid studentId, Guid lessonId)
+    {
+        Query.Where(e => e.StudentId == studentId && e.Lesson!.PublicId == lessonId).IgnoreQueryFilters();
+    }
     public EnrollmentByStudentAndLessonSpec(Guid studentId, int lessonId)
     {
         Query.Where(e => e.StudentId == studentId && e.LessonId == lessonId).IgnoreQueryFilters();

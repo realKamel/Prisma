@@ -11,14 +11,14 @@ using Prisma.Application.Features.AssignmentSubmissions.Commands.SubmitAssignmen
 
 namespace Prisma.API.Features.AssignmentSubmission;
 
-[Route("api/v{version:apiVersion}/lessons/{lessonId:int}/assignment-submission")]
+[Route("api/v{version:apiVersion}/lessons/{lessonId:Guid}/assignment-submission")]
 [EnableRateLimiting(RateLimitPolicies.UserWrite)]
 public class AssignmentSubmissionsController(IMediator mediator) : ApiController
 {
     [HttpGet]
     [ExpectedFailures(ResultStatus.Unauthorized, ResultStatus.NotFound)]
     public async Task<Result<AssignmentSubmissionDto?>> GetSubmission(
-        int lessonId,
+        Guid lessonId,
         CancellationToken cancellationToken
     )
     {
@@ -33,7 +33,7 @@ public class AssignmentSubmissionsController(IMediator mediator) : ApiController
         ResultStatus.Invalid
     )]
     public async Task<Result> SubmitAssignment(
-        int lessonId,
+        Guid lessonId,
         IFormFile file,
         CancellationToken cancellationToken
     )
@@ -48,7 +48,7 @@ public class AssignmentSubmissionsController(IMediator mediator) : ApiController
         ResultStatus.Unauthorized,
         ResultStatus.NotFound
     )]
-    public async Task<Result> DeleteSubmission(int lessonId, CancellationToken cancellationToken)
+    public async Task<Result> DeleteSubmission(Guid lessonId, CancellationToken cancellationToken)
     {
         return await mediator.Send(new DeleteAssignmentSubmissionCommand(lessonId), cancellationToken);
     }

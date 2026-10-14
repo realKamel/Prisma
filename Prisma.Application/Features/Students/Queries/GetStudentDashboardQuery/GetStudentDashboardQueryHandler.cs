@@ -5,7 +5,6 @@ using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.QuizAttemptSpecs;
@@ -51,9 +50,7 @@ internal sealed class GetStudentDashboardQueryHandler(
             new EnrollmentWithProjectionSpec<EnrollmentDashboardInfo>(
                 userId,
                 e => new EnrollmentDashboardInfo(
-                    e.Id,
-                    e.Lesson.Id,
-                    e.Lesson.PublicId,
+                    e.Lesson!.PublicId,
                     e.Lesson.Title,
                     e.Lesson.ImageThumbnailUrl,
                     e.Lesson.TimeDuration,
@@ -138,7 +135,7 @@ internal sealed class GetStudentDashboardQueryHandler(
 
             nextLessonDto = new NextLessonDto
             {
-                Id = lastActiveEnrollment.LessonId,
+                LessonPublicId = lastActiveEnrollment.LessonPublicId,
                 Title = lastActiveEnrollment.LessonTitle ?? string.Empty,
                 Subject = lastActiveEnrollment.Subject ?? string.Empty,
                 TeacherName = lastActiveEnrollment.TeacherName ?? string.Empty,
@@ -164,8 +161,7 @@ internal sealed class GetStudentDashboardQueryHandler(
 
             return new LessonCardDto
             {
-                Id = enrollment.LessonId,
-                PublicId = enrollment.PublicLessonId,
+                LessonPublicId = enrollment.LessonPublicId,
                 Title = enrollment.LessonTitle ?? string.Empty,
                 Subject = enrollment.Subject ?? string.Empty,
                 TeacherName = enrollment.TeacherName ?? string.Empty,
@@ -233,9 +229,7 @@ internal sealed class GetStudentDashboardQueryHandler(
     public sealed record TopQuizInfo(decimal? StudentScore, decimal? TopScore);
 
     public sealed record EnrollmentDashboardInfo(
-        int EnrollmentId,
-        int LessonId,
-        Guid PublicLessonId,
+        Guid LessonPublicId,
         string? LessonTitle,
         string? LessonThumbnailUrl,
         TimeDuration? Duration,

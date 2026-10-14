@@ -3,4 +3,4 @@ using MediatR;
 
 namespace Prisma.Application.Features.AssignmentSubmissions.Commands.DeleteAssignmentSubmission;
 
-public record DeleteAssignmentSubmissionCommand(int LessonId) : IRequest<Result>;
+public record DeleteAssignmentSubmissionCommand(Guid LessonId) : IRequest<Result>;

@@ -7,14 +7,14 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetailsProjection>
 {
-    public LessonWithDetailsSpecification(int lessonId)
+    public LessonWithDetailsSpecification(Guid lessonId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId)
+            .Where(lesson => lesson.PublicId == lessonId)
             .AsNoTracking()
             .Select(lesson => new LessonDetailsProjection
             {
-                Id = lesson.Id,
+                Id = lesson.PublicId,
                 Title = lesson.Title,
                 Description = lesson.Description,
                 Price = lesson.Price,
@@ -43,7 +43,7 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
 
 public record LessonDetailsProjection
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string? Title { get; init; }
     public string? Description { get; init; }
     public decimal Price { get; init; }

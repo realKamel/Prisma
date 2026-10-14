@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 
-public sealed record RedeemCodeCommand(string Code, int LessonId)
+public sealed record RedeemCodeCommand(string Code, Guid LessonId)
     : IRequest<Result<RedeemCodeResponse>>;
 
 public sealed record RedeemCodeResponse

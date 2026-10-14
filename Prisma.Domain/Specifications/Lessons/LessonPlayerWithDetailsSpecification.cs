@@ -6,15 +6,15 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonPlayerWithDetailsSpecification : Specification<Lesson, LessonPlayerProjection>
 {
-    public LessonPlayerWithDetailsSpecification(int lessonId, Guid studentId)
+    public LessonPlayerWithDetailsSpecification(Guid lessonId, Guid studentId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId)
+            .Where(lesson => lesson.PublicId == lessonId)
             .AsNoTracking()
             .AsSplitQuery()
             .Select(lesson => new LessonPlayerProjection
             {
-                Id = lesson.Id,
+                Id = lesson.PublicId,
                 Title = lesson.Title,
                 Description = lesson.Description,
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
@@ -91,7 +91,7 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
 
 public class LessonPlayerProjection
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Title { get; set; }
     public string? Description { get; set; }
     public Guid EnrollmentId { get; set; }

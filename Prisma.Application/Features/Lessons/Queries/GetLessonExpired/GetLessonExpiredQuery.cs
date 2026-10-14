@@ -4,11 +4,11 @@ using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
 
-public record GetLessonExpiredQuery(int LessonId) : IRequest<Result<LessonExpiredDto>>;
+public record GetLessonExpiredQuery(Guid LessonId) : IRequest<Result<LessonExpiredDto>>;
 
 public record LessonExpiredDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Url { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;

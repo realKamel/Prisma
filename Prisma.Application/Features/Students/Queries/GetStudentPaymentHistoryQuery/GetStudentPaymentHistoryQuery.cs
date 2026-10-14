@@ -9,7 +9,7 @@ public record GetStudentPaymentHistoryQuery() : IRequest<Result<StudentPaymentHi
 
 public record StudentPaymentHistoryResponseDto(
     PaymentStatsDto Stats,
-    List<StudentPaymentDetailsDto> Payments
+    ICollection<StudentPaymentDetailsDto> Payments
 );
 
 public record PaymentStatsDto(
@@ -22,8 +22,7 @@ public record PaymentStatsDto(
 public record StudentPaymentDetailsDto(
     string Id,
     string LessonTitle,
-    int LessonId,
-    string PosterVariant,
+    Guid LessonId,
     DateTimeOffset PaymentDate,
     decimal Amount,
     string Method,

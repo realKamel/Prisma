@@ -7,14 +7,14 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonExpiredSpecification : Specification<Lesson, LessonExpiredProjection>
 {
-    public LessonExpiredSpecification(int lessonId, Guid studentId)
+    public LessonExpiredSpecification(Guid lessonId, Guid studentId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId)
+            .Where(lesson => lesson.PublicId == lessonId)
             .AsNoTracking()
             .Select(lesson => new LessonExpiredProjection
             {
-                Id = lesson.Id,
+                Id = lesson.PublicId,
                 Title = lesson.Title,
                 Description = lesson.Description,
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
@@ -57,7 +57,7 @@ public class LessonExpiredSpecification : Specification<Lesson, LessonExpiredPro
 
 public class LessonExpiredProjection
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public string? Title { get; set; }
     public string? Description { get; set; }
     public string? ImageThumbnailUrl { get; set; }

@@ -28,7 +28,7 @@ public record StreakDto
 
 public record NextLessonDto
 {
-    public int Id { get; init; }
+    public Guid LessonPublicId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;
     public string TeacherName { get; init; } = string.Empty;
@@ -40,8 +40,7 @@ public record NextLessonDto
 
 public record LessonCardDto
 {
-    public int Id { get; init; }
-    public Guid PublicId { get; init; }
+    public Guid LessonPublicId { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;
     public string TeacherName { get; init; } = string.Empty;

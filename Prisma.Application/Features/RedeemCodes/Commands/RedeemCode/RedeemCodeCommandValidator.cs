@@ -10,8 +10,5 @@ public class RedeemCodeCommandValidator : AbstractValidator<RedeemCodeCommand>
             .NotEmpty()
             .MinimumLength(4)
             .MaximumLength(20);
-
-        RuleFor(x => x.LessonId)
-            .GreaterThan(0);
     }
 }

@@ -8,8 +8,10 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.RedeemCodes;
 using Prisma.Domain.Specifications.Teachers;
+using Prisma.Domain.ValueObjects.ContentDomain;
 using Prisma.Domain.ValueObjects.EnrollmentDomain;
 // Alias to avoid collision with Prisma.Application.Features.RedeemCodes namespace
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
@@ -78,7 +80,7 @@ internal sealed class RedeemCodeCommandHandler(
         var batch = await batchRepo.FirstOrDefaultAsync(
             new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(
                 generatedCode.BatchId,
-                b => new CodeBatchLessonInfo(b.LessonId, b.AcademicYearId, b.Lesson!.TeacherId)
+                b => new CodeBatchLessonInfo(b.Lesson.PublicId, b.AcademicYearId, b.Lesson!.TeacherId)
             ),
             ct
         );
@@ -113,11 +115,13 @@ internal sealed class RedeemCodeCommandHandler(
             return Result.Conflict("انت عندك الدرس ده بالفعل");
         }
 
-        var lesson = await lessonRepo.GetByIdAsync(request.LessonId);
+        var lesson = await lessonRepo.FirstOrDefaultAsync(
+            new LessonWithProjectionSpec<LessonInfo>(
+                request.LessonId, l => new LessonInfo(l.Id, l.ValidityDuration.Seconds)));
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
 
-        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(lesson.ValidityDuration.Seconds);
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(lesson.validityDuration);
 
         Enrollment enrollment = default!;
         if (existing is not null && existing.IsDeleted)
@@ -137,7 +141,7 @@ internal sealed class RedeemCodeCommandHandler(
                 EnrollmentMethod = EnrollmentMethod.RedeemCode,
                 // ExpiresAt = expiresAt,
                 ValidityDateRange = DateRange.StartingNow(expiresAt),
-                LessonId = request.LessonId,
+                LessonId = lesson.Id,
                 StudentId = studentId,
                 GeneratedCodeId = generatedCode.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -165,4 +169,6 @@ internal sealed class RedeemCodeCommandHandler(
     }
 }
 
-public sealed record CodeBatchLessonInfo(int LessonId, int? AcademicYearId, Guid? TeacherId);
+public sealed record LessonInfo(int Id, long validityDuration);
+
+public sealed record CodeBatchLessonInfo(Guid LessonId, int? AcademicYearId, Guid? TeacherId);

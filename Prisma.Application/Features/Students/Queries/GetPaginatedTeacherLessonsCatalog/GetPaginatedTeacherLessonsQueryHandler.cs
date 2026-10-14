@@ -108,7 +108,7 @@ internal sealed class GetPaginatedTeacherLessonsQueryHandler(
             status == EnrollmentStatus.Locked ? "تحتاج لإكمال الدرس السابق" : null;
         return new LessonCatalogDto
         {
-            Id = lesson.Id,
+            PublicId = lesson.PublicId,
             Title = lesson.Title,
             Money = status == EnrollmentStatus.Available ? lesson?.Money?.ToDto() : null,
             Status = status,

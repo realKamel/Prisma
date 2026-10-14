@@ -36,7 +36,7 @@ public class GetLessonFormOptionsQueryHandler(
         }
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson,int>();
         var allLessons = await lessonRepository.ListAsync(
-            new LessonWithProjectionSpec<LessonDto>(userId.Value,
+            new LessonWithProjectionSpec<LessonDto>(userId,
             l => new LessonDto(l.Title ?? string.Empty, l.Id)),cancellationToken);
         
 

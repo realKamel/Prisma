@@ -1,7 +1,15 @@
+using MediatR;
+
 namespace Prisma.Application.Common.Interfaces;
 
-public interface IAuthorizableRequest
+public interface IAuthorizableRequest<out TResponse> : IRequest<TResponse>
 {
-    IList<string> RequiredRoles { get; }
-    IList<string> RequiredPermissions { get; }
+    IReadOnlyList<string> RequiredRoles { get; }
+    IReadOnlyList<string> RequiredPermissions { get; }
+}
+
+public interface IAuthorizableRequest : IRequest
+{
+    IReadOnlyList<string> RequiredRoles { get; }
+    IReadOnlyList<string> RequiredPermissions { get; }
 }

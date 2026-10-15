@@ -40,14 +40,8 @@ public class GetLessonFormOptionsQueryHandler(
             l => new LessonDto(l.Title ?? string.Empty, l.Id)),cancellationToken);
         
 
-        var academicYearRepository = unitOfWork.GetOrCreateRepository<AcademicYear, int>();
-        var allAcademicYears = await academicYearRepository.ListAsync(cancellationToken);
-        var allAcademicYearsOptions = allAcademicYears
-            .Select(ay => new AcademicYearResponseDto(ay.Id, ay.Title ?? string.Empty))
-            .ToList();
-
         return Result<LessonFormOptionsResponseDto>.Success(
-            new LessonFormOptionsResponseDto(allLessons, allAcademicYearsOptions)
+            new LessonFormOptionsResponseDto(allLessons)
         );
 
 

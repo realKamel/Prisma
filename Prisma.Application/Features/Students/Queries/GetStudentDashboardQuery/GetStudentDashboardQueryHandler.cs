@@ -95,7 +95,7 @@ internal sealed class GetStudentDashboardQueryHandler(
 
         int completedLessonsCount = enrollments.Count(e => e.IsCompleted);
 
-        var totalStudyMinutes = enrollments
+        var totalStudySeconds = enrollments
             .SelectMany(e => e.Sections)
             .Where(s => s.IsCompletedByStudent)
             .Sum(s => s.Duration?.Seconds ?? 0);
@@ -104,7 +104,7 @@ internal sealed class GetStudentDashboardQueryHandler(
         {
             PurchasedLessons = enrollments.Count,
             CompletedLessons = completedLessonsCount,
-            StudyHours = (int)Math.Ceiling(totalStudyMinutes / 60.0),
+            StudyHours = (int)Math.Ceiling(totalStudySeconds / 60.0 / 60.0),
             TopQuizScore = topScore.HasValue ? (int)topScore.Value : 0,
         };
 

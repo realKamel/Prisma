@@ -73,7 +73,7 @@ public class CreateCodeBatchCommandHandler(
             return Result.Error("This lesson does not belong to the selected academic year.");
 
         // Verify teacher is linked to the requested academic year
-        var teacherAcademicYearRepo = unitOfWork.GetOrCreateRepository<AcademicYearTeacher, int>();
+        var teacherAcademicYearRepo = unitOfWork.GetOrCreateRepository<Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher, int>();
         var teacherHasAccess = await teacherAcademicYearRepo.AnyAsync(
             new TeacherAcademicYearExistsSpecification(teacherId, request.AcademicYearId),
             ct

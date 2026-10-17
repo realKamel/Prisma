@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Polly;
 using Prisma.Domain.Common;
+using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence.Repositories;
 
@@ -23,6 +27,15 @@ public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
 
     public async Task<int> SaveChangesAsync(CancellationToken ct)
     {
-        return await dbContext.SaveChangesAsync(ct);
+
+        try
+        {
+            return await dbContext.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            throw new UniqueConstraintViolationException(ex);
+        }
     }
 }

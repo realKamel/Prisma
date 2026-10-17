@@ -3,5 +3,5 @@ using Ardalis.Result;
 
 namespace Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
 
-public record SaveQuizAnswerCommand(int AttemptId, int QuestionId, int? ChoiceId, string? TextAnswer)
+public record SaveQuizAnswerCommand(int AttemptId, int QuestionId, int? ChoiceId, string? TextAnswer, long ClientSeq)
     : IRequest<Result>;

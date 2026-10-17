@@ -70,7 +70,8 @@ public static partial class WebAppHelper
                 policy.SetIsOriginAllowed(_ => true) // Dev
                     .AllowCredentials()
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .WithExposedHeaders("Retry-After");
             });
         });
 

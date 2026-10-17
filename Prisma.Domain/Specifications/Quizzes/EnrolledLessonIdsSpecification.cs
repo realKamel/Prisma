@@ -8,7 +8,7 @@ public class EnrolledLessonIdsSpecification : Specification<Enrollment, int?>
 {
     public EnrolledLessonIdsSpecification(Guid studentId)
     {
-        Query.Where(e => e.StudentId == studentId && e.Status == EnrollmentStatus.Active)
+        Query.Where(e => e.StudentId == studentId && (e.Status == EnrollmentStatus.Active || e.Status == EnrollmentStatus.Done))
             .Select(e => e.LessonId);
     }
 }

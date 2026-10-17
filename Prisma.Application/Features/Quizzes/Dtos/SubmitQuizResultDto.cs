@@ -9,4 +9,5 @@ public class SubmitQuizResultDto
     public string Status { get; set; } = string.Empty; // "submitted" | "graded"
     public decimal? Score { get; set; }
     public decimal TotalDegree { get; set; }
+    public bool WasLate { get; set; }
 }

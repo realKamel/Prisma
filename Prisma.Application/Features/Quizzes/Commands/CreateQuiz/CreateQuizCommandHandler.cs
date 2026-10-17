@@ -83,8 +83,8 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
             LessonId = request.Scope == QuizScope.LessonQuiz ? request.LessonId : null,
             AcademicYearId = request.Scope == QuizScope.ComprehensiveExam ? request.AcademicYearId : null,
             TimeInMinutes = TimeSpan.FromMinutes(request.DurationMinutes),
-            AvailableFrom = request.AvailableFrom,
-            DueDate = request.DueDate,
+            AvailableFrom = request.Scope == QuizScope.ComprehensiveExam? request.AvailableFrom: null,
+            DueDate = request.Scope == QuizScope.ComprehensiveExam ? request.DueDate : null,
             TotalDegree = totalDegree
         };
 

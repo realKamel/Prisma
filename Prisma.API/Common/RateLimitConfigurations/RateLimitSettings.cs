@@ -15,6 +15,9 @@ internal sealed class RateLimitSettings
 
     // LLM: Expensive compute, strict concurrency
     public LlmSettings Llm { get; set; } = new();
+
+    // Quiz: Strict limits for quiz attempts, to prevent abuse
+    public QuizRateLimitSettings Quiz { get; set; } = new();
 }
 
 public class AuthSettings
@@ -40,4 +43,10 @@ public class UserSettings
 public class LlmSettings
 {
     public int MaxConcurrentStreams { get; set; }
+}
+
+public class QuizRateLimitSettings
+{
+    public int AnswerBurstLimit { get; set; } = 60;
+    public int AnswerSustainedPerMinute { get; set; } = 120;
 }

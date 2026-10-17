@@ -1,17 +1,19 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Admin;
 
-namespace Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
+namespace Prisma.Application.Features.ActivityLogs.Queries.GetAdminStatsQuery;
 
 internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
     : IRequestHandler<GetAdminStatsQuery, Result<AdminStatsResponseDto>>
 {
-    public async Task<Result<AdminStatsResponseDto>> Handle(GetAdminStatsQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<AdminStatsResponseDto>> Handle(
+        GetAdminStatsQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var studentRepo = _unitOfWork.GetOrCreateRepository<Student, Guid>();
         var paymentRepo = _unitOfWork.GetOrCreateRepository<Payment, int>();
@@ -28,24 +30,31 @@ internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
         decimal studentsDelta = 0;
         if (studentsLastMonth > 0)
         {
-            studentsDelta = Math.Round(((decimal)(studentsThisMonth - studentsLastMonth) / studentsLastMonth) * 100, 1);
+            studentsDelta = Math.Round(
+                ((decimal)(studentsThisMonth - studentsLastMonth) / studentsLastMonth) * 100,
+                1
+            );
         }
         else if (studentsThisMonth > 0)
         {
             studentsDelta = 100;
         }
 
-
         var spec = new AdminSuccessfulPaymentsSpec();
         var successfulPayments = await paymentRepo.ListAsync(spec, cancellationToken);
 
         var paymentsThisMonth = successfulPayments
-            .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfThisMonth).ToList();
+            .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfThisMonth)
+            .ToList();
         decimal revenueThisMonth = paymentsThisMonth.Sum(p => p.Money.Amount);
         int lessonsSoldThisMonth = paymentsThisMonth.Count;
 
         var paymentsLastMonth = successfulPayments
-            .Where(p => p.PaidAt.HasValue && p.PaidAt.Value >= startOfLastMonth && p.PaidAt.Value < startOfThisMonth)
+            .Where(p =>
+                p.PaidAt.HasValue
+                && p.PaidAt.Value >= startOfLastMonth
+                && p.PaidAt.Value < startOfThisMonth
+            )
             .ToList();
         decimal revenueLastMonth = paymentsLastMonth.Sum(p => p.Money.Amount);
         int lessonsSoldLastMonth = paymentsLastMonth.Count;
@@ -53,7 +62,10 @@ internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
         decimal revenueDelta = 0;
         if (revenueLastMonth > 0)
         {
-            revenueDelta = Math.Round(((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100, 1);
+            revenueDelta = Math.Round(
+                ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100,
+                1
+            );
         }
         else if (revenueThisMonth > 0)
         {
@@ -63,8 +75,11 @@ internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
         decimal lessonsDelta = 0;
         if (lessonsSoldLastMonth > 0)
         {
-            lessonsDelta =
-                Math.Round(((decimal)(lessonsSoldThisMonth - lessonsSoldLastMonth) / lessonsSoldLastMonth) * 100, 1);
+            lessonsDelta = Math.Round(
+                ((decimal)(lessonsSoldThisMonth - lessonsSoldLastMonth) / lessonsSoldLastMonth)
+                    * 100,
+                1
+            );
         }
         else if (lessonsSoldThisMonth > 0)
         {
@@ -76,7 +91,7 @@ internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
             new("students", totalStudents, studentsDelta),
             new("revenue", successfulPayments.Sum(p => p.Money.Amount), revenueDelta),
             new("lessons-sold", successfulPayments.Count, lessonsDelta),
-            new("uptime", 99.9m, 0)
+            new("uptime", 99.9m, 0),
         };
 
         var revenueWeek = new List<RevenueWeekDto>();
@@ -90,11 +105,13 @@ internal sealed class GetAdminStatsQueryHandler(IUnitOfWork _unitOfWork)
                 .Where(p => p.PaidAt.HasValue && p.PaidAt.Value.Date == currentDayDate)
                 .Sum(p => p.Money.Amount);
 
-            revenueWeek.Add(new RevenueWeekDto(
-                Date: new DateTimeOffset(currentDayDate, now.Offset),
-                Amount: dayAmount,
-                IsToday: currentDayDate == today
-            ));
+            revenueWeek.Add(
+                new RevenueWeekDto(
+                    Date: new DateTimeOffset(currentDayDate, now.Offset),
+                    Amount: dayAmount,
+                    IsToday: currentDayDate == today
+                )
+            );
         }
 
         var response = new AdminStatsResponseDto(

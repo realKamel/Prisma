@@ -8,7 +8,7 @@ using Prisma.Infrastructure.Persistence.Repositories;
 
 namespace Prisma.Infrastructure.Persistence;
 
-public class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
+internal sealed class UnitOfWork(AppDbContext dbContext) : IUnitOfWork
 {
     private readonly Dictionary<Type, object> _repositories = [];
 

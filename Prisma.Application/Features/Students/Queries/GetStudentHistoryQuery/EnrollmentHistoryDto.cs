@@ -1,7 +1,7 @@
 namespace Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 
 public record EnrollmentHistoryDto(
-    int PublicId,
+    Guid PublicId,
     string ImageThumbnailUrl,
     string Title,
     string Status,

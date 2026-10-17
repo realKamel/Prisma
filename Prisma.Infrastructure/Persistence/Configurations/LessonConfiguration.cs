@@ -16,7 +16,10 @@ internal sealed class LessonConfiguration : IEntityTypeConfiguration<Lesson>
 
         builder.ComplexProperty(x => x.Money).ConfigureMoney<Lesson>();
         builder.ComplexProperty(x => x.ValidityRange).ConfigureDateRange<Lesson>();
-        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Lesson>();
+        builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Lesson>("TimeDuration");
+        builder
+            .ComplexProperty(x => x.ValidityDuration)
+            .ConfigureTimeDuration<Lesson>("ValidityDuration");
 
         builder.HasMany(l => l.RedeemCodes).WithOne(r => r.Lesson).HasForeignKey(r => r.LessonId);
 

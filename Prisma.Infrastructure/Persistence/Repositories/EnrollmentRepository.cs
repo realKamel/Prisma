@@ -6,7 +6,8 @@ using Prisma.Domain.Repositories;
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
 internal sealed class EnrollmentRepository(AppDbContext dbContext)
-    : Repository<Enrollment, int>(dbContext), IEnrollmentRepository
+    : Repository<Enrollment, int>(dbContext),
+        IEnrollmentRepository
 {
     private readonly AppDbContext _dbContext = dbContext;
 
@@ -25,12 +26,12 @@ internal sealed class EnrollmentRepository(AppDbContext dbContext)
                 // 2. Count completed lessons
                 g.Count(e => e.IsCompleted),
                 // 3. Sum study hours (convert TimeSpan to seconds for safe SQL translation)
-                (int)(g.Sum(e => e.Lesson != null ? e.Lesson.Duration.TotalSeconds : 0.0) / 3600.0),
+                (int)(g.Sum(e => e.Lesson != null ? e.Lesson.TimeDuration.Seconds : 0.0) / 3600.0),
                 // 4. Average quiz degree (null-safe to avoid skewing results)
                 g.Average(e =>
                     e.Lesson != null && e.Lesson.Quiz != null
                         ? e.Lesson.Quiz.Attempts.FirstOrDefault(a => a.StudentId == userId)!.Degree
-                          / e.Lesson.Quiz.TotalDegree
+                            / e.Lesson.Quiz.TotalDegree
                         : null
                 ) ?? 0m
             ))

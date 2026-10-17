@@ -19,19 +19,24 @@ using Prisma.Infrastructure.DependenciesInjections;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
 
-
 namespace Prisma.API.Extensions;
 
 public static partial class WebAppHelper
 {
-    public static void AddWebAppServices(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
+    public static void AddWebAppServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment
+    )
     {
         // web api services
-        services.AddSerilog((sp, loggerConfiguration) => loggerConfiguration
-            .ReadFrom.Configuration(configuration)
-            .ReadFrom.Services(sp)
-            .Enrich.FromLogContext());
+        services.AddSerilog(
+            (sp, loggerConfiguration) =>
+                loggerConfiguration
+                    .ReadFrom.Configuration(configuration)
+                    .ReadFrom.Services(sp)
+                    .Enrich.FromLogContext()
+        );
 
         services.AddProblemDetails(options =>
         {
@@ -41,8 +46,8 @@ public static partial class WebAppHelper
             };
         });
 
-        services.AddControllers(options =>
-                options.AddDefaultResultConvention())
+        services
+            .AddControllers(options => options.AddDefaultResultConvention())
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(
@@ -69,7 +74,8 @@ public static partial class WebAppHelper
         // Add forwarded headers BEFORE anything else that reads the request scheme
         services.Configure<ForwardedHeadersOptions>(options =>
         {
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 
             // Clear known networks and proxies so .NET trusts (Caddy|Traefik)'s headers inside Docker
             options.KnownIPNetworks.Clear();
@@ -105,50 +111,59 @@ public static partial class WebAppHelper
         public void UseRecurringJobs()
         {
             using IServiceScope scope = app.Services.CreateScope();
-            IBackgroundJobService jobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+            IBackgroundJobService jobService =
+                scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
 
             //Every Friday at 10:00 PM
             jobService.AddOrUpdateRecurring<ReportGenerationJob>(
                 JobQueues.Reports,
                 x => x.GenerateWeekly(),
-                Cron.Weekly(DayOfWeek.Friday, 22, 0));
+                Cron.Weekly(DayOfWeek.Friday, 22, 0)
+            );
 
             // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
-            jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
-                JobQueues.QuizAttemptFinalization,
-                x => x.FinalizeExpiredAttempts(CancellationToken.None),
-                Cron.Minutely());
-        
-    }
+            // jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
+            //     JobQueues.QuizAttemptFinalization,
+            //     x => x.FinalizeExpiredAttempts(CancellationToken.None),
+            //     Cron.Minutely());
+        }
 
         public void UseHangfireUi()
         {
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = [new HangfireDashboardAuthFilter()] //TODO: restrict to admins
-            });
+            app.UseHangfireDashboard(
+                "/hangfire",
+                new DashboardOptions
+                {
+                    Authorization = [new HangfireDashboardAuthFilter()], //TODO: restrict to admins
+                }
+            );
         }
 
         public void MapAppHealthChecks()
         {
             // 1. Liveness Probe (Lightweight)
-            // Kubernetes uses this to know if the app process is alive. 
+            // Kubernetes uses this to know if the app process is alive.
             // We exclude heavy checks (like DB), so a temporary DB blip doesn't restart the whole pod.
-            app.MapHealthChecks("/health/live", new HealthCheckOptions
-            {
-                Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-            });
+            app.MapHealthChecks(
+                "/health/live",
+                new HealthCheckOptions
+                {
+                    Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+                }
+            );
 
             // 2. Readiness Probe (Heavyweight)
             // Kubernetes / Load Balancers use this to know if the app can accept traffic.
             // This includes Postgres, Valkey, and Hangfire (as we tagged them with "ready").
-            app.MapHealthChecks("/health/ready",
+            app.MapHealthChecks(
+                "/health/ready",
                 new HealthCheckOptions
                 {
                     Predicate = check => check.Tags.Contains("ready"),
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-                });
+                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+                }
+            );
         }
 
         public void MapOpenAiResponses(IHostEnvironment environment)
@@ -165,12 +180,14 @@ public static partial class WebAppHelper
         public void UseLocalization()
         {
             var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
-            app.UseRequestLocalization(new RequestLocalizationOptions
-            {
-                DefaultRequestCulture = new RequestCulture("en-US"),
-                SupportedCultures = supportedCultures, // For dates, numbers, currency
-                SupportedUICultures = supportedCultures // For string localizations
-            });
+            app.UseRequestLocalization(
+                new RequestLocalizationOptions
+                {
+                    DefaultRequestCulture = new RequestCulture("en-US"),
+                    SupportedCultures = supportedCultures, // For dates, numbers, currency
+                    SupportedUICultures = supportedCultures, // For string localizations
+                }
+            );
         }
     }
 }

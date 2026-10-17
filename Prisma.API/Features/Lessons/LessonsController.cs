@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
+using Prisma.API.Filters;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
@@ -23,9 +24,9 @@ namespace Prisma.API.Features.Lessons;
 
 public sealed class LessonsController(IMediator mediator) : ApiController
 {
-    [HttpGet("{id:int}/details")]
+    [HttpGet("{id:Guid}/details")]
     public async Task<Result<LessonDetailsDto>> GetLessonDetails(
-        [FromRoute] int id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken
     )
     {
@@ -33,9 +34,9 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return await mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("{id:int}/watch")]
+    [HttpGet("{id:Guid}/watch")]
     public async Task<Result<LessonPlayerResult>> GetLessonPlayerDetails(
-        [FromRoute] int id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken
     )
     {
@@ -43,9 +44,9 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return await mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("{id:int}/status")]
+    [HttpGet("{id:Guid}/status")]
     public async Task<Result<LessonStatusResponse>> GetLessonStatus(
-        [FromRoute] int id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken
     )
     {
@@ -61,7 +62,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return await mediator.Send(query, cancellationToken);
     }
 
-    [HttpGet("{id:int}/expired-details")]
+    [HttpGet("{id:Guid}/expired-details")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
         ResultStatus.Error,
@@ -70,7 +71,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         ResultStatus.Unauthorized
     )]
     public async Task<Result<LessonExpiredDto>> GetExpiredLessonDetails(
-        [FromRoute] int id,
+        [FromRoute] Guid id,
         CancellationToken cancellationToken
     )
     {
@@ -95,6 +96,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpPost]
+    [Idempotent]
     [Consumes("multipart/form-data")]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<CreateLessonResponse>> CreateLesson(
@@ -107,6 +109,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpDelete("{id:int}")]
+    [Idempotent]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteLesson([FromRoute] int id, CancellationToken cancellationToken)
     {
@@ -114,6 +117,7 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     }
 
     [HttpPut("{id:int}/editor")]
+    [Idempotent]
     [Consumes("multipart/form-data")]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result<UpdateLessonResponse>> UpdateLessonEditorDetails(

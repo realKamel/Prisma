@@ -108,7 +108,7 @@ internal sealed class GetPaginatedTeacherLessonsQueryHandler(
             status == EnrollmentStatus.Locked ? "تحتاج لإكمال الدرس السابق" : null;
         return new LessonCatalogDto
         {
-            Id = lesson.Id,
+            PublicId = lesson.PublicId,
             Title = lesson.Title,
             Money = status == EnrollmentStatus.Available ? lesson?.Money?.ToDto() : null,
             Status = status,
@@ -117,7 +117,7 @@ internal sealed class GetPaginatedTeacherLessonsQueryHandler(
             ExpiresAt = enrollment?.ExpiresAt,
             TeacherName = teacherName,
             Subject = lesson?.Teacher?.Subject,
-            Duration = new TimeDurationDto((int)(lesson?.Duration.TotalSeconds ?? 0)),
+            Duration = lesson?.TimeDuration.ToDto() ?? new TimeDurationDto(0),
             ImageThumbnailUrl = imageThumbnailUrl,
         };
     }

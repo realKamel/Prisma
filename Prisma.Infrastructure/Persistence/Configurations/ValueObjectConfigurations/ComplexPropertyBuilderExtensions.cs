@@ -13,14 +13,18 @@ internal static class ComplexPropertyBuilderExtensions
 {
     public static ComplexPropertyBuilder<FullName> ConfigureFullName<TEntity>(
         this ComplexPropertyBuilder<FullName> builder,
-        string prefix = "FullName") where TEntity : class
+        string prefix = "FullName"
+    )
+        where TEntity : class
     {
-        builder.Property(f => f.FirstName)
+        builder
+            .Property(f => f.FirstName)
             .HasColumnName($"{prefix}_FirstName")
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(f => f.SecondName)
+        builder
+            .Property(f => f.SecondName)
             .HasColumnName($"{prefix}_SecondName")
             .HasMaxLength(100)
             .IsRequired();
@@ -30,14 +34,18 @@ internal static class ComplexPropertyBuilderExtensions
 
     public static ComplexPropertyBuilder<Money> ConfigureMoney<TEntity>(
         this ComplexPropertyBuilder<Money> builder,
-        string prefix = "Money") where TEntity : class
+        string prefix = "Money"
+    )
+        where TEntity : class
     {
-        builder.Property(m => m.Amount)
+        builder
+            .Property(m => m.Amount)
             .HasColumnName($"{prefix}_Amount")
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.Property(m => m.Currency)
+        builder
+            .Property(m => m.Currency)
             .HasColumnName($"{prefix}_Currency")
             .HasMaxLength(3)
             .IsFixedLength()
@@ -48,47 +56,45 @@ internal static class ComplexPropertyBuilderExtensions
 
     public static ComplexPropertyBuilder<TimeDuration> ConfigureTimeDuration<TEntity>(
         this ComplexPropertyBuilder<TimeDuration> builder,
-        string prefix = "TimeDuration") where TEntity : class
+        string prefix
+    )
+        where TEntity : class
     {
-        builder.Property(m => m.Seconds)
-            .HasColumnName($"{prefix}_Seconds")
-            .IsRequired();
+        builder.Property(m => m.Seconds).HasColumnName($"{prefix}_Seconds").IsRequired();
 
         return builder;
     }
 
     public static ComplexPropertyBuilder<EmailAddress> ConfigureEmailAddress<TEntity>(
         this ComplexPropertyBuilder<EmailAddress> builder,
-        string columnName = "Email") where TEntity : class
+        string columnName = "Email"
+    )
+        where TEntity : class
     {
-        builder.Property(e => e.Value)
-            .HasColumnName(columnName)
-            .HasMaxLength(255)
-            .IsRequired();
+        builder.Property(e => e.Value).HasColumnName(columnName).HasMaxLength(255).IsRequired();
 
         return builder;
     }
 
     public static ComplexPropertyBuilder<DateRange> ConfigureDateRange<TEntity>(
         this ComplexPropertyBuilder<DateRange> builder,
-        string columnName = "DateRange") where TEntity : class
+        string columnName = "DateRange"
+    )
+        where TEntity : class
     {
-        builder.Property(dr => dr.StartDate)
-            .HasColumnName($"{columnName}_StartDate");
+        builder.Property(dr => dr.StartDate).HasColumnName($"{columnName}_StartDate");
 
-        builder.Property(dr => dr.EndDate)
-            .HasColumnName($"{columnName}_EndDate");
+        builder.Property(dr => dr.EndDate).HasColumnName($"{columnName}_EndDate");
         return builder;
     }
 
     public static ComplexPropertyBuilder<Percentage> ConfigurePercentage<TEntity>(
         this ComplexPropertyBuilder<Percentage> builder,
-        string columnName = "Percentage") where TEntity : class
+        string columnName = "Percentage"
+    )
+        where TEntity : class
     {
-        builder.Property(p => p.Value)
-            .HasColumnName(columnName)
-            .HasPrecision(5, 2)
-            .IsRequired();
+        builder.Property(p => p.Value).HasColumnName(columnName).HasPrecision(5, 2).IsRequired();
 
         return builder;
     }
@@ -98,9 +104,12 @@ internal static class ComplexPropertyBuilderExtensions
     /// </summary>
     public static ComplexPropertyBuilder<Slug> ConfigureSlug<TEntity>(
         this ComplexPropertyBuilder<Slug> builder,
-        string columnName = "Slug") where TEntity : class
+        string columnName = "Slug"
+    )
+        where TEntity : class
     {
-        builder.Property(s => s.Value)
+        builder
+            .Property(s => s.Value)
             .HasColumnName(columnName)
             .HasMaxLength(200)
             .IsUnicode(true)
@@ -114,9 +123,12 @@ internal static class ComplexPropertyBuilderExtensions
     /// </summary>
     public static ComplexPropertyBuilder<OptionKey> ConfigureOptionKey<TEntity>(
         this ComplexPropertyBuilder<OptionKey> builder,
-        string columnName = "OptionKey") where TEntity : class
+        string columnName = "OptionKey"
+    )
+        where TEntity : class
     {
-        builder.Property(o => o.Value)
+        builder
+            .Property(o => o.Value)
             .HasColumnName(columnName)
             .HasMaxLength(1)
             .IsUnicode(false)
@@ -130,30 +142,39 @@ internal static class ComplexPropertyBuilderExtensions
     /// </summary>
     public static ComplexPropertyBuilder<PassingScore> ConfigurePassingScore<TEntity>(
         this ComplexPropertyBuilder<PassingScore> builder,
-        string columnName = "PassingScorePercentage") where TEntity : class
+        string columnName = "PassingScorePercentage"
+    )
+        where TEntity : class
     {
-        builder.ComplexProperty(p => p.Value, percentageBuilder =>
-        {
-            percentageBuilder.Property(p => p.Value)
-                .HasColumnName(columnName)
-                .HasPrecision(5, 2)
-                .IsRequired();
-        });
+        builder.ComplexProperty(
+            p => p.Value,
+            percentageBuilder =>
+            {
+                percentageBuilder
+                    .Property(p => p.Value)
+                    .HasColumnName(columnName)
+                    .HasPrecision(5, 2)
+                    .IsRequired();
+            }
+        );
 
         return builder;
     }
 
-
     public static ComplexPropertyBuilder<Score> ConfigureScore<TEntity>(
         this ComplexPropertyBuilder<Score> builder,
-        string prefix = "Score") where TEntity : class
+        string prefix = "Score"
+    )
+        where TEntity : class
     {
-        builder.Property(g => g.AchievedPoints)
+        builder
+            .Property(g => g.AchievedPoints)
             .HasColumnName($"{prefix}_AchievedPoints")
             .HasPrecision(7, 2)
             .IsRequired();
 
-        builder.Property(g => g.MaxPoints)
+        builder
+            .Property(g => g.MaxPoints)
             .HasColumnName($"{prefix}_MaxPoints")
             .HasPrecision(7, 2)
             .IsRequired();
@@ -164,9 +185,12 @@ internal static class ComplexPropertyBuilderExtensions
     public static ComplexPropertyBuilder<PhoneNumber> ConfigurePhoneNumber<TEntity>(
         this ComplexPropertyBuilder<PhoneNumber> builder,
         string columnName = "MobilePhoneNumber",
-        int maxLength = 20) where TEntity : class
+        int maxLength = 20
+    )
+        where TEntity : class
     {
-        builder.Property(p => p.Value)
+        builder
+            .Property(p => p.Value)
             .HasColumnName(columnName)
             .HasMaxLength(maxLength)
             .IsRequired();

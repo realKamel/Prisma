@@ -4,11 +4,11 @@ using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 
-public record GetLessonDetailsQuery(int LessonId) : IRequest<Result<LessonDetailsDto>>;
+public record GetLessonDetailsQuery(Guid LessonId) : IRequest<Result<LessonDetailsDto>>;
 
 public record LessonDetailsDto
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Url { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;
@@ -16,8 +16,11 @@ public record LessonDetailsDto
     public TimeDurationDto Duration { get; init; }
     public int ChaptersCount { get; init; }
     public int StudentsCount { get; init; }
+
     public MoneyDto Money { get; init; }
-    public int ValidityDays { get; init; }
+
+    // public int ValidityDays { get; init; }
+    public TimeDurationDto ValidityDuration { get; init; }
     public DateRangeDto? ValidityDateRange { get; set; }
     public string AboutText { get; init; } = string.Empty;
     public IList<string> Outcomes { get; init; } = [];

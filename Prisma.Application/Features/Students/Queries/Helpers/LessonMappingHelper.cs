@@ -47,7 +47,6 @@ internal static class LessonMappingHelper
 
         return new LessonCatalogDto
         {
-            Id = lesson.Id,
             PublicId = lesson.PublicId,
             Title = lesson.Title,
             Money = status == EnrollmentStatus.Available ? enrollment.Payment?.Money.ToDto() : null,
@@ -57,7 +56,7 @@ internal static class LessonMappingHelper
             ExpiresAt = enrollment.ExpiresAt,
             TeacherName = teacherName,
             Subject = lesson.Teacher?.Subject,
-            Duration = new TimeDurationDto((int)lesson.Duration.TotalSeconds),
+            Duration = lesson.TimeDuration.ToDto(),
             ImageThumbnailUrl = imageThumbnailUrl,
         };
     }

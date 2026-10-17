@@ -1,20 +1,24 @@
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
-public class GetLessonPlayerQueryHandler(
+internal sealed class GetLessonPlayerQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IVideoStorageService videoStorageService,
-    IStorageService storageService) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
+    IStorageService storageService
+) : IRequestHandler<GetLessonPlayerQuery, Result<LessonPlayerResult>>
 {
-    public async Task<Result<LessonPlayerResult>> Handle(GetLessonPlayerQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<LessonPlayerResult>> Handle(
+        GetLessonPlayerQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var studentId = currentUserService.UserId;
         if (studentId == null)
@@ -40,40 +44,46 @@ public class GetLessonPlayerQueryHandler(
 
         foreach (var s in lesson.Sections.OrderBy(x => x.SortOrder))
         {
-            var contentUrl = s.PlaybackId != null
-                ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)
-                : null;
+            var contentUrl =
+                s.PlaybackId != null
+                    ? await videoStorageService.GetVideoUrlAsync(s.PlaybackId)
+                    : null;
 
-            sections.Add(new SectionDto
-            {
-                Id = s.SortOrder,
-                SectionId = s.Id,
-                Title = s.Title ?? string.Empty,
-                Duration = s.Duration.ToString(@"hh\:mm\:ss"),
-                IsCompleted = s.IsCompleted,
-                ContentUrl = contentUrl,
-                Progress = s.IsCompleted ? 100 : 0,
-                WatchedSeconds = s.WatchedSeconds
-            });
+            sections.Add(
+                new SectionDto
+                {
+                    Id = s.SortOrder,
+                    SectionId = s.Id,
+                    Title = s.Title ?? string.Empty,
+                    Duration = s.Duration?.ToDto() ?? new TimeDurationDto(),
+                    IsCompleted = s.IsCompleted,
+                    ContentUrl = contentUrl,
+                    Progress = s.IsCompleted ? 100 : 0,
+                    WatchedSeconds = s.WatchedSeconds,
+                }
+            );
         }
 
         var materials = new List<MaterialDto>();
         foreach (var m in lesson.Materials)
         {
-            materials.Add(new MaterialDto
-            {
-                Title = m.Title ?? string.Empty,
-                DownloadUrl = m.DownloadUrl != null
-                    ? await storageService.GetDownloadUrlAsync(m.DownloadUrl)
-                    : string.Empty,
-                Type = m.Type switch
+            materials.Add(
+                new MaterialDto
                 {
-                    0 => "pdf",
-                    1 => "video",
-                    2 => "audio",
-                    _ => "unknown"
+                    Title = m.Title ?? string.Empty,
+                    DownloadUrl =
+                        m.DownloadUrl != null
+                            ? await storageService.GetDownloadUrlAsync(m.DownloadUrl)
+                            : string.Empty,
+                    Type = m.Type switch
+                    {
+                        0 => "pdf",
+                        1 => "video",
+                        2 => "audio",
+                        _ => "unknown",
+                    },
                 }
-            });
+            );
         }
 
         var videoPoster = lesson.ImageThumbnailUrl is not null
@@ -108,14 +118,15 @@ public class GetLessonPlayerQueryHandler(
                 : new AssignmentDto
                 {
                     Id = lesson.Assignment.Id,
-                    ContentURL = lesson.Assignment.ContentURL != null
-                        ? await storageService.GetDownloadUrlAsync(lesson.Assignment.ContentURL)
-                        : null,
+                    ContentURL =
+                        lesson.Assignment.ContentURL != null
+                            ? await storageService.GetDownloadUrlAsync(lesson.Assignment.ContentURL)
+                            : null,
                     DueDate = lesson.Assignment.DueDate,
-                    FileName = lesson.Assignment.SubmissionTitle ?? string.Empty
+                    FileName = lesson.Assignment.SubmissionTitle ?? string.Empty,
                 },
             Sections = sections,
-            IsEnrollmentCompleted = lesson.IsEnrollmentCompleted
+            IsEnrollmentCompleted = lesson.IsEnrollmentCompleted,
         };
 
         return result;

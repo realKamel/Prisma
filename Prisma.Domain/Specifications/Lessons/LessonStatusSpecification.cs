@@ -5,14 +5,14 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonStatusSpecification : Specification<Lesson, LessonStatusProjection>
 {
-    public LessonStatusSpecification(int lessonId, Guid studentId)
+    public LessonStatusSpecification(Guid lessonId, Guid studentId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId)
+            .Where(lesson => lesson.PublicId == lessonId)
             .AsNoTracking()
             .Select(lesson => new LessonStatusProjection
             {
-                Id = lesson.Id,
+                PublicId = lesson.PublicId,
                 HasEnrollment = lesson.Enrollments.Any(e => e.StudentId == studentId),
                 EnrollmentExpiresAt = lesson
                     .Enrollments.Where(e => e.StudentId == studentId)
@@ -31,7 +31,7 @@ public class LessonStatusSpecification : Specification<Lesson, LessonStatusProje
 
 public class LessonStatusProjection
 {
-    public int Id { get; set; }
+    public Guid PublicId { get; set; }
     public DateTimeOffset? EnrollmentExpiresAt { get; set; }
     public bool HasEnrollment { get; set; }
     public bool HasPrerequisite { get; set; }

@@ -1,13 +1,15 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 
-public record GetLessonPlayerQuery(int Id) : IRequest<Result<LessonPlayerResult>>;
+public record GetLessonPlayerQuery(Guid Id) : IRequest<Result<LessonPlayerResult>>;
 
 public record LessonPlayerResult
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string Title { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
     public string Subject { get; init; } = string.Empty;
@@ -56,7 +58,7 @@ public record SectionDto
     public int Id { get; init; }
     public int SectionId { get; init; }
     public string Title { get; init; } = string.Empty;
-    public string Duration { get; init; } = string.Empty;
+    public TimeDurationDto Duration { get; init; }
     public bool IsCompleted { get; init; }
     public string? ContentUrl { get; init; }
     public int Progress { get; init; }

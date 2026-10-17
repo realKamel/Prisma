@@ -9,6 +9,7 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
@@ -16,8 +17,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IIdentityService userManager,
-    IStorageService storageService,
-    IBackgroundJobService backgroundJobService
+    IStorageService storageService
 ) : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
     public async Task<Result<CreateLessonResponse>> Handle(
@@ -33,6 +33,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
         }
 
         var user = await userManager.FindByIdAsync(userId.Value, cancellationToken);
+
         if (user is null)
         {
             return Result.Unauthorized();
@@ -77,7 +78,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
 
             var teacherExists =
                 await userManager.FindByIdAsync(request.TeacherId.Value, cancellationToken)
-                    is Teacher;
+                is Teacher;
 
             if (!teacherExists)
             {
@@ -97,6 +98,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
             Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
             Outcomes = request.Outcomes,
             TeacherId = teacherId,
+            ValidityDuration = TimeDuration.Create(request.ValidityDurationInSeconds),
         };
 
         if (request.ImageFile != null && request.ImageFile.Length > 0)
@@ -127,7 +129,8 @@ internal sealed class CreateLessonDetailsCommandHandler(
                         SortOrder = order++,
                         PlaybackId = ch.VideoFileName?.Split('.')[0],
                         AssetId = ch.VideoFileName?.Split('.')[0],
-                        Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds)
+                        // Duration = TimeSpan.FromSeconds(ch.VideoDurationSeconds),
+                        TimeDuration = TimeDuration.Create(ch.VideoDurationSeconds),
                     }
                 );
             }
@@ -180,18 +183,19 @@ internal sealed class CreateLessonDetailsCommandHandler(
             }
         }
 
-        lesson.Duration = TimeSpan.FromSeconds(request.Chapters?.Sum(ch => ch.VideoDurationSeconds) ?? 0);
+        var lessonDurationInSeconds = request.Chapters?.Sum(ch => ch.VideoDurationSeconds) ?? 0;
 
+        // lesson.Duration = TimeSpan.FromSeconds(lessonDurationInSeconds);
+        lesson.TimeDuration = TimeDuration.Create(lessonDurationInSeconds);
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+
         lessonRepository.Add(lesson);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         List<int> sectionIds = lesson.Sections.Select(s => s.Id).ToList();
 
         var response = new CreateLessonResponse(lesson.Id, sectionIds);
-
-        //backgroundJobService.Enqueue<ILessonTranscriptAndSummarizationJob>(job =>
-        //    job.TranscriptAndSummarize(lesson.Id, cancellationToken));
 
         return response;
     }

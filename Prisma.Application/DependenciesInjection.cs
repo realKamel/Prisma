@@ -21,16 +21,13 @@ public static class DependenciesInjection
             cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly)
         );
 
-        // Register all validators from the assembly
-        services.AddValidatorsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
-
         // Register the pipeline behavior
 
         // 1. LOGGING (Outermost) - Catches total execution time, including cache hits/misses
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
         // 3. CACHING - Checks FusionCache. If hit, skips Validation and UoW entirely.
-        //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionCacheBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
 
         // 4. VALIDATION - Fails fast before hitting the database.
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

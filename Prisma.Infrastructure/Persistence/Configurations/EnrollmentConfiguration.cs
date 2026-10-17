@@ -10,8 +10,7 @@ internal sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollm
     public void Configure(EntityTypeBuilder<Enrollment> builder)
     {
         builder.HasKey(x => x.Id);
-        builder.ComplexProperty(e => e.ValidityDateRange)
-            .ConfigureDateRange<Enrollment>();
+        builder.ComplexProperty(e => e.ValidityDateRange).ConfigureDateRange<Enrollment>();
 
         builder
             .HasOne(x => x.Student)
@@ -31,9 +30,7 @@ internal sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollm
             .HasForeignKey<Enrollment>(x => x.GeneratedCodeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(x => x.PublicId)
-            .IsUnique()
-            .HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(x => x.PublicId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

@@ -52,7 +52,7 @@ services:
       exit 0;
       "
 
-  ffmpeg-worker3:
+  ffmpeg-worker2:
     build:
       context: ./ffmpeg-worker
       dockerfile: Dockerfile

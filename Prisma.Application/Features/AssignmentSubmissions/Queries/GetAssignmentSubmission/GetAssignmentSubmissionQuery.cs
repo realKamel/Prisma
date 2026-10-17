@@ -3,7 +3,7 @@ using MediatR;
 
 namespace Prisma.Application.Features.AssignmentSubmissions.Queries.GetAssignmentSubmission;
 
-public sealed record GetAssignmentSubmissionQuery(int LessonId) : IRequest<Result<AssignmentSubmissionDto?>>;
+public sealed record GetAssignmentSubmissionQuery(Guid LessonId) : IRequest<Result<AssignmentSubmissionDto?>>;
 
 public sealed class AssignmentSubmissionDto
 {

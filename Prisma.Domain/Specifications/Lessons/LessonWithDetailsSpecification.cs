@@ -7,23 +7,23 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetailsProjection>
 {
-    public LessonWithDetailsSpecification(int lessonId)
+    public LessonWithDetailsSpecification(Guid lessonId)
     {
         Query
-            .Where(lesson => lesson.Id == lessonId)
+            .Where(lesson => lesson.PublicId == lessonId)
             .AsNoTracking()
             .Select(lesson => new LessonDetailsProjection
             {
-                Id = lesson.Id,
+                Id = lesson.PublicId,
                 Title = lesson.Title,
                 Description = lesson.Description,
                 Price = lesson.Price,
                 ImageThumbnailUrl = lesson.ImageThumbnailUrl,
                 EnrollmentsCount = lesson.Enrollments.Count,
                 Money = lesson.Money,
-                TimeDuration = lesson.TimeDuration,
                 TeacherName = lesson.Teacher.FirstName + " " + lesson.Teacher.LastName,
                 ValidityRange = lesson.ValidityRange,
+                ValidityDuration = lesson.ValidityDuration,
                 TeacherSubject = lesson.Teacher.Subject,
                 Outcomes = lesson.Outcomes.ToList(),
                 Sections = lesson
@@ -31,7 +31,7 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
                     {
                         Id = s.Id,
                         Title = s.Title,
-                        Duration = s.Duration,
+                        Duration = s.TimeDuration,
                         IsPreview = s.IsPreview,
                     })
                     .ToList(),
@@ -43,14 +43,14 @@ public class LessonWithDetailsSpecification : Specification<Lesson, LessonDetail
 
 public record LessonDetailsProjection
 {
-    public int Id { get; init; }
+    public Guid Id { get; init; }
     public string? Title { get; init; }
     public string? Description { get; init; }
     public decimal Price { get; init; }
     public string? ImageThumbnailUrl { get; init; }
     public int EnrollmentsCount { get; init; }
     public Money Money { get; init; }
-    public TimeDuration TimeDuration { get; init; }
+    public TimeDuration Duration { get; init; }
     public DateRange? ValidityRange { get; init; }
     public List<string> Outcomes { get; init; } = [];
     public List<SectionProjection> Sections { get; init; } = [];
@@ -58,12 +58,13 @@ public record LessonDetailsProjection
     public string? PrerequisiteTitle { get; init; }
     public string TeacherName { get; init; }
     public string TeacherSubject { get; init; }
+    public TimeDuration ValidityDuration { get; init; }
 }
 
 public record SectionProjection
 {
     public int Id { get; init; }
     public string? Title { get; init; }
-    public TimeSpan Duration { get; init; }
+    public TimeDuration? Duration { get; init; }
     public bool IsPreview { get; init; }
 }

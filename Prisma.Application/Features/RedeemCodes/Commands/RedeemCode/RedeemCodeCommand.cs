@@ -1,15 +1,13 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 
 namespace Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 
-public record RedeemCodeCommand(
-    string Code,
-    int LessonId
-) : IRequest<Result<RedeemCodeResponse>>;
+public sealed record RedeemCodeCommand(string Code, Guid LessonId)
+    : IRequest<Result<RedeemCodeResponse>>;
 
-public class RedeemCodeResponse
+public sealed record RedeemCodeResponse
 {
-    public int EnrollmentId { get; set; }
-    public DateTimeOffset? ExpiresAt { get; set; }
+    public int EnrollmentId { get; init; }
+    public DateTimeOffset? ExpiresAt { get; init; }
 }

@@ -10,14 +10,13 @@ using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
-public class Lesson : BaseEntity
+public sealed class Lesson : BaseEntity
 {
     public Guid PublicId { get; init; } = Guid.CreateVersion7();
     public string? Title { get; set; }
     public string? Description { get; set; }
     public decimal Price { get; set; }
     public Money Money { get; set; } = Money.Zero();
-    public TimeSpan Duration { get; set; }
     public TimeDuration TimeDuration { get; set; } = TimeDuration.Zero;
     public string? ImageThumbnailUrl { get; set; }
 
@@ -25,8 +24,13 @@ public class Lesson : BaseEntity
 
     public LessonStatus Status { get; set; }
 
-    public DateTimeOffset? EndDate { get; set; }
+    // public DateTimeOffset? EndDate { get; set; }
+
+    //represent a global lesson Validity Range for all (optional)
     public DateRange? ValidityRange { get; set; }
+
+    //represents per enrollment lesson Validity Range for one student (must as of business)
+    public TimeDuration ValidityDuration { get; set; } = TimeDuration.Zero;
 
     public bool IsEligible { get; set; }
 

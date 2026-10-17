@@ -5,7 +5,6 @@ namespace Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalo
 
 public record LessonCatalogDto
 {
-    public int Id { get; init; }
     public Guid PublicId { get; init; }
     public string? Title { get; init; }
     public MoneyDto? Money { get; init; }

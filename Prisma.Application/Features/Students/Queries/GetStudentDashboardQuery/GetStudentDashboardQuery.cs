@@ -1,65 +1,64 @@
-using System;
-using System.Collections.Generic;
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 
 public record GetStudentDashboardQuery : IRequest<Result<GetStudentDashboardResponse>>;
 
-public class GetStudentDashboardResponse
+public record GetStudentDashboardResponse
 {
-    public StudentDto Student { get; set; } = null!;
-    public StreakDto Streak { get; set; } = null!;
-    public NextLessonDto? NextLesson { get; set; }
-    public List<LessonCardDto> Lessons { get; set; } = [];
-    public StatsDto Stats { get; set; } = null!;
+    public StudentDto Student { get; init; } = null!;
+    public StreakDto Streak { get; init; } = null!;
+    public NextLessonDto? NextLesson { get; init; }
+    public List<LessonCardDto> Lessons { get; init; } = [];
+    public StatsDto Stats { get; init; } = null!;
 }
 
-public class StudentDto
+public record StudentDto
 {
-    public string FirstName { get; set; } = string.Empty;
-    public string GradeLabel { get; set; } = string.Empty;
+    public string FirstName { get; init; } = string.Empty;
+    public string GradeLabel { get; init; } = string.Empty;
 }
 
-public class StreakDto
+public record StreakDto
 {
-    public int Count { get; set; }
+    public int Count { get; init; }
 }
 
-public class NextLessonDto
+public record NextLessonDto
 {
-    public string Id { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string TeacherName { get; set; } = string.Empty;
-    public string TeacherInitial { get; set; } = string.Empty;
-    public int CurrentChapter { get; set; }
-    public int TotalChapters { get; set; }
-    public string PosterUrl { get; set; } = string.Empty;
+    public Guid LessonPublicId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
+    public string TeacherName { get; init; } = string.Empty;
+    public string TeacherInitial { get; init; } = string.Empty;
+    public int CurrentChapter { get; init; }
+    public int TotalChapters { get; init; }
+    public string PosterUrl { get; init; } = string.Empty;
 }
 
-public class LessonCardDto
+public record LessonCardDto
 {
-    public string Id { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Subject { get; set; } = string.Empty;
-    public string TeacherName { get; set; } = string.Empty;
-    public string TeacherInitial { get; set; } = string.Empty;
+    public Guid LessonPublicId { get; init; }
+    public string Title { get; init; } = string.Empty;
+    public string Subject { get; init; } = string.Empty;
+    public string TeacherName { get; init; } = string.Empty;
+    public string TeacherInitial { get; init; } = string.Empty;
+    public TimeDurationDto? Duration { get; init; }
 
-    public TimeSpan Duration { get; set; }
-
-    public string Status { get; set; }
-    public string PosterUrl { get; set; } = string.Empty;
-    public int? ExpiresInDays { get; set; }
+    public DateRangeDto? ValidityDateRange { get; init; }
+    public string Status { get; init; }
+    public string PosterUrl { get; init; } = string.Empty;
+    public int? ExpiresInDays => (int?)ValidityDateRange?.Duration.TotalDays;
 }
 
-public class StatsDto
+public record StatsDto
 {
-    public int PurchasedLessons { get; set; }
-    public int CompletedLessons { get; set; }
-    public int StudyHours { get; set; }
-    public int TopQuizScore { get; set; }
+    public int PurchasedLessons { get; init; }
+    public int CompletedLessons { get; init; }
+    public int StudyHours { get; init; }
+    public int TopQuizScore { get; init; }
 }
 
 public enum LessonStatus
@@ -68,5 +67,5 @@ public enum LessonStatus
     Progress,
     Done,
     Warn,
-    Expired
+    Expired,
 }

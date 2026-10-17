@@ -18,7 +18,9 @@ public record CreateLessonDetailsCommand(
     IList<int> AcademicYearIds,
     IList<string> Outcomes,
     IFormFile? ImageFile,
-    Guid? TeacherId) : IRequest<Result<CreateLessonResponse>>;
+    Guid? TeacherId,
+    long ValidityDurationInSeconds
+) : IRequest<Result<CreateLessonResponse>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName, double VideoDurationSeconds);
 

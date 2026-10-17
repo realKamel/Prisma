@@ -1,14 +1,16 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
-internal sealed class S3StorageService(
+internal sealed partial class S3StorageService(
     IAmazonS3 s3,
-    IOptions<ObjectStorageOptions> objectStorageOptions)
-    : IStorageService
+    IOptions<ObjectStorageOptions> objectStorageOptions,
+    ILogger<S3StorageService> logger
+) : IStorageService
 {
     public string DefaultBucketName => objectStorageOptions.Value.BucketName;
 
@@ -32,10 +34,20 @@ internal sealed class S3StorageService(
         await s3.PutObjectAsync(request, cancellationToken);
     }
 
-    public async Task UploadFileAsync(string objectKey, Stream content, string contentType,
-        CancellationToken cancellationToken = default)
+    public async Task UploadFileAsync(
+        string objectKey,
+        Stream content,
+        string contentType,
+        CancellationToken cancellationToken = default
+    )
     {
-        await UploadFileAsync(DefaultBucketName, objectKey, content, contentType, cancellationToken);
+        await UploadFileAsync(
+            DefaultBucketName,
+            objectKey,
+            content,
+            contentType,
+            cancellationToken
+        );
     }
 
     // public string GetPublicUrl(string bucketName, string objectKey)
@@ -73,10 +85,7 @@ internal sealed class S3StorageService(
         return url;
     }
 
-    public async Task<string> GetDownloadUrlAsync(
-        string objectKey,
-        int expiryMinutes = 60
-    )
+    public async Task<string> GetDownloadUrlAsync(string objectKey, int expiryMinutes = 60)
     {
         return await GetDownloadUrlAsync(DefaultBucketName, objectKey, expiryMinutes);
     }
@@ -102,9 +111,17 @@ internal sealed class S3StorageService(
         CancellationToken cancellationToken = default
     )
     {
-        var request = new DeleteObjectRequest { BucketName = bucketName, Key = objectKey };
-
-        await s3.DeleteObjectAsync(request, cancellationToken);
+        try
+        {
+            var request = new DeleteObjectRequest { BucketName = bucketName, Key = objectKey };
+            await s3.DeleteObjectAsync(request, cancellationToken);
+            LogFileDeleted(logger, objectKey, bucketName);
+        }
+        catch (Exception e)
+        {
+            LogFileDeleteFailed(logger, objectKey, bucketName, e);
+            throw;
+        }
     }
 
     public async Task DeleteFileAsync(
@@ -114,4 +131,23 @@ internal sealed class S3StorageService(
     {
         await DeleteFileAsync(DefaultBucketName, objectKey, cancellationToken);
     }
+
+    [LoggerMessage(
+        EventId = 2001,
+        Level = LogLevel.Information,
+        Message = "Successfully deleted object '{ObjectKey}' from bucket '{BucketName}'"
+    )]
+    private static partial void LogFileDeleted(ILogger logger, string objectKey, string bucketName);
+
+    [LoggerMessage(
+        EventId = 2002,
+        Level = LogLevel.Error,
+        Message = "Failed to delete object '{ObjectKey}' from bucket '{BucketName}'"
+    )]
+    private static partial void LogFileDeleteFailed(
+        ILogger logger,
+        string objectKey,
+        string bucketName,
+        Exception ex
+    );
 }

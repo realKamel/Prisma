@@ -103,6 +103,8 @@
     <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
     <PackageVersion Include="RedisRateLimiting" Version="1.2.1" />
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
+    <PackageVersion Include="Refit" Version="16.3.0" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="16.3.0" />
     <PackageVersion
       Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"
       Version="6.0.0"

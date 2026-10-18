@@ -57,6 +57,8 @@
     <PackageReference Include="PdfPig" />
     <PackageReference Include="Pgvector" />
     <PackageReference Include="Pgvector.EntityFrameworkCore" />
+    <PackageReference Include="Refit" />
+    <PackageReference Include="Refit.HttpClientFactory" />
     <PackageReference Include="StackExchange.Redis" />
     <PackageReference Include="ZiggyCreatures.FusionCache" />
     <PackageReference Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis" />

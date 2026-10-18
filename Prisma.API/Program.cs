@@ -26,8 +26,8 @@ public class Program
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
-
             builder.AddAiAgents(builder.Configuration);
+            builder.Host.UseWolverineWithConfiguration(builder.Configuration);
 
             var app = builder.Build();
 
@@ -44,7 +44,8 @@ public class Program
             {
                 app.MapOpenApi().WithDocumentPerVersion();
                 app.UseDeveloperExceptionPage();
-                app.UseSwaggerUI((options) =>
+                app.UseSwaggerUI(
+                    (options) =>
                     {
                         options.SwaggerEndpoint("/openapi/v1.json", "Prisma API V1");
                         options.RoutePrefix = "swagger";
@@ -53,14 +54,14 @@ public class Program
             }
 
             app.UseRouting();
-            
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseCors("CorsPolicy");
             }
 
             app.UseLocalization();
-            
+
             app.UseHangfireUi();
 
             app.UseAuthentication();
@@ -72,9 +73,9 @@ public class Program
             app.UseAuthorization();
 
             app.UseRecurringJobs();
-            
+
             app.MapPrometheusScrapingEndpoint();
-            
+
             app.MapAppHealthChecks();
 
             app.MapControllers();

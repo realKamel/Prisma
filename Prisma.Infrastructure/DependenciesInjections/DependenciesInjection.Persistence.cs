@@ -31,7 +31,7 @@ public static partial class DependenciesInjection
         //interceptors
         services.AddScoped<AuditInterceptor>();
         services.AddScoped<AuditLogInterceptor>();
-        services.AddScoped<DomainEventDispatcherInterceptor>();
+        // services.AddScoped<DomainEventDispatcherInterceptor>();
 
         services.AddDbContext<AppDbContext>(
             (serviceProvider, options) =>
@@ -51,8 +51,8 @@ public static partial class DependenciesInjection
 
                 options.AddInterceptors(
                     serviceProvider.GetRequiredService<AuditInterceptor>(),
-                    serviceProvider.GetRequiredService<AuditLogInterceptor>(),
-                    serviceProvider.GetRequiredService<DomainEventDispatcherInterceptor>()
+                    serviceProvider.GetRequiredService<AuditLogInterceptor>()
+                // serviceProvider.GetRequiredService<DomainEventDispatcherInterceptor>()
                 );
 
                 if (environment.IsDevelopment())

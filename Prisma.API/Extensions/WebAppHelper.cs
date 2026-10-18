@@ -14,16 +14,21 @@ using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Prisma.Domain.Common;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.DependenciesInjections;
+using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
+using Wolverine;
+using Wolverine.EntityFrameworkCore;
+using Wolverine.Postgresql;
 
 namespace Prisma.API.Extensions;
 
 public static partial class WebAppHelper
 {
-    public static void AddWebAppServices(
+    internal static void AddWebAppServices(
         this IServiceCollection services,
         IConfiguration configuration,
         IHostEnvironment hostEnvironment
@@ -101,14 +106,14 @@ public static partial class WebAppHelper
 
     extension(WebApplication app)
     {
-        public async Task UseDataSeedingAsync()
+        internal async Task UseDataSeedingAsync()
         {
             using var scope = app.Services.CreateScope();
             var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
             await services.SeedAppDataAsync();
         }
 
-        public void UseRecurringJobs()
+        internal void UseRecurringJobs()
         {
             using IServiceScope scope = app.Services.CreateScope();
             IBackgroundJobService jobService =
@@ -128,7 +133,7 @@ public static partial class WebAppHelper
             //     Cron.Minutely());
         }
 
-        public void UseHangfireUi()
+        internal void UseHangfireUi()
         {
             app.UseHangfireDashboard(
                 "/hangfire",
@@ -139,7 +144,7 @@ public static partial class WebAppHelper
             );
         }
 
-        public void MapAppHealthChecks()
+        internal void MapAppHealthChecks()
         {
             // 1. Liveness Probe (Lightweight)
             // Kubernetes uses this to know if the app process is alive.
@@ -166,7 +171,7 @@ public static partial class WebAppHelper
             );
         }
 
-        public void MapOpenAiResponses(IHostEnvironment environment)
+        internal void MapOpenAiResponses(IHostEnvironment environment)
         {
             app.MapOpenAIResponses();
             app.MapOpenAIConversations();
@@ -177,7 +182,7 @@ public static partial class WebAppHelper
             }
         }
 
-        public void UseLocalization()
+        internal void UseLocalization()
         {
             var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
             app.UseRequestLocalization(
@@ -189,5 +194,34 @@ public static partial class WebAppHelper
                 }
             );
         }
+    }
+
+    internal static void UseWolverineWithConfiguration(
+        this IHostBuilder host,
+        IConfiguration configuration
+    )
+    {
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        host.UseWolverine(options =>
+        {
+            // Enable EF Core transactional outbox & inbox middleware automatically
+            options.UseEntityFrameworkCoreTransactions();
+
+            // Automatically scrape and publish domain events from DbContext entities upon SaveChangesAsync
+            options.PublishDomainEventsFromEntityFrameworkCore<IDomainEventEnumerable>(e =>
+                e.DomainEvents
+            );
+
+            // Direct Wolverine to persist outbox messages using your database provider
+            options.PersistMessagesWithPostgresql(connectionStrings.DefaultSqlConnection);
+
+            // Enable durable outbox processing across all handlers/endpoints
+            options.Policies.UseDurableOutboxOnAllSendingEndpoints();
+        });
     }
 }

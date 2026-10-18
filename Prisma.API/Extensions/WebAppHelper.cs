@@ -22,6 +22,7 @@ using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
+using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
 
 namespace Prisma.API.Extensions;
@@ -222,6 +223,15 @@ public static partial class WebAppHelper
 
             // Enable durable outbox processing across all handlers/endpoints
             options.Policies.UseDurableOutboxOnAllSendingEndpoints();
+
+            // Configure transient exceptions to retry with a cooldown
+            options
+                .Policies.OnException<HttpRequestException>()
+                .RetryWithCooldown(
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(30)
+                );
         });
     }
 }

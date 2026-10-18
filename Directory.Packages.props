@@ -128,6 +128,7 @@
     <PackageVersion Include="WolverineFx" Version="6.51.0" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.51.0" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.51.0" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.51.0" />
     <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.7.2" />
     <PackageVersion
       Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis"

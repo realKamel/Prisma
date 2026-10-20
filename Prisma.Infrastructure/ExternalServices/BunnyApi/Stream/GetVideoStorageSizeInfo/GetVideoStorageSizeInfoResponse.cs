@@ -61,7 +61,7 @@ public sealed record VideoStorageSizeModel
     /// Timestamp when this storage size was calculated (UTC).
     /// </summary>
     [JsonPropertyName("calculatedAt")]
-    public DateTime CalculatedAt { get; init; }
+    public DateTimeOffset CalculatedAt { get; init; }
 }
 
 /// <summary>

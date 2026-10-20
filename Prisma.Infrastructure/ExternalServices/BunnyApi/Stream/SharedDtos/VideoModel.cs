@@ -17,7 +17,7 @@ public record VideoModel
     public string? Description { get; init; }
 
     [JsonPropertyName("dateUploaded")]
-    public DateTime DateUploaded { get; init; }
+    public DateTimeOffset DateUploaded { get; init; }
 
     [JsonPropertyName("views")]
     public long Views { get; init; }
@@ -161,7 +161,7 @@ public record MetaTagModel
 public record TranscodingMessageModel
 {
     [JsonPropertyName("timeStamp")]
-    public DateTime TimeStamp { get; init; }
+    public DateTimeOffset TimeStamp { get; init; }
 
     [JsonPropertyName("level")]
     public Severity Level { get; init; }

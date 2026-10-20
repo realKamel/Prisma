@@ -20,10 +20,10 @@ public record VideoLibraryModel
     public long StorageUsage { get; init; }
 
     [JsonPropertyName("DateCreated")]
-    public DateTime DateCreated { get; init; }
+    public DateTimeOffset DateCreated { get; init; }
 
     [JsonPropertyName("DateModified")]
-    public DateTime DateModified { get; init; }
+    public DateTimeOffset DateModified { get; init; }
 
     [JsonPropertyName("ReplicationRegions")]
     public List<string>? ReplicationRegions { get; init; }
@@ -263,7 +263,7 @@ public record AppleFairPlayDrm
     public long? CertificateId { get; init; }
 
     [JsonPropertyName("CertificateExpirationDate")]
-    public DateTime? CertificateExpirationDate { get; init; }
+    public DateTimeOffset? CertificateExpirationDate { get; init; }
 
     [JsonPropertyName("Provider")]
     public string? Provider { get; init; }
@@ -278,7 +278,7 @@ public record GoogleWidevineDrm
     public long? CertificateId { get; init; }
 
     [JsonPropertyName("CertificateExpirationDate")]
-    public DateTime? CertificateExpirationDate { get; init; }
+    public DateTimeOffset? CertificateExpirationDate { get; init; }
 
     [JsonPropertyName("Provider")]
     public string? Provider { get; init; }

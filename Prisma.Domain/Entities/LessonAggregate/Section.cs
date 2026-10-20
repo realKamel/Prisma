@@ -26,4 +26,7 @@ public sealed class Section : BaseEntity
     public string? UploadId { get; set; }
     public string? AssetId { get; set; }
     public string? PlaybackId { get; set; }
+
+    public Video? Video { get; set; }
+    public int? VideoId { get; set; }
 }

@@ -18,6 +18,8 @@ internal sealed class SectionConfiguration : IEntityTypeConfiguration<Section>
             .HasForeignKey(x => x.LessonId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(x => x.Video).WithOne(y => y.Section).HasForeignKey<Video>(x => x.SectionId);
+
         builder.HasIndex(x => x.PublicId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);

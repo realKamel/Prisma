@@ -30,6 +30,7 @@ public static class DomainErrors
     public static class TeacherErrors
     {
         public const string NotFound = "TEACHERS.NOT_FOUND";
+        public const string MustHaveSubject = "TEACHER.MUST_HAVE_SUBJECT";
     }
 
     public static class AssistantErrors
@@ -83,7 +84,8 @@ public static class DomainErrors
         public const string NotAuthorized = "ASSIGNMENT_SUBMISSIONS.NOT_AUTHORIZED";
         public const string DeadlinePassed = "ASSIGNMENT_SUBMISSIONS.DEADLINE_PASSED";
         public const string CurrentlyBeingGraded = "ASSIGNMENT_SUBMISSIONS.CURRENTLY_BEING_GRADED";
-        public const string CannotReleaseOthersGradingLock = "ASSIGNMENT_SUBMISSIONS.CANNOT_RELEASE_LOCK";
+        public const string CannotReleaseOthersGradingLock =
+            "ASSIGNMENT_SUBMISSIONS.CANNOT_RELEASE_LOCK";
         public const string ScoreExceedsMax = "ASSIGNMENT_SUBMISSIONS.SCORE_EXCEEDS_MAX";
     }
 
@@ -93,7 +95,8 @@ public static class DomainErrors
         public const string NotAvailable = "QUIZZES.NOT_AVAILABLE";
         public const string DueDatePassed = "QUIZZES.DUE_DATE_PASSED";
         public const string LessonAlreadyHasQuiz = "QUIZZES.LESSON_ALREADY_HAS_QUIZ";
-        public const string CannotDeleteWithSubmittedAttempts = "QUIZZES.CANNOT_DELETE_WITH_ATTEMPTS";
+        public const string CannotDeleteWithSubmittedAttempts =
+            "QUIZZES.CANNOT_DELETE_WITH_ATTEMPTS";
     }
 
     public static class QuizAttemptErrors
@@ -104,18 +107,23 @@ public static class DomainErrors
         public const string StillInProgress = "QUIZ_ATTEMPTS.STILL_IN_PROGRESS";
         public const string NotYetSubmitted = "QUIZ_ATTEMPTS.NOT_YET_SUBMITTED";
         public const string TimeExpired = "QUIZ_ATTEMPTS.TIME_EXPIRED";
-        public const string CannotModifyAfterSubmission = "QUIZ_ATTEMPTS.CANNOT_MODIFY_AFTER_SUBMISSION";
+        public const string CannotModifyAfterSubmission =
+            "QUIZ_ATTEMPTS.CANNOT_MODIFY_AFTER_SUBMISSION";
         public const string TimeUpCannotSave = "QUIZ_ATTEMPTS.TIME_UP_CANNOT_SAVE";
         public const string AnswerNotFound = "QUIZ_ATTEMPTS.ANSWER_NOT_FOUND";
-        public const string McqAnswerDoesNotNeedManualGrading = "QUIZ_ATTEMPTS.MCQ_NO_MANUAL_GRADING";
-        public const string ScoreExceedsQuestionDegree = "QUIZ_ATTEMPTS.SCORE_EXCEEDS_QUESTION_DEGREE";
-        public const string PenaltyExceedsStudentDegree = "QUIZ_ATTEMPTS.PENALTY_EXCEEDS_STUDENT_DEGREE";
+        public const string McqAnswerDoesNotNeedManualGrading =
+            "QUIZ_ATTEMPTS.MCQ_NO_MANUAL_GRADING";
+        public const string ScoreExceedsQuestionDegree =
+            "QUIZ_ATTEMPTS.SCORE_EXCEEDS_QUESTION_DEGREE";
+        public const string PenaltyExceedsStudentDegree =
+            "QUIZ_ATTEMPTS.PENALTY_EXCEEDS_STUDENT_DEGREE";
     }
 
     public static class CodeBatchErrors
     {
         public const string NotFound = "CODE_BATCHES.NOT_FOUND";
-        public const string LessonDoesNotBelongToAcademicYear = "CODE_BATCHES.LESSON_NOT_IN_ACADEMIC_YEAR";
+        public const string LessonDoesNotBelongToAcademicYear =
+            "CODE_BATCHES.LESSON_NOT_IN_ACADEMIC_YEAR";
         public const string NoAccessToAcademicYear = "CODE_BATCHES.NO_ACCESS_TO_ACADEMIC_YEAR";
     }
 
@@ -124,7 +132,8 @@ public static class DomainErrors
         public const string NotValid = "GENERATED_CODES.NOT_VALID";
         public const string AlreadyRedeemed = "GENERATED_CODES.ALREADY_REDEEMED";
         public const string DoesNotMatchLesson = "GENERATED_CODES.DOES_NOT_MATCH_LESSON";
-        public const string DoesNotMatchAcademicYear = "GENERATED_CODES.DOES_NOT_MATCH_ACADEMIC_YEAR";
+        public const string DoesNotMatchAcademicYear =
+            "GENERATED_CODES.DOES_NOT_MATCH_ACADEMIC_YEAR";
     }
 
     public static class AuthenticationErrors

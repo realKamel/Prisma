@@ -6,7 +6,7 @@ using Prisma.Domain.ValueObjects.UserDomain;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
-public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
+public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable, IDomainEventEnumerable
 {
     // private User() : base() { } // EF Core private constructor
     public string FirstName { get; set; }
@@ -40,7 +40,7 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
     public void SetOnlineStatus(bool status) => IsOnline = status;
 
     /// <summary>
-    /// Factory method to construct a new User aggregate root while mapping domain value objects 
+    /// Factory method to construct a new User aggregate root while mapping domain value objects
     /// and keeping ASP.NET Core Identity properties in sync.
     /// </summary>
     public static Result<User> Create(
@@ -49,7 +49,8 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
         string rawEmail,
         string rawPhone,
         string? thirdName = null,
-        string? lastName = null)
+        string? lastName = null
+    )
     {
         // 1. Instantiating / converting to Value Objects
         var fullNameResult = FullName.Create(firstName, secondName, thirdName, lastName);
@@ -101,4 +102,16 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable
 
         return Result.Success(user);
     }
+
+    //event dispatching
+    private readonly List<BaseDomainEvent> _domainEvents = [];
+
+    public IReadOnlyCollection<BaseDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+    protected void AddDomainEvent(BaseDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
+    }
+
+    public void ClearDomainEvents() => _domainEvents.Clear();
 }

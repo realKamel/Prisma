@@ -65,5 +65,14 @@ public static partial class DependenciesInjection
                 c.DefaultRequestHeaders.Add("Authorization", bunnyOptions.ApiKey);
             })
             .AddStandardResilienceHandler();
+
+        services
+            .AddRefitClient<IBunnyCorePullZoneApi>()
+            .ConfigureHttpClient(c =>
+            {
+                c.BaseAddress = new Uri(bunnyOptions.CoreBaseUrl);
+                c.DefaultRequestHeaders.Add("Authorization", bunnyOptions.ApiKey);
+            })
+            .AddStandardResilienceHandler();
     }
 }

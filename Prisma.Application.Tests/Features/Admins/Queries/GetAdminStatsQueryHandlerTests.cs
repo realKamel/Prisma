@@ -1,19 +1,23 @@
 using FluentAssertions;
 using NSubstitute;
-using Prisma.Application.Features.Admin.Queries.GetAdminStatsQuery;
+using Prisma.Application.Features.ActivityLogs.Queries.GetAdminStatsQuery;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
-namespace Prisma.Application.Tests.Features.Admin.Queries;
+namespace Prisma.Application.Tests.Features.Admins.Queries;
 
 public class GetAdminStatsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<IRepository<Student, Guid>>();
-    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<IRepository<Payment, int>>();
+    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<
+        IRepository<Student, Guid>
+    >();
+    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<
+        IRepository<Payment, int>
+    >();
     private readonly GetAdminStatsQueryHandler _sut;
 
     public GetAdminStatsQueryHandlerTests()
@@ -36,7 +40,7 @@ public class GetAdminStatsQueryHandlerTests
         var fakeStudents = new List<Student>
         {
             new() { Id = Guid.CreateVersion7(), CreatedAt = startOfLastMonth.AddDays(2) },
-            new() { Id = Guid.CreateVersion7(), CreatedAt = startOfThisMonth.AddDays(2) }
+            new() { Id = Guid.CreateVersion7(), CreatedAt = startOfThisMonth.AddDays(2) },
         };
 
         _studentRepo.CountAsync(Arg.Any<CancellationToken>()).Returns(fakeStudents.Count);
@@ -64,10 +68,11 @@ public class GetAdminStatsQueryHandlerTests
                 "REF2",
                 now.Date.AddHours(10),
                 now.Date.AddHours(10)
-            )
+            ),
         };
 
-        _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act
@@ -92,8 +97,7 @@ public class GetAdminStatsQueryHandlerTests
         var todayRevenue = result.Value.RevenueWeek.First(r => r.IsToday);
         todayRevenue.Amount.Should().Be(200); // دفعة اليوم
 
-        result.Value.WeeklyTotal.Should()
-            .Be(200); // مجموع الـ 7 أيام الأخيرة (الـ 100 بتاعة الشهر اللي فات بره الأسبوع الحالي)
+        result.Value.WeeklyTotal.Should().Be(200); // مجموع الـ 7 أيام الأخيرة (الـ 100 بتاعة الشهر اللي فات بره الأسبوع الحالي)
     }
 
     [Fact]
@@ -102,7 +106,8 @@ public class GetAdminStatsQueryHandlerTests
         // Arrange
         _studentRepo.CountAsync(Arg.Any<CancellationToken>()).Returns(0);
         _studentRepo.ListAsync(Arg.Any<CancellationToken>()).Returns(new List<Student>());
-        _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(new List<PaymentActivityProjection>());
 
         // Act

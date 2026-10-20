@@ -1,20 +1,21 @@
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Admin.Queries.GetActivityLogsQuery;
+using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogsQuery;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 
-namespace Prisma.Application.Tests.Features.Admin.Queries;
+namespace Prisma.Application.Tests.Features.Admins.Queries;
 
 public class GetActivityLogsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IIdentityService _userManager = Substitute.For<IIdentityService>();
-    private readonly IRepository<AuditLog, int> _auditLogRepository = Substitute.For<IRepository<AuditLog, int>>();
+    private readonly IRepository<AuditLog, int> _auditLogRepository = Substitute.For<
+        IRepository<AuditLog, int>
+    >();
     private readonly GetActivityLogsQueryHandler _sut;
 
     public GetActivityLogsQueryHandlerTests()
@@ -40,11 +41,12 @@ public class GetActivityLogsQueryHandlerTests
                 UserEmail = "system",
                 Action = "UPDATE",
                 TableName = "Lesson",
-                CreatedAt = DateTimeOffset.UtcNow
-            }
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
         };
 
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
         // Act
@@ -66,7 +68,12 @@ public class GetActivityLogsQueryHandlerTests
         // Arrange
         var query = new GetActivityLogsQuery(Skip: 0, Take: 2);
         var userEmail = "teacher@prisma.com";
-        var fakeUser = new User { FirstName = "احمد", LastName = "علي", Email = userEmail };
+        var fakeUser = new User
+        {
+            FirstName = "احمد",
+            LastName = "علي",
+            Email = userEmail,
+        };
 
         var fakeLogs = new List<AuditLog>
         {
@@ -76,11 +83,12 @@ public class GetActivityLogsQueryHandlerTests
                 UserEmail = userEmail,
                 Action = "INSERT",
                 TableName = "Lesson",
-                CreatedAt = DateTimeOffset.UtcNow
-            }
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
         };
 
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
         _userManager.FindByEmailAsync(userEmail).Returns(fakeUser);
@@ -104,10 +112,12 @@ public class GetActivityLogsQueryHandlerTests
         var query = new GetActivityLogsQuery(Skip: 0, Take: 1);
         var fakeLogs = new List<AuditLog>
         {
-            new() { Id = 1, UserEmail = "system" }, new() { Id = 2, UserEmail = "system" } // سجل إضافي
+            new() { Id = 1, UserEmail = "system" },
+            new() { Id = 2, UserEmail = "system" }, // سجل إضافي
         };
 
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
         // Act
@@ -133,7 +143,7 @@ public class GetActivityLogsQueryHandlerTests
                 UserEmail = "system",
                 Action = "DELETE",
                 TableName = "Quiz",
-                CreatedAt = today
+                CreatedAt = today,
             },
             new()
             {
@@ -141,11 +151,12 @@ public class GetActivityLogsQueryHandlerTests
                 UserEmail = "system",
                 Action = "UPDATE",
                 TableName = "Lesson",
-                CreatedAt = today
-            }
+                CreatedAt = today,
+            },
         };
 
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
         // Act
@@ -163,7 +174,8 @@ public class GetActivityLogsQueryHandlerTests
     {
         // Arrange
         var query = new GetActivityLogsQuery(Skip: 10, Take: 5);
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(new List<AuditLog>());
 
         // Act
@@ -188,11 +200,12 @@ public class GetActivityLogsQueryHandlerTests
                 UserEmail = "system",
                 Action = "DELETE",
                 TableName = "lesson",
-                OldValues = oldValuesJson
-            }
+                OldValues = oldValuesJson,
+            },
         };
 
-        _auditLogRepository.ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepository
+            .ListAsync(Arg.Any<ActivityLogsFilterSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
         // Act

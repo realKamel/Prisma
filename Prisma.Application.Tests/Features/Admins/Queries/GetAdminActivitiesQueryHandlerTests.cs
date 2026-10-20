@@ -1,20 +1,24 @@
 using FluentAssertions;
 using NSubstitute;
-using Prisma.Application.Features.Admin.Queries.GetAdminActivitiesQuery;
+using Prisma.Application.Features.ActivityLogs.Queries.GetAdminActivitiesQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
-namespace Prisma.Application.Tests.Features.Admin.Queries;
+namespace Prisma.Application.Tests.Features.Admins.Queries;
 
 public class GetAdminActivitiesQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
-    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<IRepository<Payment, int>>();
+    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
+    private readonly IRepository<Payment, int> _paymentRepo = Substitute.For<
+        IRepository<Payment, int>
+    >();
     private readonly GetAdminActivitiesQueryHandler _sut;
 
     public GetAdminActivitiesQueryHandlerTests()
@@ -40,9 +44,8 @@ public class GetAdminActivitiesQueryHandlerTests
                 "درس سي شارب أول",
                 EnrollmentMethod.OnlinePayment, // تأكدي إنه مطابق للـ Enum عندك
                 baseTime.AddMinutes(-10)
-            )
+            ),
         };
-
 
         var moneyResult = Money.Create(150);
         var fakePayments = new List<PaymentActivityProjection>
@@ -55,13 +58,15 @@ public class GetAdminActivitiesQueryHandlerTests
                 "REF123",
                 baseTime.AddMinutes(-5),
                 baseTime.AddMinutes(-5)
-            )
+            ),
         };
 
-        _enrollmentRepo.ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo
+            .ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeEnrollments);
 
-        _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act
@@ -87,30 +92,36 @@ public class GetAdminActivitiesQueryHandlerTests
     {
         // Arrange
         // تصحيح بناء الـ Lists هنا لمنع الـ Type Mismatch
-        var fakeEnrollments = Enumerable.Range(1, 5).Select(i => new EnrollmentActivityProjection
-        (
-            i,
-            Guid.CreateVersion7(),
-            $"درس {i}",
-            EnrollmentMethod.OnlinePayment,
-            DateTimeOffset.UtcNow.AddHours(-i)
-        )).ToList();
+        var fakeEnrollments = Enumerable
+            .Range(1, 5)
+            .Select(i => new EnrollmentActivityProjection(
+                i,
+                Guid.CreateVersion7(),
+                $"درس {i}",
+                EnrollmentMethod.OnlinePayment,
+                DateTimeOffset.UtcNow.AddHours(-i)
+            ))
+            .ToList();
 
-        var fakePayments = Enumerable.Range(1, 5).Select(i => new PaymentActivityProjection
-        (
-            i,
-            Guid.CreateVersion7(),
-            Money.Create(100).Value,
-            "Fawry",
-            $"REF{i}",
-            DateTimeOffset.UtcNow.AddHours(-i),
-            DateTimeOffset.UtcNow.AddHours(-i)
-        )).ToList();
+        var fakePayments = Enumerable
+            .Range(1, 5)
+            .Select(i => new PaymentActivityProjection(
+                i,
+                Guid.CreateVersion7(),
+                Money.Create(100).Value,
+                "Fawry",
+                $"REF{i}",
+                DateTimeOffset.UtcNow.AddHours(-i),
+                DateTimeOffset.UtcNow.AddHours(-i)
+            ))
+            .ToList();
 
-        _enrollmentRepo.ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo
+            .ListAsync(Arg.Any<AdminLatestEnrollmentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeEnrollments);
 
-        _paymentRepo.ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
+        _paymentRepo
+            .ListAsync(Arg.Any<AdminSuccessfulPaymentsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act

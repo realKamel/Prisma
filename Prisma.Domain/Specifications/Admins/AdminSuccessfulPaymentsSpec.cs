@@ -3,7 +3,7 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
-namespace Prisma.Domain.Specifications.Admin;
+namespace Prisma.Domain.Specifications.Admins;
 
 public sealed class AdminSuccessfulPaymentsSpec : Specification<Payment, PaymentActivityProjection>
 {

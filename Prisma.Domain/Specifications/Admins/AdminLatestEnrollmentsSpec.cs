@@ -2,9 +2,10 @@
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Enums;
 
-namespace Prisma.Domain.Specifications.Admin;
+namespace Prisma.Domain.Specifications.Admins;
 
-public sealed class AdminLatestEnrollmentsSpec : Specification<Enrollment, EnrollmentActivityProjection>
+public sealed class AdminLatestEnrollmentsSpec
+    : Specification<Enrollment, EnrollmentActivityProjection>
 {
     public AdminLatestEnrollmentsSpec()
     {
@@ -20,6 +21,7 @@ public sealed class AdminLatestEnrollmentsSpec : Specification<Enrollment, Enrol
             ));
     }
 }
+
 public sealed record EnrollmentActivityProjection(
     int Id,
     Guid? StudentId,

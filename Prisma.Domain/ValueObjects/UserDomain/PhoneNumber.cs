@@ -1,14 +1,11 @@
-using System.Text.RegularExpressions;
 using Ardalis.Result;
+using PhoneNumbers;
 using Prisma.Domain.Errors;
 
 namespace Prisma.Domain.ValueObjects.UserDomain;
 
-public sealed partial record PhoneNumber
+public sealed record PhoneNumber
 {
-    [GeneratedRegex(@"^\+[1-9]\d{1,14}$")]
-    private static partial Regex E164Regex();
-
     public string Value { get; init; } = default!;
 
     // EF Core parameterless constructor (required for materialization)
@@ -23,32 +20,55 @@ public sealed partial record PhoneNumber
     /// <summary>
     /// Factory method returning Result
     /// </summary>
-    public static Result<PhoneNumber> Create(string? rawNumber)
+    public static Result<PhoneNumber> Create(string? rawNumber, string defaultRegion = "EG")
     {
         if (string.IsNullOrWhiteSpace(rawNumber))
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(PhoneNumber),
-                ErrorMessage = "Phone number cannot be empty.",
-                ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.IsRequired
-            });
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(PhoneNumber),
+                    ErrorMessage = "Phone number cannot be empty.",
+                    ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.IsRequired,
+                }
+            );
         }
 
-        // Sanitize spaces, dashes, and parentheses
-        string sanitized = MyRegex().Replace(rawNumber, "");
-
-        if (!E164Regex().IsMatch(sanitized))
+        try
         {
-            return Result.Invalid(new ValidationError
-            {
-                Identifier = nameof(PhoneNumber),
-                ErrorMessage = $"'{rawNumber}' is not a valid E.164 phone number (e.g. +14155552671).",
-                ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.Invalid
-            });
-        }
+            var phoneUtil = PhoneNumberUtil.GetInstance();
 
-        return Result.Success(new PhoneNumber(sanitized));
+            // Parse using Google's library (handles local formats like 010xxx too if defaultRegion is provided)
+            var parsedNumber = phoneUtil.Parse(rawNumber, defaultRegion);
+
+            if (!phoneUtil.IsValidNumber(parsedNumber))
+            {
+                return Result.Invalid(
+                    new ValidationError
+                    {
+                        Identifier = nameof(PhoneNumber),
+                        ErrorMessage = $"'{rawNumber}' is not a valid phone number.",
+                        ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.Invalid,
+                    }
+                );
+            }
+
+            // Automatically normalize to strict E.164 format (e.g., +201001234567)
+            string e164Normalized = phoneUtil.Format(parsedNumber, PhoneNumberFormat.E164);
+
+            return Result.Success(new PhoneNumber(e164Normalized));
+        }
+        catch (NumberParseException)
+        {
+            return Result.Invalid(
+                new ValidationError
+                {
+                    Identifier = nameof(PhoneNumber),
+                    ErrorMessage = $"'{rawNumber}' is not a valid phone number format.",
+                    ErrorCode = DomainErrors.DomainValdtionErrors.PhoneNumber.Invalid,
+                }
+            );
+        }
     }
 
     public static implicit operator string(PhoneNumber number)
@@ -58,7 +78,4 @@ public sealed partial record PhoneNumber
     }
 
     public override string ToString() => Value;
-
-    [GeneratedRegex(@"[\s\-\(\)]")]
-    private static partial Regex MyRegex();
 }

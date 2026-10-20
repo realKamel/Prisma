@@ -3,6 +3,7 @@
     <PackageReference Include="Ardalis.Result" />
     <PackageReference Include="Ardalis.SmartEnum" />
     <PackageReference Include="Ardalis.Specification" />
+    <PackageReference Include="libphonenumber-csharp" />
     <PackageReference Include="MediatR.Contracts" />
     <PackageReference Include="Microsoft.AspNetCore.Identity" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />

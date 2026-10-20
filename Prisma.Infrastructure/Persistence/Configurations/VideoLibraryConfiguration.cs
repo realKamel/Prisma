@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
-internal sealed class LibraryConfiguration : IEntityTypeConfiguration<VideoLibrary>
+internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<VideoLibrary>
 {
     public void Configure(EntityTypeBuilder<VideoLibrary> builder)
     {
@@ -21,6 +21,8 @@ internal sealed class LibraryConfiguration : IEntityTypeConfiguration<VideoLibra
             .HasOne<Teacher>(x => x.Teacher)
             .WithOne(x => x.VideoLibrary)
             .HasForeignKey<VideoLibrary>(x => x.TeacherId);
+
+        builder.Property(x => x.ProvisioningStatus).HasConversion<string>().HasMaxLength(50);
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

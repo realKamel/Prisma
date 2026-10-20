@@ -13,6 +13,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<int>(
+                name: "VideoLibraryId",
+                table: "Users",
+                type: "integer",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
                 name: "VideoId",
                 table: "Section",
                 type: "integer",
@@ -29,11 +35,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     StorageUsage = table.Column<long>(type: "bigint", nullable: false),
                     LibraryApiKey = table.Column<string>(type: "text", nullable: true),
                     ReadOnlyApiKey = table.Column<string>(type: "text", nullable: true),
-                    TokenAuthKey = table.Column<string>(type: "text", nullable: true),
-                    CdnHostname = table.Column<string>(type: "text", nullable: true),
                     WebhookUrl = table.Column<string>(type: "text", nullable: true),
-                    PullZoneUrl = table.Column<string>(type: "text", nullable: true),
                     TeacherId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProvisioningStatus = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -59,12 +63,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ProviderVideoId = table.Column<long>(type: "bigint", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
-                    StorageSize = table.Column<long>(type: "bigint", nullable: false),
-                    ThumbnailUrl = table.Column<string>(type: "text", nullable: true),
                     VideoLibraryId = table.Column<int>(type: "integer", nullable: false),
                     SectionId = table.Column<int>(type: "integer", nullable: false),
+                    ProviderVideoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProviderVideoLibraryId = table.Column<long>(type: "bigint", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    StorageSizeBytes = table.Column<long>(type: "bigint", nullable: false),
+                    ProcessingStatus = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ThumbnailUrl = table.Column<string>(type: "text", nullable: true),
+                    TimeDuration_Seconds = table.Column<long>(type: "bigint", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
@@ -118,7 +125,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_VideoLibrary_TeacherId",
                 table: "VideoLibrary",
-                column: "TeacherId");
+                column: "TeacherId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -129,6 +137,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "VideoLibrary");
+
+            migrationBuilder.DropColumn(
+                name: "VideoLibraryId",
+                table: "Users");
 
             migrationBuilder.DropColumn(
                 name: "VideoId",

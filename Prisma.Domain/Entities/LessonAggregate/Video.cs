@@ -1,20 +1,29 @@
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
 public sealed class Video : BaseEntity
 {
-    public long ProviderVideoId { get; set; }
-    public string Title { get; set; }
-    public long StorageSize { get; set; }
-    public Uri? ThumbnailUrl { get; init; }
+    private Video() { }
 
-    // library relation (Library <-1:M=> Video)
-    public VideoLibrary VideoLibrary { get; set; }
-    public int VideoLibraryId { get; set; }
+    public int VideoLibraryId { get; private set; }
+    public VideoLibrary VideoLibrary { get; private set; } = null!;
 
-    // section <-1:1=> video
-    public Section Section { get; set; }
-    public int SectionId { get; set; }
+    public int SectionId { get; private set; }
+    public Section Section { get; private set; } = null!;
+
+    public Guid ProviderVideoId { get; private set; }
+    public long ProviderVideoLibraryId { get; private set; }
+
+    public string Title { get; private set; } = null!;
+
+    public long StorageSizeBytes { get; private set; }
+
+    public TimeDuration TimeDuration { get; private set; } = TimeDuration.Zero;
+
+    public VideoProcessingStatus ProcessingStatus { get; private set; }
+
+    public Uri? ThumbnailUrl { get; private set; }
 }

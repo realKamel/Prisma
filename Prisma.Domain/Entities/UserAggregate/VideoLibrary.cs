@@ -13,14 +13,18 @@ public sealed class VideoLibrary : BaseEntity
     public long StorageUsage { get; private set; }
     public string? LibraryApiKey { get; private set; }
     public string? ReadOnlyApiKey { get; private set; }
-    public string? TokenAuthKey { get; private set; }
-    public string? CdnHostname { get; private set; }
+
+    // public string? TokenAuthKey { get; private set; }
+    // public string? CdnHostname { get; private set; }
     public Uri? WebhookUrl { get; private set; }
-    public Uri? PullZoneUrl { get; private set; }
+
+    // public long? PullZoneId { get; private set; }
 
     //relation (teacher <-1:1=> Library)
     public Teacher Teacher { get; private set; }
     public Guid TeacherId { get; private set; }
+
+    public ProvisioningStatus ProvisioningStatus { get; set; }
 
     //relations (Library <-1:M=> Video)
     public ICollection<Video> Videos { get; private set; } = [];
@@ -29,10 +33,7 @@ public sealed class VideoLibrary : BaseEntity
         long providerId,
         string? libraryApiKey,
         string readOnlyApiKey,
-        string tokenAuthKey,
-        string cdnHostname,
-        string webhookUrl,
-        string pullZoneUrl
+        string webhookUrl
     )
     {
         var library = new VideoLibrary
@@ -40,10 +41,11 @@ public sealed class VideoLibrary : BaseEntity
             ProviderLibraryId = providerId,
             LibraryApiKey = libraryApiKey,
             ReadOnlyApiKey = readOnlyApiKey,
-            TokenAuthKey = tokenAuthKey,
-            CdnHostname = cdnHostname,
+            // TokenAuthKey = tokenAuthKey,
+            // CdnHostname = cdnHostname,
             WebhookUrl = new Uri(webhookUrl),
-            PullZoneUrl = new Uri(pullZoneUrl),
+            // PullZoneId = pullZoneId,
+            ProvisioningStatus = ProvisioningStatus.Active,
         };
         return Result.Success(library);
     }

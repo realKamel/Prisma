@@ -34,5 +34,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        base.ConfigureConventions(configurationBuilder);
+        // configurationBuilder.Properties<Enum>().HaveConversion<string>();
+    }
+
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }

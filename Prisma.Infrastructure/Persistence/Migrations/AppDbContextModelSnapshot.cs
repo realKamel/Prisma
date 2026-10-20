@@ -925,13 +925,21 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<long>("ProviderVideoId")
+                    b.Property<string>("ProcessingStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ProviderVideoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProviderVideoLibraryId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("SectionId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("StorageSize")
+                    b.Property<long>("StorageSizeBytes")
                         .HasColumnType("bigint");
 
                     b.Property<string>("ThumbnailUrl")
@@ -949,6 +957,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("VideoLibraryId")
                         .HasColumnType("integer");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "TimeDuration", "Prisma.Domain.Entities.LessonAggregate.Video.TimeDuration#TimeDuration", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<long>("Seconds")
+                                .HasColumnType("bigint")
+                                .HasColumnName("TimeDuration_Seconds");
+                        });
 
                     b.HasKey("Id");
 
@@ -2017,9 +2034,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CdnHostname")
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -2041,8 +2055,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<long>("ProviderLibraryId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("PullZoneUrl")
-                        .HasColumnType("text");
+                    b.Property<string>("ProvisioningStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ReadOnlyApiKey")
                         .HasColumnType("text");
@@ -2052,9 +2068,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("TeacherId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("TokenAuthKey")
-                        .HasColumnType("text");
 
                     b.Property<long>("TrafficUsage")
                         .HasColumnType("bigint");
@@ -2074,7 +2087,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.HasIndex("TeacherId");
+                    b.HasIndex("TeacherId")
+                        .IsUnique();
 
                     b.ToTable("VideoLibrary");
                 });
@@ -2150,6 +2164,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("TeacherAvatarUrl")
                         .HasColumnType("text");
+
+                    b.Property<int?>("VideoLibraryId")
+                        .HasColumnType("integer");
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "TeacherLandingSettings", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings", b1 =>
                         {
@@ -2705,8 +2722,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.VideoLibrary", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.UserAggregate.Teacher", "Teacher")
-                        .WithMany()
-                        .HasForeignKey("TeacherId")
+                        .WithOne("VideoLibrary")
+                        .HasForeignKey("Prisma.Domain.Entities.UserAggregate.VideoLibrary", "TeacherId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -2861,6 +2878,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Quizzes");
 
                     b.Navigation("TeacherStudents");
+
+                    b.Navigation("VideoLibrary");
                 });
 #pragma warning restore 612, 618
         }

@@ -45,6 +45,8 @@ public static partial class DependenciesInjection
         services.AddScoped<ITextEmbeddingProcessor, TextEmbeddingProcessor>();
 
         services.AddCacheServices(configuration);
+
+        services.AddSingleton<ISecretCipher, SecretCipher>();
     }
 
     private static void AddInfrastructureHealthChecks(

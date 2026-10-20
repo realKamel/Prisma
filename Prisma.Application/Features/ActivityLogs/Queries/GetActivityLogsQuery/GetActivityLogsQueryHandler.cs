@@ -4,7 +4,7 @@ using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 
 namespace Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogsQuery;
 

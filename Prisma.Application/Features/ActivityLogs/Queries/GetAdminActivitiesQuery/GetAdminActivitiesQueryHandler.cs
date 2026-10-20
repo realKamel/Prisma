@@ -3,7 +3,7 @@ using MediatR;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 
 namespace Prisma.Application.Features.ActivityLogs.Queries.GetAdminActivitiesQuery;
 

@@ -5,7 +5,7 @@ using Prisma.Application.Features.ActivityLogs.Queries.GetAdminStatsQuery;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Admin;
+using Prisma.Domain.Specifications.Admins;
 
 namespace Prisma.Application.Features.Users.Queries.GetAdminProfile;
 

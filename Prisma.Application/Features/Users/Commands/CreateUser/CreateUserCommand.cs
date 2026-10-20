@@ -1,5 +1,5 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 using Prisma.Application.Features.Users.Dtos;
 
 namespace Prisma.Application.Features.Users.Commands.CreateUser;
@@ -12,10 +12,10 @@ public record CreateUserCommand(
     string Mobile,
     string Email,
     string Password,
-    string Role,           // "Admin" | "Teacher" | "Student" | "Assistant"
-    int? GradeId,           // Student only
-    Guid? TeacherId,        // Student only — ignored for Assistant, see handler note
-    string? ParentMobile ,
-        string? Subject
+    string Role, // "Admin" | "Teacher" | "Student" | "Assistant"
+    int? GradeId, // Student only
+    Guid? TeacherId, // Student only — ignored for Assistant, see handler note
+    string? ParentMobile,
+    string? Subject
 // Student only
 ) : IRequest<Result<UserEditDto>>;

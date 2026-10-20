@@ -28,40 +28,58 @@ internal sealed class CreateUserCommandHandler(IIdentityService identityService,
             return Result.Conflict("A user with this email or phone already exists.");
         }
 
-        var roleInRequest = request.Role.ToLower();
+        var roleInRequest = request.Role.ToLowerInvariant();
 
-        if (
-            roleInRequest
-            is not (AppRoles.Student or AppRoles.Teacher or AppRoles.Assistant or AppRoles.Admin)
-        )
+        User user;
+        switch (request.Role)
         {
-            return Result.Error($"Unknown role '{request.Role}'.");
+            case AppRoles.Student:
+                user = Student.Create(
+                    request.FirstName,
+                    request.SecondName,
+                    request.Email,
+                    request.Mobile,
+                    request.GradeId,
+                    request.ParentMobile,
+                    request.ThirdName,
+                    request.LastName
+                );
+                break;
+            case AppRoles.Teacher:
+                user = Teacher.Create(
+                    request.FirstName,
+                    request.SecondName,
+                    request.Email,
+                    request.Mobile,
+                    request.Subject,
+                    request.ThirdName,
+                    request.LastName
+                );
+                break;
+            case AppRoles.Assistant:
+                user = Assistant.Create(
+                    request.FirstName,
+                    request.SecondName,
+                    request.Email,
+                    request.Mobile,
+                    request.TeacherId,
+                    request.ThirdName,
+                    request.LastName
+                );
+                break;
+            case AppRoles.Admin:
+                user = User.Create(
+                    request.FirstName,
+                    request.SecondName,
+                    request.Email,
+                    request.Mobile,
+                    request.ThirdName,
+                    request.LastName
+                );
+                break;
+            default:
+                return Result.Error($"Unknown role '{request.Role}'.");
         }
-
-        User user = roleInRequest switch
-        {
-            AppRoles.Student => new Student
-            {
-                Id = Guid.CreateVersion7(),
-                AcademicYearId = request.GradeId,
-                ParentPhoneNumber = request.ParentMobile,
-            },
-            AppRoles.Teacher => new Teacher { Id = Guid.CreateVersion7(), Subject = request.Subject ?? string.Empty, },
-            // NOTE: unlike CreateAssistantCommand, this generic path doesn't set
-            // Policies claims — an admin can grant permissions afterward via the
-            // existing AssistantsController.UpdateAssistantPermissions endpoint.
-            AppRoles.Assistant => new Assistant { Id = Guid.CreateVersion7(), TeacherId = request.TeacherId, },
-            AppRoles.Admin => new Domain.Entities.UserAggregate.Admin { Id = Guid.CreateVersion7(), },
-            _ => throw new ArgumentOutOfRangeException(roleInRequest, $"Unknown role '{request.Role}'."),
-        };
-
-        user.FirstName = request.FirstName;
-        user.SecondName = request.SecondName;
-        user.ThirdName = request.ThirdName;
-        user.LastName = request.LastName;
-        user.PhoneNumber = request.Mobile;
-        user.Email = request.Email;
-        user.UserName = request.Email;
 
         var createResult = await identityService.CreateAsync(user, request.Password);
 
@@ -85,7 +103,7 @@ internal sealed class CreateUserCommandHandler(IIdentityService identityService,
 
             foreach (var ay in academicYears)
             {
-                ay.Teachers.Add(new() { TeacherId = user.Id, AcademicYearId = ay.Id });
+                ay.RegisterTeacherInAcademicYear(user.Id);
             }
         }
 

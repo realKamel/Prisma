@@ -31,7 +31,10 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       Groq__ApiKey: ${GROQ_API_KEY}
-      
+      BunnyDotNet__ApiKey: ${BUNNYDOTNET_APIKEY}
+      BunnyDotNet__CoreBaseUrl: ${BUNNYDOTNET_COREBASEURL}
+      BunnyDotNet__StreamBaseUrl: ${BUNNYDOTNET_STREAMBASEURL}
+      BunnyDotNet__DefaultPullZone: ${BUNNYDOTNET_DEFAULTPULLZONE}
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]

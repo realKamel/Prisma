@@ -12,6 +12,7 @@ public class QuizWithQuestionsSpecification: Specification<Quiz>
 
             .Include(q => q.Questions)
                 .ThenInclude(ql => ql.Question)
-                .ThenInclude(question => (question as MCQQuestion)!.Choices);
+                .ThenInclude(question => (question as MCQQuestion)!.Choices)
+            .AsSplitQuery();
     }
 }

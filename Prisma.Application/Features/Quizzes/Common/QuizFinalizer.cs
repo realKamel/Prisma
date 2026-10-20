@@ -39,7 +39,10 @@ public static class QuizFinalizer
                 ct);
         }
 
-        attempt.SubmittedAt = DateTimeOffset.UtcNow;
+        var deadline = attempt.StartedAt + quiz.TimeInMinutes;
+        var now = DateTimeOffset.UtcNow;
+        attempt.SubmittedAt = now > deadline ? deadline : now;
+
         await unitOfWork.SaveChangesAsync(ct);
     }
 
@@ -103,16 +106,23 @@ public static class QuizFinalizer
                 answer.Score = answer.IsCorrect == true ? ql.Degree : 0;
                 totalScore += answer.Score.Value;
             }
-            else // WrittenQuestion
+            else if (question is WrittenQuestion) // WrittenQuestion
             {
-                if (answer is null || answer.Score is null)
+                // A blank answer has nothing to grade: it scores 0 instead of waiting for a teacher
+                if (answer is null || string.IsNullOrWhiteSpace(answer.TextAnswer))
                 {
+                    if (answer is not null)
+                    {
+                        answer.IsCorrect = false;
+                        answer.Score = 0;
+                    }
+                    continue;
+                }
+
+                if (answer.Score is null)
                     hasPendingWritten = true;
-                }
                 else
-                {
                     totalScore += answer.Score.Value;
-                }
             }
         }
         return (totalScore, hasPendingWritten);

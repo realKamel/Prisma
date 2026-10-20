@@ -20,4 +20,7 @@ public class AttemptAnswer : BaseEntity
     public decimal? Score { get; set; }
     public bool? IsCorrect { get; set; }
     public string? TextAnswer { get; set; }
+
+    // Client-generated, monotonic (time-based) sequence used to ignore stale writes.
+    public long ClientSeq { get; set; }
 }

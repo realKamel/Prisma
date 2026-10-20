@@ -46,7 +46,7 @@ public class StudentQuizzesController(ISender sender) : ApiController
     }
 
     [HttpPatch("attempts/{attemptId:int}/answer")]
-    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [EnableRateLimiting(RateLimitPolicies.QuizAnswer)]
     public async Task<Result> SaveAnswer(
         int attemptId,
         [FromBody] SaveAnswerRequest body,
@@ -54,22 +54,22 @@ public class StudentQuizzesController(ISender sender) : ApiController
     )
     {
         var result = await sender.Send(
-            new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer),
+            new SaveQuizAnswerCommand(attemptId, body.QuestionId, body.ChoiceId, body.TextAnswer, body.ClientSeq),
             ct
         );
         return result;
     }
 
     [HttpPost("attempts/{attemptId:int}/submit")]
-    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
-    public async Task<Result<SubmitQuizResultDto>> Submit(int attemptId, CancellationToken ct)
+    //[EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<SubmitQuizResultDto>> Submit(int attemptId, [FromBody] SubmitQuizRequest body, CancellationToken ct)
     {
-        var result = await sender.Send(new SubmitQuizAttemptCommand(attemptId), ct);
+        var result = await sender.Send(new SubmitQuizAttemptCommand(attemptId, body?.Answers), ct);
         return result;
     }
 
     [HttpPost("attempts/{attemptId:int}/security-event")]
-    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [EnableRateLimiting(RateLimitPolicies.QuizAnswer)]
     public async Task<Result> ReportSecurityEvent(
         int attemptId,
         [FromBody] ReportSecurityEventRequest body,
@@ -84,6 +84,7 @@ public class StudentQuizzesController(ISender sender) : ApiController
     }
 }
 
-public record SaveAnswerRequest(int QuestionId, int? ChoiceId, string? TextAnswer);
+public record SaveAnswerRequest(int QuestionId, int? ChoiceId, string? TextAnswer, long ClientSeq);
+public sealed record SubmitQuizRequest(List<SubmitAnswerDto>? Answers);
 
 public record ReportSecurityEventRequest(SecurityEventType EventType);

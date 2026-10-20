@@ -42,5 +42,8 @@ internal sealed class AttemptAnswerConfiguration : IEntityTypeConfiguration<Atte
             .HasFilter("\"IsDeleted\" = false");
 
         builder.HasQueryFilter(x => !x.IsDeleted);
+
+        builder.Property(a => a.ClientSeq)
+       .HasDefaultValue(0L);
     }
 }

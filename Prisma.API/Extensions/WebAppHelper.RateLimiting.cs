@@ -58,7 +58,7 @@ public static partial class WebAppHelper
             {
                 var multiplexer = httpContext.RequestServices.GetRequiredService<IConnectionMultiplexer>();
                 return RedisRateLimitPartition.GetTokenBucketRateLimiter(
-                    partitionKey: $"rl:user:read:{httpContext.User.FindFirst("sub")?.Value ?? "anon"}",
+                    partitionKey: $"rl:user:read:{GetUserKey(httpContext)}",
                     factory: _ => new RedisTokenBucketRateLimiterOptions
                     {
                         ConnectionMultiplexerFactory = () => multiplexer,
@@ -75,7 +75,7 @@ public static partial class WebAppHelper
                 var redis = httpContext.RequestServices.GetRequiredService<IConnectionMultiplexer>();
 
                 return RedisRateLimitPartition.GetTokenBucketRateLimiter(
-                    partitionKey: $"rl:user:write:{httpContext.User.FindFirst("sub")?.Value ?? "anon"}",
+                    partitionKey: $"rl:user:write:{GetUserKey(httpContext)}",
                     factory: _ => new RedisTokenBucketRateLimiterOptions
                     {
                         ConnectionMultiplexerFactory = () => redis,
@@ -84,7 +84,26 @@ public static partial class WebAppHelper
                         ReplenishmentPeriod = TimeSpan.FromMinutes(1)
                     });
             });
-            // Policy 5: LLM STREAMING endpoints
+
+            // Policy 5: QUIZ ANSWER autosave
+            // Cheap and idempotent, but bursty by nature (rapid clicks, essay typing).
+            // Generous per-user bucket so legitimate exam behavior never hits the limit.
+            options.AddPolicy(RateLimitPolicies.QuizAnswer, httpContext =>
+            {
+                var multiplexer = httpContext.RequestServices.GetRequiredService<IConnectionMultiplexer>();
+
+                return RedisRateLimitPartition.GetTokenBucketRateLimiter(
+                    partitionKey: $"rl:quiz:answer:{GetUserKey(httpContext)}",
+                    factory: _ => new RedisTokenBucketRateLimiterOptions
+                    {
+                        ConnectionMultiplexerFactory = () => multiplexer,
+                        TokenLimit = settings.Quiz.AnswerBurstLimit,
+                        TokensPerPeriod = settings.Quiz.AnswerSustainedPerMinute,
+                        ReplenishmentPeriod = TimeSpan.FromMinutes(1)
+                    });
+            });
+
+            // Policy 6: LLM STREAMING endpoints
             // Concurrency limit: Max 2 simultaneous streaming requests per user.
             // QueueLimit = 0 ensures we fail fast (429) instead of making the user wait in a queue 
             // while their other streams are still running.
@@ -132,4 +151,11 @@ public static partial class WebAppHelper
             };
         });
     }
+
+    // One place to resolve the user identity for all user-scoped policies.
+    // Falls back to IP (not a shared "anon" bucket) if the user is unauthenticated.
+    private static string GetUserKey(HttpContext ctx) =>
+        ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? ctx.User.FindFirstValue("sub")
+        ?? $"anon:{ctx.Connection.RemoteIpAddress}";
 }

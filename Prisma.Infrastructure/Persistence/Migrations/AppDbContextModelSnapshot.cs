@@ -1176,6 +1176,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("ChoiceId")
                         .HasColumnType("integer");
 
+                    b.Property<long>("ClientSeq")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L);
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 

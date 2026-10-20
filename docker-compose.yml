@@ -9,6 +9,7 @@ services:
       #ConnectionStrings__DefaultSqlConnection: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Include Error Detail=false;SSL Mode=Disable;GSS Encryption Mode=Disable;"
       ConnectionStrings__DefaultSqlConnection: "Host=connection-pooler;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};No Reset On Close=true;Max Auto Prepare=0;Include Error Detail=true;SSL Mode=Disable;GSS Encryption Mode=Disable;"
       ConnectionStrings__Valkey: "cache:6379"
+      ConnectionStrings__ValkeyMessaging: "messaging:6379"
       IdentitySeed__AdminEmail: ${IDENTITY_SEED_ADMIN_EMAIL}
       IdentitySeed__AdminPassword: ${IDENTITY_SEED_ADMIN_PASSWORD}
       IdentitySeed__AdminPhone: ${IDENTITY_SEED_ADMIN_PHONE_NUMBER}
@@ -30,6 +31,7 @@ services:
       JwtSettings__Issuer: ${JWT_ISSUER}
       JwtSettings__Audience: ${JWT_AUDIENCE}
       Groq__ApiKey: ${GROQ_API_KEY}
+      
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
@@ -90,6 +92,26 @@ services:
       timeout: 5s
       retries: 5
     mem_limit: 1024m
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+  
+  messaging:
+    image: valkey/valkey:9.0-alpine
+    container_name: prisma-messaging
+    volumes:
+      - messaging-data:/data
+    command: [ "valkey-server", "--maxmemory","400mb", "--maxmemory-policy", "noeviction", "--appendonly","yes" ]
+    
+    mem_limit: 512m
+    healthcheck:
+      test: [ "CMD", "valkey-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     logging:
       driver: json-file
@@ -339,3 +361,4 @@ volumes:
   loki-data:
   grafana-data:
   tempo-data:
+  messaging-data:

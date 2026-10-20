@@ -75,6 +75,10 @@ services:
     ports:
       - "6379:6379"
 
+  messaging:
+    ports:
+      - "6380:6379"
+  
   connection-pooler:
     ports:
       - "6432:5432"

@@ -1,8 +1,8 @@
 ﻿namespace Prisma.Domain.Common;
 
-public class BaseEntity : IEntity<int>, IAuditable, IDomainEventEnumerable
+public class BaseEntity<TKey> : IEntity<TKey>, IAuditable, IDomainEventEnumerable
 {
-    public int Id { get; set; }
+    public TKey Id { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
@@ -23,3 +23,5 @@ public class BaseEntity : IEntity<int>, IAuditable, IDomainEventEnumerable
 
     public void ClearDomainEvents() => _domainEvents.Clear();
 }
+
+public class BaseEntity : BaseEntity<int> { }

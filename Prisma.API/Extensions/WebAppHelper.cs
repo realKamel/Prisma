@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,10 +21,12 @@ using Prisma.Infrastructure.DependenciesInjections;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
+using StackExchange.Redis;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
 using Wolverine.Postgresql;
+using Wolverine.Redis;
 
 namespace Prisma.API.Extensions;
 
@@ -97,6 +100,24 @@ public static partial class WebAppHelper
         // services.AddOpenAIResponses();
         // services.AddOpenAIConversations();
         // services.AddDevUI();
+
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        var multiplexer = ConnectionMultiplexer.Connect(
+            new ConfigurationOptions
+            {
+                EndPoints = { connectionStrings.ValkeyMessaging },
+                AbortOnConnectFail = false,
+                ConnectRetry = 10,
+                ConnectTimeout = 5000,
+                SyncTimeout = 5000,
+            }
+        );
+        services.AddKeyedSingleton<IConnectionMultiplexer>("messaging", multiplexer);
     }
 
     private static void AddLocalizationServices(this IServiceCollection services)
@@ -224,6 +245,16 @@ public static partial class WebAppHelper
             // Enable durable outbox processing across all handlers/endpoints
             options.Policies.UseDurableOutboxOnAllSendingEndpoints();
 
+            options.Policies.UseDurableInboxOnAllListeners();
+
+            options
+                .UseRedisTransport(
+                    (sp) => sp.GetRequiredKeyedService<IConnectionMultiplexer>("messaging")
+                )
+                .AutoProvision();
+
+            options.Policies.AutoApplyIdempotencyOnNonTransactionalHandlers();
+            options.MultipleHandlerBehavior = MultipleHandlerBehavior.Separated;
             // Configure transient exceptions to retry with a cooldown
             options
                 .Policies.OnException<HttpRequestException>()

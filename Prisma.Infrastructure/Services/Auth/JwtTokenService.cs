@@ -8,7 +8,7 @@ using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.Auth;
 
-public class JwtTokenService : IJwtTokenService
+internal sealed class JwtTokenService : IJwtTokenService
 {
     private readonly SigningCredentials _signingCredentials;
     private readonly JwtSettingsOptions _jwtSettings;

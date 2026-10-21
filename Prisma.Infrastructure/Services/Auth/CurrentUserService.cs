@@ -24,6 +24,8 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
 
     public string? Email => User?.FindFirstValue(ClaimTypes.Email);
 
+    public string? Role => User?.FindFirstValue(ClaimTypes.Role);
+
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 
     public bool IsInAnyRole(

@@ -23,16 +23,19 @@ public static class DependenciesInjection
 
         // Register the pipeline behavior
 
-        // 1. LOGGING (Outermost) - Catches total execution time, including cache hits/misses
+        // 1. LOGGING (Outermost) - Measures total execution time, including authorization and cache hits.
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 
-        // 3. CACHING - Checks FusionCache. If hit, skips Validation and UoW entirely.
+        // 2. Authorization - Ensures the current user is authorized before accessing cached data or executing the handler
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
+
+        // 3. CACHING - Returns cached responses when available, skipping validation and handler execution.
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
 
-        // 4. VALIDATION - Fails fast before hitting the database.
+        // 4. VALIDATION - Validates requests before executing the handler.
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-        // 5. UNIT OF WORK (Innermost) - Wraps the actual Handler execution and calls SaveChanges()
+        // 5. UNIT OF WORK (Innermost) - Wraps handler execution and commits changes when appropriate.
         //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DbTransactionBehavior<,>));
 
         services.Configure<FeatureOptions>(configuration.GetSection(AppFeatureKeys.SectionKey));

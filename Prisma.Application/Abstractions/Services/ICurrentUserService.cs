@@ -6,4 +6,5 @@ public interface ICurrentUserService
     string? Email { get; }
     bool IsAuthenticated { get; }
     bool IsInAnyRole(IReadOnlyList<string>? role, CancellationToken cancellationToken = default);
+    bool IsInRole(string role, CancellationToken cancellationToken);
 }

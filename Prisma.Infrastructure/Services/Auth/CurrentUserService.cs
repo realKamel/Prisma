@@ -5,7 +5,8 @@ using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Infrastructure.Services.Auth;
 
-internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
+internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    : ICurrentUserService
 {
     private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
 
@@ -13,8 +14,9 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
     {
         get
         {
-            string? value = User?.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
-                            User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            string? value =
+                User?.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                ?? User?.FindFirstValue(ClaimTypes.NameIdentifier);
 
             return Guid.TryParse(value, out Guid id) ? id : null;
         }
@@ -24,7 +26,10 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
 
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;
 
-    public bool IsInAnyRole(IReadOnlyList<string>? roles, CancellationToken cancellationToken = default)
+    public bool IsInAnyRole(
+        IReadOnlyList<string>? roles,
+        CancellationToken cancellationToken = default
+    )
     {
         if (User is null || roles is null || roles.Count == 0)
         {
@@ -32,5 +37,10 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
         }
 
         return roles.Any(User.IsInRole);
+    }
+
+    public bool IsInRole(string role, CancellationToken cancellationToken)
+    {
+        return User?.IsInRole(role) ?? false;
     }
 }

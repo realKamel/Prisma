@@ -60,7 +60,9 @@
     <PackageReference Include="Pgvector.EntityFrameworkCore" />
     <PackageReference Include="Refit" />
     <PackageReference Include="Refit.HttpClientFactory" />
+    <PackageReference Include="Refit.Reflection" />
     <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="tusdotnet.Stores.S3" />
     <PackageReference Include="WolverineFx" />
     <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <PackageReference Include="WolverineFx.Postgresql" />

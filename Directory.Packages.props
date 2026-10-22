@@ -107,6 +107,7 @@
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
     <PackageVersion Include="Refit" Version="16.4.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="16.4.0" />
+    <PackageVersion Include="Refit.Reflection" Version="16.4.0" />
     <PackageVersion
       Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"
       Version="6.0.1"
@@ -127,6 +128,8 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+    <PackageVersion Include="tusdotnet" Version="2.12.0" />
+    <PackageVersion Include="tusdotnet.Stores.S3" Version="2.2.0" />
     <PackageVersion Include="WolverineFx" Version="6.51.2" />
     <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.51.2" />
     <PackageVersion Include="WolverineFx.Postgresql" Version="6.51.2" />

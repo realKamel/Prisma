@@ -15,6 +15,7 @@ public interface IBunnyStreamVideosApi
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
     /// <param name="videoId">The unique GUID of the video.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The details of the requested video.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if libraryId is less than or equal to 0, or videoId is null/empty.</exception>
@@ -23,6 +24,7 @@ public interface IBunnyStreamVideosApi
     Task<GetVideoResponse> GetVideo(
         [AliasAs("libraryId")] long libraryId,
         [AliasAs("videoId")] string videoId,
+        [Header("Authorization")] string libraryApiKey,
         CancellationToken cancellationToken
     );
 
@@ -30,6 +32,7 @@ public interface IBunnyStreamVideosApi
     /// Creates a new video entry in the specified library, returning a video GUID that can be used for subsequent uploads.
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="model">The configuration details for the new video. The 'Title' property is required.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The newly created VideoModel, including its unique GUID and initial status.</returns>
@@ -39,6 +42,7 @@ public interface IBunnyStreamVideosApi
     [Post("/library/{libraryId}/videos")]
     Task<CreateVideoResponse> CreateVideo(
         [AliasAs("libraryId")] long libraryId,
+        [Header("Authorization")] string libraryApiKey,
         [Body] CreateVideoRequest model,
         CancellationToken cancellationToken
     );
@@ -48,6 +52,7 @@ public interface IBunnyStreamVideosApi
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
     /// <param name="videoId">The unique GUID of the video.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="model">The properties to update. Only non-null properties will be applied.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A StatusModel indicating success or failure.</returns>
@@ -56,6 +61,7 @@ public interface IBunnyStreamVideosApi
     Task<BunnyStreamGeneralResponse> UpdateVideo(
         [AliasAs("libraryId")] long libraryId,
         [AliasAs("videoId")] string videoId,
+        [Header("Authorization")] string libraryApiKey,
         [Body] UpdateVideoRequest model,
         CancellationToken cancellationToken
     );
@@ -65,6 +71,7 @@ public interface IBunnyStreamVideosApi
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
     /// <param name="videoId">The unique GUID of the video to delete.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A StatusModel indicating success or failure.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if libraryId is less than or equal to 0, or videoId is null/empty.</exception>
@@ -77,6 +84,7 @@ public interface IBunnyStreamVideosApi
     Task<BunnyStreamGeneralResponse> DeleteVideo(
         [AliasAs("libraryId")] long libraryId,
         [AliasAs("videoId")] string videoId,
+        [Header("Authorization")] string libraryApiKey,
         CancellationToken cancellationToken
     );
 
@@ -84,6 +92,7 @@ public interface IBunnyStreamVideosApi
     /// Retrieves a paginated list of videos within a specific video library.
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="page">The page number to return, 1-based. Values below 1 are treated as 1. (Default: 1)</param>
     /// <param name="itemsPerPage">The number of items to return per page, clamped to a range of 10-1000. (Default: 100)</param>
     /// <param name="search">Optional. Filters videos by title, case-insensitive substring match.</param>
@@ -96,6 +105,7 @@ public interface IBunnyStreamVideosApi
     [Get("/library/{libraryId}/videos")]
     Task<GetVideosResponse> ListVideos(
         [AliasAs("libraryId")] long libraryId,
+        [Header("Authorization")] string libraryApiKey,
         [Query] int? page = null,
         [Query] int? itemsPerPage = null,
         [Query] string? search = null,
@@ -109,6 +119,7 @@ public interface IBunnyStreamVideosApi
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
     /// <param name="videoId">The unique GUID of the video.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A StatusModelOfVideoStorageSizeModel containing the storage breakdown.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown if libraryId is less than or equal to 0, or videoId is null/empty.</exception>
@@ -117,6 +128,7 @@ public interface IBunnyStreamVideosApi
     Task<GetVideoStorageSizeInfoResponse> GetVideoStorageSize(
         [AliasAs("libraryId")] long libraryId,
         [AliasAs("videoId")] string videoId,
+        [Header("Authorization")] string libraryApiKey,
         CancellationToken cancellationToken
     );
 
@@ -125,6 +137,7 @@ public interface IBunnyStreamVideosApi
     /// </summary>
     /// <param name="libraryId">The ID of the video library.</param>
     /// <param name="videoId">The unique GUID of the video.</param>
+    /// <param name="libraryApiKey">The API key for the same library.</param>
     /// <param name="resolutionsToDelete">Comma-separated list of specific resolutions to delete (e.g., "720p,480p").</param>
     /// <param name="deleteNonConfiguredResolutions">If true, all resolutions not currently configured for the library will be deleted.</param>
     /// <param name="allResolutions">If true, all resolutions for the video will be deleted, regardless of library configuration.</param>
@@ -139,7 +152,7 @@ public interface IBunnyStreamVideosApi
     /// ⚠️ WARNING: This action cannot be undone.
     /// If the library has 'keep original files' turned off, the original source file is also deleted as part of this
     /// cleanup even when deleteOriginal is not explicitly set to true.
-    /// <br/><br/>
+    ///
     /// When targeting HLS resolutions (the default, or outputs=all), at least one resolution must remain after cleanup
     /// or the request is rejected (400). To remove every rendition, scope outputs to "mp4".
     /// </remarks>
@@ -147,6 +160,7 @@ public interface IBunnyStreamVideosApi
     Task<CleanUpUnconfiguredResolutionsResponse> CleanupVideoResolutions(
         [AliasAs("libraryId")] long libraryId,
         [AliasAs("videoId")] string videoId,
+        [Header("Authorization")] string libraryApiKey,
         [Query] string? resolutionsToDelete = null,
         [Query] bool? deleteNonConfiguredResolutions = null,
         [Query] bool? allResolutions = null,

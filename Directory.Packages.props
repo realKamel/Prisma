@@ -7,7 +7,7 @@
     <PackageVersion Include="Ardalis.SmartEnum" Version="8.2.0" />
     <PackageVersion Include="Ardalis.SmartEnum.EFCore" Version="8.2.0" />
     <PackageVersion Include="Ardalis.SmartEnum.SystemTextJson" Version="8.1.0" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.5" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.104.5" />
     <PackageVersion Include="Ardalis.Result" Version="10.1.0" />
     <PackageVersion Include="Ardalis.Result.AspNetCore" Version="10.1.0" />
     <PackageVersion Include="Ardalis.Specification" Version="9.3.1" />
@@ -25,63 +25,63 @@
     <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.PostgreSQL.Storage" Version="9.0.0" />
     <PackageVersion Include="AspNetCore.HealthChecks.UI.SQLite.Storage" Version="9.0.0" />
-    <PackageVersion Include="FluentAssertions" Version="8.10.0" />
+    <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.34.1" />
-    <PackageVersion Include="FluentValidation" Version="12.1.1" />
-    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageVersion Include="FluentValidation" Version="12.2.0" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="12.2.0" />
     <PackageVersion Include="Groq.Sdk.Core" Version="2.0.0.11-alpha" />
     <PackageVersion Include="Groq.Sdk.Extensions.DependencyInjection" Version="2.0.0.11-alpha" />
     <PackageVersion Include="Hangfire" Version="1.8.25" />
     <PackageVersion Include="Hangfire.Core" Version="1.8.25" />
     <PackageVersion Include="Hangfire.PostgreSql" Version="1.21.1" />
-    <PackageVersion Include="KubernetesClient" Version="17.0.14" />
+    <PackageVersion Include="KubernetesClient" Version="21.0.8" />
     <PackageVersion Include="libphonenumber-csharp" Version="9.0.41" />
-    <PackageVersion Include="MailKit" Version="4.17.0" />
+    <PackageVersion Include="MailKit" Version="4.18.1" />
     <PackageVersion Include="MediatR" Version="14.2.0" />
     <PackageVersion Include="MediatR.Contracts" Version="2.0.1" />
-    <PackageVersion Include="Microsoft.Agents.AI" Version="1.13.0" />
-    <PackageVersion Include="Microsoft.Agents.AI.Abstractions" Version="1.13.0" />
+    <PackageVersion Include="Microsoft.Agents.AI" Version="1.25.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Abstractions" Version="1.25.0" />
     <PackageVersion Include="Microsoft.Agents.AI.DurableTask" Version="1.13.0-preview.260703.1" />
     <PackageVersion Include="Microsoft.Agents.AI.Foundry" Version="1.5.0" />
     <PackageVersion Include="Microsoft.Agents.AI.Hosting" Version="1.13.0-preview.260703.1" />
     <PackageVersion Include="Microsoft.Agents.AI.Hosting.OpenAI" Version="1.13.0-alpha.260703.1" />
-    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.13.0" />
-    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.13.0" />
-    <PackageVersion Include="Microsoft.Agents.AI.Workflows.Declarative" Version="1.13.0" />
-    <PackageVersion Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.13.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.Agents.AI.OpenAI" Version="1.25.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows" Version="1.25.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows.Declarative" Version="1.25.0" />
+    <PackageVersion Include="Microsoft.Agents.AI.Workflows.Generators" Version="1.25.0" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
     <PackageVersion
       Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"
-      Version="10.0.11"
+      Version="10.0.13"
     />
     <PackageVersion
       Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis"
-      Version="10.0.11"
+      Version="10.0.13"
     />
-    <PackageVersion Include="Microsoft.AspNetCore.Identity" Version="2.3.12" />
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity" Version="2.3.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
     <PackageVersion
       Include="Microsoft.AspNetCore.OutputCaching.StackExchangeRedis"
-      Version="10.0.11"
+      Version="10.0.13"
     />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.13" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.8.1" />
-    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
-    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.11" />
-    <PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.9.0" />
-    <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.7.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
-    <PackageVersion Include="Microsoft.OpenApi" Version="2.9.0" />
-    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.78.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.11.0" />
+    <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.8.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.13.0" />
+    <PackageVersion Include="Microsoft.SemanticKernel.Core" Version="1.81.0" />
     <PackageVersion
       Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets"
       Version="1.23.0"
@@ -91,25 +91,25 @@
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
-    <PackageVersion Include="OpenAI" Version="2.12.0" />
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageVersion Include="OpenAI" Version="2.14.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.20.1" />
     <PackageVersion
       Include="OpenTelemetry.Instrumentation.EntityFrameworkCore"
       Version="1.18.0-beta.1"
     />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
-    <PackageVersion Include="PdfPig" Version="0.1.15" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.20.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.20.1" />
+    <PackageVersion Include="PdfPig" Version="0.1.16" />
     <PackageVersion Include="Pgvector" Version="0.3.2" />
     <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
     <PackageVersion Include="RedisRateLimiting" Version="1.2.1" />
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
-    <PackageVersion Include="Refit" Version="16.3.0" />
-    <PackageVersion Include="Refit.HttpClientFactory" Version="16.3.0" />
+    <PackageVersion Include="Refit" Version="16.4.0" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="16.4.0" />
     <PackageVersion
       Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"
-      Version="6.0.0"
+      Version="6.0.1"
     />
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
@@ -123,26 +123,26 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.Console.Themes" Version="4.0.1" />
     <PackageVersion Include="Serilog.Sinks.Seq" Version="9.1.0" />
-    <PackageVersion Include="StackExchange.Redis" Version="3.1.31" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
-    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.11" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
-    <PackageVersion Include="WolverineFx" Version="6.51.0" />
-    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.51.0" />
-    <PackageVersion Include="WolverineFx.Postgresql" Version="6.51.0" />
-    <PackageVersion Include="WolverineFx.Redis" Version="6.51.0" />
-    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.51.0" />
-    <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.7.2" />
+    <PackageVersion Include="StackExchange.Redis" Version="3.4.5" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.3.1" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
+    <PackageVersion Include="WolverineFx" Version="6.51.2" />
+    <PackageVersion Include="WolverineFx.EntityFrameworkCore" Version="6.51.2" />
+    <PackageVersion Include="WolverineFx.Postgresql" Version="6.51.2" />
+    <PackageVersion Include="WolverineFx.Redis" Version="6.51.2" />
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.51.2" />
+    <PackageVersion Include="ZiggyCreatures.FusionCache" Version="2.9.0" />
     <PackageVersion
       Include="ZiggyCreatures.FusionCache.Backplane.StackExchangeRedis"
-      Version="2.7.2"
+      Version="2.9.0"
     />
     <PackageVersion
       Include="ZiggyCreatures.FusionCache.Serialization.SystemTextJson"
-      Version="2.7.2"
+      Version="2.9.0"
     />
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
 </Project>

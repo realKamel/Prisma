@@ -75,5 +75,6 @@ public static partial class DependenciesInjection
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         //Custom Repositories
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
     }
 }

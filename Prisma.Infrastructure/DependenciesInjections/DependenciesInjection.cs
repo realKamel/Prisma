@@ -49,6 +49,8 @@ public static partial class DependenciesInjection
         services.AddCacheServices(configuration);
 
         services.AddSingleton<ISecretCipher, SecretCipher>();
+        
+        services.AddSignalRWithConfiguration(configuration);
     }
 
     private static void AddInfrastructureHealthChecks(

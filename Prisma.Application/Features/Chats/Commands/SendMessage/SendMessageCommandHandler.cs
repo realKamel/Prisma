@@ -41,6 +41,12 @@ internal sealed class SendMessageCommandHandler(
             return Result<Guid>.Invalid(messageResult.ValidationErrors);
         }
 
+        // The message is a brand-new entity carrying an application-assigned Guid key, while
+        // the conversation's Messages collection is not loaded. Change detection alone would
+        // track it as Modified and emit an UPDATE for a row that does not exist yet
+        // (DbUpdateConcurrencyException), so register it explicitly for insertion.
+        conversationRepository.AddMessage(messageResult.Value);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result<Guid>.Success(messageResult.Value.Id);

@@ -112,6 +112,7 @@
       Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"
       Version="6.0.1"
     />
+    <PackageVersion Include="SignalR.OpenApi.SwaggerUi" Version="1.1.68" />
     <PackageVersion Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />

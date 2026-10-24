@@ -43,6 +43,15 @@ Prisma is an AI-enabled educational management backend built with .NET 10 and AS
 - Paymob card and Fawry payment initiation with HMAC-verified webhooks and payment history.
 - Teacher finances, platform statistics, and student performance/history dashboards.
 
+### Real-time chat
+
+- Unified `Conversation` aggregate covering direct (1-on-1) and group chats, with member roles and per-member read-receipt pointers.
+- SignalR `ChatHub` at `/hubs/chat` for sending messages, joining/leaving conversations, read receipts, typing indicators, and presence.
+- JWT authentication for WebSocket handshakes via the `access_token` query string, with membership guard clauses on every hub method.
+- Wolverine EF Core outbox dispatch of `MessageSentDomainEvent` and `MessageReadDomainEvent`, so broadcasts survive process restarts.
+- Redis backplane for horizontal scaling, plus Redis-backed presence tracking and cached unread badges for offline members.
+- Cursor-based message history (`SentAt`) with a `(ConversationId, SentAt DESC)` index and a `(UserId, ConversationId)` inbox index.
+
 ### Platform and operations
 
 - Feature flags via `Microsoft.FeatureManagement` for AI grading, RAG chat, and weekly reports.

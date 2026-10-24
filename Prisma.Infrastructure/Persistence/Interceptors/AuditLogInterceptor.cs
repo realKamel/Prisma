@@ -1,17 +1,29 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Interceptors;
 
-internal class AuditLogInterceptor(ICurrentUserService currentUser) : SaveChangesInterceptor
+internal class AuditLogInterceptor(IHttpContextAccessor httpContextAccessor)
+    : SaveChangesInterceptor
 {
+    private string GetCurrentUserEmail()
+    {
+        var currentUser =
+            httpContextAccessor.HttpContext?.RequestServices.GetService<ICurrentUserService>();
+
+        return currentUser?.Email ?? SystemConstants.SystemEmail;
+    }
+
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
-        InterceptionResult<int> result)
+        InterceptionResult<int> result
+    )
     {
         AddAuditLogs(eventData.Context);
         return base.SavingChanges(eventData, result);
@@ -20,7 +32,8 @@ internal class AuditLogInterceptor(ICurrentUserService currentUser) : SaveChange
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         AddAuditLogs(eventData.Context);
         return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -28,31 +41,41 @@ internal class AuditLogInterceptor(ICurrentUserService currentUser) : SaveChange
 
     private void AddAuditLogs(DbContext? context)
     {
-        if (context is null) return;
+        if (context is null)
+        {
+            return;
+        }
 
         var entries = BuildAuditLogs(context);
+
         if (entries.Count > 0)
+        {
             context.Set<AuditLog>().AddRange(entries);
+        }
     }
 
     private List<AuditLog> BuildAuditLogs(DbContext context)
     {
         var now = DateTimeOffset.UtcNow;
-        var userEmail = currentUser.Email ?? SystemConstants.SystemEmail;
+        var userEmail = GetCurrentUserEmail();
         var auditEntries = new List<AuditLog>();
 
         foreach (var entry in context.ChangeTracker.Entries())
         {
-            if (entry.Entity is AuditLog
-                || entry.State is EntityState.Detached or EntityState.Unchanged)
+            if (
+                entry.Entity is AuditLog
+                || entry.State is EntityState.Detached or EntityState.Unchanged
+            )
+            {
                 continue;
+            }
 
             var action = entry.State switch
             {
                 EntityState.Added => "CREATE",
                 EntityState.Modified => "UPDATE",
                 EntityState.Deleted => "DELETE",
-                _ => entry.State.ToString().ToUpper()
+                _ => entry.State.ToString().ToUpperInvariant(),
             };
 
             var auditLog = new AuditLog
@@ -60,7 +83,7 @@ internal class AuditLogInterceptor(ICurrentUserService currentUser) : SaveChange
                 UserEmail = userEmail,
                 TableName = entry.Metadata.GetTableName() ?? "",
                 Action = action,
-                CreatedAt = now
+                CreatedAt = now,
             };
 
             var oldValues = new Dictionary<string, object?>();

@@ -1,15 +1,28 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Domain.Common;
 
 namespace Prisma.Infrastructure.Persistence.Interceptors;
 
-internal sealed class AuditInterceptor(ICurrentUserService currentUserService) : SaveChangesInterceptor
+internal sealed class AuditInterceptor(IHttpContextAccessor httpContextAccessor)
+    : SaveChangesInterceptor
 {
+    private Guid GetCurrentUserId()
+    {
+        var currentUser =
+            httpContextAccessor.HttpContext?.RequestServices.GetService<ICurrentUserService>();
+
+        return currentUser?.UserId ?? SystemConstants.SystemId;
+    }
+
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
-        InterceptionResult<int> result)
+        InterceptionResult<int> result
+    )
     {
         Stamp(eventData.Context);
         return base.SavingChanges(eventData, result);
@@ -18,7 +31,8 @@ internal sealed class AuditInterceptor(ICurrentUserService currentUserService) :
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         Stamp(eventData.Context);
         return base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -26,13 +40,13 @@ internal sealed class AuditInterceptor(ICurrentUserService currentUserService) :
 
     private void Stamp(DbContext? context)
     {
-        if (context is null) return;
+        if (context is null)
+            return;
 
         var now = DateTimeOffset.UtcNow;
-        var userId = currentUserService.UserId ?? Guid.Empty; // means system
+        var userId = GetCurrentUserId();
 
-        var entries = context.ChangeTracker
-            .Entries<IAuditable>();
+        var entries = context.ChangeTracker.Entries<IAuditable>();
 
         foreach (var entry in entries)
         {

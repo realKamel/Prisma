@@ -48,6 +48,7 @@
     <PackageReference Include="Serilog.Sinks.Console.Themes" />
     <PackageReference Include="Serilog.Sinks.Seq" />
     <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore" />
+    <PackageReference Include="SignalR.OpenApi.SwaggerUi" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
   </ItemGroup>

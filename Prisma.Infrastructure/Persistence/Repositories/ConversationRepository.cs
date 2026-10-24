@@ -1,21 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using Prisma.Domain.Common;
 using Prisma.Domain.Entities.ChatAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.ReadModels.Chats;
 using Prisma.Domain.Repositories;
-using Wolverine;
-using Wolverine.EntityFrameworkCore;
-using Wolverine.Runtime;
 
 namespace Prisma.Infrastructure.Persistence.Repositories;
 
 // Public so Wolverine's codegen can resolve it for event handler dependencies
 // without falling back to service location.
-public sealed class ConversationRepository(
-    AppDbContext dbContext,
-    IDbContextOutbox<AppDbContext> dbContextOutbox
-) : IConversationRepository
+public sealed class ConversationRepository(AppDbContext dbContext) : IConversationRepository
 {
     public async Task AddAsync(
         Conversation conversation,
@@ -23,6 +16,18 @@ public sealed class ConversationRepository(
     )
     {
         dbContext.Set<Conversation>().Add(conversation);
+    }
+
+    /// <summary>
+    /// Tracks a message created by <see cref="Conversation.AddMessage"/> as Added.
+    /// Messages are immutable and carry a client-generated Guid key, so once the aggregate
+    /// hands one back it must be inserted explicitly; relying on change detection over the
+    /// (not loaded) Messages collection would emit an UPDATE against a row that does not
+    /// exist yet and fail with a DbUpdateConcurrencyException.
+    /// </summary>
+    public void AddMessage(Message message)
+    {
+        dbContext.Set<Message>().Add(message);
     }
 
     public Task<Conversation?> GetByIdAsync(
@@ -200,43 +205,4 @@ public sealed class ConversationRepository(
             )
             .ToList();
     }
-
-    // public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    // {
-    //     dbContext.ChangeTracker.DetectChanges();
-    //     PromoteNewMessages();
-    //
-    //     // Wolverine scrapes the change tracker for IDomainEventEnumerable before saving and
-    //     // persists the resulting messages through its EF Core outbox in the same transaction.
-    //     var domainEventEntities = dbContext
-    //         .ChangeTracker.Entries<IDomainEventEnumerable>()
-    //         .Where(entry => entry.State is EntityState.Added or EntityState.Modified)
-    //         .Select(entry => entry.Entity)
-    //         .ToList();
-    //
-    //     await dbContextOutbox.SaveChangesAndFlushMessagesAsync(
-    //         MultiFlushMode.AllowMultiples,
-    //         cancellationToken
-    //     );
-    //
-    //     foreach (var entity in domainEventEntities)
-    //     {
-    //         entity.ClearDomainEvents();
-    //     }
-    // }
-    //
-    // private void PromoteNewMessages()
-    // {
-    //     // Messages are immutable (no public setters, no update path), so EF can never
-    //     // legitimately track one as Modified. EF reports freshly created messages as Modified
-    //     // because they already carry a client-generated Guid key by the time the aggregate's
-    //     // tracked collection is inspected; promote them back to Added so they get inserted.
-    //     foreach (var entry in dbContext.ChangeTracker.Entries<Message>())
-    //     {
-    //         if (entry.State == EntityState.Modified)
-    //         {
-    //             entry.State = EntityState.Added;
-    //         }
-    //     }
-    // }
 }

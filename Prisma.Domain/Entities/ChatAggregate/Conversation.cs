@@ -20,6 +20,7 @@ public sealed class Conversation : BaseEntity<Guid>
 
     private Conversation(ConversationType type, string? title)
     {
+        Id = Guid.CreateVersion7();
         Type = type;
         Title = title;
     }

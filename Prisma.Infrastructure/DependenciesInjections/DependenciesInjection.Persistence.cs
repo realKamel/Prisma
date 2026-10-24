@@ -11,6 +11,7 @@ using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
+using Wolverine.EntityFrameworkCore;
 
 namespace Prisma.Infrastructure.DependenciesInjections;
 
@@ -29,11 +30,11 @@ public static partial class DependenciesInjection
         ArgumentNullException.ThrowIfNull(connectionStrings);
 
         //interceptors
-        services.AddScoped<AuditInterceptor>();
-        services.AddScoped<AuditLogInterceptor>();
+        services.AddSingleton<AuditInterceptor>();
+        services.AddSingleton<AuditLogInterceptor>();
         // services.AddScoped<DomainEventDispatcherInterceptor>();
 
-        services.AddDbContext<AppDbContext>(
+        services.AddDbContextWithWolverineIntegration<AppDbContext>(
             (serviceProvider, options) =>
             {
                 options.UseNpgsql(

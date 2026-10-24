@@ -1,11 +1,13 @@
+using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services.Chatting;
 using StackExchange.Redis;
 
 namespace Prisma.Infrastructure.RealTime;
 
 // Public so Wolverine's codegen can resolve it for event handler dependencies.
-public sealed class RedisChatPresenceTracker(IConnectionMultiplexer connectionMultiplexer)
-    : IChatPresenceTracker
+public sealed class RedisChatPresenceTracker(
+    [FromKeyedServices("messaging")] IConnectionMultiplexer connectionMultiplexer
+) : IChatPresenceTracker
 {
     private static readonly TimeSpan ConnectionSetTtl = TimeSpan.FromDays(1);
 

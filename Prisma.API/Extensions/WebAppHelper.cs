@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,6 +21,10 @@ using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Serilog;
 using StackExchange.Redis;
+using tusdotnet;
+using tusdotnet.Interfaces;
+using tusdotnet.Models;
+using tusdotnet.Stores;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
@@ -74,6 +77,9 @@ public static partial class WebAppHelper
         //Infrastructure Services
         services.AddInfrastructureServices(configuration, hostEnvironment);
 
+        // Presentation-layer bindings for real-time chat
+        services.AddChatRealTimeServices();
+
         services.AddJwtAuthentication(configuration, hostEnvironment);
         services.AddOutputCacheServices(configuration);
         services.AddLocalizationServices();
@@ -118,6 +124,7 @@ public static partial class WebAppHelper
             }
         );
         services.AddKeyedSingleton<IConnectionMultiplexer>("messaging", multiplexer);
+        services.AddSingleton<ITusStore>(_ => new TusDiskStore("/uploads"));
     }
 
     private static void AddLocalizationServices(this IServiceCollection services)
@@ -126,96 +133,113 @@ public static partial class WebAppHelper
         services.AddTransient<IAppLocalizer, AppLocalizer>();
     }
 
-    extension(WebApplication app)
+    internal static async Task UseDataSeedingAsync(this WebApplication app)
     {
-        internal async Task UseDataSeedingAsync()
-        {
-            using var scope = app.Services.CreateScope();
-            var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-            await services.SeedAppDataAsync();
-        }
+        using var scope = app.Services.CreateScope();
+        var services = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+        await services.SeedAppDataAsync();
+    }
 
-        internal void UseRecurringJobs()
-        {
-            using IServiceScope scope = app.Services.CreateScope();
-            IBackgroundJobService jobService =
-                scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+    internal static void UseRecurringJobs(this WebApplication app)
+    {
+        using IServiceScope scope = app.Services.CreateScope();
+        IBackgroundJobService jobService =
+            scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
 
-            //Every Friday at 10:00 PM
-            jobService.AddOrUpdateRecurring<ReportGenerationJob>(
-                JobQueues.Reports,
-                x => x.GenerateWeekly(),
-                Cron.Weekly(DayOfWeek.Friday, 22, 0)
-            );
+        //Every Friday at 10:00 PM
+        jobService.AddOrUpdateRecurring<ReportGenerationJob>(
+            JobQueues.Reports,
+            x => x.GenerateWeekly(),
+            Cron.Weekly(DayOfWeek.Friday, 22, 0)
+        );
 
-            // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
-            // jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
-            //     JobQueues.QuizAttemptFinalization,
-            //     x => x.FinalizeExpiredAttempts(CancellationToken.None),
-            //     Cron.Minutely());
-        }
+        // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
+        // jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
+        //     JobQueues.QuizAttemptFinalization,
+        //     x => x.FinalizeExpiredAttempts(CancellationToken.None),
+        //     Cron.Minutely());
+    }
 
-        internal void UseHangfireUi()
-        {
-            app.UseHangfireDashboard(
-                "/hangfire",
-                new DashboardOptions
-                {
-                    Authorization = [new HangfireDashboardAuthFilter()], //TODO: restrict to admins
-                }
-            );
-        }
-
-        internal void MapAppHealthChecks()
-        {
-            // 1. Liveness Probe (Lightweight)
-            // Kubernetes uses this to know if the app process is alive.
-            // We exclude heavy checks (like DB), so a temporary DB blip doesn't restart the whole pod.
-            app.MapHealthChecks(
-                "/health/live",
-                new HealthCheckOptions
-                {
-                    Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-                }
-            );
-
-            // 2. Readiness Probe (Heavyweight)
-            // Kubernetes / Load Balancers use this to know if the app can accept traffic.
-            // This includes Postgres, Valkey, and Hangfire (as we tagged them with "ready").
-            app.MapHealthChecks(
-                "/health/ready",
-                new HealthCheckOptions
-                {
-                    Predicate = check => check.Tags.Contains("ready"),
-                    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
-                }
-            );
-        }
-
-        internal void MapOpenAiResponses(IHostEnvironment environment)
-        {
-            app.MapOpenAIResponses();
-            app.MapOpenAIConversations();
-            if (environment.IsDevelopment())
+    internal static void UseHangfireUi(this WebApplication app)
+    {
+        app.UseHangfireDashboard(
+            "/hangfire",
+            new DashboardOptions
             {
-                // Map DevUI endpoint to /devui
-                // app.MapDevUI();
+                Authorization = [new HangfireDashboardAuthFilter()], //TODO: restrict to admins
             }
-        }
+        );
+    }
 
-        internal void UseLocalization()
+    internal static void MapAppHealthChecks(this WebApplication app)
+    {
+        // 1. Liveness Probe (Lightweight)
+        // Kubernetes uses this to know if the app process is alive.
+        // We exclude heavy checks (like DB), so a temporary DB blip doesn't restart the whole pod.
+        app.MapHealthChecks(
+            "/health/live",
+            new HealthCheckOptions
+            {
+                Predicate = check => !check.Tags.Contains("ready"), // Runs checks WITHOUT the "ready" tag
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+            }
+        );
+
+        // 2. Readiness Probe (Heavyweight)
+        // Kubernetes / Load Balancers use this to know if the app can accept traffic.
+        // This includes Postgres, Valkey, and Hangfire (as we tagged them with "ready").
+        app.MapHealthChecks(
+            "/health/ready",
+            new HealthCheckOptions
+            {
+                Predicate = check => check.Tags.Contains("ready"),
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse,
+            }
+        );
+    }
+
+    internal static void MapOpenAiResponses(this WebApplication app, IHostEnvironment environment)
+    {
+        app.MapOpenAIResponses();
+        app.MapOpenAIConversations();
+        if (environment.IsDevelopment())
         {
-            var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
-            app.UseRequestLocalization(
-                new RequestLocalizationOptions
-                {
-                    DefaultRequestCulture = new RequestCulture("en-US"),
-                    SupportedCultures = supportedCultures, // For dates, numbers, currency
-                    SupportedUICultures = supportedCultures, // For string localizations
-                }
-            );
+            // Map DevUI endpoint to /devui
+            // app.MapDevUI();
         }
+    }
+
+    internal static void UseLocalization(this WebApplication app)
+    {
+        var supportedCultures = new[] { new CultureInfo("en-US"), new CultureInfo("ar-EG") };
+        app.UseRequestLocalization(
+            new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                SupportedCultures = supportedCultures, // For dates, numbers, currency
+                SupportedUICultures = supportedCultures, // For string localizations
+            }
+        );
+    }
+
+    internal static void MapTusEndpoints(this WebApplication app)
+    {
+        app.MapTus(
+            "/tus",
+            httpContext =>
+            {
+                var store = httpContext.RequestServices.GetRequiredService<ITusStore>();
+
+                return Task.FromResult<DefaultTusConfiguration?>(
+                    new DefaultTusConfiguration
+                    {
+                        Store = store,
+                        MetadataParsingStrategy = MetadataParsingStrategy.AllowEmptyValues,
+                        UsePipelinesIfAvailable = true,
+                    }
+                );
+            }
+        );
     }
 
     internal static void UseWolverineWithConfiguration(
@@ -231,6 +255,10 @@ public static partial class WebAppHelper
 
         host.UseWolverine(options =>
         {
+            // Wolverine only scans the entry assembly by default, while chat event handlers
+            // and existing application handlers live in Prisma.Application.
+            options.Discovery.IncludeAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+
             // Enable EF Core transactional outbox & inbox middleware automatically
             options.UseEntityFrameworkCoreTransactions();
 

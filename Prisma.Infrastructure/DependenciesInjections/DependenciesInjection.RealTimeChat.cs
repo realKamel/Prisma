@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.Chatting;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.RealTime;
 

@@ -8,8 +8,11 @@ namespace Prisma.API.Extensions;
 
 public static partial class WebAppHelper
 {
-    private static void AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration,
-        IHostEnvironment hostEnvironment)
+    private static void AddJwtAuthentication(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment hostEnvironment
+    )
     {
         var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>()!;
         var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
@@ -26,9 +29,22 @@ public static partial class WebAppHelper
                 {
                     OnMessageReceived = context =>
                     {
+                        // WebSocket handshakes cannot send Authorization headers, so SignalR
+                        // clients pass the access token in the query string.
+                        var accessToken = context.Request.Query[AppCookies.AccessToken];
+
+                        if (
+                            !string.IsNullOrEmpty(accessToken)
+                            && context.HttpContext.Request.Path.StartsWithSegments("/api/hubs")
+                        )
+                        {
+                            context.Token = accessToken;
+                            return Task.CompletedTask;
+                        }
+
                         context.Token = context.Request.Cookies[AppCookies.AccessToken];
                         return Task.CompletedTask;
-                    }
+                    },
                 };
 
                 if (hostEnvironment.IsDevelopment())
@@ -42,7 +58,7 @@ public static partial class WebAppHelper
                         // ValidIssuer = jwtSettings.Issuer,
                         // ValidAudience = jwtSettings.Audience,
                         IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ClockSkew = TimeSpan.Zero
+                        ClockSkew = TimeSpan.Zero,
                     };
                 }
                 else
@@ -56,7 +72,7 @@ public static partial class WebAppHelper
                         ValidIssuer = jwtSettings.Issuer,
                         ValidAudience = jwtSettings.Audience,
                         IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ClockSkew = TimeSpan.Zero
+                        ClockSkew = TimeSpan.Zero,
                     };
                 }
 
@@ -65,14 +81,18 @@ public static partial class WebAppHelper
 
         services.AddCors(options =>
         {
-            options.AddPolicy("CorsPolicy", policy =>
-            {
-                policy.SetIsOriginAllowed(_ => true) // Dev
-                    .AllowCredentials()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod()
-                    .WithExposedHeaders("Retry-After");
-            });
+            options.AddPolicy(
+                "CorsPolicy",
+                policy =>
+                {
+                    policy
+                        .SetIsOriginAllowed(_ => true) // Dev
+                        .AllowCredentials()
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .WithExposedHeaders("Retry-After");
+                }
+            );
         });
 
         // services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
@@ -92,8 +112,7 @@ public static partial class WebAppHelper
         {
             foreach (string policy in AppClaims.Policies.All)
             {
-                options.AddPolicy(policy, p =>
-                    p.RequireClaim(AppClaims.PermissionsClaim, policy));
+                options.AddPolicy(policy, p => p.RequireClaim(AppClaims.PermissionsClaim, policy));
             }
         });
     }

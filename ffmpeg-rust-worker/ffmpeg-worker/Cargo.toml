@@ -1,0 +1,15 @@
+[package]
+name = "ffmpeg-worker"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+aws-config = "1"
+aws-credential-types = "1"
+aws-sdk-s3 = "1"
+aws-smithy-types = "1"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+tempfile = "3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "process", "fs", "io-util"] }
+walkdir = "2"

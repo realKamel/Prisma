@@ -51,6 +51,7 @@
     <PackageReference Include="SignalR.OpenApi.SwaggerUi" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
+    <PackageReference Include="tusdotnet" />
   </ItemGroup>
 
   <ItemGroup>

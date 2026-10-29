@@ -28,6 +28,34 @@ public class Program
             builder.Services.AddWebAppServices(builder.Configuration, builder.Environment);
             builder.AddAiAgents(builder.Configuration);
             builder.Host.UseWolverineWithConfiguration(builder.Configuration);
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(
+                    "TusLocal",
+                    policy =>
+                    {
+                        policy
+                            .WithOrigins("http://localhost:4200")
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials()
+                            .WithExposedHeaders(
+                                "Location",
+                                "Tus-Resumable",
+                                "Tus-Version",
+                                "Tus-Extension",
+                                "Tus-Max-Size",
+                                "Upload-Offset",
+                                "Upload-Length",
+                                "Upload-Metadata",
+                                "Upload-Defer-Length",
+                                "Upload-Concat",
+                                "Upload-Expires",
+                                "Retry-After"
+                            );
+                    }
+                );
+            });
 
             var app = builder.Build();
 
@@ -57,6 +85,7 @@ public class Program
 
             if (app.Environment.IsDevelopment())
             {
+                app.UseCors("TusLocal");
                 app.UseCors("CorsPolicy");
             }
 
@@ -78,7 +107,11 @@ public class Program
 
             app.MapAppHealthChecks();
 
+            app.MapTusEndpoints();
+
             app.MapControllers();
+
+            app.MapChatHub();
 
             await app.RunAsync();
         }

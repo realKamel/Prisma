@@ -16,9 +16,12 @@ services:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/home/app/.aspnet/https:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - video-uploads:/uploads
     depends_on:
       object-storage:
         condition: service_healthy
+      init-uploads:
+        condition: service_completed_successfully
 
   object-storage:
     image: minio/minio:latest
@@ -33,7 +36,7 @@ services:
     volumes:
       - minio-data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: [ "CMD", "mc", "ready", "local" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -52,11 +55,11 @@ services:
       exit 0;
       "
 
-  ffmpeg-worker2:
+  ffmpeg-worker5:
     build:
-      context: ./ffmpeg-worker
-      dockerfile: Dockerfile
-    container_name: prisma-ffmpeg-worker
+      context: ./ffmpeg-rust-worker/ffmpeg-worker
+      dockerfile: ../Dockerfile
+    container_name: ffmpeg-worker
     depends_on:
       object-storage:
         condition: service_healthy
@@ -86,5 +89,14 @@ services:
   grafana:
     ports:
       - "3000:3000"
+  
+  init-uploads:
+    image: alpine:3.22
+    user: "0:0"
+    command: sh -c "mkdir -p /uploads && chown -R 1654:1654 /uploads"
+    volumes:
+      - video-uploads:/uploads
+    restart: "no"
 volumes:
   minio-data:
+  video-uploads:

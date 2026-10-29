@@ -2,6 +2,8 @@ using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
+namespace Prisma.Application.Common.Behaviors;
+
 public sealed class LoggingBehavior<TRequest, TResponse>(
     ILogger<LoggingBehavior<TRequest, TResponse>> logger
 ) : IPipelineBehavior<TRequest, TResponse>

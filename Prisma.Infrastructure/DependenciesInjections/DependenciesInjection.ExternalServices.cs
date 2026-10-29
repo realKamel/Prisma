@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.VideoServices;
 using Prisma.Infrastructure.ExternalServices.BunnyApi;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.StorageService;
+using Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 using Refit;
 
 namespace Prisma.Infrastructure.DependenciesInjections;
@@ -62,7 +64,7 @@ public static partial class DependenciesInjection
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = new Uri(bunnyOptions.StreamBaseUrl);
-                c.DefaultRequestHeaders.Add("Authorization", bunnyOptions.ApiKey);
+                // c.DefaultRequestHeaders.Add("Authorization", bunnyOptions.ApiKey);
             })
             .AddStandardResilienceHandler();
 
@@ -74,5 +76,8 @@ public static partial class DependenciesInjection
                 c.DefaultRequestHeaders.Add("Authorization", bunnyOptions.ApiKey);
             })
             .AddStandardResilienceHandler();
+
+        services.AddScoped<IVideoStreamServices, VideoStreamServices>();
+        services.AddScoped<IVideoLibraryService, VideoLibraryService>();
     }
 }

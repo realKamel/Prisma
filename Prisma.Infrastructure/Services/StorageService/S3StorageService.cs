@@ -1,5 +1,6 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using Ardalis.Result;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
@@ -48,6 +49,31 @@ internal sealed partial class S3StorageService(
             contentType,
             cancellationToken
         );
+    }
+
+    public async Task<Result<string>> GetPreSignedUploadUrlAsync(
+        string objectKey,
+        long expiresInSeconds,
+        string? contentType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = DefaultBucketName,
+                Key = objectKey,
+                Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
+                Verb = HttpVerb.PUT,
+            };
+            return await s3.GetPreSignedURLAsync(request);
+        }
+        catch (Exception ex)
+        {
+            LogPresignedUrlCreateFailed(logger, objectKey, DefaultBucketName, ex);
+            return Result.Error("Error happened while create upload link");
+        }
     }
 
     // public string GetPublicUrl(string bucketName, string objectKey)
@@ -145,6 +171,18 @@ internal sealed partial class S3StorageService(
         Message = "Failed to delete object '{ObjectKey}' from bucket '{BucketName}'"
     )]
     private static partial void LogFileDeleteFailed(
+        ILogger logger,
+        string objectKey,
+        string bucketName,
+        Exception ex
+    );
+
+    [LoggerMessage(
+        EventId = 2003,
+        Level = LogLevel.Error,
+        Message = "Failed to create presigned URL for object '{ObjectKey}' in bucket '{BucketName}'"
+    )]
+    private static partial void LogPresignedUrlCreateFailed(
         ILogger logger,
         string objectKey,
         string bucketName,

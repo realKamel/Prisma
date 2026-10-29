@@ -49,7 +49,7 @@ public static partial class DependenciesInjection
         services.AddCacheServices(configuration);
 
         services.AddSingleton<ISecretCipher, SecretCipher>();
-        
+        services.AddBunnyServices(configuration);
         services.AddSignalRWithConfiguration(configuration);
     }
 

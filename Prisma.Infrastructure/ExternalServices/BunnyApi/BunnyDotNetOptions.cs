@@ -15,4 +15,6 @@ public class BunnyDotNetOptions
 
     // "DefaultPullZone": ""
     public string DefaultPullZone { get; set; }
+
+    public long TusUploadExpiryInSeconds  { get; set; }
 }

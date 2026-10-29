@@ -8,4 +8,7 @@ public enum VideoProcessingStatus
     Transcoding = 3,
     Finished = 4,
     Error = 5,
+    UploadFailed = 6,
+    JitSegmenting = 7,
+    JitPlaylistsCreated = 8,
 }

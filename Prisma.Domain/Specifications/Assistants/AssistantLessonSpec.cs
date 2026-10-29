@@ -3,7 +3,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Domain.Specifications.Assistants;
 
-public class AssistantLessonsSpec : Specification<Lesson>
+public sealed class AssistantLessonsSpec : Specification<Lesson>
 {
     public AssistantLessonsSpec()
     {

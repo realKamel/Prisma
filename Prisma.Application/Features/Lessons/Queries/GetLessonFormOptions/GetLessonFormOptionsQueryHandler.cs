@@ -12,13 +12,16 @@ using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Queries.GetLessonFormOptions;
 
-public class GetLessonFormOptionsQueryHandler(
-    IUnitOfWork unitOfWork, IIdentityService identityService, ICurrentUserService currentUserService
+internal sealed class GetLessonFormOptionsQueryHandler(
+    IUnitOfWork unitOfWork,
+    IIdentityService identityService,
+    ICurrentUserService currentUserService
 ) : IRequestHandler<GetLessonFormOptionsQuery, Result<LessonFormOptionsResponseDto>>
 {
     public async Task<Result<LessonFormOptionsResponseDto>> Handle(
         GetLessonFormOptionsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -34,17 +37,19 @@ public class GetLessonFormOptionsQueryHandler(
                 return Result.Unauthorized("Assistant is not associated with a teacher.");
             userId = assistant.TeacherId;
         }
-        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson,int>();
+
+        var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+
         var allLessons = await lessonRepository.ListAsync(
-            new LessonWithProjectionSpec<LessonDto>(userId,
-            l => new LessonDto(l.Title ?? string.Empty, l.Id)),cancellationToken);
-        
+            new LessonWithProjectionSpec<LessonDto>(
+                userId,
+                l => new LessonDto(l.Title ?? string.Empty, l.Id)
+            ),
+            cancellationToken
+        );
 
         return Result<LessonFormOptionsResponseDto>.Success(
             new LessonFormOptionsResponseDto(allLessons)
         );
-
-
     }
 }
-

@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using MediatR;
-using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -9,7 +8,6 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.ValueObjects.ContentDomain;
-using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 

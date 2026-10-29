@@ -7,4 +7,5 @@ public enum LessonStatus
     Active = 1,
     Hidden = 2,
     UnPublish = 3,
+    Published = 4,
 }

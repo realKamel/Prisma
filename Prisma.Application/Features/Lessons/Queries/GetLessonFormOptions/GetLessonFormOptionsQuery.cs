@@ -6,6 +6,9 @@ namespace Prisma.Application.Features.Lessons.Queries.GetLessonFormOptions;
 
 public record GetLessonFormOptionsQuery : IRequest<Result<LessonFormOptionsResponseDto>>;
 
-public record LessonFormOptionsResponseDto(
-    ICollection<LessonDto> PrerequisitesOptions
+public record LessonFormOptionsResponseDto(ICollection<LessonDto> PrerequisitesOptions);
+
+public record LessonFormOptionsResponseDtoV2(
+    ICollection<LessonDto> PrerequisitesOptions,
+    ICollection<AcademicYearResponseDto> AllAcademicYearsOptions
 );

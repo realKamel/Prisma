@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
-public record CreateLessonDetailsCommand(
+public sealed record CreateLessonDetailsCommand(
     string Title,
     string? Description,
     decimal Price,

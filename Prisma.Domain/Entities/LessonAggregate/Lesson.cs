@@ -85,13 +85,13 @@ public sealed class Lesson : BaseEntity
     public static Result<Lesson> Create(
         string title,
         string? description,
-        int prerequisiteId,
+        int? prerequisiteId,
         bool isPublished,
         IReadOnlyList<string> outcomes,
         Guid teacherId,
         decimal price,
         string currency,
-        int durationInSeconds
+        long durationInSeconds
     )
     {
         var moneyResult = Money.Create(price, currency);
@@ -189,5 +189,26 @@ public sealed class Lesson : BaseEntity
         };
 
         return Result.Success(lesson);
+    }
+
+    public void PublishLesson()
+    {
+        Status = LessonStatus.Active;
+    }
+
+    public void AddAssignment(Assignment assignment)
+    {
+        Assignment = assignment;
+    }
+
+    public void AttachToAcademicYear(AcademicYear academicYear)
+    {
+        ArgumentNullException.ThrowIfNull(academicYear);
+        AcademicYears.Add(new AcademicYearLesson { AcademicYearId = academicYear.Id });
+    }
+
+    public void AddSection(Section section)
+    {
+        Sections.Add(section);
     }
 }

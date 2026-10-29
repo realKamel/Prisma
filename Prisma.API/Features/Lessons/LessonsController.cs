@@ -5,10 +5,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
+using Prisma.API.Features.Lessons.RequestsAndResponses;
 using Prisma.API.Filters;
+using Prisma.Application.Features.Lessons.Commands.AddLesson;
 using Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
+using Prisma.Application.Features.Lessons.Commands.CreateLessonSection;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
+using Prisma.Application.Features.Lessons.Commands.RenewSectionUploadLink;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
@@ -62,6 +66,15 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return await mediator.Send(query, cancellationToken);
     }
 
+    // [HttpGet("options/v2")]
+    // public async Task<Result<LessonFormOptionsResponseDto>> GetPrepDataForAddV2(
+    //     CancellationToken cancellationToken
+    // )
+    // {
+    //     var query = new GetLessonFormOptionsQuery();
+    //     return await mediator.Send(query, cancellationToken);
+    // }
+
     [HttpGet("{id:Guid}/expired-details")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
@@ -106,6 +119,79 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     {
         var result = await mediator.Send(command, cancellationToken);
         return result;
+    }
+
+    [HttpPost("v2")]
+    [Idempotent]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<AddLessonResponse>> AddLesson(
+        [FromBody] AddLessonCommand command,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(command, cancellationToken);
+    }
+
+    [HttpPost("{id:guid}/sections")]
+    [Idempotent]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<
+        Result<CreateSectionAndAttachVideoUploadLinkResponse>
+    > CreateSectionAndAttachVideo(
+        [FromRoute] Guid id,
+        [FromBody] CreateSectionAndAttachVideoUploadLinkRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(
+            new CreateLessonSectionCommand(
+                id,
+                request.Title,
+                request.VideoDurationInSeconds,
+                request.IsPreviewable
+            ),
+            cancellationToken
+        );
+    }
+
+    [HttpPatch("{id:guid}/sections/{sectionId:guid}")]
+    [Idempotent]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<RenewSectionUploadLinkResponse>> RenewSectionVideoUploadLink(
+        [FromRoute] Guid id,
+        [FromRoute] Guid sectionId,
+        [FromBody] RenewSectionUploadLinkRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(
+            new RenewSectionUploadLinkCommand(
+                LessonId: id,
+                SectionId: sectionId,
+                VideoId: request.VideoId
+            ),
+            cancellationToken
+        );
+    }
+
+    [HttpDelete("{id:guid}/sections/{sectionId:guid}")]
+    [Idempotent]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<RenewSectionUploadLinkResponse>> RemoveSection(
+        [FromRoute] Guid id,
+        [FromRoute] Guid sectionId,
+        [FromBody] RenewSectionUploadLinkRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(
+            new RenewSectionUploadLinkCommand(
+                LessonId: id,
+                SectionId: sectionId,
+                VideoId: request.VideoId
+            ),
+            cancellationToken
+        );
     }
 
     [HttpDelete("{id:int}")]
@@ -176,11 +262,11 @@ public sealed class LessonsController(IMediator mediator) : ApiController
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
     public async Task<Result> DeleteMaterial(
         [FromRoute] int id,
-        [FromRoute] int MaterialId,
+        [FromRoute] int materialId,
         CancellationToken cancellationToken
     )
     {
-        var command = new DeleteLessonMaterialCommand(id, MaterialId);
+        var command = new DeleteLessonMaterialCommand(id, materialId);
         return await mediator.Send(command, cancellationToken);
     }
 

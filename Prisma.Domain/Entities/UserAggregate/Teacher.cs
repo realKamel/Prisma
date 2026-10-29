@@ -37,6 +37,7 @@ public class Teacher : User
         string secondName,
         string rawEmail,
         string rawPhone,
+        string subject,
         string thirdName,
         string lastName
     )
@@ -85,6 +86,7 @@ public class Teacher : User
             FullName = fullNameResult.Value,
             EmailAddress = emailAddressResult.Value,
             MobilePhoneNumber = mobilePhoneNumberResult.Value,
+            Subject = subject,
 
             // Syncing base IdentityUser fields
             UserName = emailAddressResult.Value.Value,

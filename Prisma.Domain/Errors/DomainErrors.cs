@@ -143,7 +143,7 @@ public static class DomainErrors
         public const string MustLogin = "AUTH.MUST_LOGIN";
         public const string MustProvideEmailOrPhone = "AUTH.MUST_PROVIDE_EMAIL_OR_PHONE";
         public const string InvalidPhoneNumber = "AUTH.INVALID_PHONE_NUMBER";
-        public const string PhoneNumberIsRequired = "AUTH.IS_REQUIRED";
+        public const string PhoneNumberRequired = "AUTH.PHONE_NUMBER.REQUIRED";
         public const string PleaseLogin = "AUTH.PLEASE_LOGIN";
         public const string InvalidResetCode = "AUTH.INVALID_RESET_CODE";
         public const string UnexpectedError = "AUTH.UNEXPECTED_ERROR";
@@ -158,6 +158,14 @@ public static class DomainErrors
         {
             public const string Invalid = "DOMAIN.INVALID_PHONE_NUMBER";
             public const string IsRequired = "DOMAIN.PHONE_NUMBER_IS_REQUIRED";
+        }
+
+        public static class Video
+        {
+            public const string VideoLibraryIdRequired = "";
+            public const string ProviderVideoIdRequired = "";
+            public const string TitleRequired = "";
+            public const string StorageSizeInvalid = "";
         }
     }
 

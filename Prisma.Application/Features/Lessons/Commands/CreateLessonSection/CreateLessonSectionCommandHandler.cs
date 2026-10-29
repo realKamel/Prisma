@@ -71,7 +71,7 @@ internal sealed class CreateLessonSectionCommandHandler(
 
         var decryptedLibraryApiKey = secretCipher.Decrypt(library.LibraryApiKey);
 
-        var createdVideoResult = await streamServices.CreateVideo(
+        var createdVideoResult = await streamServices.CreateVideoAsync(
             providerLibraryId,
             decryptedLibraryApiKey,
             request.Title,

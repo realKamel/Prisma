@@ -72,7 +72,7 @@ internal sealed class RenewSectionUploadLinkCommandHandler(
         {
             var videoRepository = unitOfWork.GetOrCreateRepository<Video, int>();
 
-            var createdVideoResult = await videoStreamServices.CreateVideo(
+            var createdVideoResult = await videoStreamServices.CreateVideoAsync(
                 providerLibraryId,
                 library.LibraryApiKey,
                 sectionInfo.Title,

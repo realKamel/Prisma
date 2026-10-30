@@ -154,7 +154,7 @@ internal sealed class GetStudentDashboardQueryHandler(
             };
         }
 
-        var lessonTasks = enrollments.Select(async enrollment =>
+        var lessonTasks = enrollments.Take(9).Select(async enrollment =>
         {
             var now = DateTimeOffset.UtcNow;
             var status = ResolveStatus(enrollment, now);
@@ -184,7 +184,7 @@ internal sealed class GetStudentDashboardQueryHandler(
                 //         : null,
             };
         });
-        var lessons = (await Task.WhenAll(lessonTasks)).ToList();
+        var lessons = await Task.WhenAll(lessonTasks);
 
         return Result<GetStudentDashboardResponse>.Success(
             new GetStudentDashboardResponse
@@ -192,7 +192,7 @@ internal sealed class GetStudentDashboardQueryHandler(
                 Student = studentDto,
                 Streak = streakDto,
                 NextLesson = nextLessonDto,
-                Lessons = lessons,
+                Lessons = [.. lessons],
                 Stats = statsDto,
             }
         );

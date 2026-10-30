@@ -13,7 +13,7 @@ public record AddLessonCommand(
     bool AssignmentEnabled,
     DateTimeOffset? AssignmentDueDate,
     int? AssignmentGrade,
-    IReadOnlyList<Guid> AcademicYearIds,
+    IReadOnlyList<int> AcademicYearIds,
     IReadOnlyList<string> Outcomes,
     long ValidityDurationInSeconds
 ) : IAuthorizableRequest<Result<AddLessonResponse>>

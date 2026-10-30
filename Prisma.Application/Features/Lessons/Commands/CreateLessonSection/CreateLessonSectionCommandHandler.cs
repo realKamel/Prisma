@@ -42,7 +42,7 @@ internal sealed class CreateLessonSectionCommandHandler(
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
-        var lesson = await lessonRepo.GetByIdAsync(
+        var lesson = await lessonRepo.FirstOrDefaultAsync(
             new LessonByPublicId(request.LessonId, true),
             cancellationToken
         );
@@ -58,7 +58,7 @@ internal sealed class CreateLessonSectionCommandHandler(
 
         if (library is null)
         {
-            return Result.NotFound("The user's library isn't found.");
+            return Result.NotFound("Teacher's library isn't found.");
         }
 
         if (

@@ -108,6 +108,8 @@
     <PackageVersion Include="Refit" Version="16.4.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="16.4.0" />
     <PackageVersion Include="Refit.Reflection" Version="16.4.0" />
+    <PackageVersion Include="Resend" Version="0.24.0" />
+    <PackageVersion Include="Resend.FluentEmail" Version="0.24.0" />
     <PackageVersion
       Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore"
       Version="6.0.1"

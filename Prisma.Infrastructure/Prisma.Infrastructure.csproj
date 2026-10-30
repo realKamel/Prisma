@@ -61,6 +61,8 @@
     <PackageReference Include="Refit" />
     <PackageReference Include="Refit.HttpClientFactory" />
     <PackageReference Include="Refit.Reflection" />
+    <PackageReference Include="Resend" />
+    <PackageReference Include="Resend.FluentEmail" />
     <PackageReference Include="StackExchange.Redis" />
     <PackageReference Include="tusdotnet.Stores.S3" />
     <PackageReference Include="WolverineFx" />

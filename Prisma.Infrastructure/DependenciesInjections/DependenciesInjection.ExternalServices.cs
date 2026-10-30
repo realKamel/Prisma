@@ -5,10 +5,12 @@ using Prisma.Application.Abstractions.Services.VideoServices;
 using Prisma.Infrastructure.ExternalServices.BunnyApi;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
+using Prisma.Infrastructure.ExternalServices.EmailService;
 using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.StorageService;
 using Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 using Refit;
+using Resend;
 
 namespace Prisma.Infrastructure.DependenciesInjections;
 
@@ -20,8 +22,30 @@ public static partial class DependenciesInjection
     )
     {
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-
         services.AddScoped<IEmailService, EmailService>();
+
+        var resendOptions =
+            configuration.GetSection(ResendOptions.SectionName).Get<ResendOptions>()
+            ?? throw new InvalidOperationException("Resend configuration is missing.");
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(resendOptions.ApiKey);
+
+        services
+            .AddOptions<ResendOptions>()
+            .Bind(configuration.GetSection(ResendOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddHttpClient<ResendClient>();
+
+        services.Configure<ResendClientOptions>(options =>
+        {
+            options.ApiToken = resendOptions.ApiKey;
+        });
+
+        services.AddTransient<IResend, ResendClient>();
+
+        services.AddTransient<IEmailSender, ResendEmailSender>();
     }
 
     private static void AddMuxStreaming(this IServiceCollection services)

@@ -35,6 +35,7 @@ services:
       BunnyDotNet__CoreBaseUrl: ${BUNNYDOTNET_COREBASEURL}
       BunnyDotNet__StreamBaseUrl: ${BUNNYDOTNET_STREAMBASEURL}
       BunnyDotNet__DefaultPullZone: ${BUNNYDOTNET_DEFAULTPULLZONE}
+      ResendOptions__ApiKey: ${RESEND_APIKEY}
 
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]

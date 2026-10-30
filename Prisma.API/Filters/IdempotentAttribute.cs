@@ -1,7 +1,7 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Caching.Hybrid;
+using ZiggyCreatures.Caching.Fusion;
 using IResult = Ardalis.Result.IResult;
 
 namespace Prisma.API.Filters;
@@ -9,10 +9,15 @@ namespace Prisma.API.Filters;
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class IdempotentAttribute() : TypeFilterAttribute(typeof(IdempotentFilter));
 
-public sealed class IdempotentFilter(HybridCache cache, ILogger<IdempotentFilter> logger)
-    : IAsyncActionFilter
+public sealed class IdempotentFilter(
+    IFusionCacheProvider cacheProvider,
+    ILogger<IdempotentFilter> logger,
+    IHostEnvironment environment
+) : IAsyncActionFilter
 {
     private const string HeaderName = "X-Idempotency-Key";
+
+    private readonly IFusionCache _cache = cacheProvider.GetCache("prisma_cache");
 
     public async Task OnActionExecutionAsync(
         ActionExecutingContext context,
@@ -39,15 +44,15 @@ public sealed class IdempotentFilter(HybridCache cache, ILogger<IdempotentFilter
 
         bool isCacheHit = true;
 
-        var cachedResponse = await cache.GetOrCreateAsync(
+        var cachedResponse = await _cache.GetOrSetAsync<CachedResponse?>(
             cacheKey,
-            state: next,
-            async (nextDelegate, _) =>
+            factory: async (_) =>
             {
                 isCacheHit = false;
+
                 logger.LogCacheMiss(idempotencyKey);
 
-                var executedContext = await nextDelegate();
+                var executedContext = await next();
 
                 if (executedContext.Result is ObjectResult objectResult)
                 {
@@ -79,10 +84,21 @@ public sealed class IdempotentFilter(HybridCache cache, ILogger<IdempotentFilter
                     }
                 }
 
-                return null!;
+                return null;
             },
-            options: new HybridCacheEntryOptions { Expiration = TimeSpan.FromHours(24) },
-            cancellationToken: context.HttpContext.RequestAborted
+            options: new FusionCacheEntryOptions
+            {
+                Duration = TimeSpan.FromHours(24),
+
+                // Override global factory timeouts
+                FactorySoftTimeout = environment.IsDevelopment()
+                    ? TimeSpan.FromMinutes(5)
+                    : TimeSpan.FromSeconds(10),
+                FactoryHardTimeout = environment.IsDevelopment()
+                    ? TimeSpan.FromMinutes(10)
+                    : TimeSpan.FromMinutes(2),
+            },
+            token: context.HttpContext.RequestAborted
         );
 
         if (isCacheHit && cachedResponse is not null)
@@ -96,10 +112,10 @@ public sealed class IdempotentFilter(HybridCache cache, ILogger<IdempotentFilter
         }
     }
 
-    private class CachedResponse
+    private record CachedResponse
     {
-        public int StatusCode { get; set; }
-        public object? Body { get; set; }
+        public int StatusCode { get; init; }
+        public object? Body { get; init; }
     }
 }
 

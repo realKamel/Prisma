@@ -14,10 +14,11 @@ namespace Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 internal sealed class GetTeacherLessonsQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IIdentityService identityService
-) : IRequestHandler<GetTeacherLessonsQuery, Result<PaginatedList<TeacherLessonDto>>>
+    IIdentityService identityService,
+    IStorageService storageService
+) : IRequestHandler<GetTeacherLessonsQuery, Result<TeacherLessonsResponse>>
 {
-    public async Task<Result<PaginatedList<TeacherLessonDto>>> Handle(
+    public async Task<Result<TeacherLessonsResponse>> Handle(
         GetTeacherLessonsQuery request,
         CancellationToken cancellationToken
     )
@@ -40,48 +41,93 @@ internal sealed class GetTeacherLessonsQueryHandler(
             userId = assistant.TeacherId;
         }
 
+        var teacherId = userId.Value;
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
-        //var spec = new TeacherLessonsSpecification();
+
         var spec = new TeacherLessonsWithProjectionSpec<TeacherLessonsInfo>(
-            userId.Value,
+            teacherId,
             request.PaginationParams.PageNumber,
             request.PaginationParams.PageSize,
+            request.Search,
+            request.Status,
+            request.Sort,
             e => new TeacherLessonsInfo(
                 e.Id,
                 e.Title,
                 e.Price,
                 e.Money,
                 e.Enrollments.Count,
-                e.Status
+                e.Status,
+                e.ImageThumbnailUrl,
+                e.Sections.Count,
+                e.TimeDuration,
+                e.Enrollments.Count(x => x.IsCompleted),
+                e.Payments.Where(p => p.Status == PaymentStatus.Completed).Sum(p => p.Money.Amount),
+                e.CreatedAt.Value,
+                e.UpdatedAt
             )
         );
 
         var lessons = await lessonRepository.ListAsync(spec, cancellationToken);
         var count = await lessonRepository.CountAsync(spec, cancellationToken);
-
-        var result = lessons
-            .Select(lesson =>
-            {
-                var price = lesson.Money.ToDto();
-                return new TeacherLessonDto
-                {
-                    Id = lesson.Id,
-                    Name = lesson.Name ?? string.Empty,
-                    Price = lesson.Price,
-                    Money = price,
-                    Students = lesson.Students,
-                    Status = lesson.Status,
-                };
-            })
-            .ToList();
-
-        var paginatedList = new PaginatedList<TeacherLessonDto>(
-            result,
-            count,
-            request.PaginationParams
+        var statuses = await lessonRepository.ListAsync(
+            new TeacherLessonStatusesSpec(teacherId),
+            cancellationToken
         );
 
-        return paginatedList;
+        var items = new List<TeacherLessonDto>(lessons.Count);
+        foreach (var l in lessons)
+        {
+            items.Add(
+                new TeacherLessonDto
+                {
+                    Id = l.Id,
+                    Name = l.Name ?? string.Empty,
+                    Price = l.Price,
+                    Money = l.Money.ToDto(),
+                    Students = l.Students,
+                    Status = l.Status,
+                    ThumbnailUrl = await ResolveThumbnailUrlAsync(
+                        l.ThumbnailUrl,
+                        cancellationToken
+                    ),
+                    SectionsCount = l.SectionsCount,
+                    DurationSeconds = (int)l.Duration.Value.TotalSeconds,
+                    CompletionRate =
+                        l.Students == 0
+                            ? null
+                            : (int)Math.Round(100.0 * l.CompletedCount / l.Students),
+                    Revenue = l.Revenue,
+                    CreatedAt = l.CreatedAt,
+                    UpdatedAt = l.UpdatedAt,
+                }
+            );
+        }
+
+        var counts = new TeacherLessonStatusCounts(
+            All: statuses.Count,
+            Active: statuses.Count(s => s == LessonStatus.Active),
+            Hidden: statuses.Count(s => s == LessonStatus.Hidden),
+            Drafted: statuses.Count(s => s == LessonStatus.Drafted)
+        );
+
+        return new TeacherLessonsResponse(
+            new PaginatedList<TeacherLessonDto>(
+                items,
+                count,
+                request.PaginationParams.PageNumber,
+                request.PaginationParams.PageSize
+            ),
+            counts
+        );
+    }
+
+    private async Task<string?> ResolveThumbnailUrlAsync(string? objectKey, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(objectKey))
+            return null;
+
+        return await storageService.GetDownloadUrlAsync(objectKey);
     }
 
     public sealed record TeacherLessonsInfo(
@@ -90,6 +136,13 @@ internal sealed class GetTeacherLessonsQueryHandler(
         decimal Price,
         Money Money,
         int Students,
-        LessonStatus Status
+        LessonStatus Status,
+        string? ThumbnailUrl,
+        int SectionsCount,
+        TimeDuration Duration,
+        int CompletedCount,
+        decimal Revenue,
+        DateTimeOffset CreatedAt,
+        DateTimeOffset? UpdatedAt
     );
 }

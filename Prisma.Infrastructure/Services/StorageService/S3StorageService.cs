@@ -1,6 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using Ardalis.Result;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
@@ -10,7 +11,8 @@ namespace Prisma.Infrastructure.Services.StorageService;
 internal sealed partial class S3StorageService(
     IAmazonS3 s3,
     IOptions<ObjectStorageOptions> objectStorageOptions,
-    ILogger<S3StorageService> logger
+    ILogger<S3StorageService> logger,
+    IHostEnvironment environment
 ) : IStorageService
 {
     public string DefaultBucketName => objectStorageOptions.Value.BucketName;
@@ -67,7 +69,14 @@ internal sealed partial class S3StorageService(
                 Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
                 Verb = HttpVerb.PUT,
             };
-            return await s3.GetPreSignedURLAsync(request);
+
+            if (environment.IsDevelopment())
+            {
+                request.Protocol = Protocol.HTTP;
+            }
+
+            var link = await s3.GetPreSignedURLAsync(request);
+            return link;
         }
         catch (Exception ex)
         {

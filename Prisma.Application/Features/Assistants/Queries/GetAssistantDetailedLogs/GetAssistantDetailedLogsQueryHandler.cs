@@ -16,7 +16,8 @@ internal sealed class GetAssistantDetailedLogsQueryHandler(
 {
     public async Task<Result<GetAssistantDetailedLogsResponseDto>> Handle(
         GetAssistantDetailedLogsQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var userId = currentUserService.UserId;
 
@@ -27,7 +28,7 @@ internal sealed class GetAssistantDetailedLogsQueryHandler(
 
         var userEmail = currentUserService.Email ?? string.Empty;
 
-        var auditLogRepository = unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var auditLogRepository = unitOfWork.GetOrCreateRepository<AuditLog, long>();
 
         var spec = new RecentAssistantLogsSpec(userEmail, request.Take);
 
@@ -59,22 +60,31 @@ internal sealed class GetAssistantDetailedLogsQueryHandler(
                     type = "revoke";
                     subText = "إلغاء المنح";
                 }
-                else if (log.Action.Contains("Search", StringComparison.OrdinalIgnoreCase)) { type = "search"; }
+                else if (log.Action.Contains("Search", StringComparison.OrdinalIgnoreCase))
+                {
+                    type = "search";
+                }
             }
 
             if (!string.IsNullOrEmpty(log.EntityId))
             {
-                if (log.TableName?.Equals("Enrollment", StringComparison.OrdinalIgnoreCase) == true &&
-                    int.TryParse(log.EntityId, out int enrollmentId))
+                if (
+                    log.TableName?.Equals("Enrollment", StringComparison.OrdinalIgnoreCase) == true
+                    && int.TryParse(log.EntityId, out int enrollmentId)
+                )
                 {
                     var enrollmentSpec = new EnrollmentWithStudentAndLessonSpec(enrollmentId);
-                    var enrollment = await enrollmentRepository.FirstOrDefaultAsync(enrollmentSpec, cancellationToken);
+                    var enrollment = await enrollmentRepository.FirstOrDefaultAsync(
+                        enrollmentSpec,
+                        cancellationToken
+                    );
 
                     if (enrollment != null)
                     {
                         if (enrollment.Student != null)
                         {
-                            studentName = $"{enrollment.Student.FirstName} {enrollment.Student.LastName}".Trim();
+                            studentName =
+                                $"{enrollment.Student.FirstName} {enrollment.Student.LastName}".Trim();
                             if (string.IsNullOrEmpty(studentName))
                                 studentName = enrollment.Student.UserName ?? "—";
 
@@ -90,11 +100,16 @@ internal sealed class GetAssistantDetailedLogsQueryHandler(
                         }
                     }
                 }
-                else if (log.TableName?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true &&
-                         Guid.TryParse(log.EntityId, out Guid studentGuid))
+                else if (
+                    log.TableName?.Equals("Student", StringComparison.OrdinalIgnoreCase) == true
+                    && Guid.TryParse(log.EntityId, out Guid studentGuid)
+                )
                 {
                     var studentSpec = new StudentWithAcademicYearSpec(studentGuid);
-                    var student = await studentRepository.FirstOrDefaultAsync(studentSpec, cancellationToken);
+                    var student = await studentRepository.FirstOrDefaultAsync(
+                        studentSpec,
+                        cancellationToken
+                    );
 
                     if (student != null)
                     {
@@ -111,23 +126,26 @@ internal sealed class GetAssistantDetailedLogsQueryHandler(
 
             var logTime = log.CreatedAt ?? DateTimeOffset.UtcNow;
 
-            logItems.Add(new DetailedLogItemDto(
-                Id: log.Id,
-                Type: type,
-                Detail: detailText,
-                Sub: subText,
-                Student: studentName,
-                Grade: gradeName,
-                Time: logTime,
-                Ok: true
-            ));
+            logItems.Add(
+                new DetailedLogItemDto(
+                    Id: log.Id,
+                    Type: type,
+                    Detail: detailText,
+                    Sub: subText,
+                    Student: studentName,
+                    Grade: gradeName,
+                    Time: logTime,
+                    Ok: true
+                )
+            );
         }
 
         int totalThisMonth = logItems.Count;
         int grantedCount = logItems.Count(l => l.Type == "grant");
         int revokedCount = logItems.Count(l => l.Type == "revoke");
         int successCount = logItems.Count(l => l.Ok);
-        int successRate = totalThisMonth > 0 ? (int)Math.Round((double)successCount / totalThisMonth * 100) : 100;
+        int successRate =
+            totalThisMonth > 0 ? (int)Math.Round((double)successCount / totalThisMonth * 100) : 100;
 
         var metaDto = new DashboardMetaDto(totalThisMonth, grantedCount, revokedCount, successRate);
 

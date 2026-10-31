@@ -1,8 +1,7 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDashboard;
-
 
 public record GetAssistantDashboardQuery : IRequest<Result<GetAssistantDashboardResponse>>;
 
@@ -12,7 +11,7 @@ public record GetAssistantDashboardQuery : IRequest<Result<GetAssistantDashboard
 
 public class GetAssistantDashboardResponse
 {
-    public DashboardTeacher Teacher { get; set; } = new(string.Empty,string.Empty);
+    public DashboardTeacher Teacher { get; set; } = new(string.Empty, string.Empty);
     public List<KpiTile> Kpis { get; set; } = [];
     public List<ActivityItem> Activities { get; set; } = [];
     public List<Permission> Permissions { get; set; } = [];
@@ -20,20 +19,8 @@ public class GetAssistantDashboardResponse
 
 public record DashboardTeacher(string Name, string SupervisorName);
 
-public record KpiTile(
-    string Id,
-    int Value,
-    double Delta,
-    string Trend,
-    string Variant);
+public record KpiTile(string Id, int Value, double Delta, string Trend, string Variant);
 
-public record ActivityItem(
-    int Id,
-    string Action,
-    string TableName,
-    DateTimeOffset CreatedAt
-);
+public record ActivityItem(long Id, string Action, string TableName, DateTimeOffset CreatedAt);
 
-public record Permission(
-    string Id,
-    string Status);
+public record Permission(string Id, string Status);

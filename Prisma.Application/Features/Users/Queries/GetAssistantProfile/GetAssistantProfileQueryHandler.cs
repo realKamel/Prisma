@@ -1,7 +1,7 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -15,12 +15,13 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Users.Queries.GetAssistantProfile;
 
-public class GetAssistantProfileQueryHandler(
-    IUnitOfWork unitOfWork,
-    UserManager<User> userManager)
+public class GetAssistantProfileQueryHandler(IUnitOfWork unitOfWork, UserManager<User> userManager)
     : IRequestHandler<GetAssistantProfileQuery, Result<RoleProfileDto>>
 {
-    public async Task<Result<RoleProfileDto>> Handle(GetAssistantProfileQuery request, CancellationToken cancellationToken)
+    public async Task<Result<RoleProfileDto>> Handle(
+        GetAssistantProfileQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
         var assistant = await assistantRepo.GetByIdAsync(request.AssistantId, cancellationToken);
@@ -28,7 +29,7 @@ public class GetAssistantProfileQueryHandler(
         if (assistant is null)
             return Result.NotFound($"Assistant with id '{request.AssistantId}' was not found");
 
-        var teacherId = assistant.TeacherId!.Value; 
+        var teacherId = assistant.TeacherId!.Value;
 
         var now = DateTimeOffset.UtcNow;
         var weekStart = now.AddDays(-7);
@@ -36,16 +37,24 @@ public class GetAssistantProfileQueryHandler(
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
         var quizAttemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var auditRepo = unitOfWork.GetOrCreateRepository<AuditLog, long>();
 
         var activeStudentsTask = await enrollmentRepo.CountAsync(
-            new ActiveEnrollmentsSpec(teacherId), cancellationToken);
+            new ActiveEnrollmentsSpec(teacherId),
+            cancellationToken
+        );
         var quizzesThisWeekTask = await quizAttemptRepo.CountAsync(
-            new QuizAttemptsSpec(teacherId, from: weekStart), cancellationToken);
+            new QuizAttemptsSpec(teacherId, from: weekStart),
+            cancellationToken
+        );
         var totalLessonsTask = await lessonRepo.CountAsync(
-            new LessonsSpec(teacherId), cancellationToken);
+            new LessonsSpec(teacherId),
+            cancellationToken
+        );
         var logsTask = await auditRepo.ListAsync(
-            new RecentAssistantLogsSpec(assistant.Email ?? string.Empty, take: 10), cancellationToken);
+            new RecentAssistantLogsSpec(assistant.Email ?? string.Empty, take: 10),
+            cancellationToken
+        );
 
         var stats = new List<ProfileStatDto>
         {
@@ -58,7 +67,8 @@ public class GetAssistantProfileQueryHandler(
             .Select(l => new ProfileActivityDto(
                 $"{l.Action} — {l.TableName}",
                 l.CreatedAt?.ToString("yyyy-MM-dd hh:mm tt") ?? "—",
-                "bg-[var(--star)]"))
+                "bg-[var(--star)]"
+            ))
             .ToList();
 
         var claims = await userManager.GetClaimsAsync(assistant);
@@ -67,13 +77,26 @@ public class GetAssistantProfileQueryHandler(
             .Select(c => c.Value)
             .ToHashSet();
 
-        var permissions = AppClaims.Policies.All
-            .Select(policy => new ProfilePermissionDto(policy, heldPolicies.Contains(policy)))
+        var permissions = AppClaims
+            .Policies.All.Select(policy => new ProfilePermissionDto(
+                policy,
+                heldPolicies.Contains(policy)
+            ))
             .ToList();
 
-        var name = string.Join(" ", new[] { assistant.FirstName, assistant.SecondName, assistant.ThirdName, assistant.LastName }
-            .Where(p => !string.IsNullOrWhiteSpace(p)));
+        var name = string.Join(
+            " ",
+            new[]
+            {
+                assistant.FirstName,
+                assistant.SecondName,
+                assistant.ThirdName,
+                assistant.LastName,
+            }.Where(p => !string.IsNullOrWhiteSpace(p))
+        );
 
-        return Result<RoleProfileDto>.Success(new RoleProfileDto(name, stats, activities, permissions));
+        return Result<RoleProfileDto>.Success(
+            new RoleProfileDto(name, stats, activities, permissions)
+        );
     }
 }

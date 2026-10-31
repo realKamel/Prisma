@@ -16,7 +16,7 @@ public class GetActivityLogsQueryHandler(IUnitOfWork _unitOfWork, IIdentityServi
         CancellationToken cancellationToken
     )
     {
-        var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, int>();
+        var auditLogRepository = _unitOfWork.GetOrCreateRepository<AuditLog, long>();
 
         var spec = new ActivityLogsFilterSpec(request.Skip, request.Take + 1);
         var logs = await auditLogRepository.ListAsync(spec, cancellationToken);

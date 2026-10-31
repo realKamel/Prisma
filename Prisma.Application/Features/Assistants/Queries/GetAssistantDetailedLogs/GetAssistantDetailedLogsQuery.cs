@@ -3,22 +3,18 @@ using MediatR;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 
-public record GetAssistantDetailedLogsQuery(int Take) : IRequest<Result<GetAssistantDetailedLogsResponseDto>>;
+public record GetAssistantDetailedLogsQuery(int Take)
+    : IRequest<Result<GetAssistantDetailedLogsResponseDto>>;
 
 public record GetAssistantDetailedLogsResponseDto(
     DashboardMetaDto Meta,
     IList<DetailedLogItemDto> Logs
 );
 
-public record DashboardMetaDto(
-    int TotalThisMonth,
-    int Granted,
-    int Revoked,
-    int SuccessRate
-);
+public record DashboardMetaDto(int TotalThisMonth, int Granted, int Revoked, int SuccessRate);
 
 public record DetailedLogItemDto(
-    int Id,
+    long Id,
     string Type,
     string Detail,
     string Sub,

@@ -4,7 +4,7 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
-public class AcademicYear : BaseEntity
+public sealed class AcademicYear : BaseEntity
 {
     public string Title { get; set; } = string.Empty;
     public Guid PublicId { get; set; } = Guid.CreateVersion7();

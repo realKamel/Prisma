@@ -2,7 +2,7 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
-public class AuditLog : BaseEntity
+public class AuditLog : BaseEntity<long>
 {
     public string UserEmail { get; set; }
     public string Action { get; set; }

@@ -1,6 +1,6 @@
 using Ardalis.Result;
 
-namespace Prisma.Domain.ValueObjects;
+namespace Prisma.Domain.ValueObjects.UserDomain;
 
 public sealed record FullName
 {
@@ -26,39 +26,55 @@ public sealed record FullName
     /// <summary>
     /// Factory method returning Result
     /// </summary>
-    public static Result<FullName> Create(string firstName, string secondName, string? thirdName = null,
-        string? lastName = null)
+    public static Result<FullName> Create(
+        string firstName,
+        string secondName,
+        string? thirdName = null,
+        string? lastName = null
+    )
     {
         var errors = new List<ValidationError>();
 
         if (string.IsNullOrWhiteSpace(firstName))
         {
-            errors.Add(new ValidationError
-            {
-                Identifier = nameof(FirstName), ErrorMessage = "First name is required."
-            });
+            errors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(FirstName),
+                    ErrorMessage = "First name is required.",
+                }
+            );
         }
         else if (firstName.Length > 50)
         {
-            errors.Add(new ValidationError
-            {
-                Identifier = nameof(FirstName), ErrorMessage = "First name cannot exceed 50 characters."
-            });
+            errors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(FirstName),
+                    ErrorMessage = "First name cannot exceed 50 characters.",
+                }
+            );
         }
 
         if (string.IsNullOrWhiteSpace(secondName))
         {
-            errors.Add(new ValidationError
-            {
-                Identifier = nameof(SecondName), ErrorMessage = "Second name is required."
-            });
+            errors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(SecondName),
+                    ErrorMessage = "Second name is required.",
+                }
+            );
         }
         else if (secondName.Length > 50)
         {
-            errors.Add(new ValidationError
-            {
-                Identifier = nameof(SecondName), ErrorMessage = "Second name cannot exceed 50 characters."
-            });
+            errors.Add(
+                new ValidationError
+                {
+                    Identifier = nameof(SecondName),
+                    ErrorMessage = "Second name cannot exceed 50 characters.",
+                }
+            );
         }
 
         if (errors.Count != 0)
@@ -66,12 +82,14 @@ public sealed record FullName
             return Result.Invalid(errors);
         }
 
-        return Result.Success(new FullName(
-            firstName.Trim(),
-            secondName.Trim(),
-            string.IsNullOrWhiteSpace(thirdName) ? null : thirdName.Trim(),
-            string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim()
-        ));
+        return Result.Success(
+            new FullName(
+                firstName.Trim(),
+                secondName.Trim(),
+                string.IsNullOrWhiteSpace(thirdName) ? null : thirdName.Trim(),
+                string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim()
+            )
+        );
     }
 
     public override string ToString() => DisplayName;

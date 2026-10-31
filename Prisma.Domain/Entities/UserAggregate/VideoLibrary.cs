@@ -21,37 +21,55 @@ public sealed class VideoLibrary : BaseEntity
     // public long? PullZoneId { get; private set; }
 
     //relation (teacher <-1:1=> Library)
-    public Teacher Teacher { get; private set; }
+    // public Teacher Teacher { get; private set; }
     public Guid TeacherId { get; private set; }
 
     public ProvisioningStatus ProvisioningStatus { get; set; }
 
+    public EncodingTier EncodingTier { get; set; }
+
     //relations (Library <-1:M=> Video)
     public ICollection<Video> Videos { get; private set; } = [];
 
-    public static Result<VideoLibrary> Create(
+    public static Result<VideoLibrary> Create(Guid teacherId)
+    {
+        var library = new VideoLibrary
+        {
+            ProvisioningStatus = ProvisioningStatus.Pending,
+            TeacherId = teacherId,
+        };
+        return Result.Success(library);
+    }
+
+    public void AttachToTeacher(Guid teacherId)
+    {
+        TeacherId = teacherId;
+    }
+
+    public void MarkLibraryAsActive(
         long providerId,
         string? libraryApiKey,
         string readOnlyApiKey,
         string webhookUrl
     )
     {
-        var library = new VideoLibrary
-        {
-            ProviderLibraryId = providerId,
-            LibraryApiKey = libraryApiKey,
-            ReadOnlyApiKey = readOnlyApiKey,
-            // TokenAuthKey = tokenAuthKey,
-            // CdnHostname = cdnHostname,
-            WebhookUrl = new Uri(webhookUrl),
-            // PullZoneId = pullZoneId,
-            ProvisioningStatus = ProvisioningStatus.Active,
-        };
-        return Result.Success(library);
+        ProviderLibraryId = providerId;
+        LibraryApiKey = libraryApiKey;
+        ReadOnlyApiKey = readOnlyApiKey;
+        // TokenAuthKey = tokenAuthKey;
+        // CdnHostname = cdnHostname;
+        WebhookUrl = new Uri(webhookUrl);
+        // PullZoneId = pullZoneId;
+        ProvisioningStatus = ProvisioningStatus.Active;
     }
 
-    public void SetTeacher(Teacher teacher)
+    public void MarkAsFailed()
     {
-        Teacher = teacher;
+        ProvisioningStatus = ProvisioningStatus.Failed;
+    }
+
+    public static string GenerateLibraryName(Guid teacherId)
+    {
+        return $"prisma-teacher-{teacherId:N}";
     }
 }

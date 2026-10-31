@@ -17,10 +17,13 @@ internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<Video
             .WithOne(y => y.VideoLibrary)
             .HasForeignKey(x => x.VideoLibraryId);
 
-        builder
-            .HasOne<Teacher>(x => x.Teacher)
-            .WithOne(x => x.VideoLibrary)
-            .HasForeignKey<VideoLibrary>(x => x.TeacherId);
+        // builder
+        //     .HasOne<Teacher>(x => x.Teacher)
+        //     .WithOne(x => x.VideoLibrary)
+        //     .HasForeignKey<VideoLibrary>(x => x.TeacherId);
+        //
+
+        builder.HasIndex(x => x.TeacherId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
         builder.Property(x => x.ProvisioningStatus).HasConversion<string>().HasMaxLength(50);
 

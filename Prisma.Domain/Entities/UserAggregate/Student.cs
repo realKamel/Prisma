@@ -19,16 +19,19 @@ public class Student : User
     public AcademicYear? AcademicYear { get; set; }
 
     public ICollection<Enrollment> Enrollments { get; private set; } = new List<Enrollment>();
-    public ICollection<SectionProgress> SectionProgresses { get; private set; } = new List<SectionProgress>();
+    public ICollection<SectionProgress> SectionProgresses { get; private set; } =
+        new List<SectionProgress>();
 
     public ICollection<AssignmentSubmission> AssignmentSubmissions { get; private set; } =
         new List<AssignmentSubmission>();
 
     public ICollection<Payment> Payments { get; private set; } = new List<Payment>();
-    public ICollection<AttemptAnswer> AttemptAnswers { get; private set; } = new List<AttemptAnswer>();
+    public ICollection<AttemptAnswer> AttemptAnswers { get; private set; } =
+        new List<AttemptAnswer>();
     public ICollection<QuizAttempt> QuizAttempts { get; private set; } = new List<QuizAttempt>();
     public ICollection<Report> Reports { get; private set; } = new List<Report>();
-    public ICollection<TeacherStudent> TeacherStudents { get; private set; } = new List<TeacherStudent>();
+    public ICollection<TeacherStudent> TeacherStudents { get; private set; } =
+        new List<TeacherStudent>();
 
     /// <summary>
     /// Factory method to validate value objects and construct a Student instance.
@@ -41,10 +44,11 @@ public class Student : User
         int? academicYearId = null,
         string? rawParentPhone = null,
         string? thirdName = null,
-        string? lastName = null)
+        string? lastName = null
+    )
     {
         // 1. Validate Base Domain Value Objects
-        var fullNameResult = ValueObjects.FullName.Create(firstName, secondName, thirdName, lastName);
+        var fullNameResult = FullName.Create(firstName, secondName, thirdName, lastName);
         var emailAddressResult = EmailAddress.Create(rawEmail);
         var mobilePhoneNumberResult = ValueObjects.UserDomain.PhoneNumber.Create(rawPhone);
 
@@ -100,7 +104,6 @@ public class Student : User
 
         return Result.Success(student);
     }
-
 
     public void UpdateAcademicYear(int academicYearId)
     {

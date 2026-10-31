@@ -3,6 +3,7 @@ using Prisma.Domain.DomainEvents;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
+using Prisma.Domain.ValueObjects.UserDomain;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
@@ -20,8 +21,8 @@ public class Teacher : User
     public TeacherLandingSettings? TeacherLandingSettings { get; set; }
     public TeacherPreferences Preferences { get; set; } = null!;
 
-    public VideoLibrary? VideoLibrary { get; private set; }
-    public int? VideoLibraryId { get; private set; }
+    // public VideoLibrary? VideoLibrary { get; private set; }
+    // public int? VideoLibraryId { get; private set; }
 
     // public TenantSetting? TenantSetting { get; set; }
     public ICollection<TeacherStudent> TeacherStudents { get; set; } = [];
@@ -43,12 +44,7 @@ public class Teacher : User
     )
     {
         // 1. Instantiating / converting to Value Objects
-        var fullNameResult = ValueObjects.FullName.Create(
-            firstName,
-            secondName,
-            thirdName,
-            lastName
-        );
+        var fullNameResult = FullName.Create(firstName, secondName, thirdName, lastName);
         var emailAddressResult = ValueObjects.UserDomain.EmailAddress.Create(rawEmail);
         var mobilePhoneNumberResult = ValueObjects.UserDomain.PhoneNumber.Create(rawPhone);
 
@@ -99,10 +95,10 @@ public class Teacher : User
         return Result.Success(teacher);
     }
 
-    public void AttachVideoLibrary(VideoLibrary library)
-    {
-        ArgumentNullException.ThrowIfNull(library);
-        VideoLibraryId = library.Id;
-        VideoLibrary = library;
-    }
+    // public void AttachVideoLibrary(VideoLibrary library)
+    // {
+    //     ArgumentNullException.ThrowIfNull(library);
+    //     VideoLibraryId = library.Id;
+    //     VideoLibrary = library;
+    // }
 }

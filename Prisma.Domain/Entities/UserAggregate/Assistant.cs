@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Prisma.Domain.ValueObjects.UserDomain;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
@@ -18,10 +19,11 @@ public class Assistant : User
         string rawPhone,
         Guid? teacherId = null,
         string? thirdName = null,
-        string? lastName = null)
+        string? lastName = null
+    )
     {
         // 1. Convert to / validate Value Objects
-        var fullNameResult = ValueObjects.FullName.Create(firstName, secondName, thirdName, lastName);
+        var fullNameResult = FullName.Create(firstName, secondName, thirdName, lastName);
         var emailAddressResult = ValueObjects.UserDomain.EmailAddress.Create(rawEmail);
         var mobilePhoneNumberResult = ValueObjects.UserDomain.PhoneNumber.Create(rawPhone);
 
@@ -66,7 +68,7 @@ public class Assistant : User
             PhoneNumber = mobilePhoneNumberResult.Value.Value,
             TeacherId = teacherId,
             IsBlocked = false,
-            IsOnline = false
+            IsOnline = false,
         };
 
         return Result.Success(assistant);

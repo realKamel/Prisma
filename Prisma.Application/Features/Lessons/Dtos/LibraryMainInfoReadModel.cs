@@ -1,6 +1,6 @@
 namespace Prisma.Application.Features.Lessons.Dtos;
 
-internal sealed record LibraryMainInfoReadModel(
+public sealed record LibraryMainInfoReadModel(
     int VideoLibraryId,
     long? ProviderLibraryId,
     string? LibraryApiKey

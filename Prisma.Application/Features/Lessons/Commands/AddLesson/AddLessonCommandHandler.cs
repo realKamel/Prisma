@@ -35,7 +35,7 @@ internal sealed class AddLessonCommandHandler(
         {
             var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
             var teacherAssignmentId = await assistantRepo.FirstOrDefaultAsync(
-                new GetAssistantByIdWithProjection<Guid?>(userId, x => x.TeacherId),
+                new AssistantByIdWithProjectionSpec<Guid?>(userId, x => x.TeacherId),
                 cancellationToken
             );
 
@@ -105,7 +105,7 @@ internal sealed class AddLessonCommandHandler(
 
         if (!coverStorageResult.IsSuccess)
         {
-            return Result.Error(new ErrorList(coverStorageResult.Errors));
+            return coverStorageResult.Map();
         }
 
         // 5. Generate Pre-signed Assignment Upload URL (if enabled)
@@ -126,7 +126,7 @@ internal sealed class AddLessonCommandHandler(
 
             if (!assignmentStorageResult.IsSuccess)
             {
-                return Result.Error(new ErrorList(assignmentStorageResult.Errors));
+                return assignmentStorageResult.Map();
             }
 
             assignmentStorageUrl = assignmentStorageResult.Value; // Extract the actual URL string

@@ -19,7 +19,8 @@ internal sealed class RenewSectionUploadLinkCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IVideoStreamServices videoStreamServices,
-    ISecretCipher secretCipher
+    ISecretCipher secretCipher,
+    ILibraryQueryService libraryQueryService
 ) : IRequestHandler<RenewSectionUploadLinkCommand, Result<RenewSectionUploadLinkResponse>>
 {
     private sealed record SectionInfo(int Id, string Title, Guid? VideoId);
@@ -124,49 +125,17 @@ internal sealed class RenewSectionUploadLinkCommandHandler(
     {
         return currentUserService.Role switch
         {
-            AppRoles.Teacher => await GetTeacherLibraryInfo(userId, cancellationToken),
+            AppRoles.Teacher => await libraryQueryService.GetLibraryInfoFromTeacher(
+                userId,
+                cancellationToken
+            ),
 
-            AppRoles.Assistant => await GetAssistantLibraryInfo(userId, cancellationToken),
+            AppRoles.Assistant => await libraryQueryService.GetLibraryInfoFromAssistant(
+                userId,
+                cancellationToken
+            ),
 
             _ => null,
         };
-    }
-
-    private async Task<LibraryMainInfoReadModel?> GetTeacherLibraryInfo(
-        Guid teacherId,
-        CancellationToken cancellationToken
-    )
-    {
-        var repository = unitOfWork.GetOrCreateRepository<VideoLibrary, int>();
-
-        var spec = new VideoLibraryByIdWithProjection<LibraryMainInfoReadModel>(
-            teacherId,
-            library => new LibraryMainInfoReadModel(
-                library.Id,
-                library.ProviderLibraryId,
-                library.LibraryApiKey
-            )
-        );
-
-        return await repository.FirstOrDefaultAsync(spec, cancellationToken);
-    }
-
-    private async Task<LibraryMainInfoReadModel?> GetAssistantLibraryInfo(
-        Guid assistantId,
-        CancellationToken cancellationToken
-    )
-    {
-        var repository = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
-
-        var spec = new GetAssistantByIdWithProjection<LibraryMainInfoReadModel>(
-            assistantId,
-            assistant => new LibraryMainInfoReadModel(
-                assistant.Teacher.VideoLibrary.Id,
-                assistant.Teacher.VideoLibrary.ProviderLibraryId,
-                assistant.Teacher.VideoLibrary.LibraryApiKey
-            )
-        );
-
-        return await repository.FirstOrDefaultAsync(spec, cancellationToken);
     }
 }

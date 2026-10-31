@@ -6,6 +6,7 @@ using Microsoft.FeatureManagement;
 using Prisma.Application.Common.Behaviors;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Options;
+using Prisma.Application.Features.Lessons.Helpers;
 
 namespace Prisma.Application;
 
@@ -47,5 +48,8 @@ public static class DependenciesInjection
             .Bind(configuration.GetSection(AppFeatureKeys.SectionKey))
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        //specific service
+        services.AddScoped<ILibraryQueryService, LibraryQueryService>();
     }
 }

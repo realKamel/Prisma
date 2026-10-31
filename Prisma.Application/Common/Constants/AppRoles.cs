@@ -8,4 +8,6 @@ public static class AppRoles
     public const string Assistant = "assistant";
 
     public static HashSet<string> RolesSet = new(["admin", "student", "teacher", "assistant"]);
+
+    public static string? Normalize(string? role) => role?.ToLowerInvariant() ?? null;
 }

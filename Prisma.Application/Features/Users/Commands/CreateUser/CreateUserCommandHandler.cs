@@ -28,10 +28,91 @@ internal sealed class CreateUserCommandHandler(IIdentityService identityService,
             return Result.Conflict("A user with this email or phone already exists.");
         }
 
-        var roleInRequest = request.Role.ToLowerInvariant();
+        var role = AppRoles.Normalize(request.Role);
 
+        if (role is null)
+        {
+            return Result.Error($"Unknown role '{request.Role}'.");
+        }
+
+        var userResult = CreateUser(request, role);
+
+        if (!userResult.IsSuccess)
+        {
+            return userResult.Map();
+        }
+
+        var user = userResult.Value;
+
+        var createResult = await identityService.CreateAsync(user, request.Password);
+
+        if (!createResult.Succeeded)
+        {
+            return Result.Error(string.Join("\n", createResult.Errors.Select(e => e.Code)));
+        }
+
+        var roleResult = await identityService.AddToRoleAsync(user, request.Role);
+
+        if (!roleResult.Succeeded)
+        {
+            return Result.Error(string.Join("\n", roleResult.Errors.Select(e => e.Description)));
+        }
+
+        if (role == AppRoles.Teacher)
+        {
+            var academicYearsTeachers = uow.GetOrCreateRepository<AcademicYear, int>();
+            var videoLibraryRepo = uow.GetOrCreateRepository<VideoLibrary, int>();
+            var academicYears = await academicYearsTeachers.ListAsync(cancellationToken);
+            var objectStorageRepo = uow.GetOrCreateRepository<ObjectStorage, Guid>();
+            foreach (var ay in academicYears)
+            {
+                ay.RegisterTeacherInAcademicYear(user.Id);
+            }
+
+            var videoLibraryResult = VideoLibrary.Create(user.Id);
+
+            if (!videoLibraryResult.IsSuccess)
+            {
+                return videoLibraryResult.Map();
+            }
+
+            videoLibraryRepo.Add(videoLibraryResult);
+
+            var objectStorageResult = ObjectStorage.Create(
+                user.Id,
+                ObjectStorage.GenerateBucketName(user.Id)
+            );
+
+            if (!objectStorageResult.IsSuccess)
+            {
+                return videoLibraryResult.Map();
+            }
+
+            objectStorageRepo.Add(objectStorageResult);
+        }
+
+        await uow.SaveChangesAsync(cancellationToken);
+        var dto = new UserEditDto(
+            user.Id,
+            user.FirstName,
+            user.SecondName,
+            user.ThirdName,
+            user.LastName,
+            user.PhoneNumber,
+            user.Email,
+            request.Role,
+            (user as Student)?.AcademicYearId,
+            [],
+            (user as Student)?.ParentPhoneNumber
+        );
+
+        return dto;
+    }
+
+    private static Result<User> CreateUser(CreateUserCommand request, string role)
+    {
         User user;
-        switch (request.Role)
+        switch (role)
         {
             case AppRoles.Student:
                 user = Student.Create(
@@ -81,47 +162,6 @@ internal sealed class CreateUserCommandHandler(IIdentityService identityService,
                 return Result.Error($"Unknown role '{request.Role}'.");
         }
 
-        var createResult = await identityService.CreateAsync(user, request.Password);
-
-        if (!createResult.Succeeded)
-        {
-            return Result.Error(string.Join("\n", createResult.Errors.Select(e => e.Code)));
-        }
-
-        var roleResult = await identityService.AddToRoleAsync(user, request.Role);
-
-        if (!roleResult.Succeeded)
-        {
-            return Result.Error(string.Join("\n", roleResult.Errors.Select(e => e.Description)));
-        }
-
-        if (roleInRequest == AppRoles.Teacher)
-        {
-            var academicYearsTeachers = uow.GetOrCreateRepository<AcademicYear, int>();
-
-            var academicYears = await academicYearsTeachers.ListAsync(cancellationToken);
-
-            foreach (var ay in academicYears)
-            {
-                ay.RegisterTeacherInAcademicYear(user.Id);
-            }
-        }
-
-        await uow.SaveChangesAsync(cancellationToken);
-        var dto = new UserEditDto(
-            user.Id,
-            user.FirstName,
-            user.SecondName,
-            user.ThirdName,
-            user.LastName,
-            user.PhoneNumber,
-            user.Email,
-            request.Role,
-            (user as Student)?.AcademicYearId,
-            [],
-            (user as Student)?.ParentPhoneNumber
-        );
-
-        return dto;
+        return user;
     }
 }

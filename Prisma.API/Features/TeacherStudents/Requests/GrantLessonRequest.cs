@@ -1,7 +1,8 @@
 namespace Prisma.API.Features.TeacherStudents.Requests;
 
-public record GrantLessonRequest(
+public sealed record GrantLessonRequest(
     Guid StudentId,
     int LessonId,
     int ValidityDays,
-    string? Note);
+    string? Note
+);

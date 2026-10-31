@@ -1,6 +1,6 @@
 namespace Prisma.API.Features.TeacherStudents.Requests;
 
-public record AddStudentRequest(
+public sealed record AddStudentRequest(
     string FirstName,
     string SecondName,
     string ThirdName,
@@ -9,4 +9,5 @@ public record AddStudentRequest(
     string Email,
     string Password,
     int Grade,
-    string ParentMobile);
+    string ParentMobile
+);

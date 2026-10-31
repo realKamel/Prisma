@@ -1,8 +1,6 @@
-﻿using Prisma.Application.Features.Authentication.Commands.Register;
+﻿namespace Prisma.API.Features.Auth.Requests;
 
-namespace Prisma.API.Features.Auth.Requests;
-
-public record RegisterRequest(
+public sealed record RegisterRequest(
     string FirstName,
     string SecondName,
     string ThirdName,
@@ -12,4 +10,5 @@ public record RegisterRequest(
     string Password,
     string ConfirmPassword,
     int Grade,
-    string ParentMobile);
+    string ParentMobile
+);

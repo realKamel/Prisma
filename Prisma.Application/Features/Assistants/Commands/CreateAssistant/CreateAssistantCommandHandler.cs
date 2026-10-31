@@ -10,11 +10,13 @@ namespace Prisma.Application.Features.Assistants.Commands.CreateAssistant;
 
 internal sealed class CreateAssistantCommandHandler(
     IIdentityService identityService,
-    ICurrentUserService currentUserService) :
-    IRequestHandler<CreateAssistantCommand, Result<CreateOrUpdatedAssistantCommandResponse>>
+    ICurrentUserService currentUserService
+) : IRequestHandler<CreateAssistantCommand, Result<CreateOrUpdatedAssistantCommandResponse>>
 {
-    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> Handle(CreateAssistantCommand request,
-        CancellationToken cancellationToken)
+    public async Task<Result<CreateOrUpdatedAssistantCommandResponse>> Handle(
+        CreateAssistantCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var isAuthenticated = currentUserService.IsAuthenticated;
 
@@ -23,7 +25,10 @@ internal sealed class CreateAssistantCommandHandler(
             return Result.Unauthorized();
         }
 
-        var user = await identityService.FindByPhoneNumberAsync(request.PhoneNumber, cancellationToken);
+        var user = await identityService.FindByPhoneNumberAsync(
+            request.PhoneNumber,
+            cancellationToken
+        );
 
         var teacherId = currentUserService.UserId.Value;
 
@@ -32,12 +37,17 @@ internal sealed class CreateAssistantCommandHandler(
             return Result.Conflict();
         }
 
-        var assistantResult = Assistant.Create(request.FirstName, request.SecondName, request.Email,
-            request.PhoneNumber, teacherId);
+        var assistantResult = Assistant.Create(
+            request.FirstName,
+            request.SecondName,
+            request.Email,
+            request.PhoneNumber,
+            teacherId
+        );
 
         if (!assistantResult.IsSuccess)
         {
-            return Result.Invalid(assistantResult.ValidationErrors);
+            return assistantResult.Map();
         }
         // var assistant = new Assistant
         // {
@@ -58,8 +68,7 @@ internal sealed class CreateAssistantCommandHandler(
         //     .Select(x => new Claim(AppClaims.PermissionsClaim, x));
 
         var permissions = request
-            .Policies
-            .Where(p => AppClaims.Policies.All.Contains(p))
+            .Policies.Where(p => AppClaims.Policies.All.Contains(p))
             .Select(px => new Claim(AppClaims.PermissionsClaim, px));
 
         if (!result.Succeeded)
@@ -74,19 +83,23 @@ internal sealed class CreateAssistantCommandHandler(
             return Result.Error(string.Join("\n", claimsResult.Errors.Select(e => e.Code)));
         }
 
-        var roleResult = await identityService.AddToRoleAsync(assistantResult.Value, AppRoles.Assistant);
+        var roleResult = await identityService.AddToRoleAsync(
+            assistantResult.Value,
+            AppRoles.Assistant
+        );
 
         if (!roleResult.Succeeded)
         {
             return Result.Error(string.Join("\n", roleResult.Errors.Select(e => e.Code)));
         }
 
-        return new CreateOrUpdatedAssistantCommandResponse
-        (assistantResult.Value.Id,
+        return new CreateOrUpdatedAssistantCommandResponse(
+            assistantResult.Value.Id,
             assistantResult.Value.FirstName,
             assistantResult.Value.SecondName,
             assistantResult.Value.PhoneNumber,
             assistantResult.Value.Email,
-            [.. request.Policies]);
+            [.. request.Policies]
+        );
     }
 }

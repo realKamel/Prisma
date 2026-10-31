@@ -1,10 +1,11 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 
 namespace Prisma.Application.Features.TeacherStudents.Commands.SendReport;
 
-public record SendReportCommand(
-    List<Guid> StudentIds,
+public sealed record SendReportCommand(
+    IList<Guid> StudentIds,
     string ReportType,
     string DateFrom,
-    string DateTo) : IRequest<Result>;
+    string DateTo
+) : IRequest<Result>;

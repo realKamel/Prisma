@@ -1,36 +1,63 @@
+using Ardalis.Result;
 using Prisma.Application.Abstractions.Services.VideoServices;
-using Prisma.Application.Common.Interfaces;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core.AddVideoLibrary;
+using Prisma.Infrastructure.Helpers;
+using EncodingTier = Prisma.Domain.Entities.UserAggregate.EncodingTier;
 
 namespace Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 
-internal sealed class VideoLibraryService(IBunnyCoreVideoLibraryApi api, ISecretCipher secretCipher)
-    : IVideoLibraryService
+internal sealed class VideoLibraryService(IBunnyCoreVideoLibraryApi api) : IVideoLibraryService
 {
-    public async Task<VideoLibrary> CreateLibrary(string name, CancellationToken cancellationToken)
+    public async Task<Result<VideoLibraryCreateResult>> CreateLibrary(
+        string name,
+        CancellationToken cancellationToken,
+        EncodingTier encodingTier,
+        string enabledResolutions = "480p,720p,1080p"
+    )
     {
+        ExternalServices.BunnyApi.Core.AddVideoLibrary.EncodingTier? mappedEncodingTier =
+            encodingTier == EncodingTier.Free
+                ? ExternalServices.BunnyApi.Core.AddVideoLibrary.EncodingTier.Free
+                : ExternalServices.BunnyApi.Core.AddVideoLibrary.EncodingTier.Premium;
+
         var request = new AddVideoLibraryRequest
         {
             Name = name,
-            EncodingTier = EncodingTier.Free,
-            EnabledResolutions = "480p,720p,1080p",
+            EncodingTier = mappedEncodingTier,
+            EnabledResolutions = enabledResolutions,
             AllowDirectPlay = false,
         };
-        var result = await api.AddVideoLibrary(request, cancellationToken);
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(result.ApiKey);
-        // ArgumentException.ThrowIfNullOrWhiteSpace(result.ApiKey);
-        var encryptedApiKey = secretCipher.Encrypt(result.ApiKey);
-        var encryptedReadOnlyApiKey = secretCipher.Encrypt(result.ReadOnlyApiKey);
+        try
+        {
+            var result = await api.AddVideoLibrary(request, cancellationToken);
 
-        var createLibraryResult = VideoLibrary.Create(
-            result.Id,
-            encryptedApiKey,
-            encryptedReadOnlyApiKey,
-            result.WebhookUrl
-        );
-        return createLibraryResult;
+            ArgumentException.ThrowIfNullOrWhiteSpace(result.ApiKey);
+
+            return new VideoLibraryCreateResult(
+                result.Id,
+                result.ApiKey,
+                result.ReadOnlyApiKey,
+                result.WebhookUrl
+            );
+        }
+        catch (HttpRequestException httpRequestException)
+        {
+            return httpRequestException.ToResult("video Library");
+        }
+        catch (Exception e)
+        {
+            throw;
+        }
+    }
+
+    public async Task<Result<VideoLibrary>> EnsureLibraryExistsAsync(
+        string libraryName,
+        CancellationToken cancellationToken
+    )
+    {
+        throw new NotImplementedException();
     }
 }

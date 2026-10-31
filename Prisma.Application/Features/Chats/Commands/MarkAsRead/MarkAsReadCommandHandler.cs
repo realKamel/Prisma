@@ -53,7 +53,7 @@ internal sealed class MarkAsReadCommandHandler(
 
         if (!readResult.IsSuccess)
         {
-            return Result.Invalid(readResult.ValidationErrors);
+            return readResult.Map();
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

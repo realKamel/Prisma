@@ -112,7 +112,7 @@ public sealed class IdempotentFilter(
         }
     }
 
-    private record CachedResponse
+    private sealed record CachedResponse
     {
         public int StatusCode { get; init; }
         public object? Body { get; init; }

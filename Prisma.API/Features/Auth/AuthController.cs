@@ -33,7 +33,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
             // Map the Result<LoginResponse> to Result<LoginCredentials>
             // The lambda (_ => ...) is IGNORED because IsSuccess is false.
             // This aligns the generic types so ToActionResult() works.
-            var mappedError = result.Map(_ => (LoginCredentials)null!);
+            var mappedError = result.Map();
 
             return mappedError.ToActionResult(this);
         }
@@ -80,7 +80,7 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
             // Map the Result<LoginResponse> to Result<LoginCredentials>
             // The lambda (_ => ...) is IGNORED because IsSuccess is false.
             // This aligns the generic types so ToActionResult() works.
-            var mappedError = result.Map(_ => (AuthResponse)null!);
+            var mappedError = result.Map();
 
             return mappedError.ToActionResult(this);
         }

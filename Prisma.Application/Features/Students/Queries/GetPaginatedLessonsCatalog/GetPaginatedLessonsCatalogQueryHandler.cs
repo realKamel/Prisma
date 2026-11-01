@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Queries.Helpers;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -45,27 +46,39 @@ internal sealed class GetPaginatedLessonsCatalogQueryHandler(
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
         var lessons = await enrollmentRepo.ListAsync(
-            new ActiveEnrollmentsSpec(studentId, request.PaginationParams.PageNumber,
-                request.PaginationParams.PageSize),
+            new ActiveEnrollmentsSpec(
+                studentId,
+                request.PaginationParams.PageNumber,
+                request.PaginationParams.PageSize
+            ),
             cancellationToken
         );
 
         var totalCount = await enrollmentRepo.CountAsync(
-            new ActiveEnrollmentsSpec(studentId, request.PaginationParams.PageNumber,
-                request.PaginationParams.PageSize),
+            new ActiveEnrollmentsSpec(
+                studentId,
+                request.PaginationParams.PageNumber,
+                request.PaginationParams.PageSize
+            ),
             cancellationToken
         );
 
-
         var result = (
-                await Task.WhenAll(lessons.Select(lesson =>
-                    LessonMappingHelper.MapLesson(storageService, lesson, student)))
+            await Task.WhenAll(
+                lessons.Select(lesson =>
+                    LessonMappingHelper.MapLesson(storageService, lesson, student)
+                )
             )
-            .OfType<LessonCatalogDto>().ToList();
+        )
+            .OfType<LessonCatalogDto>()
+            .ToList();
 
-        var paginatedResult = new PaginatedList<LessonCatalogDto>(result, totalCount,
+        var paginatedResult = new PaginatedList<LessonCatalogDto>(
+            result,
+            totalCount,
             request.PaginationParams.PageNumber,
-            request.PaginationParams.PageSize);
+            request.PaginationParams.PageSize
+        );
 
         return paginatedResult;
     }

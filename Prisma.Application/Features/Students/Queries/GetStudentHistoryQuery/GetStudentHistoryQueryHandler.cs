@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Interfaces;
@@ -64,35 +65,46 @@ internal class GetStudentHistoryQueryHandler(
                     e.ExpiresAt,
                     e.Lesson != null && e.Lesson.Quiz != null ? e.Lesson.Quiz.TotalDegree : 0,
                     e.Lesson != null && e.Lesson.Quiz != null
-                        ? e.Lesson.Quiz.Attempts.FirstOrDefault(ex => ex.StudentId == userId.Value)!.Degree
+                        ? e
+                            .Lesson.Quiz.Attempts.FirstOrDefault(ex =>
+                                ex.StudentId == userId.Value
+                            )!
+                            .Degree
                         : 0,
                     e.IsCompleted,
                     e.Lesson != null ? e.Lesson.Sections.Count : 0,
                     e.Lesson != null
                         ? e.Lesson.Sections.SelectMany(sec => sec.Progresses)
                             .Where(p => p.StudentId == userId.Value)
-                            .Sum(p => (double?)p.Percentage) ?? 0
+                            .Sum(p => (double?)p.Percentage)
+                            ?? 0
                         : 0
                 )
             ),
             cancellationToken: cancellationToken
         );
 
-        var tasks = rawData
-            .Select(async (raw) => new HistoryDto(
-                raw.PublicId,
-                await storageService.GetDownloadUrlAsync(raw.ImageThumbnailUrl),
-                raw.Title,
-                raw.Status,
-                raw.TeacherName,
-                raw.Subject,
-                raw.CreatedAt,
-                raw.CompletedAt,
-                raw.ExpiresAt,
-                raw.TotalDegree,
-                raw.QuizScore,
-                CalculateProgressPercentage(raw.IsCompleted, raw.SectionsCount, raw.TotalProgress)
-            ));
+        var tasks = rawData.Select(
+            async (raw) =>
+                new HistoryDto(
+                    raw.PublicId,
+                    await storageService.GetDownloadUrlAsync(raw.ImageThumbnailUrl),
+                    raw.Title,
+                    raw.Status,
+                    raw.TeacherName,
+                    raw.Subject,
+                    raw.CreatedAt,
+                    raw.CompletedAt,
+                    raw.ExpiresAt,
+                    raw.TotalDegree,
+                    raw.QuizScore,
+                    CalculateProgressPercentage(
+                        raw.IsCompleted,
+                        raw.SectionsCount,
+                        raw.TotalProgress
+                    )
+                )
+        );
         var result = await Task.WhenAll(tasks);
 
         return new PaginatedList<HistoryDto>(

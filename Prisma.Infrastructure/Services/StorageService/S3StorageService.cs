@@ -4,7 +4,7 @@ using Ardalis.Result;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
@@ -16,6 +16,96 @@ internal sealed partial class S3StorageService(
 ) : IStorageService
 {
     public string DefaultBucketName => objectStorageOptions.Value.BucketName;
+
+    public async Task<Result> CreateBucketAsync(
+        string bucketName,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var request = new PutBucketRequest { BucketName = bucketName };
+
+            await s3.PutBucketAsync(request, cancellationToken);
+
+            LogBucketCreated(logger, bucketName);
+
+            return Result.Success();
+        }
+        catch (AmazonS3Exception ex)
+        {
+            LogBucketCreationFailed(logger, ex, bucketName, ex.ErrorCode);
+
+            return ex.ErrorCode switch
+            {
+                "BucketAlreadyOwnedByYou" => Result.Success(),
+
+                "BucketAlreadyExists" => Result.Conflict(
+                    $"The bucket '{bucketName}' already exists and is owned by another account."
+                ),
+
+                "AccessDenied" => Result.Forbidden(
+                    "The storage provider denied permission to create the bucket."
+                ),
+
+                _ => Result.Error("Failed to create the storage bucket."),
+            };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            UnexpectedErrorCreatingBucket(logger, bucketName, ex);
+
+            return Result.Error("An unexpected error occurred while creating the bucket.");
+        }
+    }
+
+    public async Task<Result> DeleteBucketAsync(
+        string bucketName,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(bucketName);
+
+        try
+        {
+            await s3.DeleteBucketAsync(bucketName, cancellationToken);
+
+            LogBucketDeleted(logger, bucketName);
+
+            return Result.Success();
+        }
+        catch (AmazonS3Exception ex)
+        {
+            LogBucketDeletionFailed(logger, ex, bucketName, ex.ErrorCode);
+
+            return ex.ErrorCode switch
+            {
+                "NoSuchBucket" => Result.NotFound($"Bucket '{bucketName}' does not exist."),
+
+                "BucketNotEmpty" => Result.Conflict($"Bucket '{bucketName}' is not empty."),
+
+                "AccessDenied" => Result.Forbidden(
+                    "The storage provider denied permission to delete the bucket."
+                ),
+
+                _ => Result.Error("Failed to delete the storage bucket."),
+            };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            UnexpectedErrorDeletingBucket(logger, bucketName, ex);
+
+            return Result.Error("An unexpected error occurred while deleting the bucket.");
+        }
+    }
 
     public async Task UploadFileAsync(
         string bucketName,
@@ -82,6 +172,37 @@ internal sealed partial class S3StorageService(
         {
             LogPresignedUrlCreateFailed(logger, objectKey, DefaultBucketName, ex);
             return Result.Error("Error happened while create upload link");
+        }
+    }
+
+    public async Task<Result<string>> GetPreSignedDownloadUrlAsync(
+        string objectKey,
+        long expiresInSeconds,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = DefaultBucketName,
+                Key = objectKey,
+                Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
+                Verb = HttpVerb.GET,
+            };
+
+            if (environment.IsDevelopment())
+            {
+                request.Protocol = Protocol.HTTP;
+            }
+
+            var link = await s3.GetPreSignedURLAsync(request);
+            return link;
+        }
+        catch (Exception ex)
+        {
+            LogPresignedUrlCreateFailed(logger, objectKey, DefaultBucketName, ex);
+            return Result.Error("Error happened while create download link");
         }
     }
 
@@ -167,6 +288,15 @@ internal sealed partial class S3StorageService(
         await DeleteFileAsync(DefaultBucketName, objectKey, cancellationToken);
     }
 
+    public async Task<Result> DeleteObjectAsync(
+        string objectKeys,
+        string bucketName,
+        CancellationToken cancellationToken = default
+    )
+    {
+        throw new NotImplementedException();
+    }
+
     [LoggerMessage(
         EventId = 2001,
         Level = LogLevel.Information,
@@ -196,5 +326,65 @@ internal sealed partial class S3StorageService(
         string objectKey,
         string bucketName,
         Exception ex
+    );
+
+    [LoggerMessage(
+        EventId = 4001,
+        Level = LogLevel.Information,
+        Message = "Successfully created bucket {BucketName}"
+    )]
+    private static partial void LogBucketCreated(ILogger logger, string bucketName);
+
+    [LoggerMessage(
+        EventId = 4002,
+        Level = LogLevel.Error,
+        Message = "Failed to create bucket {BucketName}. AWS error code: {ErrorCode}"
+    )]
+    private static partial void LogBucketCreationFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string? errorCode
+    );
+
+    [LoggerMessage(
+        EventId = 4003,
+        Level = LogLevel.Information,
+        Message = "Successfully deleted bucket {BucketName}"
+    )]
+    private static partial void LogBucketDeleted(ILogger logger, string bucketName);
+
+    [LoggerMessage(
+        EventId = 4009,
+        Level = LogLevel.Error,
+        Message = "Failed to delete bucket {BucketName}. AWS error code: {ErrorCode}"
+    )]
+    private static partial void LogBucketDeletionFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string? errorCode
+    );
+
+    [LoggerMessage(
+        EventId = 4010,
+        Level = LogLevel.Error,
+        Message = "Unexpected error deleting bucket {BucketName}"
+    )]
+    private static partial void UnexpectedErrorDeletingBucket(
+        ILogger logger,
+        string bucketName,
+        Exception exception
+    );
+
+    [LoggerMessage(
+        EventId = 4008,
+        Level = LogLevel.Error,
+        Message = "Unexpected error creating bucket {BucketName}"
+    )]
+    private static partial void UnexpectedErrorCreatingBucket(
+        ILogger logger,
+        string bucketName,
+        Exception exception
     );
 }

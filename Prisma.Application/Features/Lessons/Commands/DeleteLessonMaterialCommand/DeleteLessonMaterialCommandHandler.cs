@@ -2,6 +2,7 @@ using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;

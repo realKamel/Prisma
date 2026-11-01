@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
 using Prisma.Domain.Entities.LessonAggregate;

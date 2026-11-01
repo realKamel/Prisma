@@ -1,12 +1,21 @@
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 
 namespace Prisma.Application.Features.Storage.Queries.GetDownloadUrl;
 
-public class GetDownloadUrlQueryHandler(IStorageService storage) : IRequestHandler<GetDownloadUrlQuery, string>
+public class GetDownloadUrlQueryHandler(IStorageService storage)
+    : IRequestHandler<GetDownloadUrlQuery, string>
 {
-    public async Task<string> Handle(GetDownloadUrlQuery request, CancellationToken cancellationToken)
+    public async Task<string> Handle(
+        GetDownloadUrlQuery request,
+        CancellationToken cancellationToken
+    )
     {
-        return await storage.GetDownloadUrlAsync(request.BucketName, request.ObjectKey, request.ExpiryMinutes);
+        return await storage.GetDownloadUrlAsync(
+            request.BucketName,
+            request.ObjectKey,
+            request.ExpiryMinutes
+        );
     }
 }

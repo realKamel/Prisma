@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -154,36 +155,38 @@ internal sealed class GetStudentDashboardQueryHandler(
             };
         }
 
-        var lessonTasks = enrollments.Take(9).Select(async enrollment =>
-        {
-            var now = DateTimeOffset.UtcNow;
-            var status = ResolveStatus(enrollment, now);
-
-            return new LessonCardDto
+        var lessonTasks = enrollments
+            .Take(9)
+            .Select(async enrollment =>
             {
-                LessonPublicId = enrollment.LessonPublicId,
-                Title = enrollment.LessonTitle ?? string.Empty,
-                Subject = enrollment.Subject ?? string.Empty,
-                TeacherName = enrollment.TeacherName ?? string.Empty,
-                TeacherInitial = !string.IsNullOrEmpty(enrollment.TeacherName)
-                    ? enrollment.TeacherName[0].ToString()
-                    : string.Empty,
-                Duration = enrollment.Duration?.ToDto(),
-                PosterUrl =
-                    enrollment.LessonThumbnailUrl != null
-                        ? await storageService.GetDownloadUrlAsync(
-                            storageService.DefaultBucketName,
-                            enrollment.LessonThumbnailUrl
-                        )
+                var now = DateTimeOffset.UtcNow;
+                var status = ResolveStatus(enrollment, now);
+
+                return new LessonCardDto
+                {
+                    LessonPublicId = enrollment.LessonPublicId,
+                    Title = enrollment.LessonTitle ?? string.Empty,
+                    Subject = enrollment.Subject ?? string.Empty,
+                    TeacherName = enrollment.TeacherName ?? string.Empty,
+                    TeacherInitial = !string.IsNullOrEmpty(enrollment.TeacherName)
+                        ? enrollment.TeacherName[0].ToString()
                         : string.Empty,
-                Status = status.ToString().ToLower(),
-                ValidityDateRange = enrollment.ValidityDateRange?.ToDto(),
-                // ExpiresInDays =
-                //     status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
-                //         ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
-                //         : null,
-            };
-        });
+                    Duration = enrollment.Duration?.ToDto(),
+                    PosterUrl =
+                        enrollment.LessonThumbnailUrl != null
+                            ? await storageService.GetDownloadUrlAsync(
+                                storageService.DefaultBucketName,
+                                enrollment.LessonThumbnailUrl
+                            )
+                            : string.Empty,
+                    Status = status.ToString().ToLower(),
+                    ValidityDateRange = enrollment.ValidityDateRange?.ToDto(),
+                    // ExpiresInDays =
+                    //     status == LessonStatus.Warn && enrollment.ExpiresAt.HasValue
+                    //         ? (int)(enrollment.ExpiresAt.Value - now).TotalDays
+                    //         : null,
+                };
+            });
         var lessons = await Task.WhenAll(lessonTasks);
 
         return Result<GetStudentDashboardResponse>.Success(

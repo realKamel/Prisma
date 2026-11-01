@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Extenions;
 using Prisma.Application.Features.Lessons.Helpers;

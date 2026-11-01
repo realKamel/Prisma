@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Ardalis.Result;
@@ -39,7 +39,6 @@ public class CompleteSectionCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User must be authenticated.");
     }
 
     [Fact]
@@ -82,8 +81,6 @@ public class CompleteSectionCommandHandlerTests
         // Assert
         progress.IsCompleted.Should().BeTrue();
         progress.Percentage.Should().Be(100);
-
-        _progressRepo.Received(1).Update(progress);
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

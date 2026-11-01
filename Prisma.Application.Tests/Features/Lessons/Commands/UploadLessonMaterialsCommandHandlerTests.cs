@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -177,7 +178,7 @@ public class UploadLessonMaterialsCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Materials uploaded and attached to lesson successfully");
+        result.SuccessMessage.Should().Be("Materials uploaded and attached to lesson successfully");
 
         lesson.LessonMaterials.Should().ContainSingle();
         var firstMaterial = lesson.LessonMaterials.First();

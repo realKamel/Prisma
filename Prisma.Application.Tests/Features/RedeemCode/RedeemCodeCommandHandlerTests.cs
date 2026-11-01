@@ -5,9 +5,11 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 using Prisma.Application.Features.TeacherStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
+using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.RedeemCodes;
 using Prisma.Domain.Specifications.Teachers;
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
@@ -34,6 +36,10 @@ public class RedeemCodeCommandHandlerTests
         IRepository<Enrollment, int>
     >();
 
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+
     private readonly IRepository<TeacherStudent, int> _teacherStudentRepo = Substitute.For<
         IRepository<TeacherStudent, int>
     >();
@@ -42,6 +48,7 @@ public class RedeemCodeCommandHandlerTests
 
     private readonly Guid _studentId = Guid.NewGuid();
     private readonly Guid _teacherId = Guid.NewGuid();
+    private readonly Guid _lessonId = Guid.NewGuid();
 
     public RedeemCodeCommandHandlerTests()
     {
@@ -51,6 +58,7 @@ public class RedeemCodeCommandHandlerTests
         _unitOfWork.GetOrCreateRepository<GeneratedCode, int>().Returns(_generatedCodeRepo);
         _unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>().Returns(_batchRepo);
         _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepo);
+        _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<TeacherStudent, int>().Returns(_teacherStudentRepo);
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
@@ -58,6 +66,13 @@ public class RedeemCodeCommandHandlerTests
         _teacherStudentRepo
             .AnyAsync(Arg.Any<TeacherStudentPairSpec>(), Arg.Any<CancellationToken>())
             .Returns(false);
+
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(new LessonInfo(Id: 987, validityDuration: 3600));
 
         _sut = new RedeemCodeCommandHandler(_unitOfWork, _currentUser);
     }
@@ -81,10 +96,10 @@ public class RedeemCodeCommandHandlerTests
         };
 
     private CodeBatchLessonInfo MakeBatchInfo(
-        int lessonId = 5,
+        Guid? lessonId = null,
         int academicYearId = 1,
         Guid? teacherId = null
-    ) => new(lessonId, academicYearId, teacherId ?? _teacherId);
+    ) => new(lessonId ?? _lessonId, academicYearId, teacherId ?? _teacherId);
 
     private void SetupBatch(CodeBatchLessonInfo batchInfo)
     {
@@ -96,10 +111,8 @@ public class RedeemCodeCommandHandlerTests
             .Returns(batchInfo);
     }
 
-    [Fact]
-    public async Task Handle_WhenAllValid_CreatesEnrollmentAndReturnsResponse()
+    private void SetupValidStudentAndCode()
     {
-        // Arrange
         _studentRepo
             .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
             .Returns(MakeStudent(academicYearId: 1));
@@ -110,8 +123,14 @@ public class RedeemCodeCommandHandlerTests
                 Arg.Any<CancellationToken>()
             )
             .Returns(MakeAvailableCode(batchId: 1));
+    }
 
-        SetupBatch(MakeBatchInfo(lessonId: 5, academicYearId: 1));
+    [Fact]
+    public async Task Handle_WhenAllValid_CreatesEnrollmentAndReturnsResponse()
+    {
+        // Arrange
+        SetupValidStudentAndCode();
+        SetupBatch(MakeBatchInfo());
 
         _enrollmentRepo
             .FirstOrDefaultAsync(
@@ -122,13 +141,22 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.ExpiresAt.Should().NotBeNull();
+        _enrollmentRepo
+            .Received(1)
+            .Add(
+                Arg.Is<Enrollment>(e =>
+                    e.StudentId == _studentId
+                    && e.LessonId == 987
+                    && e.GeneratedCodeId == 10
+                )
+            );
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -136,18 +164,8 @@ public class RedeemCodeCommandHandlerTests
     public async Task Handle_WhenAllValidAndNoPairingExists_CreatesTeacherStudentPairing()
     {
         // Arrange
-        _studentRepo
-            .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
-            .Returns(MakeStudent(academicYearId: 1));
-
-        _generatedCodeRepo
-            .FirstOrDefaultAsync(
-                Arg.Any<GeneratedCodeByValueSpecification>(),
-                Arg.Any<CancellationToken>()
-            )
-            .Returns(MakeAvailableCode(batchId: 1));
-
-        SetupBatch(MakeBatchInfo(lessonId: 5, academicYearId: 1));
+        SetupValidStudentAndCode();
+        SetupBatch(MakeBatchInfo());
 
         _enrollmentRepo
             .FirstOrDefaultAsync(
@@ -157,7 +175,7 @@ public class RedeemCodeCommandHandlerTests
             .Returns((Enrollment?)null);
 
         // Act
-        await _sut.Handle(new RedeemCodeCommand("ABCD-EFGH", 5), CancellationToken.None);
+        await _sut.Handle(new RedeemCodeCommand("ABCD-EFGH", _lessonId), CancellationToken.None);
 
         // Assert
         _teacherStudentRepo
@@ -173,18 +191,8 @@ public class RedeemCodeCommandHandlerTests
     public async Task Handle_WhenPairingAlreadyExists_DoesNotAddDuplicate()
     {
         // Arrange
-        _studentRepo
-            .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
-            .Returns(MakeStudent(academicYearId: 1));
-
-        _generatedCodeRepo
-            .FirstOrDefaultAsync(
-                Arg.Any<GeneratedCodeByValueSpecification>(),
-                Arg.Any<CancellationToken>()
-            )
-            .Returns(MakeAvailableCode(batchId: 1));
-
-        SetupBatch(MakeBatchInfo(lessonId: 5, academicYearId: 1));
+        SetupValidStudentAndCode();
+        SetupBatch(MakeBatchInfo());
 
         _enrollmentRepo
             .FirstOrDefaultAsync(
@@ -198,14 +206,14 @@ public class RedeemCodeCommandHandlerTests
             .Returns(true); // pairing already exists
 
         // Act
-        await _sut.Handle(new RedeemCodeCommand("ABCD-EFGH", 5), CancellationToken.None);
+        await _sut.Handle(new RedeemCodeCommand("ABCD-EFGH", _lessonId), CancellationToken.None);
 
         // Assert
         _teacherStudentRepo.DidNotReceive().Add(Arg.Any<TeacherStudent>());
     }
 
     [Fact]
-    public async Task Handle_WhenCodeAlreadyUsed_ThrowsBadRequestException()
+    public async Task Handle_WhenCodeAlreadyUsed_ReturnsError()
     {
         // Arrange
         _studentRepo.GetByIdAsync(_studentId, Arg.Any<CancellationToken>()).Returns(MakeStudent());
@@ -222,7 +230,7 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
@@ -233,27 +241,17 @@ public class RedeemCodeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenLessonMismatch_ThrowsBadRequestException()
+    public async Task Handle_WhenLessonMismatch_ReturnsError()
     {
         // Arrange
-        _studentRepo
-            .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
-            .Returns(MakeStudent(academicYearId: 1));
-
-        _generatedCodeRepo
-            .FirstOrDefaultAsync(
-                Arg.Any<GeneratedCodeByValueSpecification>(),
-                Arg.Any<CancellationToken>()
-            )
-            .Returns(MakeAvailableCode(batchId: 1));
-
-        SetupBatch(MakeBatchInfo(lessonId: 99, academicYearId: 1)); // different lesson
+        SetupValidStudentAndCode();
+        SetupBatch(MakeBatchInfo(lessonId: Guid.NewGuid())); // different lesson
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
-        ); // requested lessonId=5
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -262,7 +260,7 @@ public class RedeemCodeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenAcademicYearMismatch_ThrowsBadRequestException()
+    public async Task Handle_WhenAcademicYearMismatch_ReturnsError()
     {
         // Arrange
         _studentRepo
@@ -276,11 +274,11 @@ public class RedeemCodeCommandHandlerTests
             )
             .Returns(MakeAvailableCode(batchId: 1));
 
-        SetupBatch(MakeBatchInfo(lessonId: 5, academicYearId: 2)); // batch is for year 2
+        SetupBatch(MakeBatchInfo(academicYearId: 2)); // batch is for year 2
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
@@ -291,21 +289,11 @@ public class RedeemCodeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenStudentAlreadyEnrolled_ThrowsBadRequestException()
+    public async Task Handle_WhenStudentAlreadyEnrolled_ReturnsConflict()
     {
         // Arrange
-        _studentRepo
-            .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
-            .Returns(MakeStudent(academicYearId: 1));
-
-        _generatedCodeRepo
-            .FirstOrDefaultAsync(
-                Arg.Any<GeneratedCodeByValueSpecification>(),
-                Arg.Any<CancellationToken>()
-            )
-            .Returns(MakeAvailableCode(batchId: 1));
-
-        SetupBatch(MakeBatchInfo(lessonId: 5, academicYearId: 1));
+        SetupValidStudentAndCode();
+        SetupBatch(MakeBatchInfo());
 
         _enrollmentRepo
             .FirstOrDefaultAsync(
@@ -316,25 +304,25 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
-        result.Errors.Should().Contain(e => e.Contains("عندك الدرس ده"));
+        result.Status.Should().Be(ResultStatus.Conflict);
+        result.Errors.Should().Contain("انت عندك الدرس ده بالفعل");
     }
 
     [Fact]
-    public async Task Handle_WhenStudentNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenStudentNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
         _currentUser.UserId.Returns((Guid?)null);
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
@@ -344,7 +332,26 @@ public class RedeemCodeCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenStudentHasNoAcademicYear_ThrowsBadRequestException()
+    public async Task Handle_WhenStudentDoesNotExist_ReturnsNotFound()
+    {
+        // Arrange
+        _studentRepo
+            .GetByIdAsync(_studentId, Arg.Any<CancellationToken>())
+            .Returns((Student?)null);
+
+        // Act
+        var result = await _sut.Handle(
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
+            CancellationToken.None
+        );
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.NotFound);
+    }
+
+    [Fact]
+    public async Task Handle_WhenStudentHasNoAcademicYear_ReturnsInvalid()
     {
         // Arrange
         _studentRepo
@@ -361,18 +368,18 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
+        result.Status.Should().Be(ResultStatus.Invalid);
         result.Errors.Should().Contain(e => e.Contains("academic year"));
     }
 
     [Fact]
-    public async Task Handle_WhenCodeNotFound_ThrowsBadRequestException()
+    public async Task Handle_WhenCodeNotFound_ReturnsInvalid()
     {
         // Arrange
         _studentRepo.GetByIdAsync(_studentId, Arg.Any<CancellationToken>()).Returns(MakeStudent());
@@ -386,14 +393,14 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("WRONG-CODE", 5),
+            new RedeemCodeCommand("WRONG-CODE", _lessonId),
             CancellationToken.None
         );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
-        result.Errors.Should().Contain(e => e.Contains("الكود غلط"));
+        result.Status.Should().Be(ResultStatus.Invalid);
+        result.Errors.Should().Contain(e => e.Contains("Code is Invalid"));
     }
 
     [Fact]
@@ -418,7 +425,7 @@ public class RedeemCodeCommandHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new RedeemCodeCommand("ABCD-EFGH", 5),
+            new RedeemCodeCommand("ABCD-EFGH", _lessonId),
             CancellationToken.None
         );
 

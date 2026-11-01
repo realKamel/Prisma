@@ -1,4 +1,4 @@
-
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
@@ -11,24 +11,30 @@ using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Commands.CreateQuiz;
 
-
 public class CreateQuizCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
 
-    private readonly IIdentityService _identityService =
-    Substitute.For<IIdentityService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
-    private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<IRepository<Lesson, int>>();
-    private readonly IRepository<Question, int> _questionRepository = Substitute.For<IRepository<Question, int>>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<QuestionLessonQuiz, int> _linkRepository =
-        Substitute.For<IRepository<QuestionLessonQuiz, int>>();
+    private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly IRepository<Question, int> _questionRepository = Substitute.For<
+        IRepository<Question, int>
+    >();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
+    private readonly IRepository<QuestionLessonQuiz, int> _linkRepository = Substitute.For<
+        IRepository<QuestionLessonQuiz, int>
+    >();
     private readonly CreateQuizCommandHandler _handler;
 
     private int _questionIdCounter = 1;
     private int _quizIdCounter = 1;
+    private static readonly Guid TeacherId = Guid.NewGuid();
 
     public CreateQuizCommandHandlerTests()
     {
@@ -37,12 +43,19 @@ public class CreateQuizCommandHandlerTests
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
         _unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>().Returns(_linkRepository);
 
+        _currentUser.UserId.Returns(TeacherId);
+        _identityService
+            .FindByIdAsync(TeacherId, Arg.Any<CancellationToken>())
+            .Returns(new Prisma.Domain.Entities.UserAggregate.Teacher { Id = TeacherId });
+
         // simulate EF-generated Ids on Add, since the handler relies on them being
         // populated before SaveChangesAsync is called again for the links
-        _questionRepository.When(x => x.Add(Arg.Any<Question>()))
+        _questionRepository
+            .When(x => x.Add(Arg.Any<Question>()))
             .Do(ci => ci.Arg<Question>().Id = _questionIdCounter++);
 
-        _quizRepository.When(x => x.Add(Arg.Any<Quiz>()))
+        _quizRepository
+            .When(x => x.Add(Arg.Any<Quiz>()))
             .Do(ci => ci.Arg<Quiz>().Id = _quizIdCounter++);
 
         _handler = new CreateQuizCommandHandler(_unitOfWork, _currentUser, _identityService);
@@ -53,7 +66,10 @@ public class CreateQuizCommandHandlerTests
     private static CreateQuizChoiceDto Choice(string text, bool isCorrect) =>
         new() { Text = text, IsCorrect = isCorrect };
 
-    private static CreateQuizQuestionDto McqQuestion(string text = "What is 2+2?", decimal degree = 5m) =>
+    private static CreateQuizQuestionDto McqQuestion(
+        string text = "What is 2+2?",
+        decimal degree = 5m
+    ) =>
         new()
         {
             Text = text,
@@ -63,18 +79,21 @@ public class CreateQuizCommandHandlerTests
             {
                 Choice("3", false),
                 Choice("4", true),
-                Choice("5", false)
-            }
+                Choice("5", false),
+            },
         };
 
     private static CreateQuizQuestionDto WrittenQuestionDto(
-        string text = "Explain X", decimal degree = 10m, string modelAnswer = "Because Y") =>
+        string text = "Explain X",
+        decimal degree = 10m,
+        string modelAnswer = "Because Y"
+    ) =>
         new()
         {
             Text = text,
             Type = QuestionType.Written,
             Degree = degree,
-            ModelAnswer = modelAnswer
+            ModelAnswer = modelAnswer,
         };
 
     private static CreateQuizCommand CreateCommand(
@@ -83,7 +102,8 @@ public class CreateQuizCommandHandlerTests
         int? academicYearId = null,
         List<CreateQuizQuestionDto>? questions = null,
         DateTimeOffset? availableFrom = null,
-        DateTimeOffset? dueDate = null) =>
+        DateTimeOffset? dueDate = null
+    ) =>
         new(
             Title: "Quiz 1",
             Description: "Description",
@@ -97,7 +117,12 @@ public class CreateQuizCommandHandlerTests
         );
 
     private static Lesson CreateLesson(int id, int? quizId = null) =>
-        new() { Id = id, Title = "Lesson", QuizId = quizId };
+        new()
+        {
+            Id = id,
+            Title = "Lesson",
+            QuizId = quizId,
+        };
 
     #endregion
 
@@ -150,7 +175,11 @@ public class CreateQuizCommandHandlerTests
     public async Task Handle_WhenComprehensiveExamScope_DoesNotQueryLessonRepository()
     {
         // Arrange
-        var command = CreateCommand(scope: QuizScope.ComprehensiveExam, lessonId: null, academicYearId: 5);
+        var command = CreateCommand(
+            scope: QuizScope.ComprehensiveExam,
+            lessonId: null,
+            academicYearId: 5
+        );
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -158,8 +187,9 @@ public class CreateQuizCommandHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        await _lessonRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<LessonByIdSpecification>(), Arg.Any<CancellationToken>());
+        await _lessonRepository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(Arg.Any<LessonByIdSpecification>(), Arg.Any<CancellationToken>());
     }
 
     #endregion
@@ -174,17 +204,23 @@ public class CreateQuizCommandHandlerTests
             scope: QuizScope.ComprehensiveExam,
             lessonId: null,
             academicYearId: 5,
-            questions: new List<CreateQuizQuestionDto> { WrittenQuestionDto(modelAnswer: "42") });
+            questions: new List<CreateQuizQuestionDto> { WrittenQuestionDto(modelAnswer: "42") }
+        );
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _questionRepository.Received(1).Add(Arg.Is<Question>(q =>
-            q is WrittenQuestion &&
-            ((WrittenQuestion)q).Answer == "42" &&
-            q.Title == "Explain X" &&
-            q.Type == QuestionType.Written));
+        _questionRepository
+            .Received(1)
+            .Add(
+                Arg.Is<Question>(q =>
+                    q is WrittenQuestion
+                    && ((WrittenQuestion)q).Answer == "42"
+                    && q.Title == "Explain X"
+                    && q.Type == QuestionType.Written
+                )
+            );
     }
 
     [Fact]
@@ -195,17 +231,23 @@ public class CreateQuizCommandHandlerTests
             scope: QuizScope.ComprehensiveExam,
             lessonId: null,
             academicYearId: 5,
-            questions: new List<CreateQuizQuestionDto> { McqQuestion() });
+            questions: new List<CreateQuizQuestionDto> { McqQuestion() }
+        );
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _questionRepository.Received(1).Add(Arg.Is<Question>(q =>
-            q is MCQQuestion &&
-            ((MCQQuestion)q).Choices.Count == 3 &&
-            ((MCQQuestion)q).Choices.Count(c => c.IsCorrect) == 1 &&
-            ((MCQQuestion)q).Choices.Single(c => c.IsCorrect).Text == "4"));
+        _questionRepository
+            .Received(1)
+            .Add(
+                Arg.Is<Question>(q =>
+                    q is MCQQuestion
+                    && ((MCQQuestion)q).Choices.Count == 3
+                    && ((MCQQuestion)q).Choices.Count(c => c.IsCorrect) == 1
+                    && ((MCQQuestion)q).Choices.Single(c => c.IsCorrect).Text == "4"
+                )
+            );
     }
 
     [Fact]
@@ -220,8 +262,9 @@ public class CreateQuizCommandHandlerTests
             {
                 McqQuestion(degree: 5m),
                 WrittenQuestionDto(degree: 10m),
-                McqQuestion(degree: 7.5m)
-            });
+                McqQuestion(degree: 7.5m),
+            }
+        );
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -250,37 +293,50 @@ public class CreateQuizCommandHandlerTests
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _quizRepository.Received(1).Add(Arg.Is<Quiz>(q =>
-            q.LessonId == 10 && q.AcademicYearId == null));
+        _quizRepository
+            .Received(1)
+            .Add(Arg.Is<Quiz>(q => q.LessonId == 10 && q.AcademicYearId == null));
     }
 
     [Fact]
     public async Task Handle_WhenComprehensiveExamScope_SetsAcademicYearIdAndClearsLessonId()
     {
         // Arrange
-        var command = CreateCommand(scope: QuizScope.ComprehensiveExam, lessonId: null, academicYearId: 5);
+        var command = CreateCommand(
+            scope: QuizScope.ComprehensiveExam,
+            lessonId: null,
+            academicYearId: 5
+        );
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _quizRepository.Received(1).Add(Arg.Is<Quiz>(q =>
-            q.AcademicYearId == 5 && q.LessonId == null));
+        _quizRepository
+            .Received(1)
+            .Add(Arg.Is<Quiz>(q => q.AcademicYearId == 5 && q.LessonId == null));
     }
 
     [Fact]
     public async Task Handle_MapsDurationMinutesToTimeSpanCorrectly()
     {
         // Arrange
-        var command = CreateCommand(scope: QuizScope.ComprehensiveExam, lessonId: null, academicYearId: 5)
-            with
-        { DurationMinutes = 45 };
+        var command = CreateCommand(
+            scope: QuizScope.ComprehensiveExam,
+            lessonId: null,
+            academicYearId: 5
+        ) with
+        {
+            DurationMinutes = 45,
+        };
 
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        _quizRepository.Received(1).Add(Arg.Is<Quiz>(q => q.TimeInMinutes == TimeSpan.FromMinutes(45)));
+        _quizRepository
+            .Received(1)
+            .Add(Arg.Is<Quiz>(q => q.TimeInMinutes == TimeSpan.FromMinutes(45)));
     }
 
     #endregion
@@ -298,8 +354,9 @@ public class CreateQuizCommandHandlerTests
             questions: new List<CreateQuizQuestionDto>
             {
                 McqQuestion(degree: 5m),
-                WrittenQuestionDto(degree: 10m)
-            });
+                WrittenQuestionDto(degree: 10m),
+            }
+        );
 
         List<QuestionLessonQuiz>? capturedLinks = null;
         _linkRepository
@@ -310,15 +367,17 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.NotNull(capturedLinks);
-        Assert.Equal(2, capturedLinks!.Count);
+        capturedLinks.Should().NotBeNull();
+        capturedLinks!.Count.Should().Be(2);
 
-        Assert.All(capturedLinks, link => Assert.Equal(result.Value!.QuizId, link.LessonQuizId));
-        Assert.Contains(capturedLinks, l => l.Degree == 5m);
-        Assert.Contains(capturedLinks, l => l.Degree == 10m);
+        capturedLinks
+            .Should()
+            .AllSatisfy(link => link.LessonQuizId.Should().Be(result.Value!.QuizId));
+        capturedLinks.Should().Contain(l => l.Degree == 5m);
+        capturedLinks.Should().Contain(l => l.Degree == 10m);
 
         // question ids must be the real generated ids, not zero
-        Assert.All(capturedLinks, l => Assert.NotEqual(0, l.QuestionId));
+        capturedLinks.Should().AllSatisfy(l => l.QuestionId.Should().NotBe(0));
     }
 
     #endregion
@@ -340,7 +399,7 @@ public class CreateQuizCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(result.Value!.QuizId, lesson.QuizId);
+        result.Value!.QuizId.Should().Be(lesson.QuizId);
     }
 
     #endregion
@@ -358,33 +417,38 @@ public class CreateQuizCommandHandlerTests
             lessonId: null,
             academicYearId: 5,
             availableFrom: availableFrom,
-            dueDate: dueDate);
+            dueDate: dueDate
+        );
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal("تم إنشاء الاختبار بنجاح", result.GetResultMessage());
+        result.IsSuccess.Should().BeTrue();
+        result.GetResultMessage().Should().Be("تم إنشاء الاختبار بنجاح");
 
         var dto = result.Value!;
-        Assert.Equal("Quiz 1", dto.Title);
-        Assert.Equal("Description", dto.Description);
-        Assert.Equal(30, dto.DurationMinutes);
-        Assert.Equal(availableFrom, dto.AvailableFrom);
-        Assert.Equal(dueDate, dto.DueDate);
-        Assert.Equal(0, dto.SubmittedCount);
-        Assert.Equal(0, dto.PendingGradingCount);
-        Assert.Null(dto.AverageScore);
-        Assert.Equal("active", dto.Status);
-        Assert.NotEqual(0, dto.QuizId);
+        dto.Title.Should().Be("Quiz 1");
+        dto.Description.Should().Be("Description");
+        dto.DurationMinutes.Should().Be(30);
+        dto.AvailableFrom.Should().Be(availableFrom);
+        dto.DueDate.Should().Be(dueDate);
+        dto.SubmittedCount.Should().Be(0);
+        dto.PendingGradingCount.Should().Be(0);
+        dto.AverageScore.Should().BeNull();
+        dto.Status.Should().Be("active");
+        dto.QuizId.Should().NotBe(0);
     }
 
     [Fact]
     public async Task Handle_WhenSuccessful_CallsSaveChangesExactlyThreeTimes()
     {
         // Arrange
-        var command = CreateCommand(scope: QuizScope.ComprehensiveExam, lessonId: null, academicYearId: 5);
+        var command = CreateCommand(
+            scope: QuizScope.ComprehensiveExam,
+            lessonId: null,
+            academicYearId: 5
+        );
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

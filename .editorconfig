@@ -258,3 +258,9 @@ dotnet_diagnostic.CA1852.severity = warning
 dotnet_diagnostic.IDE0040.severity = warning
 
 dotnet_diagnostic.CA2007.severity = none
+
+
+# CA1849: Synchronous repository operations (Add, Update, Remove) only modify EF Core's change tracker.
+# Database persistence is handled asynchronously through the Unit of Work's SaveChangesAsync().
+[**/Application/**/*.cs]
+dotnet_diagnostic.CA1849.severity = none

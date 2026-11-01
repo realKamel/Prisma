@@ -1,20 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Application.Features.Lessons.Commands.SubmitAssignmentCommand;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Features.AssignmentSubmissions.Commands.SubmitAssignment;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
-using Xunit;
 
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
@@ -23,7 +17,9 @@ public class SubmitAssignmentCommandHandlerTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IStorageService _storage = Substitute.For<IStorageService>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<Assignment, int> _assignmentRepo = Substitute.For<IRepository<Assignment, int>>();
+    private readonly IRepository<Assignment, int> _assignmentRepo = Substitute.For<
+        IRepository<Assignment, int>
+    >();
     private readonly SubmitAssignmentCommandHandler _sut;
 
     public SubmitAssignmentCommandHandlerTests()
@@ -35,10 +31,14 @@ public class SubmitAssignmentCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAssignmentNotFound_ThrowsBadRequestException()
     {
-        _assignmentRepo.FirstOrDefaultAsync(Arg.Any<AssignmentWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
+        _assignmentRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<AssignmentWithEnrollmentSpec>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((Assignment?)null);
 
-        var command = new SubmitAssignmentCommand(1, Substitute.For<IFormFile>());
+        var command = new SubmitAssignmentCommand(Guid.NewGuid(), Substitute.For<IFormFile>());
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -53,11 +53,18 @@ public class SubmitAssignmentCommandHandlerTests
         var studentId = Guid.NewGuid();
         _currentUser.UserId.Returns(studentId);
 
-        var assignment = new Assignment { Lesson = new Lesson { Enrollments = new List<Enrollment>() } };
-        _assignmentRepo.FirstOrDefaultAsync(Arg.Any<AssignmentWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
+        var assignment = new Assignment
+        {
+            Lesson = new Lesson { Enrollments = new List<Enrollment>() },
+        };
+        _assignmentRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<AssignmentWithEnrollmentSpec>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(assignment);
 
-        var command = new SubmitAssignmentCommand(1, Substitute.For<IFormFile>());
+        var command = new SubmitAssignmentCommand(Guid.NewGuid(), Substitute.For<IFormFile>());
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
@@ -81,27 +88,40 @@ public class SubmitAssignmentCommandHandlerTests
         var assignment = new Assignment
         {
             Id = 10,
-            Lesson = new Lesson { Enrollments = new List<Enrollment> { new Enrollment { StudentId = studentId } } },
-            Submissions = new List<AssignmentSubmission>()
+            Lesson = new Lesson { Enrollments = [new Enrollment { StudentId = studentId }] },
+            Submissions = [],
         };
 
-        _assignmentRepo.FirstOrDefaultAsync(Arg.Any<AssignmentWithEnrollmentSpec>(), Arg.Any<CancellationToken>())
+        _assignmentRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<AssignmentWithEnrollmentSpec>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(assignment);
 
-        // محاكاة رفع الملف
-        _storage.UploadFileAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _storage
+            .UploadFileAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<Stream>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.CompletedTask);
 
-        var command = new SubmitAssignmentCommand(1, mockFile);
+        var command = new SubmitAssignmentCommand(Guid.NewGuid(), mockFile);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("تم التسليم بنجاح!");
 
-        assignment.Submissions.Should().ContainSingle();
+        var submission = assignment.Submissions.Should().ContainSingle().Subject;
+        submission.StudentId.Should().Be(studentId);
+        submission.AssignmentId.Should().Be(assignment.Id);
+        submission.Title.Should().Be("homework.pdf");
+        submission.FileUrl.Should().StartWith($"assignments/{assignment.Id}/students/{studentId}/");
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }

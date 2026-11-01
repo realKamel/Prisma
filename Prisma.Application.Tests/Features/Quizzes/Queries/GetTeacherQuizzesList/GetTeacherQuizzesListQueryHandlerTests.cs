@@ -1,4 +1,4 @@
-
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
@@ -10,28 +10,49 @@ using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetTeacherQuizzesList;
 
-
 public class GetTeacherQuizzesListQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
     private readonly GetTeacherQuizzesListQueryHandler _handler;
 
-    private static readonly GetTeacherQuizzesListQuery ValidQuery = new(QuizScope.ComprehensiveExam, null, null);
+    private static readonly GetTeacherQuizzesListQuery ValidQuery = new(
+        QuizScope.ComprehensiveExam,
+        null,
+        null
+    );
+
+    private static readonly Guid TeacherId = Guid.NewGuid();
 
     public GetTeacherQuizzesListQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
-        _handler = new GetTeacherQuizzesListQueryHandler(_unitOfWork , _currentUserService, _identityService);
+        _currentUserService.UserId.Returns(TeacherId);
+        _identityService
+            .FindByIdAsync(TeacherId, Arg.Any<CancellationToken>())
+            .Returns(new Prisma.Domain.Entities.UserAggregate.Teacher { Id = TeacherId });
+        _handler = new GetTeacherQuizzesListQueryHandler(
+            _unitOfWork,
+            _currentUserService,
+            _identityService
+        );
     }
 
     #region Helpers
 
     private static QuizAttempt CreateAttempt(QuizAttemptStatus status, decimal degree = 0m) =>
-        new() { Status = status, Degree = degree, StartedAt = DateTimeOffset.UtcNow.AddDays(-1) };
+        new()
+        {
+            Status = status,
+            Degree = degree,
+            StartedAt = DateTimeOffset.UtcNow.AddDays(-1),
+        };
 
     private static TeacherQuizzesListProjection CreateQuizProjection(
         int id = 1,
@@ -43,7 +64,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         int submittedCount = 0,
         decimal? averageDegree = null,
         bool hasAttempts = false,
-        bool hasUngradedAttempts = false) =>
+        bool hasUngradedAttempts = false
+    ) =>
         new()
         {
             QuizId = id,
@@ -55,16 +77,13 @@ public class GetTeacherQuizzesListQueryHandlerTests
             SubmittedCount = submittedCount,
             AverageDegree = averageDegree,
             HasAttempts = hasAttempts,
-            HasUngradedAttempts = hasUngradedAttempts
+            HasUngradedAttempts = hasUngradedAttempts,
         };
 
     private void SetupQuizzes(params TeacherQuizzesListProjection[] quizzes) =>
         _quizRepository
-            .ListAsync(
-                Arg.Any<TeacherQuizzesListSpecification>(),
-                Arg.Any<CancellationToken>())
+            .ListAsync(Arg.Any<TeacherQuizzesListSpecification>(), Arg.Any<CancellationToken>())
             .Returns(quizzes.ToList());
-
 
     #endregion
 
@@ -80,16 +99,14 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
+        Assert.Single(result.Value!.Items).Status.Should().Be("active");
     }
 
     [Fact]
     public async Task Handle_WhenAllAttemptsInProgress_ReturnsActiveStatus()
     {
         // Arrange
-        var quiz = CreateQuizProjection(
-       hasAttempts: true,
-       hasUngradedAttempts: true);
+        var quiz = CreateQuizProjection(hasAttempts: true, hasUngradedAttempts: true);
 
         SetupQuizzes(quiz);
 
@@ -97,7 +114,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
+        Assert.Single(result.Value!.Items).Status.Should().Be("active");
     }
 
     [Fact]
@@ -108,7 +125,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             hasAttempts: true,
             hasUngradedAttempts: true,
             pendingGradingCount: 1,
-            submittedCount: 2);
+            submittedCount: 2
+        );
 
         SetupQuizzes(quiz);
 
@@ -117,7 +135,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
 
         // Assert
         var item = Assert.Single(result.Value!.Items);
-        Assert.Equal("pending_grading", item.Status);
+        item.Status.Should().Be("pending_grading");
         Assert.Equal(1, item.PendingGradingCount);
     }
 
@@ -129,7 +147,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             hasAttempts: true,
             hasUngradedAttempts: false,
             submittedCount: 2,
-            averageDegree: 85m);
+            averageDegree: 85m
+        );
 
         SetupQuizzes(quiz);
 
@@ -137,9 +156,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("completed", Assert.Single(result.Value!.Items).Status);
+        Assert.Single(result.Value!.Items).Status.Should().Be("completed");
     }
-
 
     [Fact]
     public async Task Handle_WhenMixOfGradedAndInProgress_ReturnsActiveStatusNotCompleted()
@@ -148,7 +166,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var quiz = CreateQuizProjection(
             hasAttempts: true,
             hasUngradedAttempts: true,
-            submittedCount: 1);
+            submittedCount: 1
+        );
 
         SetupQuizzes(quiz);
 
@@ -156,7 +175,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Equal("active", Assert.Single(result.Value!.Items).Status);
+        Assert.Single(result.Value!.Items).Status.Should().Be("active");
     }
 
     #endregion
@@ -171,7 +190,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             hasAttempts: true,
             hasUngradedAttempts: true,
             submittedCount: 3,
-            pendingGradingCount: 1);
+            pendingGradingCount: 1
+        );
 
         SetupQuizzes(quiz);
 
@@ -196,7 +216,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             totalDegree: 100m,
             hasAttempts: true,
             hasUngradedAttempts: true,
-            averageDegree: 70m);
+            averageDegree: 70m
+        );
 
         SetupQuizzes(quiz);
 
@@ -207,7 +228,6 @@ public class GetTeacherQuizzesListQueryHandlerTests
         Assert.Equal(70.0, Assert.Single(result.Value!.Items).AverageScore);
     }
 
-
     [Fact]
     public async Task Handle_WhenNoGradedAttempts_ReturnsNullAverageScore()
     {
@@ -216,7 +236,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             hasAttempts: true,
             hasUngradedAttempts: true,
             pendingGradingCount: 1,
-            averageDegree: null);
+            averageDegree: null
+        );
 
         SetupQuizzes(quiz);
 
@@ -224,7 +245,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Null(Assert.Single(result.Value!.Items).AverageScore);
+        Assert.Single(result.Value!.Items).AverageScore.Should().BeNull();
     }
 
     [Fact]
@@ -235,7 +256,8 @@ public class GetTeacherQuizzesListQueryHandlerTests
             totalDegree: 0m,
             hasAttempts: true,
             hasUngradedAttempts: false,
-            averageDegree: 0m);
+            averageDegree: 0m
+        );
 
         SetupQuizzes(quiz);
 
@@ -243,7 +265,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert
-        Assert.Null(Assert.Single(result.Value!.Items).AverageScore);
+        Assert.Single(result.Value!.Items).AverageScore.Should().BeNull();
     }
     #endregion
 
@@ -254,15 +276,17 @@ public class GetTeacherQuizzesListQueryHandlerTests
     {
         // Arrange
         var activeQuiz = CreateQuizProjection(
-             id: 1,
-             hasAttempts: false,
-             hasUngradedAttempts: false);
+            id: 1,
+            hasAttempts: false,
+            hasUngradedAttempts: false
+        );
 
         var completedQuiz = CreateQuizProjection(
             id: 2,
             averageDegree: 90m,
             hasAttempts: true,
-            hasUngradedAttempts: false);
+            hasUngradedAttempts: false
+        );
 
         SetupQuizzes(activeQuiz, completedQuiz);
 
@@ -273,7 +297,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
 
         // Assert
         Assert.Single(result.Value!.Items);
-        Assert.Equal("completed", result.Value.Items.Single().Status);
+        result.Value.Items.Single().Status.Should().Be("completed");
         Assert.Equal(1, result.Value.TotalCount); // TotalCount reflects post-filter count
     }
 
@@ -282,16 +306,14 @@ public class GetTeacherQuizzesListQueryHandlerTests
     {
         // Arrange
         SetupQuizzes(
+            CreateQuizProjection(id: 1, hasAttempts: false, hasUngradedAttempts: false),
             CreateQuizProjection(
-             id: 1,
-             hasAttempts: false,
-             hasUngradedAttempts: false)
-            ,
-            CreateQuizProjection(
-            id: 2,
-            averageDegree: 90m,
-            hasAttempts: true,
-            hasUngradedAttempts: false));
+                id: 2,
+                averageDegree: 90m,
+                hasAttempts: true,
+                hasUngradedAttempts: false
+            )
+        );
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -309,11 +331,11 @@ public class GetTeacherQuizzesListQueryHandlerTests
     public async Task Handle_PaginatesResultsAccordingToPageAndPageSize()
     {
         // Arrange
-        var quizzes = Enumerable.Range(1, 25)
-            .Select(i => CreateQuizProjection(
-                id: i,
-                hasAttempts: false,
-                hasUngradedAttempts: false))
+        var quizzes = Enumerable
+            .Range(1, 25)
+            .Select(i =>
+                CreateQuizProjection(id: i, hasAttempts: false, hasUngradedAttempts: false)
+            )
             .ToArray();
 
         SetupQuizzes(quizzes);
@@ -330,20 +352,15 @@ public class GetTeacherQuizzesListQueryHandlerTests
         Assert.Equal(2, result.Value.Page);
         Assert.Equal(10, result.Value.PageSize);
     }
+
     [Fact]
     public async Task Handle_WhenPageIsZeroOrNegative_ClampsToPageOne()
     {
         // Arrange
         SetupQuizzes(
-            CreateQuizProjection(
-             id: 1,
-             hasAttempts: false,
-             hasUngradedAttempts: false),
-             CreateQuizProjection(
-                 id: 2, hasAttempts: false,
-                 hasUngradedAttempts: false
-                 )
-             );
+            CreateQuizProjection(id: 1, hasAttempts: false, hasUngradedAttempts: false),
+            CreateQuizProjection(id: 2, hasAttempts: false, hasUngradedAttempts: false)
+        );
         var query = ValidQuery with { Page = 0 };
 
         // Act
@@ -368,20 +385,15 @@ public class GetTeacherQuizzesListQueryHandlerTests
         // Assert
         Assert.Equal(100, result.Value!.PageSize);
     }
+
     [Fact]
     public async Task Handle_WhenPageSizeIsZeroOrNegative_ClampsToOne()
     {
         // Arrange
         SetupQuizzes(
-            CreateQuizProjection(
-             id: 1,
-             hasAttempts: false,
-             hasUngradedAttempts: false),
-             CreateQuizProjection(
-                 id: 2, hasAttempts: false,
-                 hasUngradedAttempts: false
-                 )
-             );
+            CreateQuizProjection(id: 1, hasAttempts: false, hasUngradedAttempts: false),
+            CreateQuizProjection(id: 2, hasAttempts: false, hasUngradedAttempts: false)
+        );
         var query = ValidQuery with { PageSize = 0 };
 
         // Act
@@ -397,22 +409,16 @@ public class GetTeacherQuizzesListQueryHandlerTests
     {
         // Arrange
         SetupQuizzes(
-            CreateQuizProjection(
-             id: 1,
-             hasAttempts: false,
-             hasUngradedAttempts: false),
-             CreateQuizProjection(
-                 id: 2, hasAttempts: false,
-                 hasUngradedAttempts: false
-                 )
-             );
+            CreateQuizProjection(id: 1, hasAttempts: false, hasUngradedAttempts: false),
+            CreateQuizProjection(id: 2, hasAttempts: false, hasUngradedAttempts: false)
+        );
         var query = ValidQuery with { Page = 5, PageSize = 10 };
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Empty(result.Value!.Items);
+        result.Value!.Items.Should().BeEmpty();
         Assert.Equal(2, result.Value.TotalCount);
     }
 
@@ -424,12 +430,15 @@ public class GetTeacherQuizzesListQueryHandlerTests
     public async Task Handle_MapsBasicQuizFieldsCorrectly()
     {
         // Arrange
-        SetupQuizzes(CreateQuizProjection(
-            id: 7,
-            title: "Midterm",
-            totalDegree: 50m,
-            durationMinutes: 45,
-            questionsCount: 10));
+        SetupQuizzes(
+            CreateQuizProjection(
+                id: 7,
+                title: "Midterm",
+                totalDegree: 50m,
+                durationMinutes: 45,
+                questionsCount: 10
+            )
+        );
 
         // Act
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
@@ -437,11 +446,12 @@ public class GetTeacherQuizzesListQueryHandlerTests
         // Assert
         var item = Assert.Single(result.Value!.Items);
         Assert.Equal(7, item.QuizId);
-        Assert.Equal("Midterm", item.Title);
+        item.Title.Should().Be("Midterm");
         Assert.Equal(50m, item.TotalDegree);
         Assert.Equal(45, item.DurationMinutes);
         Assert.Equal(10, item.QuestionsCount);
     }
+
     [Fact]
     public async Task Handle_WhenSuccessful_ReturnsSucceededResult()
     {
@@ -452,7 +462,7 @@ public class GetTeacherQuizzesListQueryHandlerTests
         var result = await _handler.Handle(ValidQuery, CancellationToken.None);
 
         // Assert - relies on the implicit Result<T> conversion, not an explicit Success() call
-        Assert.True(result.IsSuccess);
+        result.IsSuccess.Should().BeTrue();
     }
 
     #endregion

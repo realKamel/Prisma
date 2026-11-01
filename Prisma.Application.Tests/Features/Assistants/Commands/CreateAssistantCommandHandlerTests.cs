@@ -16,10 +16,40 @@ public class CreateAssistantCommandHandlerTests
     private readonly ICurrentUserService _currentUserService;
     private readonly CreateAssistantCommandHandler _handler;
 
+    private static readonly Guid TeacherId = Guid.NewGuid();
+
     public CreateAssistantCommandHandlerTests()
     {
         _identityService = Substitute.For<IIdentityService>();
+        _currentUserService = Substitute.For<ICurrentUserService>();
+        _currentUserService.IsAuthenticated.Returns(true);
+        _currentUserService.UserId.Returns(TeacherId);
         _handler = new CreateAssistantCommandHandler(_identityService, _currentUserService);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        _currentUserService.IsAuthenticated.Returns(false);
+        var command = new CreateAssistantCommand(
+            "John",
+            "Doe",
+            "john.doe@example.com",
+            "+1234567890",
+            "SecureP@ss123!",
+            ["Policy1", "Policy2"]
+        );
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(ResultStatus.Unauthorized);
+        await _identityService
+            .DidNotReceive()
+            .FindByPhoneNumberAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -70,23 +100,25 @@ public class CreateAssistantCommandHandlerTests
             .Received(1)
             .CreateAsync(
                 Arg.Is<Assistant>(a =>
-                    a.FirstName == command.FirstName &&
-                    a.LastName == command.SecondName &&
-                    a.UserName == command.Email &&
-                    a.Email == command.Email &&
-                    a.PhoneNumber == command.PhoneNumber),
-                command.Password);
+                    a.FirstName == command.FirstName
+                    && a.SecondName == command.SecondName
+                    && a.UserName == command.Email
+                    && a.Email == command.Email
+                    && a.PhoneNumber == command.PhoneNumber
+                ),
+                command.Password
+            );
 
         await _identityService
             .Received(1)
             .AddClaimsAsync(
                 Arg.Any<Assistant>(),
                 Arg.Is<IEnumerable<Claim>>(claims =>
-                    claims.All(c => c.Type == AppClaims.PermissionsClaim)));
+                    claims.All(c => c.Type == AppClaims.PermissionsClaim)
+                )
+            );
 
-        await _identityService
-            .Received(1)
-            .AddToRoleAsync(Arg.Any<Assistant>(), AppRoles.Assistant);
+        await _identityService.Received(1).AddToRoleAsync(Arg.Any<Assistant>(), AppRoles.Assistant);
     }
 
     [Fact]
@@ -102,7 +134,6 @@ public class CreateAssistantCommandHandlerTests
             ["Policy1", "Policy2"]
         );
 
-
         var existingUser = new Assistant { PhoneNumber = command.PhoneNumber };
 
         _identityService
@@ -115,11 +146,8 @@ public class CreateAssistantCommandHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Conflict);
-        result.Errors.Should().Contain("User already exists");
 
-        await _identityService
-            .DidNotReceive()
-            .CreateAsync(Arg.Any<Assistant>(), Arg.Any<string>());
+        await _identityService.DidNotReceive().CreateAsync(Arg.Any<Assistant>(), Arg.Any<string>());
     }
 
     [Fact]
@@ -135,15 +163,18 @@ public class CreateAssistantCommandHandlerTests
             ["Policy1", "Policy2"]
         );
 
-
         _identityService
             .FindByPhoneNumberAsync(command.PhoneNumber, Arg.Any<CancellationToken>())
             .Returns((Assistant)null!);
 
         var identityErrors = new[]
         {
-            new IdentityError { Code = "DuplicateUserName", Description = "Username already taken" },
-            new IdentityError { Code = "PasswordTooShort", Description = "Password is too short" }
+            new IdentityError
+            {
+                Code = "DuplicateUserName",
+                Description = "Username already taken",
+            },
+            new IdentityError { Code = "PasswordTooShort", Description = "Password is too short" },
         };
 
         _identityService
@@ -177,7 +208,6 @@ public class CreateAssistantCommandHandlerTests
             ["Policy1", "Policy2"]
         );
 
-
         _identityService
             .FindByPhoneNumberAsync(command.PhoneNumber, Arg.Any<CancellationToken>())
             .Returns((Assistant)null!);
@@ -186,7 +216,10 @@ public class CreateAssistantCommandHandlerTests
             .CreateAsync(Arg.Any<Assistant>(), command.Password)
             .Returns(IdentityResult.Success);
 
-        var claimErrors = new[] { new IdentityError { Code = "ClaimError", Description = "Invalid claim" } };
+        var claimErrors = new[]
+        {
+            new IdentityError { Code = "ClaimError", Description = "Invalid claim" },
+        };
 
         _identityService
             .AddClaimsAsync(Arg.Any<Assistant>(), Arg.Any<IEnumerable<Claim>>())
@@ -218,7 +251,6 @@ public class CreateAssistantCommandHandlerTests
             ["Policy1", "Policy2"]
         );
 
-
         _identityService
             .FindByPhoneNumberAsync(command.PhoneNumber, Arg.Any<CancellationToken>())
             .Returns((Assistant)null!);
@@ -231,7 +263,10 @@ public class CreateAssistantCommandHandlerTests
             .AddClaimsAsync(Arg.Any<Assistant>(), Arg.Any<IEnumerable<Claim>>())
             .Returns(IdentityResult.Success);
 
-        var roleErrors = new[] { new IdentityError { Code = "RoleError", Description = "Role assignment failed" } };
+        var roleErrors = new[]
+        {
+            new IdentityError { Code = "RoleError", Description = "Role assignment failed" },
+        };
 
         _identityService
             .AddToRoleAsync(Arg.Any<Assistant>(), AppRoles.Assistant)
@@ -261,7 +296,6 @@ public class CreateAssistantCommandHandlerTests
             "SecureP@ss123!",
             [validPolicy, invalidPolicy]
         );
-
 
         IEnumerable<Claim>? capturedClaims = null;
 

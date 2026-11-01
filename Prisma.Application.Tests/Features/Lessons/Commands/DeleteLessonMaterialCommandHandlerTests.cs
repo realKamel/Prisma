@@ -1,9 +1,10 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -16,20 +17,38 @@ namespace Prisma.Application.Tests.Features.Lessons.Commands;
 public class DeleteLessonMaterialCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly UserManager<User> _userManager;
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly DeleteLessonMaterialCommandHandler _sut;
 
     public DeleteLessonMaterialCommandHandlerTests()
     {
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
+        _userManager = Substitute.For<UserManager<User>>(
+            store,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
-        _sut = new DeleteLessonMaterialCommandHandler(_unitOfWork, _currentUserService, _userManager, _storageService);
+        _sut = new DeleteLessonMaterialCommandHandler(
+            _unitOfWork,
+            _currentUserService,
+            _userManager,
+            _storageService
+        );
     }
 
     [Fact]
@@ -59,7 +78,11 @@ public class DeleteLessonMaterialCommandHandlerTests
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
         // Fixed: Use LessonWithMaterialsForUpdateSpecification instead of LessonMaterialsSpecification
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((Lesson?)null);
 
         var command = new DeleteLessonMaterialCommand(1, 10);
@@ -79,13 +102,21 @@ public class DeleteLessonMaterialCommandHandlerTests
         var userId = Guid.NewGuid();
         var fakeUser = new User { Id = userId };
         var material = new LessonMaterial { Id = 10, DownloadUrl = "materials/file.pdf" };
-        var lesson = new Lesson { Id = 1, LessonMaterials = new List<LessonMaterial> { material } };
+        var lesson = new Lesson
+        {
+            Id = 1,
+            LessonMaterials = new List<LessonMaterial> { material },
+        };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonWithMaterialsForUpdateSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithMaterialsForUpdateSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = new DeleteLessonMaterialCommand(1, 10);
@@ -95,10 +126,12 @@ public class DeleteLessonMaterialCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be("Material deleted successfully.");
+        result.SuccessMessage.Should().Be("Material deleted successfully.");
 
         // التأكد من حذف الملف من الخدمة السحابية
-        await _storageService.Received(1).DeleteFileAsync("prisma", "materials/file.pdf", Arg.Any<CancellationToken>());
+        await _storageService
+            .Received(1)
+            .DeleteFileAsync("prisma", "materials/file.pdf", Arg.Any<CancellationToken>());
 
         // التأكد من حفظ التغييرات في قاعدة البيانات
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

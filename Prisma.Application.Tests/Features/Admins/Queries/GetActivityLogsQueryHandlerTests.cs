@@ -13,15 +13,15 @@ public class GetActivityLogsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IIdentityService _userManager = Substitute.For<IIdentityService>();
-    private readonly IRepository<AuditLog, int> _auditLogRepository = Substitute.For<
-        IRepository<AuditLog, int>
+    private readonly IRepository<AuditLog, long> _auditLogRepository = Substitute.For<
+        IRepository<AuditLog, long>
     >();
     private readonly GetActivityLogsQueryHandler _sut;
 
     public GetActivityLogsQueryHandlerTests()
     {
         // ربط الـ Repository بالـ Unit of Work
-        _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditLogRepository);
+        _unitOfWork.GetOrCreateRepository<AuditLog, long>().Returns(_auditLogRepository);
 
         // عمل Mock للـ UserManager لأننا بنحتاجه كـ Dependency في الـ Handler
 
@@ -54,7 +54,7 @@ public class GetActivityLogsQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Events.Should().HaveCount(1);
+        result.Value.Events.Should().ContainSingle();
         result.Value.Events[0].User.Should().Be("النظام");
         result.Value.Events[0].Role.Should().Be("system");
 

@@ -34,6 +34,13 @@ public class LoginCommandHandlerTests
     {
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
+        _fakeUser.Roles.Add(
+            new UserRole
+            {
+                UserId = _fakeUser.Id,
+                Role = new Microsoft.AspNetCore.Identity.IdentityRole<Guid> { Name = AppRoles.Student },
+            }
+        );
         var roles = new List<string> { AppRoles.Student };
         var permissions = new List<Claim>();
 
@@ -86,7 +93,7 @@ public class LoginCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ValidCredentials_CallsUpdateAsync()
+    public async Task Handle_ValidCredentials_SavesRefreshToken()
     {
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
@@ -106,7 +113,7 @@ public class LoginCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _identityService.Received(1).UpdateAsync(_fakeUser);
+        await _tokenService.Received(1).SaveRefreshTokenAsync(_fakeUser.Id, "rt", Arg.Any<TimeSpan?>());
     }
 
     [Fact]
@@ -151,8 +158,7 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
-        result.Errors.Should().Contain(e => e.Contains("Invalid credentials"));
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 
     [Fact]
@@ -190,8 +196,7 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
-        result.Errors.Should().Contain(e => e.Contains("Invalid credentials"));
+        result.Status.Should().Be(ResultStatus.Unauthorized);
     }
 
     [Fact]

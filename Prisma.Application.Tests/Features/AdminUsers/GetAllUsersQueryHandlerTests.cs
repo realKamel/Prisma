@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Queries.GetAllUsers;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -83,11 +84,11 @@ public class GetAllUsersQueryHandlerTests
         result.Value.Should().NotContain(u => u.Email == "deleted@test.com");
 
         var teacherDto = result.Value.Single(u => u.Email == "sara@test.com");
-        teacherDto.Role.Should().Be("Teacher");
+        teacherDto.Role.Should().Be(AppRoles.Teacher);
         teacherDto.Active.Should().BeFalse(); // IsBlocked == true
 
         var studentDto = result.Value.Single(u => u.Email == "ahmed@test.com");
-        studentDto.Role.Should().Be("Student");
+        studentDto.Role.Should().Be(AppRoles.Student);
         studentDto.Active.Should().BeTrue();
         studentDto.Name.Should().Be("أحمد علي");
     }

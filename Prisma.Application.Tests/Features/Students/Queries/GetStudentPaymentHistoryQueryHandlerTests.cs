@@ -9,12 +9,9 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistoryQuery;
 using Prisma.Domain.Entities.EnrollmentAggregate;
-using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Students;
-using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.Specifications.Enrollments;
 
 namespace Prisma.Application.Tests.Features.Students.Queries;
 
@@ -31,8 +28,50 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         _sut = new GetStudentPaymentHistoryQueryHandler(_unitOfWork, _currentUserService);
     }
 
+    private static GetStudentPaymentHistoryQueryHandler.EnrollmentInfo Info(
+        int id = 1,
+        EnrollmentMethod enrollmentMethod = EnrollmentMethod.RedeemCode,
+        PaymentStatus paymentStatus = PaymentStatus.Pending,
+        DateTimeOffset? expiresAt = null,
+        string? paymentProvider = null,
+        decimal? paymentAmount = null,
+        DateTimeOffset? paymentPaidAt = null,
+        DateTimeOffset? paymentCreatedAt = null,
+        DateTimeOffset? createdAt = null,
+        string? paymentProviderRef = null,
+        int? paymentId = null,
+        string? lessonTitle = "Physics 101",
+        Guid? lessonPublicId = null
+    ) =>
+        new(
+            Id: id,
+            EnrollmentMethod: enrollmentMethod,
+            PaymentStatus: paymentStatus,
+            ExpiresAt: expiresAt,
+            PaymentProvider: paymentProvider,
+            PaymentAmount: paymentAmount,
+            PaymentPaidAt: paymentPaidAt,
+            PaymentCreatedAt: paymentCreatedAt,
+            CreatedAt: createdAt,
+            PaymentProviderRef: paymentProviderRef,
+            PaymentId: paymentId,
+            LessonTitle: lessonTitle,
+            LessonPublicId: lessonPublicId ?? Guid.NewGuid()
+        );
+
+    private void SetupEnrollments(params GetStudentPaymentHistoryQueryHandler.EnrollmentInfo[] enrollments)
+    {
+        _currentUserService.UserId.Returns(Guid.NewGuid());
+        _enrollmentRepo
+            .ListAsync(
+                Arg.Any<EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(enrollments.ToList());
+    }
+
     [Fact]
-    public async Task Handle_WhenUserIdIsNull_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserIdIsNull_ReturnsUnauthorized()
     {
         // Arrange
         _currentUserService.UserId.Returns((Guid?)null);
@@ -44,69 +83,55 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User is not authenticated.");
+        await _enrollmentRepo
+            .DidNotReceive()
+            .ListAsync(
+                Arg.Any<EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Fact]
     public async Task Handle_WhenEnrollmentHasNoQualifyingPayment_ExcludesItFromResults()
     {
         // Arrange: not redeem code, no completed payment, not a teacher grant -> should be skipped
-        var userId = Guid.NewGuid();
-        var enrollment = new Enrollment
-        {
-            Id = 1,
-            EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment
-            {
-                Status = PaymentStatus.Pending, Money = Money.Create(100m), Provider = "online"
-            }
-        };
-
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { enrollment });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        SetupEnrollments(
+            Info(enrollmentMethod: EnrollmentMethod.OnlinePayment, paymentStatus: PaymentStatus.Pending)
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         result.Value!.Payments.Should().BeEmpty();
         result.Value.Stats.LessonsPurchased.Should().Be(0);
+        result.Value.Stats.TotalAmount.Should().Be(0);
     }
 
     [Fact]
     public async Task Handle_WhenEnrollmentPaidViaRedeemCode_MapsToCodeMethodWithZeroAmount()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var lesson = new Lesson { Id = 10, Title = "Physics 101" };
-        var enrollment = new Enrollment
-        {
-            Id = 1,
-            LessonId = 10,
-            Lesson = lesson,
-            EnrollmentMethod = EnrollmentMethod.RedeemCode,
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-2),
-            Payment = null
-        };
-
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { enrollment });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        var lessonPublicId = Guid.NewGuid();
+        SetupEnrollments(
+            Info(
+                enrollmentMethod: EnrollmentMethod.RedeemCode,
+                createdAt: DateTimeOffset.UtcNow.AddDays(-2),
+                lessonTitle: "Physics 101",
+                lessonPublicId: lessonPublicId
+            )
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         result.Value!.Payments.Should().ContainSingle();
         var dto = result.Value.Payments.Single();
-        dto.Method.Should().Be("code");
+        dto.Method.Should().Be("CODE");
         dto.Amount.Should().Be(0);
         dto.LessonTitle.Should().Be("Physics 101");
+        dto.LessonId.Should().Be(lessonPublicId);
         dto.Status.Should().Be("paid");
     }
 
@@ -114,32 +139,23 @@ public class GetStudentPaymentHistoryQueryHandlerTests
     public async Task Handle_WhenEnrollmentPaidOnlineWithMatchingProvider_MapsToOnlineMethodWithAmount()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var payment = new Payment
-        {
-            Status = PaymentStatus.Completed,
-            Money = Money.Create(250m),
-            Provider = "Online",
-            ProviderRef = "ref-123",
-            PaidAt = DateTimeOffset.UtcNow.AddDays(-1)
-        };
-        var enrollment = new Enrollment
-        {
-            Id = 1, EnrollmentMethod = EnrollmentMethod.OnlinePayment, Payment = payment
-        };
-
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { enrollment });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        SetupEnrollments(
+            Info(
+                enrollmentMethod: EnrollmentMethod.OnlinePayment,
+                paymentStatus: PaymentStatus.Completed,
+                paymentProvider: "Online",
+                paymentAmount: 250m,
+                paymentProviderRef: "ref-123",
+                paymentPaidAt: DateTimeOffset.UtcNow.AddDays(-1)
+            )
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         var dto = result.Value!.Payments.Single();
-        dto.Method.Should().Be("online");
+        dto.Method.Should().Be("ONLINE");
         dto.Amount.Should().Be(250m);
         dto.Id.Should().Be("ref-123");
     }
@@ -148,99 +164,134 @@ public class GetStudentPaymentHistoryQueryHandlerTests
     public async Task Handle_WhenEnrollmentIsTeacherGrant_MapsToTeacherGrantMethod()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var enrollment = new Enrollment
-        {
-            Id = 1, EnrollmentMethod = EnrollmentMethod.TeacherGrant, CreatedAt = DateTimeOffset.UtcNow
-        };
-
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { enrollment });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        SetupEnrollments(
+            Info(
+                enrollmentMethod: EnrollmentMethod.TeacherGrant,
+                createdAt: DateTimeOffset.UtcNow
+            )
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         var dto = result.Value!.Payments.Single();
-        dto.Method.Should().Be("teacher grant");
+        dto.Method.Should().Be("TEACHER_GRANT");
         dto.Amount.Should().Be(0);
+        dto.Status.Should().Be("paid");
     }
 
     [Fact]
     public async Task Handle_WhenEnrollmentExpired_SetsStatusToExpired()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var enrollment = new Enrollment
-        {
-            Id = 1,
-            EnrollmentMethod = EnrollmentMethod.RedeemCode,
-            ExpiresAt = DateTimeOffset.UtcNow.AddDays(-1),
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-10)
-        };
-
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment> { enrollment });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        SetupEnrollments(
+            Info(
+                enrollmentMethod: EnrollmentMethod.RedeemCode,
+                expiresAt: DateTimeOffset.UtcNow.AddDays(-1),
+                createdAt: DateTimeOffset.UtcNow.AddDays(-10)
+            )
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         result.Value!.Payments.Single().Status.Should().Be("expired");
     }
 
     [Fact]
+    public async Task Handle_WhenPaymentReferenceMissing_FallsBackToEnrollmentId()
+    {
+        // Arrange
+        SetupEnrollments(
+            Info(id: 42, enrollmentMethod: EnrollmentMethod.TeacherGrant, paymentId: null)
+        );
+
+        // Act
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
+
+        // Assert
+        result.Value!.Payments.Single().Id.Should().Be("enr-42");
+    }
+
+    [Fact]
+    public async Task Handle_UsesPaymentPaidAtThenPaymentCreatedAtThenEnrollmentCreatedAt()
+    {
+        // Arrange
+        var paidAt = new DateTimeOffset(2024, 5, 1, 0, 0, 0, TimeSpan.Zero);
+        var paymentCreatedAt = new DateTimeOffset(2024, 4, 1, 0, 0, 0, TimeSpan.Zero);
+        var enrollmentCreatedAt = new DateTimeOffset(2024, 3, 1, 0, 0, 0, TimeSpan.Zero);
+
+        SetupEnrollments(
+            Info(
+                id: 1,
+                enrollmentMethod: EnrollmentMethod.TeacherGrant,
+                paymentPaidAt: paidAt,
+                paymentCreatedAt: paymentCreatedAt,
+                createdAt: enrollmentCreatedAt
+            ),
+            Info(
+                id: 2,
+                enrollmentMethod: EnrollmentMethod.TeacherGrant,
+                paymentPaidAt: null,
+                paymentCreatedAt: paymentCreatedAt,
+                createdAt: enrollmentCreatedAt
+            ),
+            Info(
+                id: 3,
+                enrollmentMethod: EnrollmentMethod.TeacherGrant,
+                paymentPaidAt: null,
+                paymentCreatedAt: null,
+                createdAt: enrollmentCreatedAt
+            )
+        );
+
+        // Act
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
+
+        // Assert
+        var payments = result.Value!.Payments.OrderBy(p => p.Id).ToList();
+        payments[0].PaymentDate.Should().Be(paidAt);
+        payments[1].PaymentDate.Should().Be(paymentCreatedAt);
+        payments[2].PaymentDate.Should().Be(enrollmentCreatedAt);
+    }
+
+    [Fact]
     public async Task Handle_ComputesAggregateStatsAcrossMultipleEnrollments()
     {
         // Arrange
-        var userId = Guid.NewGuid();
-        var activeCodeEnrollment = new Enrollment
-        {
-            Id = 1, EnrollmentMethod = EnrollmentMethod.RedeemCode, CreatedAt = DateTimeOffset.UtcNow
-        };
-        var activeOnlineEnrollment = new Enrollment
-        {
-            Id = 2,
-            EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment
-            {
-                Status = PaymentStatus.Completed, Money = Money.Create(300m), Provider = "online"
-            }
-        };
-        var expiredEnrollment = new Enrollment
-        {
-            Id = 3,
-            EnrollmentMethod = EnrollmentMethod.RedeemCode,
-            ExpiresAt = DateTimeOffset.UtcNow.AddDays(-5),
-            CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
-        };
-        var excludedEnrollment = new Enrollment
-        {
-            Id = 4,
-            EnrollmentMethod = EnrollmentMethod.OnlinePayment,
-            Payment = new Payment
-            {
-                Status = PaymentStatus.Pending, Money = Money.Create(500m), Provider = "online"
-            }
-        };
+        var activeCodeEnrollment = Info(id: 1, enrollmentMethod: EnrollmentMethod.RedeemCode, createdAt: DateTimeOffset.UtcNow);
+        var activeOnlineEnrollment = Info(
+            id: 2,
+            enrollmentMethod: EnrollmentMethod.OnlinePayment,
+            paymentStatus: PaymentStatus.Completed,
+            paymentProvider: "online",
+            paymentAmount: 300m
+        );
+        var expiredEnrollment = Info(
+            id: 3,
+            enrollmentMethod: EnrollmentMethod.RedeemCode,
+            expiresAt: DateTimeOffset.UtcNow.AddDays(-5),
+            createdAt: DateTimeOffset.UtcNow.AddDays(-30)
+        );
+        var excludedEnrollment = Info(
+            id: 4,
+            enrollmentMethod: EnrollmentMethod.OnlinePayment,
+            paymentStatus: PaymentStatus.Pending,
+            paymentProvider: "online",
+            paymentAmount: 500m
+        );
 
-        _currentUserService.UserId.Returns(userId);
-        _enrollmentRepo.ListAsync(Arg.Any<StudentEnrollmentsWithPaymentsSpec>(), Arg.Any<CancellationToken>())
-            .Returns(new List<Enrollment>
-            {
-                activeCodeEnrollment, activeOnlineEnrollment, expiredEnrollment, excludedEnrollment
-            });
-
-        var query = new GetStudentPaymentHistoryQuery();
+        SetupEnrollments(
+            activeCodeEnrollment,
+            activeOnlineEnrollment,
+            expiredEnrollment,
+            excludedEnrollment
+        );
 
         // Act
-        var result = await _sut.Handle(query, CancellationToken.None);
+        var result = await _sut.Handle(new GetStudentPaymentHistoryQuery(), CancellationToken.None);
 
         // Assert
         result.Value!.Stats.LessonsPurchased.Should().Be(3);

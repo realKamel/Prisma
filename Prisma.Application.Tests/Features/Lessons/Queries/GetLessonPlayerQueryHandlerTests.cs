@@ -1,20 +1,26 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
+using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Application.Tests.Features.Lessons.Queries;
 
 public class GetLessonPlayerQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IVideoStorageService _videoStorageService = Substitute.For<IVideoStorageService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IVideoStorageService _videoStorageService =
+        Substitute.For<IVideoStorageService>();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
     private readonly GetLessonPlayerQueryHandler _sut;
 
@@ -23,14 +29,19 @@ public class GetLessonPlayerQueryHandlerTests
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
 
-        _sut = new GetLessonPlayerQueryHandler(_unitOfWork, _currentUserService, _videoStorageService, _storageService);
+        _sut = new GetLessonPlayerQueryHandler(
+            _unitOfWork,
+            _currentUserService,
+            _videoStorageService,
+            _storageService
+        );
     }
 
     [Fact]
     public async Task Handle_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
     {
         // Arrange
-        var query = new GetLessonPlayerQuery(1);
+        var query = new GetLessonPlayerQuery(Guid.NewGuid());
         _currentUserService.UserId.Returns((Guid?)null); // مستخدم غير مسجل دخول
 
         // Act
@@ -39,19 +50,29 @@ public class GetLessonPlayerQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User must be authenticated to access lesson player");
+        await _lessonRepo
+            .DidNotReceive()
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonPlayerWithDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Fact]
     public async Task Handle_WhenLessonDoesNotExist_ReturnsNotFound()
     {
         // Arrange
-        var query = new GetLessonPlayerQuery(1);
+        var lessonId = Guid.NewGuid();
+        var query = new GetLessonPlayerQuery(lessonId);
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
         // محاكاة إرجاع null عند البحث عن الدرس
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonPlayerWithDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((LessonPlayerProjection?)null);
 
         // Act
@@ -60,13 +81,14 @@ public class GetLessonPlayerQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.NotFound);
+        result.Errors.Should().Contain($"Lesson with id '{lessonId}' was not found");
     }
 
     [Fact]
     public async Task Handle_WhenLessonExists_ReturnsCompleteMappedLessonPlayerResult()
     {
         // Arrange
-        var lessonId = 1;
+        var lessonId = Guid.NewGuid();
         var query = new GetLessonPlayerQuery(lessonId);
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
@@ -79,11 +101,11 @@ public class GetLessonPlayerQueryHandlerTests
                 Id = 101,
                 SortOrder = 1,
                 Title = "شرح قاعدة المضارع البسيط",
-                Duration = new TimeSpan(0, 45, 0),
+                Duration = TimeDuration.FromTimeSpan(TimeSpan.FromMinutes(45)).Value,
                 PlaybackId = "video-playback-123",
                 IsCompleted = true,
-                WatchedSeconds = 2700
-            }
+                WatchedSeconds = 2700,
+            },
         };
 
         // 2. إعداد بيانات المواد الدراسية الـ Materials (Type رقم مباشرة زي ما بترجعه الـ projection)
@@ -93,8 +115,8 @@ public class GetLessonPlayerQueryHandlerTests
             {
                 Title = "ملخص الدرس.pdf",
                 DownloadUrl = "materials/summary.pdf",
-                Type = 0 // الهاندلر بيحولها لـ "pdf"
-            }
+                Type = 0, // الهاندلر بيحولها لـ "pdf"
+            },
         };
 
         // 3. إعداد الكويز
@@ -104,7 +126,7 @@ public class GetLessonPlayerQueryHandlerTests
             QuestionsCount = 2,
             TimeInMinutes = TimeSpan.FromMinutes(20),
             TotalDegree = 100,
-            IsAttempted = true
+            IsAttempted = true,
         };
 
         // 4. إعداد الواجب
@@ -113,7 +135,7 @@ public class GetLessonPlayerQueryHandlerTests
             Id = 9,
             ContentURL = "assignments/task1.pdf",
             DueDate = DateTimeOffset.UtcNow.AddDays(5),
-            SubmissionTitle = "حل الطالب للواجب.pdf"
+            SubmissionTitle = "حل الطالب للواجب.pdf",
         };
 
         // 5. تجميع بيانات الدرس (projection كامل بدل Lesson entity)
@@ -125,31 +147,40 @@ public class GetLessonPlayerQueryHandlerTests
             ImageThumbnailUrl = "poster.jpg",
             Subject = "لغه انجليزيه",
             TeacherName = "أ. أحمد مصطفى",
+            EnrollmentId = Guid.NewGuid(),
             EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(10), // متبقي 10 أيام صلاحية
             Sections = fakeSections,
             Materials = fakeMaterials,
             Quiz = fakeQuiz,
-            Assignment = fakeAssignment
+            Assignment = fakeAssignment,
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonPlayerWithDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeProjection);
 
         // عمل مَوك للخدمات الخارجية التي تُستدعى داخل الحلقات التكرارية (Loops)
-        _videoStorageService.GetVideoUrlAsync("video-playback-123")
+        _videoStorageService
+            .GetVideoUrlAsync("video-playback-123")
             .Returns(Task.FromResult("https://streaming.com/video1"));
-        _storageService.GetDownloadUrlAsync("prisma", "materials/summary.pdf")
+        _storageService
+            .GetDownloadUrlAsync("materials/summary.pdf")
             .Returns(Task.FromResult("https://download.com/summary.pdf"));
-        _storageService.GetDownloadUrlAsync("prisma", "assignments/task1.pdf")
+        _storageService
+            .GetDownloadUrlAsync("assignments/task1.pdf")
             .Returns(Task.FromResult("https://download.com/task1.pdf"));
+        _storageService
+            .GetDownloadUrlAsync("poster.jpg")
+            .Returns(Task.FromResult("https://cdn.com/poster.jpg"));
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull();
 
         // التحقق من الحقول الأساسية وثوابت المادة والمعلم
         result.Value.Id.Should().Be(lessonId);
@@ -157,14 +188,15 @@ public class GetLessonPlayerQueryHandlerTests
         result.Value.Subject.Should().Be("لغه انجليزيه");
         result.Value.Teacher.Should().Be("أ. أحمد مصطفى");
         result.Value.Category.Should().Be("لغه انجليزيه · الوحدة الأولى: قواعد");
-        result.Value.VideoPoster.Should().Be("poster.jpg");
-        result.Value.ValidityDays.Should().BeGreaterThan(0); // التحقق من حساب الأيام المتبقية
+        result.Value.EnrollmentId.Should().Be(fakeProjection.EnrollmentId);
+        result.Value.VideoPoster.Should().Be("https://cdn.com/poster.jpg");
+        result.Value.ValidityDays.Should().Be(9); // 10 أيام ناقص أجزاء اليوم اللي عدت
 
         // التحقق من الـ Sections والـ Progress والروابط المرجعة من الـ Video Storage
         result.Value.Sections.Should().HaveCount(1);
         result.Value.Sections[0].Id.Should().Be(1); // SortOrder
         result.Value.Sections[0].SectionId.Should().Be(101);
-        result.Value.Sections[0].Duration.Should().Be("00:45:00");
+        result.Value.Sections[0].Duration.Seconds.Should().Be(45 * 60);
         result.Value.Sections[0].IsCompleted.Should().BeTrue();
         result.Value.Sections[0].Progress.Should().Be(100);
         result.Value.Sections[0].ContentUrl.Should().Be("https://streaming.com/video1");
@@ -196,7 +228,7 @@ public class GetLessonPlayerQueryHandlerTests
     public async Task Handle_WhenEnrollmentExpiresAtIsNullOrInPast_FallsBackToThirtyDayValidity()
     {
         // Arrange
-        var lessonId = 2;
+        var lessonId = Guid.NewGuid();
         var query = new GetLessonPlayerQuery(lessonId);
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
@@ -209,10 +241,14 @@ public class GetLessonPlayerQueryHandlerTests
             TeacherName = "أ. أحمد مصطفى",
             EnrollmentExpiresAt = null,
             Sections = new List<PlayerSectionProjection>(),
-            Materials = new List<PlayerMaterialProjection>()
+            Materials = new List<PlayerMaterialProjection>(),
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonPlayerWithDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonPlayerWithDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeProjection);
 
         // Act
@@ -221,6 +257,7 @@ public class GetLessonPlayerQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.ValidityDays.Should().Be(30);
+        result.Value.VideoPoster.Should().BeNull();
         result.Value.Quiz.Should().BeNull();
         result.Value.Assignment.Should().BeNull();
     }

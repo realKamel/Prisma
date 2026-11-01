@@ -2,8 +2,10 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.RedeemCodes.Commands.CreateCodeBatch;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
@@ -14,15 +16,19 @@ public class CreateCodeBatchCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _userManager = Substitute.For<IIdentityService>();
 
-    private readonly IRepository<AcademicYearLesson, int> _ayLessonRepo =
-        Substitute.For<IRepository<AcademicYearLesson, int>>();
+    private readonly IRepository<AcademicYearLesson, int> _ayLessonRepo = Substitute.For<
+        IRepository<AcademicYearLesson, int>
+    >();
 
-    private readonly IRepository<AcademicYearTeacher, int> _ayTeacherRepo =
-        Substitute.For<IRepository<AcademicYearTeacher, int>>();
+    private readonly IRepository<AcademicYearTeacher, int> _ayTeacherRepo = Substitute.For<
+        IRepository<AcademicYearTeacher, int>
+    >();
 
-    private readonly IRepository<RedeemCodeEntity, int> _batchRepo =
-        Substitute.For<IRepository<RedeemCodeEntity, int>>();
+    private readonly IRepository<RedeemCodeEntity, int> _batchRepo = Substitute.For<
+        IRepository<RedeemCodeEntity, int>
+    >();
 
     private readonly CreateCodeBatchCommandHandler _sut;
 
@@ -32,12 +38,17 @@ public class CreateCodeBatchCommandHandlerTests
     {
         _currentUser.UserId.Returns(_teacherId);
 
+        _userManager
+            .FindByIdAsync(_teacherId, Arg.Any<CancellationToken>())
+            .Returns(new Prisma.Domain.Entities.UserAggregate.Teacher { Id = _teacherId });
+        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(new List<string> { AppRoles.Teacher });
+
         _unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>().Returns(_ayLessonRepo);
         _unitOfWork.GetOrCreateRepository<AcademicYearTeacher, int>().Returns(_ayTeacherRepo);
         _unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>().Returns(_batchRepo);
         _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
 
-        _sut = new CreateCodeBatchCommandHandler(_unitOfWork, _currentUser);
+        _sut = new CreateCodeBatchCommandHandler(_unitOfWork, _currentUser, _userManager);
     }
 
     [Fact]
@@ -46,14 +57,18 @@ public class CreateCodeBatchCommandHandlerTests
         // Arrange
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
-        _ayLessonRepo.AnyAsync(
+        _ayLessonRepo
+            .AnyAsync(
                 Arg.Any<AcademicYearLessonExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
-        _ayTeacherRepo.AnyAsync(
+        _ayTeacherRepo
+            .AnyAsync(
                 Arg.Any<TeacherAcademicYearExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
         // Act
@@ -71,14 +86,18 @@ public class CreateCodeBatchCommandHandlerTests
         // Arrange
         var command = new CreateCodeBatchCommand(1, 2, 5, "PHY");
 
-        _ayLessonRepo.AnyAsync(
+        _ayLessonRepo
+            .AnyAsync(
                 Arg.Any<AcademicYearLessonExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
-        _ayTeacherRepo.AnyAsync(
+        _ayTeacherRepo
+            .AnyAsync(
                 Arg.Any<TeacherAcademicYearExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
         // Act
@@ -95,9 +114,11 @@ public class CreateCodeBatchCommandHandlerTests
         // Arrange
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
-        _ayLessonRepo.AnyAsync(
+        _ayLessonRepo
+            .AnyAsync(
                 Arg.Any<AcademicYearLessonExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(false);
 
         // Act
@@ -115,14 +136,18 @@ public class CreateCodeBatchCommandHandlerTests
         // Arrange
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
-        _ayLessonRepo.AnyAsync(
+        _ayLessonRepo
+            .AnyAsync(
                 Arg.Any<AcademicYearLessonExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
-        _ayTeacherRepo.AnyAsync(
+        _ayTeacherRepo
+            .AnyAsync(
                 Arg.Any<TeacherAcademicYearExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(false);
 
         // Act
@@ -154,14 +179,18 @@ public class CreateCodeBatchCommandHandlerTests
         // Arrange
         var command = new CreateCodeBatchCommand(1, 2, 10, null);
 
-        _ayLessonRepo.AnyAsync(
+        _ayLessonRepo
+            .AnyAsync(
                 Arg.Any<AcademicYearLessonExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
-        _ayTeacherRepo.AnyAsync(
+        _ayTeacherRepo
+            .AnyAsync(
                 Arg.Any<TeacherAcademicYearExistsSpecification>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
         // Act

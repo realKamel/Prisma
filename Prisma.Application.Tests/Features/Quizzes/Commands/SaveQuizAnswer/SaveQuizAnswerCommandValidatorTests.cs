@@ -1,4 +1,4 @@
-﻿using FluentValidation.TestHelper;
+using FluentValidation.TestHelper;
 using Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Commands.SaveQuizAnswer;
@@ -11,7 +11,7 @@ public class SaveQuizAnswerCommandValidatorTests
     [Fact]
     public void Validate_WhenAttemptIdIsZeroOrLess_HasValidationError()
     {
-        var command = new SaveQuizAnswerCommand(AttemptId: 0, QuestionId: 1, ChoiceId: 5, TextAnswer: null);
+        var command = new SaveQuizAnswerCommand(AttemptId: 0, QuestionId: 1, ChoiceId: 5, TextAnswer: null, ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldHaveValidationErrorFor(x => x.AttemptId);
     }
@@ -19,7 +19,7 @@ public class SaveQuizAnswerCommandValidatorTests
     [Fact]
     public void Validate_WhenQuestionIdIsZeroOrLess_HasValidationError()
     {
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 0, ChoiceId: 5, TextAnswer: null);
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 0, ChoiceId: 5, TextAnswer: null, ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldHaveValidationErrorFor(x => x.QuestionId);
     }
@@ -27,7 +27,7 @@ public class SaveQuizAnswerCommandValidatorTests
     [Fact]
     public void Validate_WhenBothChoiceIdAndTextAnswerAreProvided_HasValidationError()
     {
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: "some text");
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: "some text", ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldHaveValidationErrorFor(x => x);
     }
@@ -35,7 +35,7 @@ public class SaveQuizAnswerCommandValidatorTests
     [Fact]
     public void Validate_WhenOnlyChoiceIdIsProvided_HasNoValidationErrors()
     {
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: null);
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: null, ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -43,7 +43,7 @@ public class SaveQuizAnswerCommandValidatorTests
     [Fact]
     public void Validate_WhenOnlyTextAnswerIsProvided_HasNoValidationErrors()
     {
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: null, TextAnswer: "my answer");
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: null, TextAnswer: "my answer", ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -53,7 +53,7 @@ public class SaveQuizAnswerCommandValidatorTests
     {
         // Note: this is allowed by the validator as-is — an empty/clearing answer.
         // Flagging this as worth confirming with the team: is clearing an answer a valid use case?
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: null, TextAnswer: null);
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: null, TextAnswer: null, ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldNotHaveAnyValidationErrors();
     }
@@ -62,7 +62,7 @@ public class SaveQuizAnswerCommandValidatorTests
     public void Validate_WhenTextAnswerIsWhitespaceOnly_TreatedAsEmptyAndAllowsChoiceId()
     {
         // IsNullOrWhiteSpace treats "   " as empty, so this combination passes the "only one" rule
-        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: "   ");
+        var command = new SaveQuizAnswerCommand(AttemptId: 1, QuestionId: 1, ChoiceId: 5, TextAnswer: "   ", ClientSeq: 1);
         var result = _validator.TestValidate(command);
         result.ShouldNotHaveAnyValidationErrors();
     }

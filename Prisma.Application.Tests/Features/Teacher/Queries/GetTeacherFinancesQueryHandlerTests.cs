@@ -3,9 +3,7 @@ using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
-using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Teachers;
 using Prisma.Domain.ValueObjects.ContentDomain;
@@ -44,7 +42,9 @@ public class GetTeacherFinancesQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User is not authenticated.");
+        await _paymentRepo
+            .DidNotReceive()
+            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -54,40 +54,37 @@ public class GetTeacherFinancesQueryHandlerTests
         var query = new GetTeacherFinancesQuery();
         _currentUserService.UserId.Returns(Guid.NewGuid());
 
-        var fakePayments = new List<Payment>
+        var paidAt = new DateTimeOffset(2026, 5, 20, 10, 0, 0, TimeSpan.Zero);
+        var fakePayments = new List<Financesinfo>
         {
-            new()
-            {
-                Id = 1001,
-                Money = Money.Create(150.00m),
-                PaidAt = new DateTimeOffset(2026, 5, 20, 10, 0, 0, TimeSpan.Zero),
-                // تمرير نصوص عادية للتوافق التام مع نتيجة المقارنة الفعليّة للـ Handler
-                Student = new Student { FirstName = "احمد", LastName = "علي" },
-                Lesson = new Lesson { Id = 1, Title = "اللغة الإنجليزية - الدرس الأول" },
-            },
+            new(
+                Id: 1001,
+                Amount: Money.Create(150.00m).Value,
+                PaidAt: paidAt,
+                StudentFirstName: "احمد",
+                StudentLastName: "علي",
+                LessonTitle: "اللغة الإنجليزية - الدرس الأول"
+            ),
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification<Payment>>(), Arg.Any<CancellationToken>())
+            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>())
             .Returns(fakePayments);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull().And.HaveCount(1);
+        result.Value.Should().HaveCount(1);
 
         var transaction = result.Value[0];
         transaction.Id.Should().Be("1001");
-
-        // التعديل النهائي الصحيح: مطابقة مع القيمة الحقيقية الخارجة من الـ Handler تماماً
         transaction.StudentName.Should().Be("احمد علي");
-
         transaction.LessonTitle.Should().Be("اللغة الإنجليزية - الدرس الأول");
         transaction.Money.Amount.Should().Be(150.00m);
-        // transaction.Date.Should().Be("2026-05-20");
+        transaction.Money.Currency.Should().Be("EGP");
+        transaction.Date.Should().Be(paidAt);
     }
 
     [Fact]
@@ -97,35 +94,34 @@ public class GetTeacherFinancesQueryHandlerTests
         var query = new GetTeacherFinancesQuery();
         _currentUserService.UserId.Returns(Guid.NewGuid());
 
-        var fakePaymentsWithNulls = new List<Payment>
+        var fakePaymentsWithNulls = new List<Financesinfo>
         {
-            new()
-            {
-                Id = 1002,
-                Money = Money.Create(200.00m),
-                PaidAt = null,
-                Student = null,
-                Lesson = null,
-            },
+            new(
+                Id: 1002,
+                Amount: Money.Create(200.00m).Value,
+                PaidAt: null,
+                StudentFirstName: null,
+                StudentLastName: null,
+                LessonTitle: null
+            ),
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification<Payment>>(), Arg.Any<CancellationToken>())
+            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>())
             .Returns(fakePaymentsWithNulls);
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBeNull().And.HaveCount(1);
+        result.Value.Should().HaveCount(1);
 
         var transaction = result.Value[0];
         transaction.Id.Should().Be("1002");
         transaction.StudentName.Should().Be("طالب غير معروف");
         transaction.LessonTitle.Should().Be("درس غير معروف");
         transaction.Money.Amount.Should().Be(200.00m);
-        // transaction.Date.Should().Be(string.Empty);
+        transaction.Date.Should().BeNull();
     }
 }

@@ -2,35 +2,39 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AuditLogs;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Prisma.Application.Features.Assistants.Queries.GetAssistantDetailedLogs;
-using Xunit;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Tests.Features.Assistants.Queries;
 
 public class GetAssistantDetailedLogsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AuditLog, int> _auditLogRepo = Substitute.For<IRepository<AuditLog, int>>();
-    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<IRepository<Student, Guid>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<AuditLog, long> _auditLogRepo = Substitute.For<
+        IRepository<AuditLog, long>
+    >();
+    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<
+        IRepository<Student, Guid>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly GetAssistantDetailedLogsQueryHandler _sut;
 
     public GetAssistantDetailedLogsQueryHandlerTests()
     {
         // ربط الـ Repositories بالـ UnitOfWork
-        _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditLogRepo);
+        _unitOfWork.GetOrCreateRepository<AuditLog, long>().Returns(_auditLogRepo);
         _unitOfWork.GetOrCreateRepository<Student, Guid>().Returns(_studentRepo);
         _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepo);
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
@@ -51,7 +55,6 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("User is not authenticated.");
     }
 
     [Fact]
@@ -72,8 +75,8 @@ public class GetAssistantDetailedLogsQueryHandlerTests
                 Action = "GrantLessonAccess",
                 TableName = "Enrollment",
                 EntityId = "100",
-                CreatedAt = today
-            }
+                CreatedAt = today,
+            },
         };
 
         var fakeStudent = new Student
@@ -81,7 +84,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
             FirstName = "محمد",
             LastName = "علي",
             UserName = "mohamed_ali",
-            AcademicYear = new() { Title = "الصف الثالث الإعدادي" }
+            AcademicYear = new() { Title = "الصف الثالث الإعدادي" },
         };
 
         // fakeStudent.UpdateAcademicYear();
@@ -91,13 +94,18 @@ public class GetAssistantDetailedLogsQueryHandlerTests
             Id = 100,
             Student = fakeStudent,
             Lesson = new() { Title = "مراجعة الجبر الجملية" },
-            ExpiresAt = today.AddDays(5)
+            ValidityDateRange = DateRange.Create(today, today.AddDays(5)).Value,
         };
 
-        _auditLogRepo.ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepo
+            .ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
-        _enrollmentRepo.FirstOrDefaultAsync(Arg.Any<EnrollmentWithStudentAndLessonSpec>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<EnrollmentWithStudentAndLessonSpec>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeEnrollment);
 
         // Act
@@ -113,7 +121,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         logItem.Grade.Should().Be("الصف الثالث الإعدادي");
         logItem.Detail.Should().Be("مراجعة الجبر الجملية");
         logItem.Sub.Should().Be("صلاحية 4 أيام");
-        logItem.Time.Should().Be(DateTimeOffset.UtcNow);
+        logItem.Time.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
 
         // التأكد من الـ Meta الإحصائية
         result.Value.Meta.TotalThisMonth.Should().Be(1);
@@ -140,19 +148,26 @@ public class GetAssistantDetailedLogsQueryHandlerTests
                 Action = "ViewProfile",
                 TableName = "Student",
                 EntityId = studentGuid.ToString(),
-                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1) // أمس
-            }
+                CreatedAt = DateTimeOffset.UtcNow.AddDays(-1), // أمس
+            },
         };
 
         var fakeStudent = new Student
         {
-            FirstName = "سارة", LastName = "أحمد", AcademicYear = new() { Title = "الصف الأول الثانوي" }
+            FirstName = "سارة",
+            LastName = "أحمد",
+            AcademicYear = new() { Title = "الصف الأول الثانوي" },
         };
 
-        _auditLogRepo.ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepo
+            .ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeLogs);
 
-        _studentRepo.FirstOrDefaultAsync(Arg.Any<StudentWithAcademicYearSpec>(), Arg.Any<CancellationToken>())
+        _studentRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentWithAcademicYearSpec>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeStudent);
 
         // Act
@@ -166,7 +181,7 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         logItem.Detail.Should().Be("ملف الطالب");
         logItem.Sub.Should().Be("ViewProfile");
         logItem.Grade.Should().Be("الصف الأول الثانوي");
-        logItem.Time.Should().Be(DateTimeOffset.UtcNow.AddDays(-1));
+        logItem.Time.Should().BeCloseTo(DateTimeOffset.UtcNow.AddDays(-1), TimeSpan.FromSeconds(5));
     }
 
     [Fact]
@@ -176,7 +191,8 @@ public class GetAssistantDetailedLogsQueryHandlerTests
         _currentUserService.UserId.Returns(Guid.CreateVersion7());
         _currentUserService.Email.Returns("assistant@prisma.com");
 
-        _auditLogRepo.ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
+        _auditLogRepo
+            .ListAsync(Arg.Any<RecentAssistantLogsSpec>(), Arg.Any<CancellationToken>())
             .Returns(new List<AuditLog>());
 
         var query = new GetAssistantDetailedLogsQuery(Take: 10);

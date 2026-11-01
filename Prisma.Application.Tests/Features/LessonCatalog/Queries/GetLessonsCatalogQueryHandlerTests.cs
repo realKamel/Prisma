@@ -2,12 +2,17 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Features.Students.Queries.GetLessonsCatalog;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Common.DTOs;
+using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Lessons;
+using Prisma.Domain.Specifications.Enrollments;
+using Prisma.Domain.ValueObjects.ContentDomain;
+using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Tests.Features.LessonCatalog.Queries;
 
@@ -19,12 +24,11 @@ public class GetLessonsCatalogQueryHandlerTests
     private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<
         IRepository<Student, Guid>
     >();
-    private readonly IRepository<Lesson, int> _lessonRepository = Substitute.For<
-        IRepository<Lesson, int>
+    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<
+        IRepository<Enrollment, int>
     >();
-    private readonly GetLessonsCatalogQueryHandler _handler;
+    private readonly GetPaginatedLessonsCatalogQueryHandler _handler;
 
-    private static readonly GetLessonsCatalogQuery ValidQuery = new();
     private static readonly Guid StudentId = Guid.NewGuid();
     private const int AcademicYearId = 1;
 
@@ -32,14 +36,23 @@ public class GetLessonsCatalogQueryHandlerTests
     {
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Student, Guid>().Returns(_studentRepository);
-        _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepository);
+        _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepository);
 
-        _handler = new GetLessonsCatalogQueryHandler(_unitOfWork, _currentUser, _storageService);
+        _handler = new GetPaginatedLessonsCatalogQueryHandler(
+            _unitOfWork,
+            _currentUser,
+            _storageService
+        );
     }
 
     #region Helpers
 
-    private static Domain.Entities.UserAggregate.Teacher CreateTeacher(
+    private static GetPaginatedLessonsCatalogQuery CreateQuery(
+        int pageNumber = 1,
+        int pageSize = 10
+    ) => new(new PaginationParams { PageNumber = pageNumber, PageSize = pageSize });
+
+    private static Prisma.Domain.Entities.UserAggregate.Teacher CreateTeacher(
         string firstName = "Ahmed",
         string lastName = "Mostafa",
         string subject = "Math"
@@ -52,68 +65,69 @@ public class GetLessonsCatalogQueryHandlerTests
             Subject = subject,
         };
 
-    private static Student CreateStudent(
-        int? academicYearId,
-        params Domain.Entities.UserAggregate.Teacher[] teachers
-    )
-    {
-        var student = new Student
+    private static Student CreateStudent(int? academicYearId) =>
+        new()
         {
             Id = StudentId,
             FirstName = "Sara",
-            LastName = "Ali",
+            SecondName = "Ali",
+            LastName = "Hassan",
             AcademicYearId = academicYearId,
         };
 
-        foreach (var teacher in teachers)
-        {
-            student.TeacherStudents.Add(
-                new TeacherStudent { StudentId = student.Id, TeacherId = teacher.Id }
-            );
-        }
-
-        return student;
-    }
-
     private static Lesson CreateLesson(
         int id,
-        decimal price = 100m,
+        string title = "Lesson",
+        long durationSeconds = 0,
         string? thumbnailUrl = null,
         int? prerequisiteId = null,
-        TimeSpan? duration = null
-    )
-    {
-        var lesson = new Lesson
-        {
-            Id = id,
-            Title = $"Lesson {id}",
-            Price = price,
-            Duration = duration ?? TimeSpan.FromHours(2),
-            ImageThumbnailUrl = thumbnailUrl,
-            PrerequisiteId = prerequisiteId,
-        };
-        return lesson;
-    }
-
-    private static Enrollment CreateEnrollment(
-        Guid studentId,
-        DateTimeOffset? expiresAt = null,
-        bool isCompleted = false
+        Lesson? prerequisite = null
     ) =>
         new()
         {
-            StudentId = studentId,
-            ExpiresAt = expiresAt,
+            Id = id,
+            Title = title,
+            TimeDuration = TimeDuration.FromSeconds(durationSeconds).Value,
+            ImageThumbnailUrl = thumbnailUrl,
+            PrerequisiteId = prerequisiteId,
+            Prerequisite = prerequisite,
+        };
+
+    private static Enrollment CreateEnrollment(
+        Lesson lesson,
+        EnrollmentStatus status = EnrollmentStatus.Active,
+        bool isCompleted = false,
+        DateTimeOffset? expiresAt = null
+    )
+    {
+        var enrollment = new Enrollment
+        {
+            StudentId = StudentId,
+            Lesson = lesson,
+            Status = status,
             IsCompleted = isCompleted,
         };
 
-    private void SetupStudentAndLessons(Student student, ICollection<Lesson> lessons)
+        if (expiresAt is not null)
+        {
+            enrollment.ValidityDateRange = DateRange
+                .Create(expiresAt.Value.AddDays(-30), expiresAt.Value)
+                .Value;
+        }
+
+        return enrollment;
+    }
+
+    private void Setup(Student student, List<Enrollment> enrollments, int? totalCount = null)
     {
         _currentUser.UserId.Returns(StudentId);
         _studentRepository.GetByIdAsync(StudentId, Arg.Any<CancellationToken>()).Returns(student);
-        _lessonRepository
-            .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>())
-            .Returns((List<Lesson>)lessons);
+        _enrollmentRepository
+            .ListAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>())
+            .Returns(enrollments);
+        _enrollmentRepository
+            .CountAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>())
+            .Returns(totalCount ?? enrollments.Count);
     }
 
     #endregion
@@ -121,64 +135,56 @@ public class GetLessonsCatalogQueryHandlerTests
     #region Guards
 
     [Fact]
-    public async Task Handle_WhenUserNotAuthenticated_ThrowsUnauthorizedException()
+    public async Task Handle_WhenUserNotAuthenticated_ReturnsUnauthorized()
     {
-        // Arrange
         _currentUser.UserId.Returns((Guid?)null);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
 
         await _studentRepository
             .DidNotReceive()
             .GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _enrollmentRepository
+            .DidNotReceive()
+            .ListAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WhenStudentNotFound_ThrowsUnauthorizedException()
+    public async Task Handle_WhenStudentNotFound_ReturnsUnauthorized()
     {
-        // Arrange
         _currentUser.UserId.Returns(StudentId);
         _studentRepository
             .GetByIdAsync(StudentId, Arg.Any<CancellationToken>())
             .Returns((Student?)null);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
 
-        await _lessonRepository
+        await _enrollmentRepository
             .DidNotReceive()
-            .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
+            .ListAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_WhenStudentAcademicYearNotSet_ThrowsStudentAcademicYearNotSetException()
+    public async Task Handle_WhenStudentHasNoAcademicYear_ReturnsNotFound()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(academicYearId: null, teacher);
+        var student = CreateStudent(academicYearId: null);
+        Setup(student, [], totalCount: 0);
 
-        _currentUser.UserId.Returns(StudentId);
-        _studentRepository.GetByIdAsync(StudentId, Arg.Any<CancellationToken>()).Returns(student);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Error);
+        result.Status.Should().Be(ResultStatus.NotFound);
+        result.Errors.Should().Contain($"Student {StudentId} has no academic year assigned.");
 
-        await _lessonRepository
+        await _enrollmentRepository
             .DidNotReceive()
-            .ListAsync(Arg.Any<LessonsCatalogSpecification>(), Arg.Any<CancellationToken>());
+            .ListAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>());
     }
 
     #endregion
@@ -186,118 +192,95 @@ public class GetLessonsCatalogQueryHandlerTests
     #region Status determination
 
     [Fact]
-    public async Task Handle_WhenLessonHasNoEnrollment_ReturnsAvailableStatusWithFullPrice()
+    public async Task Handle_WhenEnrollmentExpired_ReturnsExpiredStatusAndExpiryDate()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1, price: 250m);
-
-        SetupStudentAndLessons(student, [lesson]);
-
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal("avail", dto.Status);
-        Assert.Equal(250m, dto.Price);
-        Assert.Null(dto.PrerequisiteLabel);
-        Assert.Null(dto.ExpiredDate);
-    }
-
-    [Fact]
-    public async Task Handle_WhenEnrollmentExpired_ReturnsExpiredStatusWithZeroPriceAndArabicDateLabel()
-    {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1, price: 250m);
-        lesson.Enrollments.Add(
-            CreateEnrollment(
-                StudentId,
-                expiresAt: new DateTimeOffset(2024, 6, 15, 0, 0, 0, TimeSpan.Zero)
-            )
+        var student = CreateStudent(AcademicYearId);
+        var lesson = CreateLesson(id: 1, title: "Algebra");
+        var expiresAt = new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        var enrollment = CreateEnrollment(
+            lesson,
+            status: EnrollmentStatus.Expired,
+            expiresAt: expiresAt
         );
+        Setup(student, [enrollment]);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal("expired", dto.Status);
-        Assert.Equal(0m, dto.Price);
-        Assert.Equal("انتهت صلاحيتك · انتهت في ١٥ يونيو", dto.ExpiredDate);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.Status.Should().Be(EnrollmentStatus.Expired);
+        dto.IsExpired.Should().BeTrue();
+        dto.ExpiresAt.Should().Be(expiresAt);
+        dto.PrerequisiteLabel.Should().BeNull();
+        dto.Money.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_WhenPrerequisiteNotCompleted_ReturnsLockedStatus()
+    public async Task Handle_WhenPrerequisiteNotCompleted_ReturnsLockedStatusWithArabicLabel()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
+        var student = CreateStudent(AcademicYearId);
+        var prerequisite = CreateLesson(id: 1, title: "Basics");
+        var lesson = CreateLesson(
+            id: 2,
+            title: "Advanced",
+            prerequisiteId: 1,
+            prerequisite: prerequisite
+        );
+        prerequisite.Enrollments.Add(CreateEnrollment(prerequisite, isCompleted: false));
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
-        var prerequisiteLesson = CreateLesson(id: 1, price: 100m);
-        var lesson = CreateLesson(id: 2, price: 300m, prerequisiteId: prerequisiteLesson.Id);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        lesson.Enrollments.Add(CreateEnrollment(StudentId));
-        prerequisiteLesson.Enrollments.Add(CreateEnrollment(StudentId, isCompleted: false));
-
-        SetupStudentAndLessons(student, [prerequisiteLesson, lesson]);
-
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = result.Value!.Single(d => d.Id == lesson.Id);
-        Assert.Equal("locked", dto.Status);
-        Assert.Equal("تحتاج لإكمال الدرس السابق", dto.PrerequisiteLabel);
-        Assert.Equal(0m, dto.Price);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.Status.Should().Be(EnrollmentStatus.Locked);
+        dto.PrerequisiteLabel.Should().Be("تحتاج لإكمال الدرس السابق");
+        dto.Money.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_WhenPrerequisiteCompleted_ReturnsPurchasedStatus()
+    public async Task Handle_WhenPrerequisiteCompleted_ReturnsActiveStatusWithoutLabel()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
+        var student = CreateStudent(AcademicYearId);
+        var prerequisite = CreateLesson(id: 1, title: "Basics");
+        var lesson = CreateLesson(
+            id: 2,
+            title: "Advanced",
+            prerequisiteId: 1,
+            prerequisite: prerequisite
+        );
+        prerequisite.Enrollments.Add(CreateEnrollment(prerequisite, isCompleted: true));
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
-        var prerequisiteLesson = CreateLesson(id: 1, price: 100m);
-        var lesson = CreateLesson(id: 2, price: 300m, prerequisiteId: prerequisiteLesson.Id);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        lesson.Enrollments.Add(CreateEnrollment(StudentId));
-        prerequisiteLesson.Enrollments.Add(CreateEnrollment(StudentId, isCompleted: true));
-
-        SetupStudentAndLessons(student, [prerequisiteLesson, lesson]);
-
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = result.Value!.Single(d => d.Id == lesson.Id);
-        Assert.Equal("purchased", dto.Status);
-        Assert.Null(dto.PrerequisiteLabel);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.Status.Should().Be(EnrollmentStatus.Active);
+        dto.PrerequisiteLabel.Should().BeNull();
     }
 
     [Fact]
-    public async Task Handle_WhenActiveEnrollmentHasNoPrerequisite_ReturnsPurchasedStatus()
+    public async Task Handle_WhenActiveEnrollmentHasNoPrerequisite_ReturnsActiveStatus()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1, price: 300m);
-        lesson.Enrollments.Add(CreateEnrollment(StudentId));
+        var student = CreateStudent(AcademicYearId);
+        var lesson = CreateLesson(id: 1, title: "Algebra");
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal("purchased", dto.Status);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.Status.Should().Be(EnrollmentStatus.Active);
+        dto.IsExpired.Should().BeFalse();
+        dto.ExpiresAt.Should().BeNull();
     }
 
     #endregion
@@ -305,100 +288,121 @@ public class GetLessonsCatalogQueryHandlerTests
     #region Mapping details
 
     [Fact]
-    public async Task Handle_MapsTeacherNameAndSubjectCorrectly()
+    public async Task Handle_MapsTeacherSubjectAndDuration()
     {
-        // Arrange
+        var student = CreateStudent(AcademicYearId);
         var teacher = CreateTeacher(firstName: "Mona", lastName: "Kamal", subject: "Physics");
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1);
+        var lesson = CreateLesson(
+            id: 1,
+            title: "Kinematics",
+            durationSeconds: 7200,
+            prerequisiteId: null
+        );
+        lesson.Teacher = teacher;
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal("Mona Kamal", dto.TeacherName);
-        Assert.Equal("Physics", dto.Subject);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.PublicId.Should().Be(lesson.PublicId);
+        dto.Title.Should().Be("Kinematics");
+        dto.TeacherName.Should().Be("Mona Kamal");
+        dto.Subject.Should().Be("Physics");
+        dto.Duration.Seconds.Should().Be(7200);
     }
 
     [Fact]
-    public async Task Handle_WhenThumbnailUrlIsNull_ReturnsEmptyImageUrlWithoutCallingStorageService()
+    public async Task Handle_WhenThumbnailUrlIsNull_ReturnsEmptyImageUrlAndSkipsStorageCall()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
+        var student = CreateStudent(AcademicYearId);
         var lesson = CreateLesson(id: 1, thumbnailUrl: null);
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.ImageThumbnailUrl.Should().BeEmpty();
 
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal(string.Empty, dto.ImageThumbnailUrl);
-
-        _storageService.DidNotReceive().GetDownloadUrlAsync(Arg.Any<string>(), Arg.Any<string>());
+        await _storageService
+            .DidNotReceive()
+            .GetDownloadUrlAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>());
     }
 
     [Fact]
     public async Task Handle_WhenThumbnailUrlIsSet_ReturnsPublicUrlFromStorageService()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
+        var student = CreateStudent(AcademicYearId);
         var lesson = CreateLesson(id: 1, thumbnailUrl: "lessons/1/thumb.png");
+        var enrollment = CreateEnrollment(lesson);
+        Setup(student, [enrollment]);
 
         _storageService
             .GetDownloadUrlAsync("prisma", "lessons/1/thumb.png")
             .Returns("https://cdn.example.com/prisma/lessons/1/thumb.png");
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal("https://cdn.example.com/prisma/lessons/1/thumb.png", dto.ImageThumbnailUrl);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        var dto = result.Value.Items.Single();
+        dto.ImageThumbnailUrl.Should().Be("https://cdn.example.com/prisma/lessons/1/thumb.png");
     }
 
     [Fact]
-    public async Task Handle_MapsDurationHoursWithRounding()
+    public async Task Handle_WhenEnrollmentHasNoLesson_SkipsIt()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1, duration: TimeSpan.FromMinutes(170)); // 2h 50m
+        var student = CreateStudent(AcademicYearId);
+        var lesson = CreateLesson(id: 1, title: "Algebra");
+        var mapped = CreateEnrollment(lesson);
+        var orphan = new Enrollment { StudentId = StudentId, Lesson = null };
+        Setup(student, [mapped, orphan]);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
-
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal(3, dto.DurationHours);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Items.Should().ContainSingle();
+        result.Value.Items.Single().Title.Should().Be("Algebra");
     }
 
+    #endregion
+
+    #region Pagination
+
     [Fact]
-    public async Task Handle_MapsDurationHoursWithRoundingDown()
+    public async Task Handle_ReturnsPaginatedMetadataForRequestedPage()
     {
-        // Arrange
-        var teacher = CreateTeacher();
-        var student = CreateStudent(AcademicYearId, teacher);
-        var lesson = CreateLesson(id: 1, duration: TimeSpan.FromMinutes(140)); // 2h 20m
+        var student = CreateStudent(AcademicYearId);
+        var lessons = new List<Enrollment>
+        {
+            CreateEnrollment(CreateLesson(id: 1, title: "Lesson 1")),
+            CreateEnrollment(CreateLesson(id: 2, title: "Lesson 2")),
+        };
+        Setup(student, lessons, totalCount: 7);
 
-        SetupStudentAndLessons(student, [lesson]);
+        var result = await _handler.Handle(
+            CreateQuery(pageNumber: 2, pageSize: 5),
+            CancellationToken.None
+        );
 
-        // Act
-        var result = await _handler.Handle(ValidQuery, CancellationToken.None);
+        result.IsSuccess.Should().BeTrue();
+        var page = result.Value;
+        page.Items.Select(dto => dto.Title).Should().Equal("Lesson 1", "Lesson 2");
+        page.TotalCount.Should().Be(7);
+        page.PageNumber.Should().Be(2);
+        page.PageSize.Should().Be(5);
+        page.TotalPages.Should().Be(2);
+        page.HasPreviousPage.Should().BeTrue();
+        page.HasNextPage.Should().BeFalse();
 
-        // Assert
-        var dto = Assert.Single(result.Value!);
-        Assert.Equal(2, dto.DurationHours);
+        await _enrollmentRepository
+            .Received(1)
+            .CountAsync(Arg.Any<ActiveEnrollmentsSpec>(), Arg.Any<CancellationToken>());
     }
 
     #endregion

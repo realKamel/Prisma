@@ -1,4 +1,4 @@
-﻿
+
 using NSubstitute;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -162,7 +162,7 @@ public class QuizFinalizerTests
     }
 
     [Fact]
-    public async Task FinalizeAttempt_WhenWrittenAnswerIsMissingEntirely_MarksSubmitted()
+    public async Task FinalizeAttempt_WhenWrittenAnswerIsMissingEntirely_MarksGradedWithZero()
     {
         // Arrange
         var written = CreateWrittenQuestion(id: 1);
@@ -172,8 +172,9 @@ public class QuizFinalizerTests
         // Act
         await QuizFinalizer.FinalizeAttempt(attempt, quiz, _unitOfWork, CancellationToken.None);
 
-        // Assert
-        Assert.Equal(QuizAttemptStatus.Submitted, attempt.Status);
+        // Assert - a blank answer has nothing to grade, so the attempt is auto-graded with 0
+        Assert.Equal(QuizAttemptStatus.Graded, attempt.Status);
+        Assert.Equal(0m, attempt.Degree);
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Queries.GetUserById;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -48,19 +49,24 @@ public class GetUserByIdQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Role.Should().Be("Student");
+        result.Value.Role.Should().Be(AppRoles.Student);
         result.Value.GradeId.Should().Be(2);
         result.Value.TeacherIds.Should().Contain(teacherId.ToString());
         result.Value.ParentMobile.Should().Be("01198765432");
     }
 
     [Fact]
-    public async Task Handle_WhenAssistant_TeacherIdIsAlwaysNull()
+    public async Task Handle_WhenAssistant_ReturnsAssignedTeacherId()
     {
         // Arrange
+        var teacherId = Guid.CreateVersion7();
         var assistant = new Assistant
         {
-            Id = Guid.CreateVersion7(), FirstName = "فاطمة", LastName = "أحمد", Email = "f@test.com",
+            Id = Guid.CreateVersion7(),
+            FirstName = "فاطمة",
+            SecondName = "أحمد",
+            Email = "f@test.com",
+            TeacherId = teacherId,
         };
 
         _identityService
@@ -72,11 +78,10 @@ public class GetUserByIdQueryHandlerTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Role.Should().Be("Assistant");
-        result.Value.TeacherIds.Should().BeNull();
+        result.Value.Role.Should().Be(AppRoles.Assistant);
+        result.Value.TeacherIds.Should().ContainSingle().Which.Should().Be(teacherId.ToString());
         result.Value.GradeId.Should().BeNull();
     }
-
     [Fact]
     public async Task Handle_WhenUserNotFound_ThrowsNotFoundException()
     {

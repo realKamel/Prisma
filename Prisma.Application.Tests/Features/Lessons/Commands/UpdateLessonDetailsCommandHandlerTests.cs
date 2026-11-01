@@ -1,33 +1,48 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 
-
 namespace Prisma.Application.Tests.Features.Lessons.Commands;
 
 public class UpdateLessonDetailsCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly UserManager<User> _userManager;
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IVideoStorageService _videoStorageService = Substitute.For<IVideoStorageService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IVideoStorageService _videoStorageService =
+        Substitute.For<IVideoStorageService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly UpdateLessonDetailsCommandHandler _sut;
+    private static readonly int[] expectation = new[] { 2, 3 };
 
     public UpdateLessonDetailsCommandHandlerTests()
     {
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null, null, null, null, null, null, null, null);
+        _userManager = Substitute.For<UserManager<User>>(
+            store,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
 
         _storageService.DefaultBucketName.Returns("prisma");
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
@@ -36,7 +51,8 @@ public class UpdateLessonDetailsCommandHandlerTests
             _currentUserService,
             _userManager,
             _storageService,
-            _videoStorageService);
+            _videoStorageService
+        );
     }
 
     [Fact]
@@ -84,7 +100,9 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        result.Errors.Should().Contain("Only teachers, assistants, and admins can modify lesson structures.");
+        result
+            .Errors.Should()
+            .Contain("Only teachers, assistants, and admins can modify lesson structures.");
     }
 
     [Fact]
@@ -96,7 +114,11 @@ public class UpdateLessonDetailsCommandHandlerTests
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Admin });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((Lesson?)null);
 
         var command = CreateFakeUpdateCommand();
@@ -118,14 +140,18 @@ public class UpdateLessonDetailsCommandHandlerTests
             Id = 1,
             Title = "Old Title",
             AcademicYears = new List<AcademicYearLesson>(),
-            Sections = new List<Section>()
+            Sections = new List<Section>(),
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = CreateFakeUpdateCommand();
@@ -152,13 +178,17 @@ public class UpdateLessonDetailsCommandHandlerTests
             Id = 1,
             AcademicYears = new List<AcademicYearLesson>(),
             Sections = new List<Section>(),
-            ImageThumbnailUrl = "lessons/thumbnails/old-image.jpg"
+            ImageThumbnailUrl = "lessons/thumbnails/old-image.jpg",
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = CreateFakeUpdateCommand();
@@ -167,10 +197,22 @@ public class UpdateLessonDetailsCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _storageService.Received(1).UploadFileAsync(
-            "prisma", Arg.Any<string>(), Arg.Any<Stream>(), "image/jpeg", Arg.Any<CancellationToken>());
-        await _storageService.Received(1)
-            .DeleteFileAsync("prisma", "lessons/thumbnails/old-image.jpg", Arg.Any<CancellationToken>());
+        await _storageService
+            .Received(1)
+            .UploadFileAsync(
+                "prisma",
+                Arg.Any<string>(),
+                Arg.Any<Stream>(),
+                "image/jpeg",
+                Arg.Any<CancellationToken>()
+            );
+        await _storageService
+            .Received(1)
+            .DeleteFileAsync(
+                "prisma",
+                "lessons/thumbnails/old-image.jpg",
+                Arg.Any<CancellationToken>()
+            );
         lesson.ImageThumbnailUrl.Should().NotBe("lessons/thumbnails/old-image.jpg");
     }
 
@@ -180,24 +222,38 @@ public class UpdateLessonDetailsCommandHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         var fakeUser = new User { Id = userId };
-        var remainingSection = new Section { Id = 1, ContentURL = "kept.mp4", AssetId = "asset-kept" };
-        var removedSection = new Section { Id = 2, ContentURL = "removed.mp4", AssetId = "asset-removed" };
+        var remainingSection = new Section
+        {
+            Id = 1,
+            ContentURL = "kept.mp4",
+            AssetId = "asset-kept",
+        };
+        var removedSection = new Section
+        {
+            Id = 2,
+            ContentURL = "removed.mp4",
+            AssetId = "asset-removed",
+        };
         var lesson = new Lesson
         {
             Id = 1,
             AcademicYears = new List<AcademicYearLesson>(),
-            Sections = new List<Section> { remainingSection, removedSection }
+            Sections = new List<Section> { remainingSection, removedSection },
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto> { new("Kept Chapter", "kept.mp4", 1000) }
+            Chapters = new List<ChapterCommandDto> { new("Kept Chapter", "kept.mp4", 1000) },
         };
 
         // Act
@@ -205,8 +261,12 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         // Assert
         lesson.Sections.Should().ContainSingle(s => s.ContentURL == "kept.mp4");
-        await _videoStorageService.Received(1).DeleteVideoAsync("asset-removed", Arg.Any<CancellationToken>());
-        await _videoStorageService.DidNotReceive().DeleteVideoAsync("asset-kept", Arg.Any<CancellationToken>());
+        await _videoStorageService
+            .Received(1)
+            .DeleteVideoAsync("asset-removed", Arg.Any<CancellationToken>());
+        await _videoStorageService
+            .DidNotReceive()
+            .DeleteVideoAsync("asset-kept", Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -217,18 +277,27 @@ public class UpdateLessonDetailsCommandHandlerTests
         var fakeUser = new User { Id = userId };
         var lesson = new Lesson
         {
-            Id = 1, AcademicYears = new List<AcademicYearLesson>(), Sections = new List<Section>()
+            Id = 1,
+            AcademicYears = new List<AcademicYearLesson>(),
+            Sections = new List<Section>(),
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = CreateFakeUpdateCommand() with
         {
-            Chapters = new List<ChapterCommandDto> { new("Brand New Chapter", "new-video.mp4", 2000) }
+            Chapters = new List<ChapterCommandDto>
+            {
+                new("Brand New Chapter", "new-video.mp4", 2000),
+            },
         };
 
         // Act
@@ -250,13 +319,21 @@ public class UpdateLessonDetailsCommandHandlerTests
             Id = 1,
             AcademicYears = new List<AcademicYearLesson>(),
             Sections = new List<Section>(),
-            Assignment = new Assignment { Title = "Old Assignment", ContentURL = "assignments/old.pdf" }
+            Assignment = new Assignment
+            {
+                Title = "Old Assignment",
+                ContentURL = "assignments/old.pdf",
+            },
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
         var command = CreateFakeUpdateCommand() with { AssignmentEnabled = false };
@@ -266,7 +343,8 @@ public class UpdateLessonDetailsCommandHandlerTests
 
         // Assert
         lesson.Assignment.Should().BeNull();
-        await _storageService.Received(1)
+        await _storageService
+            .Received(1)
             .DeleteFileAsync("prisma", "assignments/old.pdf", Arg.Any<CancellationToken>());
     }
 
@@ -282,23 +360,31 @@ public class UpdateLessonDetailsCommandHandlerTests
             Sections = new List<Section>(),
             AcademicYears = new List<AcademicYearLesson>
             {
-                new() { AcademicYearId = 1, LessonId = 1 }, new() { AcademicYearId = 2, LessonId = 1 }
-            }
+                new() { AcademicYearId = 1, LessonId = 1 },
+                new() { AcademicYearId = 2, LessonId = 1 },
+            },
         };
 
         _currentUserService.UserId.Returns(userId);
         _userManager.FindByIdAsync(userId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<UpdateLessonDetailsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<UpdateLessonDetailsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lesson);
 
-        var command = CreateFakeUpdateCommand() with { AcademicYearIds = new List<int> { 2, 3 } };
+        var command = CreateFakeUpdateCommand() with
+        {
+            AcademicYearIds = new List<int> { 2, 3 },
+        };
 
         // Act
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        lesson.AcademicYears.Select(ay => ay.AcademicYearId).Should().BeEquivalentTo(new[] { 2, 3 });
+        lesson.AcademicYears.Select(ay => ay.AcademicYearId).Should().BeEquivalentTo(expectation);
     }
 
     private static UpdateLessonDetailsCommand CreateFakeUpdateCommand()
@@ -322,7 +408,8 @@ public class UpdateLessonDetailsCommandHandlerTests
             IsPublished: true,
             AcademicYearIds: new List<int> { 1 },
             Outcomes: new List<string>(),
-            ImageFile: mockImageFile
+            ImageFile: mockImageFile,
+            ValidityDurationInSeconds: 0
         );
     }
 }

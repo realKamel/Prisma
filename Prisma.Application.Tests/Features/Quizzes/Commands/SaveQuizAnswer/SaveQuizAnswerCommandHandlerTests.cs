@@ -63,10 +63,10 @@ public class SaveQuizAnswerCommandHandlerTests
             .Returns(quiz);
 
     private static SaveQuizAnswerCommand McqAnswerCommand(int attemptId = 1, int questionId = 1, int choiceId = 100) =>
-        new(attemptId, questionId, choiceId, null);
+        new(attemptId, questionId, choiceId, null, ClientSeq: 1);
 
     private static SaveQuizAnswerCommand WrittenAnswerCommand(int attemptId = 1, int questionId = 1, string text = "my answer") =>
-        new(attemptId, questionId, null, text);
+        new(attemptId, questionId, null, text, ClientSeq: 1);
 
 
     private void SetupExistingAnswer(AttemptAnswer? answer) =>
@@ -252,7 +252,7 @@ public class SaveQuizAnswerCommandHandlerTests
         SetupQuiz(CreateQuiz());
         SetupExistingAnswer(existingAnswer);
 
-        var command = new SaveQuizAnswerCommand(attempt.Id, 5, null, "changed my mind, here's text");
+        var command = new SaveQuizAnswerCommand(attempt.Id, 5, null, "changed my mind, here's text", ClientSeq: 1);
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

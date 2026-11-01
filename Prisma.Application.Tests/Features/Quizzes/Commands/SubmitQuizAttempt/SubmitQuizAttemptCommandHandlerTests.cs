@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.SubmitQuizAttempt;
@@ -12,18 +10,26 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Commands.SubmitQuizAttempt;
 
-
 public class SubmitQuizAttemptCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<IRepository<Enrollment, int>>();
+    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<
+        IRepository<QuizAttempt, int>
+    >();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
     private readonly SubmitQuizAttemptCommandHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
-    private static readonly SubmitQuizAttemptCommand ValidCommand = new(AttemptId: 1);
+    private static readonly SubmitQuizAttemptCommand ValidCommand = new(
+        AttemptId: 1,
+        Answers: null
+    );
 
     public SubmitQuizAttemptCommandHandlerTests()
     {
@@ -35,7 +41,10 @@ public class SubmitQuizAttemptCommandHandlerTests
 
         // QuizFinalizer looks this up when scope is LessonQuiz; default to "not found" so it's a no-op
         _enrollmentRepository
-            .FirstOrDefaultAsync(Arg.Any<StudentLessonEnrollmentSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentLessonEnrollmentSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((Enrollment?)null);
 
         _handler = new SubmitQuizAttemptCommandHandler(_unitOfWork, _currentUser);
@@ -51,27 +60,43 @@ public class SubmitQuizAttemptCommandHandlerTests
             Type = QuestionType.MCQ,
             Choices = new List<Choice>
             {
-                new() { Id = correctChoiceId, Text = "Correct", IsCorrect = true },
-                new() { Id = correctChoiceId + 1, Text = "Wrong", IsCorrect = false }
-            }
+                new()
+                {
+                    Id = correctChoiceId,
+                    Text = "Correct",
+                    IsCorrect = true,
+                },
+                new()
+                {
+                    Id = correctChoiceId + 1,
+                    Text = "Wrong",
+                    IsCorrect = false,
+                },
+            },
         };
 
     private static WrittenQuestion CreateWrittenQuestion(int id) =>
-        new() { Id = id, Title = "Q", Type = QuestionType.Written };
+        new()
+        {
+            Id = id,
+            Title = "Q",
+            Type = QuestionType.Written,
+        };
 
     private static Quiz CreateQuiz(
         int id = 10,
         decimal totalDegree = 100m,
         int durationMinutes = 30,
         List<QuestionLessonQuiz>? questions = null,
-        QuizScope scope = QuizScope.ComprehensiveExam) =>
+        QuizScope scope = QuizScope.ComprehensiveExam
+    ) =>
         new()
         {
             Id = id,
             TotalDegree = totalDegree,
             TimeInMinutes = TimeSpan.FromMinutes(durationMinutes),
             Scope = scope,
-            Questions = questions ?? new List<QuestionLessonQuiz>()
+            Questions = questions ?? new List<QuestionLessonQuiz>(),
         };
 
     private static QuizAttempt CreateAttempt(
@@ -79,7 +104,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         int quizId = 10,
         QuizAttemptStatus status = QuizAttemptStatus.InProgress,
         DateTimeOffset? startedAt = null,
-        List<AttemptAnswer>? answers = null) =>
+        List<AttemptAnswer>? answers = null
+    ) =>
         new()
         {
             Id = id,
@@ -87,17 +113,23 @@ public class SubmitQuizAttemptCommandHandlerTests
             StudentId = StudentId,
             Status = status,
             StartedAt = startedAt ?? DateTimeOffset.UtcNow.AddMinutes(-5),
-            Answers = answers ?? new List<AttemptAnswer>()
+            Answers = answers ?? new List<AttemptAnswer>(),
         };
 
     private void SetupAttempt(QuizAttempt? attempt) =>
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<AttemptForFinalizationSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<AttemptForFinalizationSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(attempt);
 
     private void SetupQuiz(Quiz? quiz) =>
         _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<QuizWithQuestionsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(quiz);
 
     #endregion
@@ -114,17 +146,23 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess);
-        Assert.Equal("المحاولة غير موجودة", result.GetResultMessage());
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("المحاولة غير موجودة");
 
-        await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>());
+        await _quizRepository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(
+                Arg.Any<QuizWithQuestionsSpecification>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Theory]
     [InlineData(QuizAttemptStatus.Submitted)]
     [InlineData(QuizAttemptStatus.Graded)]
-    public async Task Handle_WhenAttemptAlreadySubmittedOrGraded_ReturnsFailure(QuizAttemptStatus status)
+    public async Task Handle_WhenAttemptAlreadySubmittedOrGraded_ReturnsExistingResult(
+        QuizAttemptStatus status
+    )
     {
         // Arrange
         SetupAttempt(CreateAttempt(status: status));
@@ -132,12 +170,12 @@ public class SubmitQuizAttemptCommandHandlerTests
         // Act
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
-        // Assert
-        Assert.False(result.IsSuccess);
-        Assert.Equal("تم تسليم هذا الاختبار من قبل", result.GetResultMessage());
-
-        await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>());
+        // Assert - retried submit is idempotent, not an error
+        result.IsSuccess.Should().BeTrue();
+        result
+            .Value.Status.Should()
+            .Be(status == QuizAttemptStatus.Graded ? "graded" : "submitted");
+        result.Value.WasLate.Should().BeFalse();
     }
 
     #endregion
@@ -149,14 +187,22 @@ public class SubmitQuizAttemptCommandHandlerTests
     {
         // Arrange
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(totalDegree: 5m, questions:
-        [
-            new QuestionLessonQuiz { QuestionId = question.Id, Question = question, Degree = 5m }
-        ]);
-        var attempt = CreateAttempt(quizId: quiz.Id, answers:
-        [
-            new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }
-        ]);
+        var quiz = CreateQuiz(
+            totalDegree: 5m,
+            questions:
+            [
+                new QuestionLessonQuiz
+                {
+                    QuestionId = question.Id,
+                    Question = question,
+                    Degree = 5m,
+                },
+            ]
+        );
+        var attempt = CreateAttempt(
+            quizId: quiz.Id,
+            answers: [new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }]
+        );
 
         SetupAttempt(attempt);
         SetupQuiz(quiz);
@@ -165,8 +211,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal("graded", result.Value!.Status);
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be("graded");
         Assert.Equal(5m, result.Value.Score);
         Assert.Equal(5m, result.Value.TotalDegree);
         Assert.Equal(QuizAttemptStatus.Graded, attempt.Status);
@@ -177,14 +223,30 @@ public class SubmitQuizAttemptCommandHandlerTests
     {
         // Arrange
         var written = CreateWrittenQuestion(id: 1);
-        var quiz = CreateQuiz(totalDegree: 10m, questions:
-        [
-            new QuestionLessonQuiz { QuestionId = written.Id, Question = written, Degree = 10m }
-        ]);
-        var attempt = CreateAttempt(quizId: quiz.Id, answers:
-        [
-            new AttemptAnswer { QuestionId = written.Id, TextAnswer = "my answer", Score = null }
-        ]);
+        var quiz = CreateQuiz(
+            totalDegree: 10m,
+            questions:
+            [
+                new QuestionLessonQuiz
+                {
+                    QuestionId = written.Id,
+                    Question = written,
+                    Degree = 10m,
+                },
+            ]
+        );
+        var attempt = CreateAttempt(
+            quizId: quiz.Id,
+            answers:
+            [
+                new AttemptAnswer
+                {
+                    QuestionId = written.Id,
+                    TextAnswer = "my answer",
+                    Score = null,
+                },
+            ]
+        );
 
         SetupAttempt(attempt);
         SetupQuiz(quiz);
@@ -193,9 +255,9 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal("submitted", result.Value!.Status);
-        Assert.Null(result.Value.Score);
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be("submitted");
+        result.Value.Score.Should().BeNull();
         Assert.Equal(10m, result.Value.TotalDegree); // total degree always returned, even when ungraded
         Assert.Equal(QuizAttemptStatus.Submitted, attempt.Status);
     }
@@ -205,14 +267,22 @@ public class SubmitQuizAttemptCommandHandlerTests
     {
         // Arrange - all MCQ, fully answerable automatically, but held for review due to tab switches
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(totalDegree: 5m, questions:
-        [
-            new QuestionLessonQuiz { QuestionId = question.Id, Question = question, Degree = 5m }
-        ]);
-        var attempt = CreateAttempt(quizId: quiz.Id, answers:
-        [
-            new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }
-        ]);
+        var quiz = CreateQuiz(
+            totalDegree: 5m,
+            questions:
+            [
+                new QuestionLessonQuiz
+                {
+                    QuestionId = question.Id,
+                    Question = question,
+                    Degree = 5m,
+                },
+            ]
+        );
+        var attempt = CreateAttempt(
+            quizId: quiz.Id,
+            answers: [new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }]
+        );
         attempt.TabSwitchCount = 3;
 
         SetupAttempt(attempt);
@@ -222,9 +292,9 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess);
-        Assert.Equal("submitted", result.Value!.Status); // held for review, not graded
-        Assert.Null(result.Value.Score); // Status != Graded, so DTO reports null even though Degree was computed internally
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be("submitted"); // held for review, not graded
+        result.Value.Score.Should().BeNull(); // Status != Graded, so DTO reports null even though Degree was computed internally
         Assert.Equal(QuizAttemptStatus.Submitted, attempt.Status);
     }
 
@@ -233,14 +303,24 @@ public class SubmitQuizAttemptCommandHandlerTests
     {
         // Arrange - started 2 hours ago on a 30-minute quiz, way past the 10s grace period
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(durationMinutes: 30, totalDegree: 5m, questions:
-        [
-            new QuestionLessonQuiz { QuestionId = question.Id, Question = question, Degree = 5m }
-        ]);
+        var quiz = CreateQuiz(
+            durationMinutes: 30,
+            totalDegree: 5m,
+            questions:
+            [
+                new QuestionLessonQuiz
+                {
+                    QuestionId = question.Id,
+                    Question = question,
+                    Degree = 5m,
+                },
+            ]
+        );
         var attempt = CreateAttempt(
             quizId: quiz.Id,
             startedAt: DateTimeOffset.UtcNow.AddHours(-2),
-            answers: [new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }]);
+            answers: [new AttemptAnswer { QuestionId = question.Id, ChoiceId = 100 }]
+        );
 
         SetupAttempt(attempt);
         SetupQuiz(quiz);
@@ -249,10 +329,8 @@ public class SubmitQuizAttemptCommandHandlerTests
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
         // Assert - no rejection; treated as a normal (late) submission
-        Assert.False(result.IsSuccess);
-        Assert.Equal(
-            "انتهى وقت الاختبار وتم تسليمه تلقائيًا",
-            result.GetResultMessage());
+        result.IsSuccess.Should().BeTrue();
+        result.Value.WasLate.Should().BeTrue();
 
         Assert.Equal(QuizAttemptStatus.Graded, attempt.Status);
     }
@@ -284,8 +362,8 @@ public class SubmitQuizAttemptCommandHandlerTests
 
         var result = await _handler.Handle(ValidCommand, CancellationToken.None);
 
-        Assert.False(result.IsSuccess);
-        Assert.Equal("الاختبار غير موجود", result.GetResultMessage());
+        result.IsSuccess.Should().BeFalse();
+        result.GetResultMessage().Should().Be("الاختبار غير موجود");
     }
 
     #endregion

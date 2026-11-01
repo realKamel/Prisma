@@ -2,6 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -16,12 +17,18 @@ namespace Prisma.Application.Tests.Features.Lessons.Commands;
 public class DeleteLessonCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
     private readonly IStorageService _storageService = Substitute.For<IStorageService>();
-    private readonly IVideoStorageService _videoStorageService = Substitute.For<IVideoStorageService>();
+    private readonly IVideoStorageService _videoStorageService =
+        Substitute.For<IVideoStorageService>();
     private readonly DeleteLessonCommandHandler _sut;
 
     public DeleteLessonCommandHandlerTests()
@@ -34,7 +41,8 @@ public class DeleteLessonCommandHandlerTests
             _currentUserService,
             _identityService,
             _storageService,
-            _videoStorageService);
+            _videoStorageService
+        );
     }
 
     // NOTE: assumes UserRole exposes a `Role` navigation property with a `Name` string,
@@ -45,10 +53,7 @@ public class DeleteLessonCommandHandlerTests
         return new User
         {
             Id = userId,
-            Roles = new List<UserRole>
-            {
-                new UserRole { Role = new Role { Name = roleName } }
-            }
+            Roles = new List<UserRole> { new UserRole { Role = new Role { Name = roleName } } },
         };
     }
 
@@ -56,13 +61,15 @@ public class DeleteLessonCommandHandlerTests
         int id = 1,
         string? imageThumbnailUrl = null,
         List<int>? enrollmentIds = null,
-        List<string?>? sectionAssetIds = null)
+        List<string?>? sectionAssetIds = null
+    )
     {
         return new LessonDeletionInfo(
             id,
             imageThumbnailUrl,
             enrollmentIds ?? new List<int>(),
-            sectionAssetIds ?? new List<string?>());
+            sectionAssetIds ?? new List<string?>()
+        );
     }
 
     [Fact]
@@ -75,7 +82,9 @@ public class DeleteLessonCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.Unauthorized);
-        await _identityService.DidNotReceive().FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+        await _identityService
+            .DidNotReceive()
+            .FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -118,8 +127,11 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((LessonDeletionInfo?)null);
 
         var command = new DeleteLessonCommand(1);
@@ -140,8 +152,11 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
@@ -164,15 +179,19 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
 
         await _sut.Handle(command, CancellationToken.None);
 
-        await _storageService.Received(1)
+        await _storageService
+            .Received(1)
             .DeleteFileAsync("prisma", lessonInfo.ImageThumbnailUrl!, Arg.Any<CancellationToken>());
     }
 
@@ -185,15 +204,19 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
 
         await _sut.Handle(command, CancellationToken.None);
 
-        await _storageService.DidNotReceive()
+        await _storageService
+            .DidNotReceive()
             .DeleteFileAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
@@ -204,20 +227,28 @@ public class DeleteLessonCommandHandlerTests
         var fakeUser = CreateUserWithRole(userId, AppRoles.Teacher);
         var lessonInfo = CreateLessonInfo(
             id: 1,
-            sectionAssetIds: new List<string?> { "asset-123", null });
+            sectionAssetIds: new List<string?> { "asset-123", null }
+        );
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
 
         await _sut.Handle(command, CancellationToken.None);
 
-        await _videoStorageService.Received(1).DeleteVideoAsync("asset-123", Arg.Any<CancellationToken>());
-        await _videoStorageService.Received(1).DeleteVideoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _videoStorageService
+            .Received(1)
+            .DeleteVideoAsync("asset-123", Arg.Any<CancellationToken>());
+        await _videoStorageService
+            .Received(1)
+            .DeleteVideoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -229,18 +260,19 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
 
         await _sut.Handle(command, CancellationToken.None);
 
-        await _enrollmentRepo.Received(1)
-            .DeleteAsync(Arg.Is<Enrollment>(e => e.Id == 10), Arg.Any<CancellationToken>());
-        await _enrollmentRepo.Received(1)
-            .DeleteAsync(Arg.Is<Enrollment>(e => e.Id == 20), Arg.Any<CancellationToken>());
+        _enrollmentRepo.Received(1).Delete(Arg.Is<Enrollment>(e => e.Id == 10));
+        _enrollmentRepo.Received(1).Delete(Arg.Is<Enrollment>(e => e.Id == 20));
         _lessonRepo.Received(1).Delete(Arg.Is<Lesson>(l => l.Id == 1));
     }
 
@@ -253,15 +285,19 @@ public class DeleteLessonCommandHandlerTests
 
         _currentUserService.UserId.Returns(userId);
         _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns(fakeUser);
-        _lessonRepo.FirstOrDefaultAsync(
-                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonWithProjectionSpec<LessonDeletionInfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(lessonInfo);
 
         var command = new DeleteLessonCommand(1);
 
         await _sut.Handle(command, CancellationToken.None);
 
-        await _enrollmentRepo.DidNotReceive()
+        await _enrollmentRepo
+            .DidNotReceive()
             .DeleteAsync(Arg.Any<Enrollment>(), Arg.Any<CancellationToken>());
     }
 }

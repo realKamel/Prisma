@@ -1,23 +1,19 @@
 using FluentAssertions;
 using NSubstitute;
-using Ardalis.Result;
 using Prisma.Application.Features.AcademicYears.Dtos;
 using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Prisma.Application.Tests.Features.AcademicYears.Queries;
 
 public class GetAllAcademicYearsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<IRepository<AcademicYear, int>>();
+    private readonly IRepository<AcademicYear, int> _academicYearRepo = Substitute.For<
+        IRepository<AcademicYear, int>
+    >();
     private readonly GetAllAcademicYearsQueryHandler _sut;
 
     public GetAllAcademicYearsQueryHandlerTests()
@@ -32,15 +28,19 @@ public class GetAllAcademicYearsQueryHandlerTests
     {
         // Arrange
         var query = new GetAllAcademicYearsQuery();
-        var fakeYears = new List<AcademicYear>
+        var fakeYears = new List<AcademicYearOptionDto>
         {
-            new() { Id = 1, Title = "الصف الأول الإعدادي" },
-            new() { Id = 2, Title = "الصف الثاني الإعدادي" },
-            new() { Id = 3, Title = "الصف الثالث الإعدادي" }
+            new() { Id = 1, Name = "الصف الأول الإعدادي" },
+            new() { Id = 2, Name = "الصف الثاني الإعدادي" },
+            new() { Id = 3, Name = "الصف الثالث الإعدادي" },
         };
 
         // عمل Mock للـ ListAsync لتستقبل الـ Specification وترجع البيانات الوهمية
-        _academicYearRepo.ListAsync(Arg.Any<AllAcademicYearsSpecification>(), Arg.Any<CancellationToken>())
+        _academicYearRepo
+            .ListAsync(
+                Arg.Any<AllAcademicYearsSpecification<AcademicYearOptionDto>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeYears);
 
         // Act
@@ -68,8 +68,12 @@ public class GetAllAcademicYearsQueryHandlerTests
         // Arrange
         var query = new GetAllAcademicYearsQuery();
 
-        _academicYearRepo.ListAsync(Arg.Any<AllAcademicYearsSpecification>(), Arg.Any<CancellationToken>())
-            .Returns(new List<AcademicYear>());
+        _academicYearRepo
+            .ListAsync(
+                Arg.Any<AllAcademicYearsSpecification<AcademicYearOptionDto>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(new List<AcademicYearOptionDto>());
 
         // Act
         var result = await _sut.Handle(query, CancellationToken.None);

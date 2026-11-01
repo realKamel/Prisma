@@ -5,6 +5,7 @@ using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Commands.CreateUser;
+using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
@@ -26,12 +27,28 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WhenEmailOrPhoneAlreadyExists_ThrowsConflictException()
     {
         // Arrange
-        _identityService.FindByEmailOrPhoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByEmailOrPhoneAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(new Student());
 
         var command = new CreateUserCommand(
-            "محمد", "علي", "حسن", "إبراهيم", "01012345678", "m@test.com", "Passw0rd!",
-            AppRoles.Student, 1, Guid.NewGuid(), "01198765432", "English");
+            "محمد",
+            "علي",
+            "حسن",
+            "إبراهيم",
+            "01012345678",
+            "m@test.com",
+            "Passw0rd!",
+            AppRoles.Student,
+            1,
+            Guid.NewGuid(),
+            "01198765432",
+            "English"
+        );
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -45,15 +62,35 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WhenCreatingStudent_SetsStudentSpecificFieldsAndAssignsRole()
     {
         // Arrange
-        _identityService.FindByEmailOrPhoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByEmailOrPhoneAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((User?)null);
-        _identityService.CreateAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(IdentityResult.Success);
-        _identityService.AddToRoleAsync(Arg.Any<User>(), AppRoles.Student).Returns(IdentityResult.Success);
+        _identityService
+            .CreateAsync(Arg.Any<User>(), Arg.Any<string>())
+            .Returns(IdentityResult.Success);
+        _identityService
+            .AddToRoleAsync(Arg.Any<User>(), AppRoles.Student)
+            .Returns(IdentityResult.Success);
 
         var teacherId = Guid.NewGuid();
         var command = new CreateUserCommand(
-            "محمد", "علي", "حسن", "إبراهيم", "01012345678", "m@test.com", "Passw0rd!",
-            AppRoles.Student, 2, teacherId, "01198765432", "English");
+            "محمد",
+            "علي",
+            "حسن",
+            "إبراهيم",
+            "01012345678",
+            "m@test.com",
+            "Passw0rd!",
+            AppRoles.Student,
+            2,
+            teacherId,
+            "01198765432",
+            "English"
+        );
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -62,11 +99,11 @@ public class CreateUserCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Role.Should().Be(AppRoles.Student);
         result.Value.GradeId.Should().Be(2);
-        result.Value.TeacherIds.Should().Contain(teacherId.ToString());
+        result.Value.ParentMobile.Should().Be("01198765432");
 
-        await _identityService.Received(1).CreateAsync(
-            Arg.Is<User>(u => u is Student && u.Email == "m@test.com"),
-            "Passw0rd!");
+        await _identityService
+            .Received(1)
+            .CreateAsync(Arg.Is<User>(u => u is Student && u.Email == "m@test.com"), "Passw0rd!");
         await _identityService.Received(1).AddToRoleAsync(Arg.Any<User>(), AppRoles.Student);
     }
 
@@ -74,14 +111,38 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WhenCreatingTeacher_DoesNotSetStudentOnlyFields()
     {
         // Arrange
-        _identityService.FindByEmailOrPhoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByEmailOrPhoneAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((User?)null);
-        _identityService.CreateAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(IdentityResult.Success);
-        _identityService.AddToRoleAsync(Arg.Any<User>(), AppRoles.Teacher).Returns(IdentityResult.Success);
+        _identityService
+            .CreateAsync(Arg.Any<User>(), Arg.Any<string>())
+            .Returns(IdentityResult.Success);
+        _identityService
+            .AddToRoleAsync(Arg.Any<User>(), AppRoles.Teacher)
+            .Returns(IdentityResult.Success);
+        _unitOfWork
+            .GetOrCreateRepository<AcademicYear, int>()
+            .ListAsync(Arg.Any<CancellationToken>())
+            .Returns(new List<AcademicYear>());
 
         var command = new CreateUserCommand(
-            "سارة", "خالد", "عبدالله", "محمود", "01198765432", "s@test.com", "Passw0rd!",
-            AppRoles.Teacher, null, null, null, null);
+            "سارة",
+            "خالد",
+            "عبدالله",
+            "محمود",
+            "01198765432",
+            "s@test.com",
+            "Passw0rd!",
+            AppRoles.Teacher,
+            null,
+            null,
+            null,
+            null
+        );
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -89,21 +150,38 @@ public class CreateUserCommandHandlerTests
         // Assert
         result.Value.Role.Should().Be(AppRoles.Teacher);
         result.Value.GradeId.Should().BeNull();
-        result.Value.TeacherIds.Should().BeNull();
+        result.Value.TeacherIds.Should().BeEmpty();
     }
 
     [Fact]
     public async Task Handle_WhenIdentityCreateFails_ThrowsBadRequestException()
     {
         // Arrange
-        _identityService.FindByEmailOrPhoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByEmailOrPhoneAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((User?)null);
-        _identityService.CreateAsync(Arg.Any<User>(), Arg.Any<string>())
+        _identityService
+            .CreateAsync(Arg.Any<User>(), Arg.Any<string>())
             .Returns(IdentityResult.Failed(new IdentityError { Description = "Weak password" }));
 
         var command = new CreateUserCommand(
-            "سارة", "خالد", "عبدالله", "محمود", "01198765432", "s@test.com", "weak",
-            AppRoles.Teacher, null, null, null, null);
+            "سارة",
+            "خالد",
+            "عبدالله",
+            "محمود",
+            "01198765432",
+            "s@test.com",
+            "weak",
+            AppRoles.Teacher,
+            null,
+            null,
+            null,
+            null
+        );
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -117,12 +195,28 @@ public class CreateUserCommandHandlerTests
     public async Task Handle_WhenUnknownRole_ThrowsBadRequestException()
     {
         // Arrange
-        _identityService.FindByEmailOrPhoneAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByEmailOrPhoneAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((User?)null);
 
         var command = new CreateUserCommand(
-            "س", "خ", "ع", "م", "01198765432", "s@test.com", "Passw0rd!",
-            "SuperAdmin", null, null, null, null); // not a real role
+            "س",
+            "خ",
+            "ع",
+            "م",
+            "01198765432",
+            "s@test.com",
+            "Passw0rd!",
+            "SuperAdmin",
+            null,
+            null,
+            null,
+            null
+        ); // not a real role
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);

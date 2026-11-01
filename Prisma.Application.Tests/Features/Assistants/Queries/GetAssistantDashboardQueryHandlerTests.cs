@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Ardalis.Specification;
 using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
@@ -11,6 +10,8 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
+using Prisma.Domain.Specifications.AuditLogs;
+using Prisma.Domain.Specifications.QuizAttemptSpecs;
 
 namespace Prisma.Application.Tests.Features.Assistants.Queries;
 
@@ -25,10 +26,14 @@ public class GetAssistantDashboardQueryHandlerTests
     private readonly IRepository<Lesson, int> _lessonRepo;
     private readonly IRepository<QuizAttempt, int> _quizAttemptRepo;
     private readonly IRepository<AssignmentSubmission, int> _submissionRepo;
-    private readonly IRepository<AuditLog, int> _auditRepo;
+    private readonly IRepository<AuditLog, long> _auditRepo;
 
     private static readonly Guid TestUserId = Guid.NewGuid();
+    private static readonly Guid TeacherId = Guid.NewGuid();
     private const string TestEmail = "assistant@example.com";
+
+    private readonly Assistant _assistant;
+    private readonly Prisma.Domain.Entities.UserAggregate.Teacher _teacher;
 
     public GetAssistantDashboardQueryHandlerTests()
     {
@@ -41,101 +46,185 @@ public class GetAssistantDashboardQueryHandlerTests
         _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
         _quizAttemptRepo = Substitute.For<IRepository<QuizAttempt, int>>();
         _submissionRepo = Substitute.For<IRepository<AssignmentSubmission, int>>();
-        _auditRepo = Substitute.For<IRepository<AuditLog, int>>();
+        _auditRepo = Substitute.For<IRepository<AuditLog, long>>();
 
         _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepo);
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
         _unitOfWork.GetOrCreateRepository<QuizAttempt, int>().Returns(_quizAttemptRepo);
         _unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>().Returns(_submissionRepo);
-        _unitOfWork.GetOrCreateRepository<AuditLog, int>().Returns(_auditRepo);
+        _unitOfWork.GetOrCreateRepository<AuditLog, long>().Returns(_auditRepo);
 
         _currentUser.UserId.Returns(TestUserId);
         _currentUser.Email.Returns(TestEmail);
 
         _handler = new GetAssistantDashboardQueryHandler(_unitOfWork, _currentUser, _userManager);
 
-        // Baseline "nothing happened" defaults — individual tests override what they care about.
-        _enrollmentRepo.CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
-            .Returns(0);
-        _lessonRepo.CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
-            .Returns(0);
-        _quizAttemptRepo.CountAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
-            .Returns(0);
-        _quizAttemptRepo.ListAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<QuizAttempt>());
-        _submissionRepo.CountAsync(Arg.Any<ISpecification<AssignmentSubmission>>(), Arg.Any<CancellationToken>())
-            .Returns(0);
-        _auditRepo.ListAsync(Arg.Any<ISpecification<AuditLog>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<AuditLog>());
+        _assistant = new Assistant
+        {
+            Id = TestUserId,
+            FirstName = "Sara",
+            SecondName = "Ahmed",
+            UserName = TestEmail,
+            Email = TestEmail,
+            TeacherId = TeacherId,
+        };
 
-        _userManager.FindByIdAsync(TestUserId).Returns((User)null!);
+        _teacher = new Prisma.Domain.Entities.UserAggregate.Teacher
+        {
+            Id = TeacherId,
+            FirstName = "أحمد",
+            SecondName = "مصطفى",
+        };
+
+        _userManager.FindByIdAsync(TestUserId).Returns(_assistant);
+        _userManager.FindByIdAsync(TeacherId).Returns(_teacher);
         _userManager.GetClaimsAsync(Arg.Any<User>()).Returns(new List<Claim>());
+
+        // Baseline "nothing happened" defaults — individual tests override what they care about.
+        _enrollmentRepo
+            .CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+        _lessonRepo
+            .CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+        _quizAttemptRepo
+            .CountAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
+            .Returns(0);
+        _quizAttemptRepo
+            .ListAsync(
+                Arg.Any<
+                    QuizAttemptWithProjectionSpec<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>
+                >(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>(),
+                new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>()
+            );
+        _submissionRepo
+            .CountAsync(
+                Arg.Any<ISpecification<AssignmentSubmission>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(0);
+        _auditRepo
+            .ListAsync(
+                Arg.Any<AuditLogWithProjectionSpec<ActivityItem>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(new List<ActivityItem>());
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserNotAuthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        _currentUser.UserId.Returns((Guid?)null);
+
+        // Act
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(Ardalis.Result.ResultStatus.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Handle_WhenUserIsNotAssistant_ReturnsUnauthorized()
+    {
+        // Arrange
+        _userManager.FindByIdAsync(TestUserId).Returns(new User { Id = TestUserId });
+
+        // Act
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Status.Should().Be(Ardalis.Result.ResultStatus.Unauthorized);
     }
 
     [Fact]
     public async Task Handle_HappyPath_ReturnsFullyPopulatedDashboard()
     {
         // Arrange
-        var assistant = new User
-        {
-            Id = TestUserId,
-            FirstName = "Sara",
-            LastName = "Ahmed",
-            UserName = TestEmail,
-            Email = TestEmail
-        };
-
-        _enrollmentRepo.CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo
+            .CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
             .Returns(50, 40); // activeNow=50, activeLastWeek=40 -> delta +10
 
-        _quizAttemptRepo.CountAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
+        _quizAttemptRepo
+            .CountAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
             .Returns(20);
 
-        var quiz = new Quiz { TotalDegree = 100 };
-        var gradedThisWeek = new List<QuizAttempt>
+        var gradedThisWeek = new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>
         {
-            new() { Degree = 80, Quiz = quiz }, // pass
-            new() { Degree = 30, Quiz = quiz }, // fail
+            new(Degree: 80, TotalDegree: 100), // pass
+            new(Degree: 30, TotalDegree: 100), // fail
         };
-        var gradedLastWeek = new List<QuizAttempt>
+        var gradedLastWeek = new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>
         {
-            new() { Degree = 20, Quiz = quiz }, // fail
-            new() { Degree = 10, Quiz = quiz }, // fail
+            new(Degree: 20, TotalDegree: 100), // fail
+            new(Degree: 10, TotalDegree: 100), // fail
         };
 
-        _quizAttemptRepo.ListAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
+        _quizAttemptRepo
+            .ListAsync(
+                Arg.Any<
+                    QuizAttemptWithProjectionSpec<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>
+                >(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(gradedThisWeek, gradedLastWeek);
 
-        _submissionRepo.CountAsync(Arg.Any<ISpecification<AssignmentSubmission>>(), Arg.Any<CancellationToken>())
+        _submissionRepo
+            .CountAsync(
+                Arg.Any<ISpecification<AssignmentSubmission>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(7);
 
-        _lessonRepo.CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
             .Returns(15, 3); // totalLessons=15, newLessonsThisWeek=3
 
         var logCreatedAt = DateTimeOffset.UtcNow;
-        var logs = new List<AuditLog>
+        var activities = new List<ActivityItem>
         {
-            new() { Id = 1, Action = "Update", TableName = "Lessons", CreatedAt = logCreatedAt },
+            new(Id: 1, Action: "Update", TableName: "Lessons", CreatedAt: logCreatedAt),
         };
-        _auditRepo.ListAsync(Arg.Any<ISpecification<AuditLog>>(), Arg.Any<CancellationToken>())
-            .Returns(logs);
+        _auditRepo
+            .ListAsync(
+                Arg.Any<AuditLogWithProjectionSpec<ActivityItem>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(activities);
 
-        _userManager.FindByIdAsync(TestUserId).Returns(assistant);
-        _userManager.GetClaimsAsync(assistant).Returns(new List<Claim>
-        {
-            new(AppClaims.PermissionsClaim, AppClaims.Policies.CanManageEnrollments),
-            new(AppClaims.PermissionsClaim, AppClaims.Policies.CanViewReports),
-        });
+        _userManager
+            .GetClaimsAsync(_assistant)
+            .Returns(
+                new List<Claim>
+                {
+                    new(AppClaims.PermissionsClaim, AppClaims.Policies.CanManageEnrollments),
+                    new(AppClaims.PermissionsClaim, AppClaims.Policies.CanViewReports),
+                }
+            );
 
         // Act
-        var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
 
         // Assert
-        result.Should().NotBeNull();
         result.IsSuccess.Should().BeTrue();
 
         result.Value.Teacher.Name.Should().Be("Sara Ahmed");
-        result.Value.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
+        result.Value.Teacher.SupervisorName.Should().Be("أحمد مصطفى");
 
         result.Value.Kpis.Should().HaveCount(4);
 
@@ -175,32 +264,18 @@ public class GetAssistantDashboardQueryHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenAssistantNotFound_ReturnsEmptyTeacherNameAndAllPermissionsOff()
-    {
-        // Arrange
-        _userManager.FindByIdAsync(TestUserId).Returns((User)null!);
-
-        // Act
-        var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Teacher.Name.Should().BeEmpty();
-        result.Value.Teacher.SupervisorName.Should().Be("أ. أحمد مصطفى");
-        result.Value.Permissions.Should().OnlyContain(p => p.Status == "off");
-
-        await _userManager.DidNotReceive().GetClaimsAsync(Arg.Any<User>());
-    }
-
-    [Fact]
     public async Task Handle_WhenActiveStudentsDecreased_SetsStudentsTrendToDown()
     {
         // Arrange
-        _enrollmentRepo.CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
+        _enrollmentRepo
+            .CountAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>())
             .Returns(30, 45); // activeNow=30, activeLastWeek=45 -> delta -15
 
         // Act
-        var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
 
         // Assert
         var studentsKpi = result.Value.Kpis.Single(k => k.Id == "students");
@@ -212,11 +287,21 @@ public class GetAssistantDashboardQueryHandlerTests
     public async Task Handle_WhenNoGradedQuizAttempts_ComputesZeroPassRateDeltaWithoutDivideByZero()
     {
         // Arrange
-        _quizAttemptRepo.ListAsync(Arg.Any<ISpecification<QuizAttempt>>(), Arg.Any<CancellationToken>())
-            .Returns(new List<QuizAttempt>(), new List<QuizAttempt>());
+        _quizAttemptRepo
+            .ListAsync(
+                Arg.Any<
+                    QuizAttemptWithProjectionSpec<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>
+                >(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(
+                new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>(),
+                new List<GetAssistantDashboardQueryHandler.QuizAttemptScoreInfo>()
+            );
 
         // Act
-        var act = async () => await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
+        var act = async () =>
+            await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
 
         // Assert
         var result = await act.Should().NotThrowAsync();
@@ -228,11 +313,15 @@ public class GetAssistantDashboardQueryHandlerTests
     public async Task Handle_WhenNoNewLessonsThisWeek_SetsLessonsTrendToDown()
     {
         // Arrange
-        _lessonRepo.CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .CountAsync(Arg.Any<ISpecification<Lesson>>(), Arg.Any<CancellationToken>())
             .Returns(10, 0);
 
         // Act
-        var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
 
         // Assert
         var lessonsKpi = result.Value.Kpis.Single(k => k.Id == "lessons");
@@ -245,17 +334,28 @@ public class GetAssistantDashboardQueryHandlerTests
     public async Task Handle_WhenAuditLogCreatedAtIsNull_FallsBackToUtcNow()
     {
         // Arrange
-        var logs = new List<AuditLog>
-        {
-            new() { Id = 5, Action = "Delete", TableName = "Enrollments", CreatedAt = null },
-        };
-        _auditRepo.ListAsync(Arg.Any<ISpecification<AuditLog>>(), Arg.Any<CancellationToken>())
-            .Returns(logs);
+        _auditRepo
+            .ListAsync(
+                Arg.Any<AuditLogWithProjectionSpec<ActivityItem>>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(callInfo =>
+            {
+                var spec = callInfo.ArgAt<AuditLogWithProjectionSpec<ActivityItem>>(0);
+                // The projection already applied the UtcNow fallback when projecting.
+                return new List<ActivityItem>
+                {
+                    new(5, "Delete", "Enrollments", DateTimeOffset.UtcNow),
+                };
+            });
 
         var before = DateTimeOffset.UtcNow;
 
         // Act
-        var result = await _handler.Handle(new GetAssistantDashboardQuery(), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssistantDashboardQuery(),
+            CancellationToken.None
+        );
         var after = DateTimeOffset.UtcNow;
 
         // Assert

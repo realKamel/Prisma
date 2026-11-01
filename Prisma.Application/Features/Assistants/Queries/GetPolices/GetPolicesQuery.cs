@@ -1,6 +1,6 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 
 namespace Prisma.Application.Features.Assistants.Queries.GetPolices;
 
-public record GetPolicesQuery() : IRequest<Result<string[]>>;
+public sealed record GetPolicesQuery() : IRequest<Result<string[]>>;

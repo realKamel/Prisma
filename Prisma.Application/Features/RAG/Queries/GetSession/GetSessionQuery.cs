@@ -1,10 +1,19 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
 
 namespace Prisma.Application.Features.RAG.Queries.GetSession;
 
-public record GetDetailedRagSessionQuery(Guid Id) : IRequest<Result<GetDetailedRagSessionQueryResponse>>;
+public sealed record GetDetailedRagSessionQuery(Guid Id)
+    : IRequest<Result<GetDetailedRagSessionQueryResponse>>;
 
-public record GetDetailedRagSessionQueryResponse(Guid ConversationId, List<ChatMessagesDto> messages);
+public sealed record GetDetailedRagSessionQueryResponse(
+    Guid ConversationId,
+    IList<ChatMessagesDto> messages
+);
 
-public record ChatMessagesDto(string? MessageId, string MessageText, string ChatRole, DateTimeOffset CreatedAt);
+public sealed record ChatMessagesDto(
+    string? MessageId,
+    string MessageText,
+    string ChatRole,
+    DateTimeOffset CreatedAt
+);

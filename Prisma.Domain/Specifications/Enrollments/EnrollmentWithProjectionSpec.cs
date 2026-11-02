@@ -16,7 +16,6 @@ public class EnrollmentWithProjectionSpec<TResult> : Specification<Enrollment, T
             .Where(e => e.StudentId == studentId)
             .AsNoTracking()
             .OrderByDescending(e => e.CreatedAt)
-            .Take(9)
             .Select(projection);
     }
     public EnrollmentWithProjectionSpec(

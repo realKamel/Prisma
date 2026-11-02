@@ -15,10 +15,13 @@ public record GetTeacherLessonsQuery(
 
 public class TeacherLessonsRequest
 {
-    public PaginationParams Pagination { get; set; } = new();
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
     public string? Search { get; set; }
     public LessonStatus? Status { get; set; }
     public TeacherLessonSort Sort { get; set; } = TeacherLessonSort.Newest;
+
+    public PaginationParams Pagination => new() { PageNumber = PageNumber, PageSize = PageSize };
 }
 /// <summary>One page of lessons plus per-status totals (ignoring search/status filters).</summary>
 public record TeacherLessonsResponse(

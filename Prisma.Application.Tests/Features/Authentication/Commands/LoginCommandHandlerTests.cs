@@ -7,7 +7,6 @@ using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Authentication.Commands.Login;
 using Prisma.Domain.Entities.UserAggregate;
 
-
 namespace Prisma.Application.Tests.Features.Authentication.Commands;
 
 public class LoginCommandHandlerTests
@@ -19,12 +18,19 @@ public class LoginCommandHandlerTests
 
     private readonly User _fakeUser = new()
     {
-        Id = Guid.CreateVersion7(), Email = "user@test.com", FirstName = "John", LastName = "Doe",
+        Id = Guid.CreateVersion7(),
+        Email = "user@test.com",
+        FirstName = "John",
+        LastName = "Doe",
     };
 
     public LoginCommandHandlerTests()
     {
-        _sut = new LoginCommandHandler(_identityService, _jwtTokenService, tokenService: _tokenService);
+        _sut = new LoginCommandHandler(
+            _identityService,
+            _jwtTokenService,
+            tokenService: _tokenService
+        );
     }
 
     // ── Happy path ──────────────────────────────────────────────────────────
@@ -38,24 +44,20 @@ public class LoginCommandHandlerTests
             new UserRole
             {
                 UserId = _fakeUser.Id,
-                Role = new Microsoft.AspNetCore.Identity.IdentityRole<Guid> { Name = AppRoles.Student },
+                Role = new Role() { Name = AppRoles.Student },
             }
         );
         var roles = new List<string> { AppRoles.Student };
         var permissions = new List<Claim>();
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(true);
-        _identityService.GetRolesAsync(_fakeUser)
-            .Returns(roles);
-        _identityService.GetClaimsAsync(_fakeUser)
-            .Returns(permissions);
-        _jwtTokenService.GenerateAccessToken(default!, default!, default!, default!)
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(true);
+        _identityService.GetRolesAsync(_fakeUser).Returns(roles);
+        _identityService.GetClaimsAsync(_fakeUser).Returns(permissions);
+        _jwtTokenService
+            .GenerateAccessToken(default!, default!, default!, default!)
             .ReturnsForAnyArgs(AppCookies.AccessToken);
-        _jwtTokenService.GenerateRefreshToken()
-            .Returns(AppCookies.RefreshToken);
+        _jwtTokenService.GenerateRefreshToken().Returns(AppCookies.RefreshToken);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -75,14 +77,12 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(true);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(true);
         _identityService.GetRolesAsync(_fakeUser).Returns(new List<string>());
-        _identityService.GetClaimsAsync(_fakeUser)
-            .Returns(new List<Claim>());
-        _jwtTokenService.GenerateAccessToken(default!, default!, default!, default!)
+        _identityService.GetClaimsAsync(_fakeUser).Returns(new List<Claim>());
+        _jwtTokenService
+            .GenerateAccessToken(default!, default!, default!, default!)
             .ReturnsForAnyArgs("access-token");
         _jwtTokenService.GenerateRefreshToken().Returns("refresh-token");
 
@@ -98,14 +98,14 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(true);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(true);
         _identityService.GetRolesAsync(_fakeUser).Returns(new List<string>());
-        _identityService.GetClaimsAsync(_fakeUser)
+        _identityService
+            .GetClaimsAsync(_fakeUser)
             .Returns(new List<System.Security.Claims.Claim>());
-        _jwtTokenService.GenerateAccessToken(default!, default!, default!, default!)
+        _jwtTokenService
+            .GenerateAccessToken(default!, default!, default!, default!)
             .ReturnsForAnyArgs("at");
         _jwtTokenService.GenerateRefreshToken().Returns("rt");
 
@@ -113,7 +113,9 @@ public class LoginCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _tokenService.Received(1).SaveRefreshTokenAsync(_fakeUser.Id, "rt", Arg.Any<TimeSpan?>());
+        await _tokenService
+            .Received(1)
+            .SaveRefreshTokenAsync(_fakeUser.Id, "rt", Arg.Any<TimeSpan?>());
     }
 
     [Fact]
@@ -122,16 +124,16 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(true);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(true);
 
         _identityService.GetRolesAsync(_fakeUser).Returns(new List<string>()); // empty
 
-        _identityService.GetClaimsAsync(_fakeUser)
+        _identityService
+            .GetClaimsAsync(_fakeUser)
             .Returns(new List<System.Security.Claims.Claim>());
-        _jwtTokenService.GenerateAccessToken(default!, default!, default!, default!)
+        _jwtTokenService
+            .GenerateAccessToken(default!, default!, default!, default!)
             .ReturnsForAnyArgs("at");
         _jwtTokenService.GenerateRefreshToken().Returns("rt");
 
@@ -150,8 +152,7 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("ghost@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns((User?)null);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns((User?)null);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -167,14 +168,14 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("ghost@test.com", null, "P@ssw0rd");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns((User?)null);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns((User?)null);
 
         // Act
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        await _identityService.DidNotReceive()
+        await _identityService
+            .DidNotReceive()
             .CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>());
     }
 
@@ -186,10 +187,8 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "wrong");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(false);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(false);
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -205,18 +204,21 @@ public class LoginCommandHandlerTests
         // Arrange
         var command = new LoginCommand("user@test.com", null, "wrong");
 
-        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone)
-            .Returns(_fakeUser);
-        _identityService.CheckPasswordAsync(_fakeUser, command.Password)
-            .Returns(false);
+        _identityService.FindByEmailOrPhoneAsync(command.Email, command.Phone).Returns(_fakeUser);
+        _identityService.CheckPasswordAsync(_fakeUser, command.Password).Returns(false);
 
         // Act
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        _jwtTokenService.DidNotReceive()
-            .GenerateAccessToken(Arg.Any<Guid>(), Arg.Any<string>(),
-                Arg.Any<List<string>>(), Arg.Any<List<Claim>>());
+        _jwtTokenService
+            .DidNotReceive()
+            .GenerateAccessToken(
+                Arg.Any<Guid>(),
+                Arg.Any<string>(),
+                Arg.Any<List<string>>(),
+                Arg.Any<List<Claim>>()
+            );
         _jwtTokenService.DidNotReceive().GenerateRefreshToken();
     }
 }

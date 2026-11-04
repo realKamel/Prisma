@@ -1,21 +1,46 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetGradingList;
 
-internal sealed class GetGradingListQueryHandler(IUnitOfWork unitOfWork)
+internal sealed class GetGradingListQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetGradingListQuery, Result<GradingListResponseDto>>
 {
     public async Task<Result<GradingListResponseDto>> Handle(GetGradingListQuery request, CancellationToken ct)
     {
+        var userId = currentUserService.UserId;
+        if (userId is null)
+        {
+            return Result.Unauthorized();
+        }
+
+        var user = await identityService.FindByIdAsync(userId.Value, ct);
+
+        if (user is null)
+            return Result.NotFound();
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
+
+        var teacherId = userId.Value;
+
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         var attempts = await attemptRepo.ListAsync(
-            new GradingAttemptsSpecification(request.Scope, request.QuizId), ct);
+            new GradingAttemptsSpecification(request.Scope, request.QuizId, teacherId), ct);
 
         // Apply search in-memory (student name or quiz title)
         var filtered = attempts.AsEnumerable();

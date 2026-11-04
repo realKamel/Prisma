@@ -11,10 +11,10 @@ using Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 using Prisma.Application.Features.Quizzes.Commands.DeleteQuiz;
 using Prisma.Application.Features.Quizzes.Commands.ExtractQuestionsFromPdf;
-using Prisma.Application.Features.Quizzes.Commands.OverrideAttemptScore;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetExtractionStatus;
 using Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
+using Prisma.Application.Features.Assignments.Queries.GetLessonsAvailableForAssignment;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStudents;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizDetail;
 using Prisma.Application.Features.Quizzes.Queries.GetTeacherQuizzesList;
@@ -37,13 +37,18 @@ public class TeacherQuizzesController(ISender sender) : ApiController
         return result;
     }
 
-    [HttpGet("available-lessons")]
-    public async Task<Result<List<LessonOptionDto>>> GetAvailableLessons(CancellationToken ct)
+    [HttpGet("available-lessons-for-Quiz")]
+    public async Task<Result<List<LessonOptionDto>>> GetAvailableLessonsForQuiz(CancellationToken ct)
     {
         var result = await sender.Send(new GetLessonsAvailableForQuizQuery(), ct);
         return result;
     }
-
+    [HttpGet("available-lessons-for-assignment")]
+    public async Task<Result<List<LessonOptionDto>>> GetAvailableLessonsForAssignment(CancellationToken ct)
+    {
+        var result = await sender.Send(new GetLessonsAvailableForAssignmentQuery(), ct);
+        return result;
+    }
     [HttpGet("academic-years")]
     public async Task<Result<List<AcademicYearOptionDto>>> GetAcademicYears(CancellationToken ct)
     {

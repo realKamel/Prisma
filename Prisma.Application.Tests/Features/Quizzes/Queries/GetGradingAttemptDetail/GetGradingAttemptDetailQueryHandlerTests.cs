@@ -47,13 +47,13 @@ public class GetGradingAttemptDetailQueryHandlerTests
     private static Quiz CreateQuiz(
         string title = "Quiz",
         decimal totalDegree = 100m,
-        List<QuestionLessonQuiz>? questions = null) =>
+        List<QuizQuestion>? questions = null) =>
         new()
         {
             Id = 1,
             Title = title,
             TotalDegree = totalDegree,
-            Questions = questions ?? new List<QuestionLessonQuiz>()
+            Questions = questions ?? new List<QuizQuestion>()
         };
 
     private static QuizAttempt CreateAttempt(
@@ -294,7 +294,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
         var quiz = CreateQuiz(questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 5m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 5m }
         ]);
         var answer = new AttemptAnswer { Id = 50, QuestionId = 1, ChoiceId = 100, IsCorrect = true, Score = 5m };
         var attempt = CreateAttempt(quiz: quiz, answers: [answer]);
@@ -325,7 +325,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var question = CreateWrittenQuestion(id: 1);
         var quiz = CreateQuiz(questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 10m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 10m }
         ]);
         var answer = new AttemptAnswer { Id = 51, QuestionId = 1, TextAnswer = "student's response", Score = null };
         var attempt = CreateAttempt(quiz: quiz, answers: [answer]);
@@ -354,7 +354,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
         var quiz = CreateQuiz(questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 5m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 5m }
         ]);
         var attempt = CreateAttempt(quiz: quiz, answers: []); // no answers submitted
         SetupAttempt(attempt);
@@ -381,7 +381,7 @@ public class GetGradingAttemptDetailQueryHandlerTests
         var question = CreateWrittenQuestion(id: 1);
         var quiz = CreateQuiz(questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 20m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 20m }
         ]);
         SetupAttempt(CreateAttempt(quiz: quiz));
 

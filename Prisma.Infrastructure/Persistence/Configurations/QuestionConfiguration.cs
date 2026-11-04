@@ -24,9 +24,9 @@ public class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasForeignKey(a => a.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasMany(q => q.QuestionLessons)
-            .WithOne(ql => ql.Question)
-            .HasForeignKey(ql => ql.QuestionId)
+        builder.HasMany(q => q.QuizQuestions)
+            .WithOne(qq => qq.Question)
+            .HasForeignKey(qq => qq.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(x => !x.IsDeleted);

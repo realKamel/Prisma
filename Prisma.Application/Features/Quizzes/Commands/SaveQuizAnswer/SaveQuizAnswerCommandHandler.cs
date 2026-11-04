@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -20,7 +19,7 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         
         var attempt = await attemptRepo
-            .FirstOrDefaultAsync(new AttemptByIdAndStudentSpecification(request.AttemptId, studentId), ct);
+            .FirstOrDefaultAsync(new AttemptWithAnswerForQuestionSpecification(request.AttemptId, studentId, request.QuestionId), ct);
 
         if (attempt is null)
             return Result.Error("المحاولة غير موجودة");
@@ -28,11 +27,9 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         if (attempt.Status != QuizAttemptStatus.InProgress)
             return Result.Error("لا يمكن تعديل الإجابات بعد التسليم");
 
-        var quiz = await unitOfWork.GetOrCreateRepository<Quiz, int>()
-        .FirstOrDefaultAsync(new QuizByIdSpecification(attempt.QuizId), ct);
-
-        var deadline = attempt.StartedAt + quiz!.TimeInMinutes + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
-        if (DateTimeOffset.UtcNow > deadline)
+        
+        var acceptUntil = attempt.Deadline + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
+        if (DateTimeOffset.UtcNow > acceptUntil)
             return Result.Error("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
 
         // Whitespace-only text means "cleared"
@@ -65,14 +62,12 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             }
         }
 
-        var answerRepo = unitOfWork.GetOrCreateRepository<AttemptAnswer, int>();
 
-        var existing = await answerRepo.FirstOrDefaultAsync(
-            new AttemptAnswerByAttemptAndQuestionSpecification(attempt.Id, request.QuestionId), ct);
+        var existing =  attempt.Answers.FirstOrDefault();
 
         if (existing is null)
         {
-            answerRepo.Add(new AttemptAnswer
+            unitOfWork.GetOrCreateRepository<AttemptAnswer, int>().AddAsync(new AttemptAnswer
             {
                 QuizAttemptId = attempt.Id,
                 StudentId = studentId,
@@ -101,7 +96,12 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         catch (UniqueConstraintViolationException) when (existing is null)
         {
             // A concurrent request inserted the same (attempt, question) row first.
-            // 409 is retryable on the client; the retry will take the update path.
+            return Result.Conflict("حدث تعارض أثناء الحفظ، سيتم إعادة المحاولة");
+        }
+        catch (ConcurrencyConflictException)
+        {
+            // Another save (or Submit/finalize) updated this answer first.
+            // Retryable: the retry re-reads and is either applied or ignored as stale by ClientSeq.
             return Result.Conflict("حدث تعارض أثناء الحفظ، سيتم إعادة المحاولة");
         }
         return Result.SuccessWithMessage("تم حفظ الإجابة");

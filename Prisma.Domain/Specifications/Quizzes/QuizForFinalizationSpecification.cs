@@ -1,4 +1,7 @@
-﻿using Ardalis.Specification;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Domain.Specifications.Quizzes;
@@ -11,6 +14,8 @@ public class QuizForFinalizationSpecification : Specification<Quiz>
             .Where(q => q.Id == quizId)
             .Include(q => q.Questions)
                 .ThenInclude(ql => ql.Question)
-                .ThenInclude(question => (question as MCQQuestion)!.Choices);
+                .ThenInclude(question => (question as MCQQuestion)!.Choices)
+            .AsSplitQuery();
+
     }
 }

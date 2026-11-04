@@ -83,7 +83,7 @@ public class GetQuizForTakingQueryHandlerTests
     QuizScope scope = QuizScope.ComprehensiveExam,
     int? lessonId = null,
     Lesson? lesson = null,
-    List<QuestionLessonQuiz>? questions = null)
+    List<QuizQuestion>? questions = null)
     {
         return new Quiz
         {
@@ -95,7 +95,7 @@ public class GetQuizForTakingQueryHandlerTests
             Scope = scope,
             LessonId = lessonId,
             Lesson = lesson ?? CreateLesson(), 
-            Questions = questions ?? new List<QuestionLessonQuiz>()
+            Questions = questions ?? new List<QuizQuestion>()
         };
     }
 
@@ -331,7 +331,7 @@ public class GetQuizForTakingQueryHandlerTests
     {
         // Arrange
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(questions: new List<QuestionLessonQuiz>
+        var quiz = CreateQuiz(questions: new List<QuizQuestion>
         {
             new() { QuestionId = question.Id, Question = question, Degree = 5m }
         });
@@ -364,7 +364,7 @@ public class GetQuizForTakingQueryHandlerTests
     {
         // Arrange
         var question = new WrittenQuestion { Id = 2, Title = "Explain X", Type = QuestionType.Written };
-        var quiz = CreateQuiz(questions: new List<QuestionLessonQuiz>
+        var quiz = CreateQuiz(questions: new List<QuizQuestion>
         {
             new() { QuestionId = question.Id, Question = question, Degree = 10m }
         });

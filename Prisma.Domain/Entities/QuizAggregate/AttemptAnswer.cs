@@ -23,4 +23,5 @@ public class AttemptAnswer : BaseEntity
 
     // Client-generated, monotonic (time-based) sequence used to ignore stale writes.
     public long ClientSeq { get; set; }
+    public uint Version { get; set; }
 }

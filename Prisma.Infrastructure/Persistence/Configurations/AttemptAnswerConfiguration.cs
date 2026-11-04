@@ -45,5 +45,7 @@ internal sealed class AttemptAnswerConfiguration : IEntityTypeConfiguration<Atte
 
         builder.Property(a => a.ClientSeq)
        .HasDefaultValue(0L);
+
+        builder.Property(a => a.Version).IsRowVersion();
     }
 }

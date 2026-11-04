@@ -33,7 +33,7 @@ public static partial class DependenciesInjection
 
         services.AddPaymentServices(configuration);
 
-        services.AddObjectStorageServices(configuration);
+        services.AddObjectStorageServices(configuration, environment);
 
         services.AddMuxStreaming();
 

@@ -6,13 +6,17 @@ namespace Prisma.Domain.Specifications.Quizzes;
 
 public class ExpiredInProgressAttemptsSpecification : Specification<QuizAttempt>
 {
-    public ExpiredInProgressAttemptsSpecification()
+    // Cursor pagination (Id > afterId) بدل Skip: أسرع، ومفيش خطر الـ loop اللانهائي لو attempt اتخطّى
+    public ExpiredInProgressAttemptsSpecification(int afterId, int batchSize, TimeSpan gracePeriod)
     {
-        var now = DateTimeOffset.UtcNow;
+        var cutoff = DateTimeOffset.UtcNow - gracePeriod;
+
         Query
-            .Include(a => a.Answers)
-            .Include(a => a.Quiz)
-            .Where(a => a.Status == QuizAttemptStatus.InProgress
-                     && a.StartedAt + a.Quiz.TimeInMinutes + TimeSpan.FromSeconds(10) < now);
+            .Where(a => a.Id > afterId
+                     && a.Status == QuizAttemptStatus.InProgress
+                     && a.Deadline < cutoff)
+            .OrderBy(a => a.Id)
+            .Take(batchSize)
+            .Include(a => a.Answers);
     }
 }

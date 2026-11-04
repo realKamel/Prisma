@@ -30,6 +30,6 @@ public class Quiz : BaseEntity
 
     public DateTimeOffset? DueDate { get; set; }
 
-    public ICollection<QuestionLessonQuiz> Questions { get; set; } = new List<QuestionLessonQuiz>();
+    public ICollection<QuizQuestion> Questions { get; set; } = new List<QuizQuestion>();
     public ICollection<QuizAttempt> Attempts { get; set; } = new List<QuizAttempt>();
 }

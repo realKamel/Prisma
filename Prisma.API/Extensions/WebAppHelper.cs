@@ -14,6 +14,7 @@ using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Common;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.DependenciesInjections;
@@ -288,7 +289,7 @@ public static partial class WebAppHelper
                 .Policies.OnException<HttpRequestException>()
                 .RetryWithCooldown(
                     TimeSpan.FromSeconds(3),
-                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds),
                     TimeSpan.FromSeconds(30)
                 );
         });

@@ -38,6 +38,10 @@ internal sealed class UnitOfWork(IDbContextOutbox<AppDbContext> outbox) : IUnitO
         {
             await outbox.SaveChangesAndFlushMessagesAsync(ct); // scrapes + saves + commits + flushes
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new ConcurrencyConflictException();
+        }
         catch (DbUpdateException ex)
             when (ex.InnerException
                     is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }
@@ -55,4 +59,6 @@ internal sealed class UnitOfWork(IDbContextOutbox<AppDbContext> outbox) : IUnitO
 
         return pending;
     }
+
+    public void ClearChangeTracker() => dbContext.ChangeTracker.Clear();
 }

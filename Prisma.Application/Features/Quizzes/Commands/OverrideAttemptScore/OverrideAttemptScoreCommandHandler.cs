@@ -37,8 +37,6 @@ public class OverrideAttemptScoreCommandHandler(IUnitOfWork unitOfWork)
         await unitOfWork.SaveChangesAsync(ct);
 
         return Result<OverrideScoreResultDto>.Success(
-    new OverrideScoreResultDto { FinalScore = attempt.Degree },
-    "تم تعديل الدرجة بنجاح"
-);
+            new OverrideScoreResultDto { FinalScore = attempt.Degree }, "تم تعديل الدرجة بنجاح");
     }
 }

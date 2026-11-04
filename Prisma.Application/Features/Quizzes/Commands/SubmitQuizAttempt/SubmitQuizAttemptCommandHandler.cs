@@ -36,7 +36,7 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
             return Result<SubmitQuizResultDto>.Success(ToDto(attempt, quiz, wasLate: false));
 
         // Same cutoff as SaveQuizAnswer, so both endpoints agree on "late"
-        var acceptAnswersUntil = attempt.StartedAt + quiz.TimeInMinutes
+        var acceptAnswersUntil = attempt.Deadline
                                  + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
         var isLate = DateTimeOffset.UtcNow > acceptAnswersUntil;
 
@@ -50,10 +50,11 @@ public class SubmitQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurrentUse
             // Answers + status + score must be committed by the same SaveChanges
             await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
         }
-        catch (UniqueConstraintViolationException)
+        catch (Exception ex) when (ex is UniqueConstraintViolationException or ConcurrencyConflictException)
         {
-            // A concurrent autosave inserted the same row first. Retryable: the retry finds it.
-            return Result<SubmitQuizResultDto>.Conflict("حدث تعارض أثناء التسليم، حاولي تاني");
+            // Another writer touched the attempt first (autosave, security event, or the auto-finalize job).
+            // Retryable: the retry re-reads fresh state, or hits the idempotent branch above.
+            return Result<SubmitQuizResultDto>.Conflict("حدث تعارض أثناء التسليم، حاول/ي تاني");
         }
 
         return Result<SubmitQuizResultDto>.Success(ToDto(attempt, quiz, isLate));

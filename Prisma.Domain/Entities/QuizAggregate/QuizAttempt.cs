@@ -17,6 +17,7 @@ public class QuizAttempt : BaseEntity
 
     public DateTimeOffset StartedAt { get; set; }
 
+    public DateTimeOffset Deadline { get; set; }
     public DateTimeOffset? SubmittedAt { get; set; }
 
     public QuizAttemptStatus Status { get; set; }
@@ -25,4 +26,6 @@ public class QuizAttempt : BaseEntity
 
     public int TabSwitchCount { get; set; }
     public int CopyPasteAttemptCount { get; set; }
+    public uint Version { get; set; }
+
 }

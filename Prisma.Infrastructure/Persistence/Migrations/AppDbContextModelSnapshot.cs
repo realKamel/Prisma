@@ -1370,6 +1370,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ChoiceId");
@@ -1542,56 +1548,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.UseTphMappingStrategy();
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuestionLessonQuiz", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("Degree")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("numeric(8,2)");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LessonQuizId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuestionId");
-
-                    b.HasIndex("LessonQuizId", "QuestionId")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    b.ToTable("QuestionLessonQuiz");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Quiz", b =>
                 {
                     b.Property<int>("Id")
@@ -1686,6 +1642,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset>("Deadline")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<decimal>("Degree")
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)");
@@ -1732,13 +1691,71 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id");
 
                     b.HasIndex("StudentId");
 
                     b.HasIndex("QuizId", "StudentId");
 
+                    b.HasIndex("Status", "Deadline");
+
                     b.ToTable("QuizAttempt");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Degree")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("numeric(8,2)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuizId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("QuizId", "QuestionId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("QuizQuestion");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
@@ -2873,25 +2890,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Question");
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuestionLessonQuiz", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.QuizAggregate.Quiz", "Quiz")
-                        .WithMany("Questions")
-                        .HasForeignKey("LessonQuizId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prisma.Domain.Entities.QuizAggregate.Question", "Question")
-                        .WithMany("QuestionLessons")
-                        .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Question");
-
-                    b.Navigation("Quiz");
-                });
-
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Quiz", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.AcademicYear", "AcademicYear")
@@ -2931,6 +2929,25 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Quiz");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizQuestion", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.QuizAggregate.Question", "Question")
+                        .WithMany("QuizQuestions")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prisma.Domain.Entities.QuizAggregate.Quiz", "Quiz")
+                        .WithMany("Questions")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Quiz");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
@@ -3067,7 +3084,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("AttemptAnswers");
 
-                    b.Navigation("QuestionLessons");
+                    b.Navigation("QuizQuestions");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Quiz", b =>

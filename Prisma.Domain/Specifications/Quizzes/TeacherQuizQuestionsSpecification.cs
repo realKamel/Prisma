@@ -6,7 +6,7 @@ using Prisma.Domain.Entities.QuizAggregate;
 
 namespace Prisma.Domain.Specifications.Quizzes;
 
-public class TeacherQuizQuestionsSpecification : Specification<QuestionLessonQuiz>
+public class TeacherQuizQuestionsSpecification : Specification<QuizQuestion>
 {
     public TeacherQuizQuestionsSpecification(int quizId)
     {

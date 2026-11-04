@@ -8,4 +8,5 @@ public interface IUnitOfWork
         where TEntity : class, IEntity<TKey>;
 
     Task<int> SaveChangesAsync(CancellationToken ct);
+    void ClearChangeTracker();
 }

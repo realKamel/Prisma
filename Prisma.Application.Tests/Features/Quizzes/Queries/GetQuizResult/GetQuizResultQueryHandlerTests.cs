@@ -51,14 +51,14 @@ public class GetQuizResultQueryHandlerTests
         string title = "Quiz",
         decimal totalDegree = 100m,
         DateTimeOffset? dueDate = null,
-        List<QuestionLessonQuiz>? questions = null) =>
+        List<QuizQuestion>? questions = null) =>
         new()
         {
             Id = id,
             Title = title,
             TotalDegree = totalDegree,
             DueDate = dueDate,
-            Questions = questions ?? new List<QuestionLessonQuiz>()
+            Questions = questions ?? new List<QuizQuestion>()
         };
 
     private static QuizAttempt CreateAttempt(
@@ -233,7 +233,7 @@ public class GetQuizResultQueryHandlerTests
         // Arrange
         var quiz = CreateQuiz(totalDegree: 5m, dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = CreateMcqQuestion(1, correctChoiceId: 100), Degree = 5m }
+            new QuizQuestion { QuestionId = 1, Question = CreateMcqQuestion(1, correctChoiceId: 100), Degree = 5m }
         ]);
         SetupQuiz(quiz);
 
@@ -270,7 +270,7 @@ public class GetQuizResultQueryHandlerTests
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
         var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 5m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 5m }
         ]);
         SetupQuiz(quiz);
 
@@ -303,7 +303,7 @@ public class GetQuizResultQueryHandlerTests
         var question = CreateWrittenQuestion(id: 1);
         var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 10m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 10m }
         ]);
         SetupQuiz(quiz);
 
@@ -334,7 +334,7 @@ public class GetQuizResultQueryHandlerTests
         // Arrange - student left a question blank entirely
         var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = CreateMcqQuestion(1, 100), Degree = 5m }
+            new QuizQuestion { QuestionId = 1, Question = CreateMcqQuestion(1, 100), Degree = 5m }
         ]);
         SetupQuiz(quiz);
 

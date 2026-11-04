@@ -93,18 +93,18 @@ public class CreateQuizCommandHandler(IUnitOfWork unitOfWork, ICurrentUserServic
         await unitOfWork.SaveChangesAsync(ct);
 
 
-        var questionLinks = new List<QuestionLessonQuiz>();
+        var questionLinks = new List<QuizQuestion>();
         for (int i = 0; i < questions.Count; i++)
         {
-            questionLinks.Add(new QuestionLessonQuiz
+            questionLinks.Add(new QuizQuestion
             {
-                LessonQuizId = quiz.Id,
+                QuizId = quiz.Id,
                 QuestionId = questions[i].Id,
                 Degree = request.Questions[i].Degree
             });
         }
 
-        var linkRepo = unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>();
+        var linkRepo = unitOfWork.GetOrCreateRepository<QuizQuestion, int>();
         linkRepo.AddRange(questionLinks);
 
         // ربط الـ Lesson بالـ Quiz (one-to-one) لو Scope == LessonQuiz

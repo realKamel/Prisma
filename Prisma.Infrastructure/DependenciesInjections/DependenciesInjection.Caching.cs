@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Interfaces;
 using Prisma.Infrastructure.Caching;
 using Prisma.Infrastructure.Persistence;
 using StackExchange.Redis;
@@ -29,14 +30,16 @@ public static partial class DependenciesInjection
             nameof(connectionStrings.Valkey)
         );
 
-        var multiplexer = ConnectionMultiplexer.Connect(new ConfigurationOptions
-        {
-            EndPoints = { connectionStrings.Valkey },
-            AbortOnConnectFail = false,
-            ConnectRetry = 10,
-            ConnectTimeout = 5000,
-            SyncTimeout = 5000
-        });
+        var multiplexer = ConnectionMultiplexer.Connect(
+            new ConfigurationOptions
+            {
+                EndPoints = { connectionStrings.Valkey },
+                AbortOnConnectFail = false,
+                ConnectRetry = 10,
+                ConnectTimeout = 5000,
+                SyncTimeout = 5000,
+            }
+        );
 
         services.AddSingleton<IConnectionMultiplexer>(multiplexer);
 
@@ -79,17 +82,16 @@ public static partial class DependenciesInjection
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithDistributedCache(sp => sp.GetRequiredService<IDistributedCache>())
             // Backplane: Syncs all API nodes so no server returns old data
-            .WithBackplane(sp =>
-                new RedisBackplane(
-                    new RedisBackplaneOptions
-                    {
-                        ConnectionMultiplexerFactory = () =>
-                            Task.FromResult(sp.GetRequiredService<IConnectionMultiplexer>())
-                    }
-                )
-            )
+            .WithBackplane(sp => new RedisBackplane(
+                new RedisBackplaneOptions
+                {
+                    ConnectionMultiplexerFactory = () =>
+                        Task.FromResult(sp.GetRequiredService<IConnectionMultiplexer>()),
+                }
+            ))
             .AsHybridCache();
 
         services.AddScoped<ITokenService, ValkeyTokenService>();
+        services.AddScoped<ICacheKeyBuilder, CacheKeyBuilder>();
     }
 }

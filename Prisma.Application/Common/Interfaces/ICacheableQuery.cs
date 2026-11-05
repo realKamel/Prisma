@@ -9,17 +9,17 @@ namespace Prisma.Application.Common.Interfaces;
 public interface ICacheableQuery<out TResponse> : IRequest<TResponse>
 {
     /// <summary>
-    /// The unique cache key for this exact query result.
+    /// Builds the unique cache key for this query.
     /// </summary>
-    string CacheKey { get; }
+    string BuildCacheKey(ICacheKeyBuilder builder);
 
     /// <summary>
-    /// Optional cache tags for group-based invalidation (e.g., "xzy-list").
+    /// Optional cache tags for group-based invalidation.
     /// </summary>
-    IEnumerable<string> CacheTags => []; // Defaults to empty list
+    IEnumerable<string> CacheTags => [];
 
     /// <summary>
-    /// Optional custom expiration time. If null, the global default is used.
+    /// Optional custom expiration time.
     /// </summary>
-    TimeSpan? Expiration { get; }
+    TimeSpan? Expiration => null;
 }

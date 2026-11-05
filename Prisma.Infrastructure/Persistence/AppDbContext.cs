@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
+using SmartEnum.EFCore;
 
 namespace Prisma.Infrastructure.Persistence;
 
@@ -36,9 +37,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
+        configurationBuilder.ConfigureSmartEnum();
+
         base.ConfigureConventions(configurationBuilder);
-        // configurationBuilder.Properties<Enum>().HaveConversion<string>();
     }
 
-    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 }

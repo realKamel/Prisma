@@ -1130,6 +1130,131 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("Video");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("FileStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ObjectStorageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ScanAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ScanFailureReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ScanStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ScannedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObjectStorageId");
+
+                    b.ToTable("FileObject");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BucketName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Provider")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("ObjectStorage");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>
                 {
                     b.Property<int>("Id")
@@ -2781,6 +2906,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("VideoLibrary");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", "ObjectStorage")
+                        .WithMany("Files")
+                        .HasForeignKey("ObjectStorageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ObjectStorage");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", "Batch")
@@ -3068,6 +3204,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Progresses");
 
                     b.Navigation("Video");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", b =>
+                {
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>

@@ -9,6 +9,9 @@ internal sealed class FileObjectConfiguration : IEntityTypeConfiguration<FileObj
     public void Configure(EntityTypeBuilder<FileObject> builder)
     {
         builder.HasKey(x => x.Id);
+        builder
+            .Property(x => x.FileStatus)
+            .HasConversion(status => status.Value, value => FileStatus.FromValue(value));
 
         builder.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
     }

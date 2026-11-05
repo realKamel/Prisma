@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Prisma.API.Common;
 using Prisma.API.Common.RateLimitConfigurations;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
@@ -13,6 +14,8 @@ using Prisma.Application.Features.Students.Queries.GetPaginatedTeacherLessonsCat
 using Prisma.Application.Features.Teachers.Commands.ActivateTeacherCommand;
 using Prisma.Application.Features.Teachers.Commands.SuspendTeacherCommand;
 using Prisma.Application.Features.Teachers.Queries.GetPublicTeacherProfile;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardData;
+using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardGraph;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
@@ -21,7 +24,7 @@ using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
 
 namespace Prisma.API.Features.Teacher;
 
-public sealed class TeachersController(ISender mediator) : ApiController
+public sealed class TeachersController(ISender mediator,ICurrentUserService currentUserService) : ApiController
 {
     [HttpGet("dashboard")]
     [ExpectedFailures(ResultStatus.CriticalError)]
@@ -32,6 +35,23 @@ public sealed class TeachersController(ISender mediator) : ApiController
     {
         var result = await mediator.Send(new GetTeacherDashboardStatusQuery(), token);
         return result;
+    }
+    [HttpGet("new-dashboard")]
+    [ExpectedFailures(ResultStatus.CriticalError)]
+    [Authorize(Roles = AppRoles.Teacher)]
+    public async Task<Result<GetTeacherDashboardResponse>> GetTeacherDashboard(CancellationToken token)
+    {
+        var result = await mediator.Send(new GetTeacherDashboardQuery(), token);
+        return result;
+    }
+    [HttpGet("new-dashboard-graph")]
+    [ExpectedFailures(ResultStatus.CriticalError)]
+    [Authorize(Roles = AppRoles.Teacher)]
+    public async Task<Result<GetTeacherDashboardGraphResponse>> GetTeacherDashboardGraph(CancellationToken token)
+    {
+        var teacherId = currentUserService.UserId;
+        if (teacherId is null) return Result.Unauthorized();
+        return await mediator.Send(new GetTeacherDashboardGraphQuery(teacherId.Value), token);
     }
 
     [HttpGet("lessons")]

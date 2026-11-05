@@ -10,11 +10,14 @@ using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assignments;
+using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
-public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
+    ICurrentUserService currentUser,
+    IIdentityService identityService)
     : IRequestHandler<GetAssignmentSubmissionsListQuery, Result<AssignmentSubmissionsResponseDto>>
 {
     // Grace period for grading lock — if grading started more than 30 min ago, consider it abandoned
@@ -22,7 +25,20 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork, IC
 
     public async Task<Result<AssignmentSubmissionsResponseDto>> Handle(GetAssignmentSubmissionsListQuery request, CancellationToken ct)
     {
-        var currentUserId = currentUser.UserId!.Value;
+        var userId = currentUser.UserId;
+        if (userId is null)
+            return Result.Unauthorized("User is not authenticated.");
+
+        var user = await identityService.FindByIdAsync(userId.Value, ct);
+        if (user is null)
+            return Result.NotFound("User not found.");
+
+        if (user is Assistant assistant)
+        {
+            if (assistant.TeacherId is null)
+                return Result.Unauthorized("Assistant is not associated with a teacher.");
+            userId = assistant.TeacherId;
+        }
 
         var assignmentRepo = unitOfWork.GetOrCreateRepository<Assignment, int>();
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
@@ -30,7 +46,7 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork, IC
 
         // 1. Fetch all assignments (filtered by lesson if provided)
         var assignments = await assignmentRepo.ListAsync(
-            new AssignmentsWithLessonSpecification(), ct);
+            new AssignmentsWithLessonSpecification(userId.Value), ct);
 
         if (request.LessonId.HasValue)
             assignments = assignments
@@ -45,7 +61,7 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork, IC
 
         // 2. Single query for all enrollments across all relevant lessons
         var enrollments = await enrollmentRepo.ListAsync(
-            new EnrolledStudentsByLessonIdsSpecification(lessonIds), ct);
+            new EnrollmentsByLessonIdsSpecification(lessonIds), ct);
 
         // 3. Single query for all submissions across all relevant assignments
         var submissions = await submissionRepo.ListAsync(

@@ -16,8 +16,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<QuestionLessonQuiz, int> _questionLessonRepository =
-    Substitute.For<IRepository<QuestionLessonQuiz, int>>();
+    private readonly IRepository<QuizQuestion, int> _questionLessonRepository =
+    Substitute.For<IRepository<QuizQuestion, int>>();
     private readonly GetTeacherQuizDetailQueryHandler _handler;
 
     private static readonly GetTeacherQuizDetailQuery ValidQuery = new(QuizId: 1);
@@ -25,7 +25,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
     public GetTeacherQuizDetailQueryHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
-        _unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>().Returns(_questionLessonRepository);
+        _unitOfWork.GetOrCreateRepository<QuizQuestion, int>().Returns(_questionLessonRepository);
         _handler = new GetTeacherQuizDetailQueryHandler(_unitOfWork);
     }
 
@@ -91,7 +91,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
             Arg.Any<CancellationToken>())
         .Returns(quiz);
 
-    private void SetupQuestions(params QuestionLessonQuiz[] questions) =>
+    private void SetupQuestions(params QuizQuestion[] questions) =>
     _questionLessonRepository
         .ListAsync(
             Arg.Any<TeacherQuizQuestionsSpecification>(),
@@ -213,7 +213,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         SetupQuiz(CreateQuiz());
 
         SetupQuestions(
-            new QuestionLessonQuiz
+            new QuizQuestion
             {
                 QuestionId = 1,
                 Question = question,
@@ -243,7 +243,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         SetupQuiz(CreateQuiz());
 
         SetupQuestions(
-            new QuestionLessonQuiz
+            new QuizQuestion
             {
                 QuestionId = 1,
                 Question = question,
@@ -269,7 +269,7 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var question = CreateWrittenQuestion(id: 1);
         SetupQuestions(
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = question, Degree = 15m }
+            new QuizQuestion { QuestionId = 1, Question = question, Degree = 15m }
         ]);
         SetupQuiz(CreateQuiz());
 
@@ -288,8 +288,8 @@ public class GetTeacherQuizDetailQueryHandlerTests
         var written = CreateWrittenQuestion(id: 2);
         SetupQuestions(
         [
-            new QuestionLessonQuiz { QuestionId = 1, Question = mcq, Degree = 5m },
-            new QuestionLessonQuiz { QuestionId = 2, Question = written, Degree = 10m }
+            new QuizQuestion { QuestionId = 1, Question = mcq, Degree = 5m },
+            new QuizQuestion { QuestionId = 2, Question = written, Degree = 10m }
         ]);
         SetupQuiz(CreateQuiz());
 

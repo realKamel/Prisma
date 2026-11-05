@@ -10,6 +10,6 @@ public sealed class QuestionInQuizSpecification : Specification<Question>
     public QuestionInQuizSpecification(int quizId, int questionId)
     {
         Query.Where(q => q.Id == questionId
-                        && q.QuestionLessons.Any(l => l.LessonQuizId == quizId));
+                        && q.QuizQuestions.Any(l => l.QuizId == quizId));
     }
 }

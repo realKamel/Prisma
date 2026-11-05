@@ -87,7 +87,7 @@ public class SubmitQuizAttemptCommandHandlerTests
         int id = 10,
         decimal totalDegree = 100m,
         int durationMinutes = 30,
-        List<QuestionLessonQuiz>? questions = null,
+        List<QuizQuestion>? questions = null,
         QuizScope scope = QuizScope.ComprehensiveExam
     ) =>
         new()
@@ -96,7 +96,7 @@ public class SubmitQuizAttemptCommandHandlerTests
             TotalDegree = totalDegree,
             TimeInMinutes = TimeSpan.FromMinutes(durationMinutes),
             Scope = scope,
-            Questions = questions ?? new List<QuestionLessonQuiz>(),
+            Questions = questions ?? new List<QuizQuestion>(),
         };
 
     private static QuizAttempt CreateAttempt(
@@ -191,7 +191,7 @@ public class SubmitQuizAttemptCommandHandlerTests
             totalDegree: 5m,
             questions:
             [
-                new QuestionLessonQuiz
+                new QuizQuestion
                 {
                     QuestionId = question.Id,
                     Question = question,
@@ -227,7 +227,7 @@ public class SubmitQuizAttemptCommandHandlerTests
             totalDegree: 10m,
             questions:
             [
-                new QuestionLessonQuiz
+                new QuizQuestion
                 {
                     QuestionId = written.Id,
                     Question = written,
@@ -271,7 +271,7 @@ public class SubmitQuizAttemptCommandHandlerTests
             totalDegree: 5m,
             questions:
             [
-                new QuestionLessonQuiz
+                new QuizQuestion
                 {
                     QuestionId = question.Id,
                     Question = question,
@@ -308,7 +308,7 @@ public class SubmitQuizAttemptCommandHandlerTests
             totalDegree: 5m,
             questions:
             [
-                new QuestionLessonQuiz
+                new QuizQuestion
                 {
                     QuestionId = question.Id,
                     Question = question,

@@ -38,8 +38,8 @@ public class StudentQuizzesSpecification : Specification<Quiz, StudentQuizzesLis
                             Status = a.Status,
                             Degree = a.Degree,
                             SubmittedAt = a.SubmittedAt,
-                            StartedAt = a.StartedAt
-                            
+                            StartedAt = a.StartedAt,
+                            Deadline = a.Deadline
                         })
                         .FirstOrDefault()
             });

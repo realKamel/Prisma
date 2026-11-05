@@ -52,8 +52,7 @@ public class GetStudentQuizzesListQueryHandler(IUnitOfWork unitOfWork, ICurrentU
             }
             else if (q.Attempt.Status == QuizAttemptStatus.InProgress)
             {
-                var deadline = q.Attempt.StartedAt + TimeSpan.FromMinutes(q.DurationMinutes);
-                status = now < deadline ? "in_progress" : "pending"; 
+                status = now < q.Attempt.Deadline ? "in_progress" : "pending";
             }
 
             else if (q.Attempt.Status == QuizAttemptStatus.Graded && dueDatePassed)

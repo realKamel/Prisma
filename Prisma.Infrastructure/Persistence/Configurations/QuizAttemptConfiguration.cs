@@ -16,6 +16,8 @@ internal sealed class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAt
 
         builder.Property(a => a.Status).HasConversion<string>().HasMaxLength(20).IsRequired();
 
+        builder.Property(a => a.Deadline).IsRequired();
+
         builder
             .HasOne(x => x.Student)
             .WithMany(x => x.QuizAttempts)
@@ -26,8 +28,12 @@ internal sealed class QuizAttemptConfiguration : IEntityTypeConfiguration<QuizAt
         builder.Property(a => a.TabSwitchCount).HasDefaultValue(0);
         builder.Property(a => a.CopyPasteAttemptCount).HasDefaultValue(0);
 
+        builder.Property(a => a.Version).IsRowVersion();
+
         // each student has one try to attemp the quiz
         builder.HasIndex(a => new { a.QuizId, a.StudentId });
+
+        builder.HasIndex(a => new { a.Status, a.Deadline });
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

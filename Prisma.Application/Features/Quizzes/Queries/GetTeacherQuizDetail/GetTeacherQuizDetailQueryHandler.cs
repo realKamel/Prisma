@@ -24,7 +24,7 @@ public class GetTeacherQuizDetailQueryHandler(IUnitOfWork unitOfWork)
         if (quiz is null)
             return Result<TeacherQuizDetailDto>.Error("الاختبار غير موجود");
 
-        var questionLessonRepo = unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>();
+        var questionLessonRepo = unitOfWork.GetOrCreateRepository<QuizQuestion, int>();
 
         var questionLessons = await questionLessonRepo.ListAsync(
             new TeacherQuizQuestionsSpecification(request.QuizId), ct);

@@ -27,8 +27,8 @@ public class CreateQuizCommandHandlerTests
     private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
         IRepository<Quiz, int>
     >();
-    private readonly IRepository<QuestionLessonQuiz, int> _linkRepository = Substitute.For<
-        IRepository<QuestionLessonQuiz, int>
+    private readonly IRepository<QuizQuestion, int> _linkRepository = Substitute.For<
+        IRepository<QuizQuestion, int>
     >();
     private readonly CreateQuizCommandHandler _handler;
 
@@ -41,7 +41,7 @@ public class CreateQuizCommandHandlerTests
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepository);
         _unitOfWork.GetOrCreateRepository<Question, int>().Returns(_questionRepository);
         _unitOfWork.GetOrCreateRepository<Quiz, int>().Returns(_quizRepository);
-        _unitOfWork.GetOrCreateRepository<QuestionLessonQuiz, int>().Returns(_linkRepository);
+        _unitOfWork.GetOrCreateRepository<QuizQuestion, int>().Returns(_linkRepository);
 
         _currentUser.UserId.Returns(TeacherId);
         _identityService
@@ -358,10 +358,10 @@ public class CreateQuizCommandHandlerTests
             }
         );
 
-        List<QuestionLessonQuiz>? capturedLinks = null;
+        List<QuizQuestion>? capturedLinks = null;
         _linkRepository
-            .When(x => x.AddRange(Arg.Any<IEnumerable<QuestionLessonQuiz>>()))
-            .Do(ci => capturedLinks = ci.Arg<IEnumerable<QuestionLessonQuiz>>().ToList());
+            .When(x => x.AddRange(Arg.Any<IEnumerable<QuizQuestion>>()))
+            .Do(ci => capturedLinks = ci.Arg<IEnumerable<QuizQuestion>>().ToList());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -372,7 +372,7 @@ public class CreateQuizCommandHandlerTests
 
         capturedLinks
             .Should()
-            .AllSatisfy(link => link.LessonQuizId.Should().Be(result.Value!.QuizId));
+            .AllSatisfy(link => link.QuizId.Should().Be(result.Value!.QuizId));
         capturedLinks.Should().Contain(l => l.Degree == 5m);
         capturedLinks.Should().Contain(l => l.Degree == 10m);
 

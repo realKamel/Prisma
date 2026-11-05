@@ -14,6 +14,7 @@ using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
+using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Common;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.DependenciesInjections;
@@ -154,10 +155,10 @@ public static partial class WebAppHelper
         );
 
         // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
-        // jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
-        //     JobQueues.QuizAttemptFinalization,
-        //     x => x.FinalizeExpiredAttempts(CancellationToken.None),
-        //     Cron.Minutely());
+        jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
+            JobQueues.QuizAttemptFinalization,
+            x => x.FinalizeExpiredAttempts(CancellationToken.None),
+            Cron.Minutely());
     }
 
     internal static void UseHangfireUi(this WebApplication app)
@@ -288,7 +289,7 @@ public static partial class WebAppHelper
                 .Policies.OnException<HttpRequestException>()
                 .RetryWithCooldown(
                     TimeSpan.FromSeconds(3),
-                    TimeSpan.FromSeconds(10),
+                    TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds),
                     TimeSpan.FromSeconds(30)
                 );
         });

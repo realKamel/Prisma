@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Ardalis.Result;
+﻿using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
+using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
 
@@ -37,8 +35,7 @@ public class StartOrGetQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurren
 
         if (attempt is not null && attempt.Status == QuizAttemptStatus.InProgress)
         {
-            var deadline = attempt.StartedAt + timing.TimeInMinutes;
-            var hardDeadline = deadline + TimeSpan.FromSeconds(10);
+            var hardDeadline = attempt.Deadline + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
             if (now >= hardDeadline)
             {
 
@@ -46,7 +43,14 @@ public class StartOrGetQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurren
                 var quizForFinalization = await quizRepo.FirstOrDefaultAsync(
                     new QuizForFinalizationSpecification(timing.Id), ct);
 
-                await QuizFinalizer.FinalizeAttempt(attempt, quizForFinalization!, unitOfWork, ct);
+                try
+                {
+                    await QuizFinalizer.FinalizeAttempt(attempt, quizForFinalization!, unitOfWork, ct, submittedAt: attempt.Deadline);
+                }
+                catch (ConcurrencyConflictException)
+                {
+                }
+
                 return Result<AttemptStateDto>.Error("انتهى وقت هذه المحاولة");
             }
         }
@@ -64,6 +68,7 @@ public class StartOrGetQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurren
                 QuizId = timing.Id,
                 StudentId = studentId,
                 StartedAt = now,
+                Deadline = now + timing.TimeInMinutes,
                 Status = QuizAttemptStatus.InProgress
             };
             attemptRepo.Add(attempt);
@@ -73,7 +78,7 @@ public class StartOrGetQuizAttemptCommandHandler(IUnitOfWork unitOfWork, ICurren
         var dto = new AttemptStateDto
         {
             AttemptId = attempt.Id,
-            RemainingSeconds = Math.Max(0, (int)((attempt.StartedAt + timing.TimeInMinutes - now).TotalSeconds)),
+            RemainingSeconds = Math.Max(0, (int)(attempt.Deadline - now).TotalSeconds),
             SavedAnswers = attempt.Answers.ToDictionary(
                 a => a.QuestionId,
                 a => new SavedAnswerDto { SelectedChoiceId = a.ChoiceId, TextAnswer = a.TextAnswer })

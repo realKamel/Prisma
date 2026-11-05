@@ -2,9 +2,9 @@ using Prisma.Domain.Common;
 
 namespace Prisma.Domain.Entities.QuizAggregate;
 
-public class QuestionLessonQuiz : BaseEntity
+public class QuizQuestion : BaseEntity
 {
-    public int LessonQuizId { get; set; }
+    public int QuizId { get; set; }
     public Quiz Quiz { get; set; }
 
     public int QuestionId { get; set; }

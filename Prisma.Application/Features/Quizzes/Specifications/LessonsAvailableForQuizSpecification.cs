@@ -11,10 +11,10 @@ namespace Prisma.Application.Features.Quizzes.Specifications;
 public class LessonsAvailableForQuizSpecification
     : Specification<Lesson, LessonOptionDto>
 {
-    public LessonsAvailableForQuizSpecification()
+    public LessonsAvailableForQuizSpecification(Guid teacherId)
     {
         Query
-            .Where(l => l.QuizId == null)
+            .Where(l => l.QuizId == null && l.TeacherId == teacherId)
             .Select(l => new LessonOptionDto
             {
                 LessonId = l.Id,

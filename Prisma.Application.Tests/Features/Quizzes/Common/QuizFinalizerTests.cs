@@ -53,7 +53,7 @@ public class QuizFinalizerTests
             Id = 1,
             Scope = scope,
             LessonId = lessonId,
-            Questions = questions.Select(q => new QuestionLessonQuiz
+            Questions = questions.Select(q => new QuizQuestion
             {
                 QuestionId = q.Question.Id,
                 Question = q.Question,

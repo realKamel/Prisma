@@ -8,13 +8,11 @@ namespace Prisma.Application.Features.Quizzes.Common;
 
 public static class QuizFinalizer
 {
-    public static async Task FinalizeAttempt(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct)
+    public static bool ApplyFinalization(QuizAttempt attempt, Quiz quiz, DateTimeOffset? submittedAt = null)
     {
-
         var (totalScore, hasPendingWritten) = CalculateScore(attempt, quiz);
-
         var hasSecurityViolation = attempt.TabSwitchCount > 0 || attempt.CopyPasteAttemptCount > 0;
-
+        var fullyGraded = false;
 
         if (hasPendingWritten)
         {
@@ -31,19 +29,46 @@ public static class QuizFinalizer
         {
             attempt.Degree = totalScore;
             attempt.Status = QuizAttemptStatus.Graded;
-
-            await CompleteLessonIfNeeded(
-                attempt.StudentId,
-                quiz,
-                unitOfWork,
-                ct);
+            fullyGraded = true;
         }
+        attempt.SubmittedAt = submittedAt ?? DateTimeOffset.UtcNow;
+        return fullyGraded;
 
-        var deadline = attempt.StartedAt + quiz.TimeInMinutes;
-        var now = DateTimeOffset.UtcNow;
-        attempt.SubmittedAt = now > deadline ? deadline : now;
+
+    }
+    public static async Task FinalizeAttempt(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct, DateTimeOffset? submittedAt = null)
+    {
+
+        if (ApplyFinalization(attempt, quiz, submittedAt))
+            await CompleteLessonIfNeeded(attempt.StudentId, quiz, unitOfWork, ct);
 
         await unitOfWork.SaveChangesAsync(ct);
+    }
+
+    public static async Task CompleteLessonsInBulk(
+        IReadOnlyCollection<(Guid StudentId, int LessonId)> pairs,
+        IUnitOfWork unitOfWork,
+        CancellationToken ct)
+    {
+        if (pairs.Count == 0) return;
+
+        var studentIds = pairs.Select(p => p.StudentId).Distinct().ToList();
+        var lessonIds = pairs.Select(p => p.LessonId).Distinct().ToList();
+
+        var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
+        var enrollments = await enrollmentRepo.ListAsync(
+            new IncompleteEnrollmentsSpecification(studentIds, lessonIds), ct);
+
+        var wanted = pairs.ToHashSet();
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var e in enrollments.Where(e =>
+            !e.IsCompleted &&
+             e.StudentId.HasValue && e.LessonId.HasValue &&
+             wanted.Contains((e.StudentId.Value, e.LessonId.Value))))
+        {
+            MarkCompleted(e, now);
+        }
     }
 
     public static async Task FinalizeAfterManualGrading(QuizAttempt attempt, Quiz quiz, IUnitOfWork unitOfWork, CancellationToken ct)
@@ -155,9 +180,14 @@ public static class QuizFinalizer
 
         if (enrollment is { IsCompleted: false })
         {
-            enrollment.IsCompleted = true;
-            enrollment.Status = EnrollmentStatus.Done;
-            enrollment.CompletedAt = DateTimeOffset.UtcNow;
+            MarkCompleted(enrollment, DateTimeOffset.UtcNow);
         }
+    }
+
+    private static void MarkCompleted(Enrollment enrollment, DateTimeOffset completedAt)
+    {
+        enrollment.IsCompleted = true;
+        enrollment.Status = EnrollmentStatus.Done;
+        enrollment.CompletedAt = completedAt;
     }
 }

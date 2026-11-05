@@ -22,5 +22,6 @@ public class AttemptProjection
     public decimal? Degree { get; init; }
     public DateTimeOffset? SubmittedAt { get; init; }
     public DateTimeOffset? StartedAt { get; init; }
+    public DateTimeOffset Deadline { get; init; }
 
 }

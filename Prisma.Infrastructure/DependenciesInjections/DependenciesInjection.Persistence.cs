@@ -9,6 +9,7 @@ using Prisma.Domain.Repositories;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
+using Prisma.Infrastructure.Services.AttemptSecurityCounter;
 using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Wolverine.EntityFrameworkCore;
@@ -73,6 +74,8 @@ public static partial class DependenciesInjection
 
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IAttemptSecurityCounter, AttemptSecurityCounter>();
+
         services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
         //Custom Repositories
         services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();

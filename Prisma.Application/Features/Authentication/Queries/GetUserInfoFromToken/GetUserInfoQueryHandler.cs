@@ -1,15 +1,13 @@
 using Ardalis.Result;
 using MediatR;
-using Microsoft.Extensions.Caching.Hybrid;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
 
 namespace Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 
-public class GetUserInfoQueryHandler(
+public sealed class GetUserInfoQueryHandler(
     ICurrentUserService currentUserService,
-    IIdentityService identityService,
-    HybridCache cache
+    IIdentityService identityService
 ) : IRequestHandler<GetUserInfoQuery, Result<LoginCredentials>>
 {
     public async Task<Result<LoginCredentials>> Handle(
@@ -17,44 +15,20 @@ public class GetUserInfoQueryHandler(
         CancellationToken cancellationToken
     )
     {
-        if (!currentUserService.IsAuthenticated || currentUserService.Email is null)
+        if (!currentUserService.IsAuthenticated || currentUserService.UserId is not { } userId)
         {
             return Result.Unauthorized();
         }
 
-        string userEmail = currentUserService.Email;
-
-        string cacheKey = $"user-info:{userEmail}";
-
-        // HybridCache handles L1 memory cache, L2 Valkey cache, and DB Stampede Protection
-        var credentials = await cache.GetOrCreateAsync(cacheKey,
-            state: userEmail,
-            async (email, _) => await FetchUserInfoFromDatabaseAsync(email),
-            options: new HybridCacheEntryOptions
-            {
-                Expiration = TimeSpan.FromMinutes(15), // Max lifetime in cache
-                LocalCacheExpiration = TimeSpan.FromMinutes(5), // In-memory L1 cache duration
-            },
-            cancellationToken: cancellationToken);
-
-        if (credentials is null)
-        {
-            return Result.Unauthorized();
-        }
-
-        return credentials;
-    }
-
-    private async Task<LoginCredentials?> FetchUserInfoFromDatabaseAsync(string email)
-    {
-        var user = await identityService.FindByEmailAsync(email);
+        var user = await identityService.FindByIdAsync(userId, cancellationToken);
 
         if (user is null)
         {
-            return null;
+            return Result.Unauthorized("User isn't found");
         }
 
         var roles = await identityService.GetRolesAsync(user);
+
         var permissions = (await identityService.GetClaimsAsync(user))
             .Select(claim => claim.Value)
             .ToArray();

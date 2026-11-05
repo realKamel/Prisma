@@ -23,6 +23,7 @@ public class TeacherLessonsRequest
 
     public PaginationParams Pagination => new() { PageNumber = PageNumber, PageSize = PageSize };
 }
+
 /// <summary>One page of lessons plus per-status totals (ignoring search/status filters).</summary>
 public record TeacherLessonsResponse(
     PaginatedList<TeacherLessonDto> Lessons,

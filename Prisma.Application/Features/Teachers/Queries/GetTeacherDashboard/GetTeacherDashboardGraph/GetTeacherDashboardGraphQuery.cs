@@ -5,7 +5,7 @@ namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTe
 
 // TeacherId is set by the controller from the authenticated user (never from client input).
 // It is part of the cache key so every teacher gets their own cache entry.
-public record GetTeacherDashboardGraphQuery(Guid TeacherId)
+public sealed record GetTeacherDashboardGraphQuery()
     : ICacheableQuery<Result<GetTeacherDashboardGraphResponse>>
 {
     public string BuildCacheKey(ICacheKeyBuilder builder)

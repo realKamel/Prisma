@@ -24,7 +24,7 @@ using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
 
 namespace Prisma.API.Features.Teacher;
 
-public sealed class TeachersController(ISender mediator,ICurrentUserService currentUserService) : ApiController
+public sealed class TeachersController(ISender mediator) : ApiController
 {
     [HttpGet("dashboard")]
     [ExpectedFailures(ResultStatus.CriticalError)]
@@ -36,37 +36,44 @@ public sealed class TeachersController(ISender mediator,ICurrentUserService curr
         var result = await mediator.Send(new GetTeacherDashboardStatusQuery(), token);
         return result;
     }
+
     [HttpGet("new-dashboard")]
     [ExpectedFailures(ResultStatus.CriticalError)]
     [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<Result<GetTeacherDashboardResponse>> GetTeacherDashboard(CancellationToken token)
+    public async Task<Result<GetTeacherDashboardResponse>> GetTeacherDashboard(
+        CancellationToken token
+    )
     {
         var result = await mediator.Send(new GetTeacherDashboardQuery(), token);
         return result;
     }
+
     [HttpGet("new-dashboard-graph")]
     [ExpectedFailures(ResultStatus.CriticalError)]
     [Authorize(Roles = AppRoles.Teacher)]
-    public async Task<Result<GetTeacherDashboardGraphResponse>> GetTeacherDashboardGraph(CancellationToken token)
+    public async Task<Result<GetTeacherDashboardGraphResponse>> GetTeacherDashboardGraph(
+        CancellationToken token
+    )
     {
-        var teacherId = currentUserService.UserId;
-        if (teacherId is null) return Result.Unauthorized();
-        return await mediator.Send(new GetTeacherDashboardGraphQuery(teacherId.Value), token);
+        return await mediator.Send(new GetTeacherDashboardGraphQuery(), token);
     }
 
     [HttpGet("lessons")]
     [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Unauthorized)]
     public async Task<Result<TeacherLessonsResponse>> GetLessons(
         [FromQuery] TeacherLessonsRequest request,
-        CancellationToken ct = default)
+        CancellationToken ct = default
+    )
     {
         var result = await mediator.Send(
             new GetTeacherLessonsQuery(
                 request.Pagination,
                 request.Search,
                 request.Status,
-                request.Sort),
-            ct);
+                request.Sort
+            ),
+            ct
+        );
 
         return result;
     }

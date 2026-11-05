@@ -5,7 +5,7 @@ namespace Prisma.Infrastructure.Caching;
 
 internal sealed class CacheKeyBuilder(ICurrentUserService currentUser) : ICacheKeyBuilder
 {
-    public string Build(string key) => key;
+    public string ForPublic(string key) => key;
 
     public string ForUser(string key)
     {

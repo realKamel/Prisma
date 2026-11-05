@@ -1,0 +1,2 @@
+[*Controller.cs]
+dotnet_diagnostic.CA1515.severity = silent

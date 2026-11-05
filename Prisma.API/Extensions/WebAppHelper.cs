@@ -149,7 +149,7 @@ public static partial class WebAppHelper
 
         //Every Friday at 10:00 PM
         jobService.AddOrUpdateRecurring<ReportGenerationJob>(
-            JobQueues.Reports,
+            JobQueues.Reporting,
             x => x.GenerateWeekly(),
             Cron.Weekly(DayOfWeek.Friday, 22, 0)
         );
@@ -158,7 +158,8 @@ public static partial class WebAppHelper
         jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
             JobQueues.QuizAttemptFinalization,
             x => x.FinalizeExpiredAttempts(CancellationToken.None),
-            Cron.Minutely());
+            Cron.Minutely()
+        );
     }
 
     internal static void UseHangfireUi(this WebApplication app)

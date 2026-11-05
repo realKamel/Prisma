@@ -1,4 +1,4 @@
-namespace Prisma.Domain.Entities.UserAggregate;
+namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
 
 public enum StorageStatus
 {

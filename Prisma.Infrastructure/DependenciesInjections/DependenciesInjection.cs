@@ -1,4 +1,3 @@
-using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -51,6 +50,7 @@ public static partial class DependenciesInjection
         services.AddSingleton<ISecretCipher, SecretCipher>();
         services.AddBunnyServices(configuration);
         services.AddSignalRWithConfiguration(configuration);
+        services.AddFileScannerService(configuration);
     }
 
     private static void AddInfrastructureHealthChecks(

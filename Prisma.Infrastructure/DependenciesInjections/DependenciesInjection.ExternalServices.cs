@@ -1,12 +1,16 @@
+using ClamClient.Net.Configuration;
+using ClamClient.Net.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Services.Security;
 using Prisma.Application.Abstractions.Services.VideoServices;
 using Prisma.Infrastructure.ExternalServices.BunnyApi;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
 using Prisma.Infrastructure.ExternalServices.EmailService;
 using Prisma.Infrastructure.Services.EmailService;
+using Prisma.Infrastructure.Services.Security;
 using Prisma.Infrastructure.Services.StorageService;
 using Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 using Refit;
@@ -103,5 +107,29 @@ public static partial class DependenciesInjection
 
         services.AddScoped<IVideoStreamServices, VideoStreamServices>();
         services.AddScoped<IVideoLibraryService, VideoLibraryService>();
+    }
+
+    private static void AddFileScannerService(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var clamAvOptions = configuration
+            .GetSection(ClamAvOptions.SectionName)
+            .Get<ClamAvOptions>();
+
+        ArgumentNullException.ThrowIfNull(clamAvOptions);
+        ArgumentException.ThrowIfNullOrWhiteSpace(clamAvOptions.Host, nameof(clamAvOptions.Host));
+
+        services.Configure<ClamAvOptions>(configuration.GetSection(ClamAvOptions.SectionName));
+
+        services.AddClamClient(options =>
+        {
+            options.Endpoint = ClamEndpoint.Tcp(clamAvOptions.Host, clamAvOptions.Port);
+            options.Timeout = clamAvOptions.Timeout;
+            options.MaxStreamSize = clamAvOptions.MaxFileSizeInBytes;
+        });
+
+        services.AddScoped<IFileScanner, ClamAvFileScanner>();
     }
 }

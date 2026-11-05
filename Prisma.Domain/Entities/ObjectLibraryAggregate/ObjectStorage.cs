@@ -1,7 +1,7 @@
 using Ardalis.Result;
 using Prisma.Domain.Common;
 
-namespace Prisma.Domain.Entities.UserAggregate;
+namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
 
 public sealed class ObjectStorage : BaseEntity<Guid>
 {
@@ -9,9 +9,11 @@ public sealed class ObjectStorage : BaseEntity<Guid>
 
     public StorageProvider Provider { get; private set; }
 
-    public string BucketName { get; private set; } = null!;
+    public string BucketName { get; private set; }
 
     public StorageStatus Status { get; private set; }
+
+    public ICollection<FileObject> Files { get; private set; } = [];
 
     private ObjectStorage() { }
 

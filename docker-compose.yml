@@ -358,6 +358,21 @@ services:
         max-size: "10m"
         max-file: "5"
 
+  clamav:
+    image: clamav/clamav:stable
+    container_name: prisma-clamav
+    restart: unless-stopped
+    volumes:
+      - clamav-data:/var/lib/clamav
+    expose:
+      - "3310"
+    mem_limit: 3g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
 volumes:
   postgres-data:
   cache-data:
@@ -366,3 +381,4 @@ volumes:
   grafana-data:
   tempo-data:
   messaging-data:
+  clamav-data:

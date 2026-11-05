@@ -16,6 +16,7 @@
     <PackageReference Include="AspNetCore.HealthChecks.Redis" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
     <PackageReference Include="AWSSDK.S3" />
+    <PackageReference Include="ClamClient.Net" />
     <PackageReference Include="Groq.Sdk.Core" />
     <PackageReference Include="Groq.Sdk.Extensions.DependencyInjection" />
     <PackageReference Include="Hangfire" />

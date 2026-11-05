@@ -67,15 +67,15 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
 
         if (existing is null)
         {
-            unitOfWork.GetOrCreateRepository<AttemptAnswer, int>().AddAsync(new AttemptAnswer
-            {
+           unitOfWork.GetOrCreateRepository<AttemptAnswer, int>().Add(new AttemptAnswer
+           {
                 QuizAttemptId = attempt.Id,
                 StudentId = studentId,
                 QuestionId = request.QuestionId,
                 ChoiceId = request.ChoiceId,
                 TextAnswer = text,
                 ClientSeq = request.ClientSeq
-            });
+           });
         }
         else
         {

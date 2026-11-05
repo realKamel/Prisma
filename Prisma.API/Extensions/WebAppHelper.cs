@@ -155,10 +155,10 @@ public static partial class WebAppHelper
         );
 
         // Every minute — catches quiz attempts whose time ran out without the student re-opening the page
-        // jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
-        //     JobQueues.QuizAttemptFinalization,
-        //     x => x.FinalizeExpiredAttempts(CancellationToken.None),
-        //     Cron.Minutely());
+        jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
+            JobQueues.QuizAttemptFinalization,
+            x => x.FinalizeExpiredAttempts(CancellationToken.None),
+            Cron.Minutely());
     }
 
     internal static void UseHangfireUi(this WebApplication app)

@@ -63,11 +63,11 @@ public static class QuizFinalizer
         var now = DateTimeOffset.UtcNow;
 
         foreach (var e in enrollments.Where(e =>
+            !e.IsCompleted &&
              e.StudentId.HasValue && e.LessonId.HasValue &&
              wanted.Contains((e.StudentId.Value, e.LessonId.Value))))
         {
-            e.IsCompleted = true;
-            e.CompletedAt = now;
+            MarkCompleted(e, now);
         }
     }
 
@@ -180,9 +180,14 @@ public static class QuizFinalizer
 
         if (enrollment is { IsCompleted: false })
         {
-            enrollment.IsCompleted = true;
-            enrollment.Status = EnrollmentStatus.Done;
-            enrollment.CompletedAt = DateTimeOffset.UtcNow;
+            MarkCompleted(enrollment, DateTimeOffset.UtcNow);
         }
+    }
+
+    private static void MarkCompleted(Enrollment enrollment, DateTimeOffset completedAt)
+    {
+        enrollment.IsCompleted = true;
+        enrollment.Status = EnrollmentStatus.Done;
+        enrollment.CompletedAt = completedAt;
     }
 }

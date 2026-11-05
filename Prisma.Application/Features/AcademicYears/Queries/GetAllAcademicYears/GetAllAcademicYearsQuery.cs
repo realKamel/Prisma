@@ -9,7 +9,8 @@ public record GetAllAcademicYearsQuery : ICacheableQuery<Result<List<AcademicYea
     //TODO: Must be evicted if updated immediately
     public string BuildCacheKey(ICacheKeyBuilder builder)
     {
-        return builder?.Build("academic-years") ?? throw new ArgumentNullException(nameof(builder));
+        return builder?.ForPublic("academic-years")
+            ?? throw new ArgumentNullException(nameof(builder));
     }
 
     public TimeSpan? Expiration { get; } = TimeSpan.FromDays(1);

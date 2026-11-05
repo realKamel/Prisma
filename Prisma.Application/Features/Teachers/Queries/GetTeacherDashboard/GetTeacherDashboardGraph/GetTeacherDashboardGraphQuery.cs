@@ -8,20 +8,24 @@ namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTe
 public record GetTeacherDashboardGraphQuery(Guid TeacherId)
     : ICacheableQuery<Result<GetTeacherDashboardGraphResponse>>
 {
-    public string CacheKey => $"TeacherDashboardGraph:{TeacherId}";
+    public string BuildCacheKey(ICacheKeyBuilder builder)
+    {
+        return builder?.ForUser("teacher_dashboard-graph")
+            ?? throw new ArgumentNullException(nameof(builder));
+    }
+
     public TimeSpan? Expiration { get; } = TimeSpan.FromHours(1);
 }
 
-public record GetTeacherDashboardGraphResponse(
-    GraphStats Stats,
-    Earnings Earnings
-);
+public sealed record GetTeacherDashboardGraphResponse(GraphStats Stats, Earnings Earnings);
 
-public record GraphStats(decimal TotalEarningsForThisMonth,
-    decimal? TotalEarningsAgainstLastMonth);
+public sealed record GraphStats(
+    decimal TotalEarningsForThisMonth,
+    decimal? TotalEarningsAgainstLastMonth
+);
 
 // 60 zero-filled days, oldest -> newest, bucketed by Cairo calendar day.
 // The UI slices this into 7 / 30 day ranges and compares each against the range before it.
-public record Earnings(EarningEntry[] Daily);
+public sealed record Earnings(EarningEntry[] Daily);
 
-public record EarningEntry(string Date, decimal Earning, int Enrollments);
+public sealed record EarningEntry(string Date, decimal Earning, int Enrollments);

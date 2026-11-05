@@ -36,15 +36,9 @@ public static partial class DependenciesInjection
         {
             options.ServerName = $"prisma-api-{Environment.MachineName}";
             // Process all queues
-            options.Queues =
-            [
-                JobQueues.Default,
-                JobQueues.Reports,
-                JobQueues.VideoProcessing,
-                JobQueues.AuthCleanup,
-            ];
-            options.WorkerCount = 3;
-            options.SchedulePollingInterval = TimeSpan.FromSeconds(15);
+            options.Queues = [JobQueues.Default, JobQueues.Reporting];
+            options.WorkerCount = 2;
+            options.SchedulePollingInterval = TimeSpan.FromSeconds(60);
         });
 
         services.AddSingleton<IBackgroundJobService, HangfireBackgroundJobService>();
@@ -53,6 +47,7 @@ public static partial class DependenciesInjection
         //services.AddScoped<IVideoProcessingJob, VideoProcessingJob>();
         services.AddScoped<IReportGenerationJob, ReportGenerationJob>();
         services.AddScoped<ILessonTranscriptAndSummarizationJob, LessonTranscriptAndSummaryJob>();
+
         services.AddHttpClient<IAudioStreamingService, MuxHttpClient>(client =>
         {
             client.BaseAddress = new Uri("https://stream.mux.com");

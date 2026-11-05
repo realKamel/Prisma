@@ -5,8 +5,8 @@ namespace Prisma.Application.Abstractions.BackgroundJobs;
 
 public interface IReportGenerationJob
 {
-    [Queue(JobQueues.Reports)]
+    [Queue(JobQueues.Reporting)]
     [AutomaticRetry(Attempts = 3)]
-    [JobDisplayName("Student Report Generation")]
+    [JobDisplayName("Reports Generator")]
     Task GenerateWeekly(CancellationToken cancellationToken = default);
 }

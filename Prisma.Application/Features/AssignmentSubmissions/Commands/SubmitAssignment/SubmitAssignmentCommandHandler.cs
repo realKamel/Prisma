@@ -8,7 +8,7 @@ using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.AssignmentSubmissions.Commands.SubmitAssignment;
 
-public class SubmitAssignmentCommandHandler(
+internal sealed class SubmitAssignmentCommandHandler(
     IUnitOfWork unitOfWork,
     IStorageService storage,
     ICurrentUserService currentUser
@@ -19,6 +19,13 @@ public class SubmitAssignmentCommandHandler(
         CancellationToken cancellationToken
     )
     {
+        var studentId = currentUser.UserId;
+
+        if (studentId is null)
+        {
+            return Result.Unauthorized("سجل دخولك اولا");
+        }
+
         var assignmentRepo = unitOfWork.GetOrCreateRepository<Assignment, int>();
 
         var assignment = await assignmentRepo.FirstOrDefaultAsync(
@@ -27,27 +34,30 @@ public class SubmitAssignmentCommandHandler(
         );
 
         if (assignment is null)
-            return Result.Error("لا يوجد واجب لهذا الدرس");
-
-        var studentId = currentUser.UserId;
-
-        if (studentId is null)
-            return Result.Error("سجل دخولك اولا");
+        {
+            return Result.NotFound("لا يوجد واجب لهذا الدرس");
+        }
 
         var isEnrolled = assignment.Lesson.Enrollments.Any(e => e.StudentId == studentId);
 
         if (!isEnrolled)
+        {
             return Result.Error("غير مصرح لك بتسليم هذا الواجب");
+        }
 
         var alreadySubmitted = assignment.Submissions.Any(s => s.StudentId == studentId);
 
         if (alreadySubmitted)
-            return Result.Error("لقد سلمت هذا الواجب مسبقاً");
+        {
+            return Result.Conflict("لقد سلمت هذا الواجب مسبقاً");
+        }
 
         var objectKey =
             $"assignments/{assignment.Id}/students/{studentId}/{Guid.NewGuid()}{Path.GetExtension(request.File.FileName)}";
 
         await using var stream = request.File.OpenReadStream();
+
+        //TODO: this must be fixed to make client upload directly
 
         await storage.UploadFileAsync(
             bucketName: storage.DefaultBucketName,

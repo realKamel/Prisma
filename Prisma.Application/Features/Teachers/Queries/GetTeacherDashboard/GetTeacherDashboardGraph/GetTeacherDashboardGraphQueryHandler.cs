@@ -1,13 +1,14 @@
 ﻿using System.Globalization;
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Enrollments;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardGraph;
 
-public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork)
+public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork,ICurrentUserService currentUserService)
     : IRequestHandler<GetTeacherDashboardGraphQuery,
         Result<GetTeacherDashboardGraphResponse>>
 {
@@ -18,7 +19,7 @@ public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork)
     public async Task<Result<GetTeacherDashboardGraphResponse>> Handle(
         GetTeacherDashboardGraphQuery request, CancellationToken cancellationToken)
     {
-        var teacherId = request.TeacherId;
+        var teacherId = currentUserService.UserId;
 
         // ---- Daily earnings (60 Cairo days, zero-filled) -----------------------------------------
         var now = DateTimeOffset.UtcNow;

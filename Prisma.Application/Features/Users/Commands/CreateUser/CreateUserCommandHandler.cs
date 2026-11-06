@@ -4,6 +4,7 @@ using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 

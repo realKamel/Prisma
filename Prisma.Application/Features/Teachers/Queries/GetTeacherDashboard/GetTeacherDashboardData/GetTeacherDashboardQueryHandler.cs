@@ -27,14 +27,13 @@ public class GetTeacherDashboardQueryHandler(
         Result<GetTeacherDashboardResponse>>
 {
     private const int PeriodDays = 30;
-    private const int WindowDays = PeriodDays * 2; 
-    private static readonly TimeZoneInfo Cairo = ResolveCairo();
+    private const int WindowDays = PeriodDays * 2;
 
     public async Task<Result<GetTeacherDashboardResponse>> Handle(
         GetTeacherDashboardQuery request, CancellationToken cancellationToken)
     {
         var now = DateTimeOffset.UtcNow;
-        var today = ToCairoDate(now);
+        var today = ToDate(now);
 
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
@@ -90,7 +89,7 @@ public class GetTeacherDashboardQueryHandler(
 
         var completionDates = windowEnrollments
             .Where(e => e.IsCompleted && e.CompletedAt.HasValue)
-            .Select(e => ToCairoDate(e.CompletedAt!.Value))
+            .Select(e => ToDate(e.CompletedAt!.Value))
             .ToArray();
 
         var completedThisMonth = completionDates.Count(d => d >= periodStart && d <= today);
@@ -186,25 +185,8 @@ public class GetTeacherDashboardQueryHandler(
     private static decimal? PercentChange(decimal current, decimal previous) =>
         previous == 0 ? null : Math.Round((current - previous) / previous * 100, 1);
 
-    private static DateOnly ToCairoDate(DateTimeOffset value) =>
-        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(value, Cairo).DateTime);
-
-    private static TimeZoneInfo ResolveCairo()
-    {
-        foreach (var id in new[] { "Africa/Cairo", "Egypt Standard Time" })
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById(id);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                // try the next id (IANA on Linux, Windows id on older Windows hosts)
-            }
-        }
-
-        return TimeZoneInfo.Utc;
-    }
+    private static DateOnly ToDate(DateTimeOffset value) =>
+        DateOnly.FromDateTime(value.UtcDateTime);
 
     public sealed record EnrollmentInfo(
         DateTimeOffset? CreatedAt,

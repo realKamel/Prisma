@@ -8,23 +8,22 @@ using Prisma.Domain.Specifications.Enrollments;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardGraph;
 
-public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork,ICurrentUserService currentUserService)
+public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<GetTeacherDashboardGraphQuery,
         Result<GetTeacherDashboardGraphResponse>>
 {
     private const int PeriodDays = 30;
     private const int WindowDays = PeriodDays * 2; // 30 days + the 30 before them
-    private static readonly TimeZoneInfo Cairo = ResolveCairo();
 
     public async Task<Result<GetTeacherDashboardGraphResponse>> Handle(
         GetTeacherDashboardGraphQuery request, CancellationToken cancellationToken)
     {
         var teacherId = currentUserService.UserId;
 
-        // ---- Daily earnings (60 Cairo days, zero-filled) -----------------------------------------
+        // ---- Daily earnings (60 days, zero-filled) -----------------------------------------------
         var now = DateTimeOffset.UtcNow;
         var queryFrom = now.AddDays(-(WindowDays + 1));
-        var today = ToCairoDate(now);
+        var today = ToDate(now);
         var windowStart = today.AddDays(-(WindowDays - 1));
 
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
@@ -40,7 +39,7 @@ public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork,ICurren
 
         var inWindow = windowEnrollments
             .Where(e => e.CreatedAt.HasValue)
-            .Select(e => new { Info = e, Date = ToCairoDate(e.CreatedAt!.Value) })
+            .Select(e => new { Info = e, Date = ToDate(e.CreatedAt!.Value) })
             .Where(x => x.Date >= windowStart && x.Date <= today)
             .ToArray();
 
@@ -73,23 +72,6 @@ public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork,ICurren
     private static decimal? PercentChange(decimal current, decimal previous) =>
         previous == 0 ? null : Math.Round((current - previous) / previous * 100, 1);
 
-    private static DateOnly ToCairoDate(DateTimeOffset value) =>
-        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(value, Cairo).DateTime);
-
-    private static TimeZoneInfo ResolveCairo()
-    {
-        foreach (var id in new[] { "Africa/Cairo", "Egypt Standard Time" })
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById(id);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                // try the next id (IANA on Linux, Windows id on older Windows hosts)
-            }
-        }
-
-        return TimeZoneInfo.Utc;
-    }
+    private static DateOnly ToDate(DateTimeOffset value) =>
+        DateOnly.FromDateTime(value.UtcDateTime);
 }

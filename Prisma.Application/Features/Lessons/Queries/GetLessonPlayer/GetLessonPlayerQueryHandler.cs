@@ -125,6 +125,8 @@ internal sealed class GetLessonPlayerQueryHandler(
                             : null,
                     DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty,
+                    SubmissionGrade = lesson.Assignment.SubmissionGrade ,
+                    SubmissionNotes = lesson.Assignment.SubmissionNotes ?? string.Empty,
                 },
             Sections = sections,
             IsEnrollmentCompleted = lesson.IsEnrollmentCompleted,

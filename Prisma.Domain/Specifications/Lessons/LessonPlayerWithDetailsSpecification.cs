@@ -79,6 +79,14 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                                 .Assignment.Submissions.Where(sub => sub.StudentId == studentId)
                                 .Select(sub => sub.Title)
                                 .FirstOrDefault(),
+                            SubmissionGrade = lesson
+                                .Assignment.Submissions.Where(sub => sub.StudentId == studentId)
+                                .Select(sub => sub.Score)
+                                .FirstOrDefault(),
+                            SubmissionNotes = lesson
+                                .Assignment.Submissions.Where(sub => sub.StudentId == studentId)
+                                .Select(sub => sub.Notes)
+                                .FirstOrDefault()
                         }
                         : null,
                 IsEnrollmentCompleted = lesson
@@ -141,4 +149,6 @@ public class PlayerAssignmentProjection
     public string? ContentURL { get; set; }
     public DateTimeOffset DueDate { get; set; }
     public string? SubmissionTitle { get; set; }
+    public decimal? SubmissionGrade { get; set; }
+    public string? SubmissionNotes { get; set; }
 }

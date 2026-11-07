@@ -73,7 +73,7 @@ internal sealed class RedeemCodeCommandHandler(
         }
 
         if (generatedCode.RedeemedByStudentId is not null)
-            return Result.Error("الكود ده اتستخدم قبل كده — لو في مشكلة تواصل مع المدرسة");
+            return Result.Error("الكود ده اتستخدم قبل كده — لو في مشكلة تواصل مع المدرس");
 
         var batchRepo = unitOfWork.GetOrCreateRepository<RedeemCodeEntity, int>();
 
@@ -117,7 +117,10 @@ internal sealed class RedeemCodeCommandHandler(
 
         var lesson = await lessonRepo.FirstOrDefaultAsync(
             new LessonWithProjectionSpec<LessonInfo>(
-                request.LessonId, l => new LessonInfo(l.Id, l.ValidityDuration.Seconds)));
+                request.LessonId, l => new LessonInfo(l.Id, l.ValidityDuration.Seconds, l.Money.Amount,l.Money.Currency)
+            ),
+            ct
+        );
         generatedCode.RedeemedByStudentId = studentId;
         generatedCode.RedeemedAt = DateTimeOffset.UtcNow;
 
@@ -137,6 +140,16 @@ internal sealed class RedeemCodeCommandHandler(
         {
             enrollment = new Enrollment
             {
+                Payment = new Payment() 
+                {
+                    Provider = "Code",
+                    ProviderRef = "RedeemCode",
+                    Money = Money.Create(lesson.Price, lesson.Currency),
+                    Status = PaymentStatus.Completed,
+                    StudentId = studentId,
+                    LessonId = lesson.Id,
+                    PaidAt = DateTimeOffset.UtcNow
+                },
                 Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.RedeemCode,
                 // ExpiresAt = expiresAt,
@@ -169,6 +182,6 @@ internal sealed class RedeemCodeCommandHandler(
     }
 }
 
-public sealed record LessonInfo(int Id, long validityDuration);
+public sealed record LessonInfo(int Id, long validityDuration, decimal Price, string Currency);
 
 public sealed record CodeBatchLessonInfo(Guid LessonId, int? AcademicYearId, Guid? TeacherId);

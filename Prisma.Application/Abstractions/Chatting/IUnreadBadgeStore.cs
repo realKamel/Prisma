@@ -1,6 +1,6 @@
 using Prisma.Application.Features.Chats.Dtos;
 
-namespace Prisma.Application.Abstractions.Services.Chatting;
+namespace Prisma.Application.Abstractions.Chatting;
 
 /// <summary>
 /// Caches unread counters for members that are offline so the badges can be replayed

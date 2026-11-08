@@ -1,5 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using StackExchange.Redis;
 
 namespace Prisma.Infrastructure.RealTime;

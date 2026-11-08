@@ -1,4 +1,4 @@
-namespace Prisma.Application.Abstractions.Services.Chatting;
+namespace Prisma.Application.Abstractions.Chatting;
 
 public interface IChatPresenceTracker
 {

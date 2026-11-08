@@ -1,4 +1,4 @@
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Application.Features.Chats.Dtos;
 
 namespace Prisma.Integration.Tests.Chats;

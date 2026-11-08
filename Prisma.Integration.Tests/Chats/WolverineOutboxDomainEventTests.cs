@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prisma.Application;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.ChatAggregate;
 using Prisma.Domain.Interfaces;
@@ -60,9 +60,7 @@ public sealed class WolverineOutboxDomainEventTests : IAsyncLifetime
                     (serviceProvider, options) =>
                         options
                             .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
-                            .AddInterceptors(
-                                serviceProvider.GetRequiredService<AuditInterceptor>()
-                            )
+                            .AddInterceptors(serviceProvider.GetRequiredService<AuditInterceptor>())
                 );
 
                 services.AddSingleton<IChatHubService>(_chatHubService);
@@ -174,7 +172,9 @@ public sealed class WolverineOutboxDomainEventTests : IAsyncLifetime
         await using var verificationScope = TestHost.Services.CreateAsyncScope();
         var dbContext = verificationScope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var persisted = await dbContext.Set<Message>().SingleAsync(message => message.Id == messageId);
+        var persisted = await dbContext
+            .Set<Message>()
+            .SingleAsync(message => message.Id == messageId);
 
         Assert.Equal(conversationId, persisted.ConversationId);
     }

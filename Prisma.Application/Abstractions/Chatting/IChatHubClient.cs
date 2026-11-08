@@ -1,6 +1,6 @@
 using Prisma.Application.Features.Chats.Dtos;
 
-namespace Prisma.Application.Abstractions.Services.Chatting;
+namespace Prisma.Application.Abstractions.Chatting;
 
 /// <summary>
 /// Strongly typed SignalR client contract. Implemented by the presentation layer hub.

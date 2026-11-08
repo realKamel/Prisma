@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Application.Features.Chats;
 using Prisma.Application.Features.Chats.Dtos;
 using Prisma.Domain.Entities.ChatAggregate;

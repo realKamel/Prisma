@@ -42,14 +42,14 @@ internal sealed partial class S3StorageService(
                 "BucketAlreadyOwnedByYou" => Result.Success(),
 
                 "BucketAlreadyExists" => Result.Conflict(
-                    $"The bucket '{bucketName}' already exists and is owned by another account."
+                    $"The bucket '{bucketName}' already exists and is owned by another account"
                 ),
 
                 "AccessDenied" => Result.Forbidden(
-                    "The storage provider denied permission to create the bucket."
+                    "The storage provider denied permission to create the bucket"
                 ),
 
-                _ => Result.Error("Failed to create the storage bucket."),
+                _ => Result.Error("Failed to create the storage bucket"),
             };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -60,7 +60,7 @@ internal sealed partial class S3StorageService(
         {
             UnexpectedErrorCreatingBucket(logger, bucketName, ex);
 
-            return Result.Error("An unexpected error occurred while creating the bucket.");
+            return Result.Error("An unexpected error occurred while creating the bucket");
         }
     }
 
@@ -85,15 +85,15 @@ internal sealed partial class S3StorageService(
 
             return ex.ErrorCode switch
             {
-                "NoSuchBucket" => Result.NotFound($"Bucket '{bucketName}' does not exist."),
+                "NoSuchBucket" => Result.NotFound($"Bucket '{bucketName}' does not exist"),
 
-                "BucketNotEmpty" => Result.Conflict($"Bucket '{bucketName}' is not empty."),
+                "BucketNotEmpty" => Result.Conflict($"Bucket '{bucketName}' is not empty"),
 
                 "AccessDenied" => Result.Forbidden(
-                    "The storage provider denied permission to delete the bucket."
+                    "The storage provider denied permission to delete the bucket"
                 ),
 
-                _ => Result.Error("Failed to delete the storage bucket."),
+                _ => Result.Error("Failed to delete the storage bucket"),
             };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -104,7 +104,7 @@ internal sealed partial class S3StorageService(
         {
             UnexpectedErrorDeletingBucket(logger, bucketName, ex);
 
-            return Result.Error("An unexpected error occurred while deleting the bucket.");
+            return Result.Error("An unexpected error occurred while deleting the bucket");
         }
     }
 
@@ -151,6 +151,23 @@ internal sealed partial class S3StorageService(
         CancellationToken cancellationToken = default
     )
     {
+        return await GetPreSignedUploadUrlAsync(
+            DefaultBucketName,
+            objectKey,
+            expiresInSeconds,
+            contentType,
+            cancellationToken
+        );
+    }
+
+    public async Task<Result<string>> GetPreSignedUploadUrlAsync(
+        string bucket,
+        string objectKey,
+        long expiresInSeconds,
+        string? contentType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
         try
         {
             var request = new GetPreSignedUrlRequest
@@ -177,6 +194,21 @@ internal sealed partial class S3StorageService(
     }
 
     public async Task<Result<string>> GetPreSignedDownloadUrlAsync(
+        string objectKey,
+        long expiresInSeconds,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await GetPreSignedDownloadUrlAsync(
+            DefaultBucketName,
+            objectKey,
+            expiresInSeconds,
+            cancellationToken
+        );
+    }
+
+    public async Task<Result<string>> GetPreSignedDownloadUrlAsync(
+        string bucket,
         string objectKey,
         long expiresInSeconds,
         CancellationToken cancellationToken = default
@@ -230,16 +262,13 @@ internal sealed partial class S3StorageService(
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
             Verb = HttpVerb.GET,
         };
-        var url = await s3.GetPreSignedURLAsync(request);
-        // var storageConfig = _config.GetSection("ObjectStorage");
-        // var serviceUrl = objectStorageOptions.Value.ServiceUrl;
+        request.Protocol = environment.IsDevelopment() ? Protocol.HTTP : Protocol.HTTPS;
+        return await s3.GetPreSignedURLAsync(request);
 
-        if (url.StartsWith(@"https://", StringComparison.InvariantCultureIgnoreCase))
-        {
-            url = url.Replace(@"https://", @"http://", StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        return url;
+        // if (url.StartsWith(@"https://", StringComparison.InvariantCultureIgnoreCase))
+        // {
+        //     url = url.Replace(@"https://", @"http://", StringComparison.InvariantCultureIgnoreCase);
+        // }
     }
 
     public async Task<string> GetDownloadUrlAsync(string objectKey, int expiryMinutes = 60)
@@ -295,18 +324,94 @@ internal sealed partial class S3StorageService(
         CancellationToken cancellationToken = default
     )
     {
-        throw new NotImplementedException();
+        try
+        {
+            await DeleteFileAsync(
+                bucketName: bucketName,
+                objectKey: objectKeys,
+                cancellationToken: cancellationToken
+            );
+
+            return Result.Success();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return Result.Error("Error Deleting Object");
+        }
+    }
+
+    public async Task<Stream> GetObjectAsync(
+        string bucketName,
+        string objectKey,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var result = await s3.GetObjectStreamAsync(
+                bucketName,
+                objectKey,
+                new Dictionary<string, object>(),
+                cancellationToken: cancellationToken
+            );
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                LogObjectNotFound(logger, bucketName, objectKey);
+            }
+
+            LogObjectRetrievalFailed(logger, ex, bucketName, objectKey);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LogObjectRetrievalUnexpectedFailure(logger, ex, bucketName, objectKey);
+
+            throw;
+        }
+    }
+
+    public async Task<Result<FileObjectMetadata>> GetObjectMetadataAsync(
+        string bucketName,
+        string objectKey,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var response = await s3.GetObjectMetadataAsync(bucketName, objectKey, cancellationToken);
+        var customMetadata = response.Metadata.Keys.ToDictionary(
+            key => key["x-amz-meta-".Length..],
+            key => response.Metadata[key],
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        return new FileObjectMetadata
+        {
+            SizeInBytes = response.ContentLength,
+            ContentType = response.ContentType ?? string.Empty,
+            ETag = response.ETag ?? string.Empty,
+            LastModified = response.LastModified ?? DateTimeOffset.MinValue,
+            Metadata = customMetadata,
+            VersionId = response.VersionId,
+        };
     }
 
     [LoggerMessage(
-        EventId = 2001,
+        EventId = 4001,
         Level = LogLevel.Information,
         Message = "Successfully deleted object '{ObjectKey}' from bucket '{BucketName}'"
     )]
     private static partial void LogFileDeleted(ILogger logger, string objectKey, string bucketName);
 
     [LoggerMessage(
-        EventId = 2002,
+        EventId = 4002,
         Level = LogLevel.Error,
         Message = "Failed to delete object '{ObjectKey}' from bucket '{BucketName}'"
     )]
@@ -318,7 +423,7 @@ internal sealed partial class S3StorageService(
     );
 
     [LoggerMessage(
-        EventId = 2003,
+        EventId = 4003,
         Level = LogLevel.Error,
         Message = "Failed to create presigned URL for object '{ObjectKey}' in bucket '{BucketName}'"
     )]
@@ -330,14 +435,14 @@ internal sealed partial class S3StorageService(
     );
 
     [LoggerMessage(
-        EventId = 4001,
+        EventId = 4004,
         Level = LogLevel.Information,
         Message = "Successfully created bucket {BucketName}"
     )]
     private static partial void LogBucketCreated(ILogger logger, string bucketName);
 
     [LoggerMessage(
-        EventId = 4002,
+        EventId = 4005,
         Level = LogLevel.Error,
         Message = "Failed to create bucket {BucketName}. AWS error code: {ErrorCode}"
     )]
@@ -349,7 +454,7 @@ internal sealed partial class S3StorageService(
     );
 
     [LoggerMessage(
-        EventId = 4003,
+        EventId = 4006,
         Level = LogLevel.Information,
         Message = "Successfully deleted bucket {BucketName}"
     )]
@@ -368,7 +473,7 @@ internal sealed partial class S3StorageService(
     );
 
     [LoggerMessage(
-        EventId = 4010,
+        EventId = 4019,
         Level = LogLevel.Error,
         Message = "Unexpected error deleting bucket {BucketName}"
     )]
@@ -379,7 +484,7 @@ internal sealed partial class S3StorageService(
     );
 
     [LoggerMessage(
-        EventId = 4008,
+        EventId = 4020,
         Level = LogLevel.Error,
         Message = "Unexpected error creating bucket {BucketName}"
     )]
@@ -387,5 +492,64 @@ internal sealed partial class S3StorageService(
         ILogger logger,
         string bucketName,
         Exception exception
+    );
+
+    [LoggerMessage(
+        EventId = 4015,
+        Level = LogLevel.Warning,
+        Message = "S3 object not found. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectNotFound(
+        ILogger logger,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4013,
+        Level = LogLevel.Error,
+        Message = "S3 metadata retrieval failed. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogS3MetadataRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4014,
+        Level = LogLevel.Error,
+        Message = "Unexpected error retrieving file metadata. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogMetadataRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4016,
+        Level = LogLevel.Error,
+        Message = "S3 object retrieval failed. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4017,
+        Level = LogLevel.Error,
+        Message = "Unexpected error retrieving object. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectRetrievalUnexpectedFailure(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
     );
 }

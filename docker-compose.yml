@@ -1,5 +1,5 @@
 services:
-  prisma.api:
+  wasla.api:
     image: ${DOCKER_REGISTRY-}prismaapi
     build:
       context: .
@@ -63,7 +63,7 @@ services:
 
   db:
     image: pgvector/pgvector:pg18
-    container_name: prisma-db
+    container_name: wasla-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -86,7 +86,7 @@ services:
 
   cache:
     image: valkey/valkey:9.0-alpine
-    container_name: prisma-cache
+    container_name: wasla-cache
     volumes:
       - cache-data:/data
     command: [ "valkey-server", "--maxmemory", "900mb", "--maxmemory-policy", "allkeys-lru" ]
@@ -105,7 +105,7 @@ services:
   
   messaging:
     image: valkey/valkey:9.0-alpine
-    container_name: prisma-messaging
+    container_name: wasla-messaging
     volumes:
       - messaging-data:/data
     command: [ "valkey-server", "--maxmemory","400mb", "--maxmemory-policy", "noeviction", "--appendonly","yes" ]
@@ -125,7 +125,7 @@ services:
 
   connection-pooler:
     image: edoburu/pgbouncer:v1.25.2-p0
-    container_name: prisma-pgbouncer
+    container_name: wasla-pgbouncer
     environment:
       DB_HOST: ${PGBOUNCER_DB_HOST}
       DB_PORT: ${PGBOUNCER_DB_PORT}
@@ -162,7 +162,7 @@ services:
   prometheus:
     profiles: [ "observability" ]
     image: prom/prometheus:v3.14.0
-    container_name: prisma-prometheus
+    container_name: wasla-prometheus
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=15d
@@ -183,7 +183,7 @@ services:
   node-exporter:
     profiles: [ "observability" ]
     image: prom/node-exporter:v1.12.1
-    container_name: prisma-node-exporter
+    container_name: wasla-node-exporter
     command: [ "--path.rootfs=/host" ]
     pid: host
     volumes:
@@ -199,7 +199,7 @@ services:
   cadvisor:
     profiles: [ "observability" ]
     image: ghcr.io/google/cadvisor:0.60.5
-    container_name: prisma-cadvisor
+    container_name: wasla-cadvisor
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -216,7 +216,7 @@ services:
   loki:
     profiles: [ "observability" ]
     image: grafana/loki:3.7.7
-    container_name: prisma-loki
+    container_name: wasla-loki
     command: -config.file=/etc/loki/loki-config.yml
     volumes:
       - ./docker/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
@@ -232,7 +232,7 @@ services:
   alloy:
     profiles: [ "observability" ]
     image: grafana/alloy:v1.19.2
-    container_name: prisma-alloy
+    container_name: wasla-alloy
     command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
       - ./docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
@@ -252,7 +252,7 @@ services:
   grafana:
     profiles: [ "observability" ]
     image: grafana/grafana:13.0.8
-    container_name: prisma-grafana
+    container_name: wasla-grafana
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -276,7 +276,7 @@ services:
   pgbouncer-exporter:
     profiles: [ "observability" ]
     image: prometheuscommunity/pgbouncer-exporter:v0.12.1
-    container_name: prisma-pgbouncer-exporter
+    container_name: wasla-pgbouncer-exporter
     environment:
       - DATA_SOURCE_NAME=postgresql://${PGBOUNCER_DB_USER}:${PGBOUNCER_DB_PASSWORD}@connection-pooler:5432/pgbouncer?sslmode=disable
     depends_on:
@@ -293,7 +293,7 @@ services:
   valkey-exporter:
     profiles: [ "observability" ]
     image: oliver006/redis_exporter:v1.91.1
-    container_name: prisma-valkey-exporter
+    container_name: wasla-valkey-exporter
     environment:
       - REDIS_ADDR=cache:6379
     depends_on:
@@ -310,7 +310,7 @@ services:
   tempo-init:
     profiles: [ "observability" ]
     image: busybox
-    container_name: prisma-tempo-init
+    container_name: wasla-tempo-init
     command: [ "sh", "-c", "chown -R 10001:10001 /tmp/tempo" ]
     volumes:
       - tempo-data:/tmp/tempo
@@ -325,7 +325,7 @@ services:
     profiles: [ "observability" ]
     image: grafana/tempo:3.0.3
     user: "10001:10001"
-    container_name: prisma-tempo
+    container_name: wasla-tempo
     command: [ "-config.file=/etc/tempo.yaml" ]
     volumes:
       - ./docker/tempo/tempo.yaml:/etc/tempo.yaml:ro
@@ -344,7 +344,7 @@ services:
   postgres-exporter:
     profiles: [ "observability" ]
     image: prometheuscommunity/postgres-exporter:v0.20.1
-    container_name: prisma-postgres-exporter
+    container_name: wasla-postgres-exporter
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
     depends_on:
@@ -360,7 +360,7 @@ services:
 
   clamav:
     image: clamav/clamav:stable
-    container_name: prisma-clamav
+    container_name: wasla-clamav
     restart: unless-stopped
     volumes:
       - clamav-data:/var/lib/clamav

@@ -67,7 +67,7 @@ public sealed class Lesson : BaseEntity
 
     //TODO:complete the impl
 
-    // private Lesson() { }
+    private Lesson() { }
 
     /// <summary>
     /// Factory method to create a lesson in valid state

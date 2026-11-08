@@ -26,16 +26,16 @@ public sealed class ActiveEnrollmentsSpec : Specification<Enrollment>
     {
         Query
             .Where(e =>
-                e.Status == EnrollmentStatus.Active
+                e.Status != EnrollmentStatus.Available
                 && e.StudentId == studentId
                 && (before == null || e.CreatedAt <= before)
             )
-            .Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize)
+            // .Skip((pageIndex - 1) * pageSize)
+            // .Take(pageSize)
             .Include(e => e.Lesson)
-            .ThenInclude(l => l.Teacher)
+                .ThenInclude(l => l.Teacher)
             .Include(x => x.Lesson.Sections)
-            .ThenInclude(p => p.Progresses)
+                .ThenInclude(p => p.Progresses)
             .AsSplitQuery()
             .AsNoTrackingWithIdentityResolution();
     }

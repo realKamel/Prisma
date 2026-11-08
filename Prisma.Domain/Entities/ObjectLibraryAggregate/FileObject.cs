@@ -6,26 +6,6 @@ namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
 
 public sealed class FileObject : BaseEntity<Guid>
 {
-    private FileObject() { } // EF Core
-
-    private FileObject(
-        Guid id,
-        Guid objectStorageId,
-        string objectKey,
-        string fileName,
-        string contentType,
-        long size
-    )
-    {
-        Id = id;
-        ObjectStorageId = objectStorageId;
-        ObjectKey = objectKey;
-        FileName = fileName;
-        ContentType = contentType;
-        Size = size;
-        FileStatus = FileStatus.PendingUpload;
-    }
-
     // Storage identity
     public string ObjectKey { get; private set; }
 
@@ -48,6 +28,26 @@ public sealed class FileObject : BaseEntity<Guid>
     public ObjectStorage ObjectStorage { get; private set; }
     public Guid ObjectStorageId { get; private set; }
 
+    private FileObject() { } // EF Core
+
+    private FileObject(
+        Guid id,
+        Guid objectStorageId,
+        string objectKey,
+        string fileName,
+        string contentType,
+        long size
+    )
+    {
+        Id = id;
+        ObjectStorageId = objectStorageId;
+        ObjectKey = objectKey;
+        FileName = fileName;
+        ContentType = contentType;
+        Size = size;
+        FileStatus = FileStatus.PendingUpload;
+    }
+
     public static Result<FileObject> Create(
         Guid objectStorageId,
         string bucketName,
@@ -63,13 +63,6 @@ public sealed class FileObject : BaseEntity<Guid>
         {
             errors.Add(
                 new ValidationError("BucketName", "Bucket name cannot be null or whitespace.")
-            );
-        }
-
-        if (string.IsNullOrWhiteSpace(objectKey))
-        {
-            errors.Add(
-                new ValidationError("ObjectKey", "Object key cannot be null or whitespace.")
             );
         }
 
@@ -110,6 +103,62 @@ public sealed class FileObject : BaseEntity<Guid>
             contentType,
             size
         );
+    }
+
+    public static Result<FileObject> CreateWithCustomKey(
+        Guid assignedId,
+        Guid objectStorageId,
+        string bucketName,
+        string objectKey,
+        string fileName,
+        string contentType,
+        long size
+    )
+    {
+        var errors = new List<ValidationError>();
+
+        if (assignedId == Guid.Empty)
+        {
+            errors.Add(new ValidationError("Id", "File object ID cannot be empty."));
+        }
+
+        if (string.IsNullOrWhiteSpace(bucketName))
+        {
+            errors.Add(
+                new ValidationError("BucketName", "Bucket name cannot be null or whitespace.")
+            );
+        }
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            errors.Add(new ValidationError("FileName", "File name cannot be null or whitespace."));
+        }
+
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            errors.Add(
+                new ValidationError("ContentType", "Content type cannot be null or whitespace.")
+            );
+        }
+
+        if (size <= 0)
+        {
+            errors.Add(new ValidationError("Size", "File size must be greater than zero."));
+        }
+
+        if (objectStorageId == Guid.Empty)
+        {
+            errors.Add(
+                new ValidationError("ObjectStorageId", "Object storage ID cannot be empty.")
+            );
+        }
+
+        if (errors.Count > 0)
+        {
+            return Result.Invalid(errors);
+        }
+
+        return new FileObject(assignedId, objectStorageId, objectKey, fileName, contentType, size);
     }
 
     private void ChangeStatus(FileStatus target)

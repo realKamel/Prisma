@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.ValueObjects;
 using Prisma.Domain.ValueObjects.AssessmentDomain;
 using Prisma.Domain.ValueObjects.Common;
@@ -28,6 +29,23 @@ internal static class ComplexPropertyBuilderExtensions
             .HasColumnName($"{prefix}_SecondName")
             .HasMaxLength(100)
             .IsRequired();
+
+        return builder;
+    }
+
+    public static ComplexPropertyBuilder<TenantSetting> ConfigureTenantSetting<TEntity>(
+        this ComplexPropertyBuilder<TenantSetting> builder,
+        string prefix = "TenantSetting"
+    )
+        where TEntity : class
+    {
+        builder.Property(f => f.TenantId).HasColumnName($"{prefix}_TenantId").IsRequired();
+
+        builder.Property(f => f.LibraryId).HasColumnName($"{prefix}_LibraryId").IsRequired();
+
+        builder.Property(f => f.LibraryApiKey).HasColumnName($"{prefix}_ApiKey").IsRequired();
+
+        builder.Property(f => f.PullZoneUrl).HasColumnName($"{prefix}_PullZoneUrl").IsRequired();
 
         return builder;
     }

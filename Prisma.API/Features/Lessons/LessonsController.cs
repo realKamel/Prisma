@@ -15,7 +15,7 @@ using Prisma.Application.Features.Lessons.Commands.DeleteLessonMaterialCommand;
 using Prisma.Application.Features.Lessons.Commands.RenewSectionUploadLink;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
-using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterialsCommand;
+using Prisma.Application.Features.Lessons.Commands.UploadLessonMaterials;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
@@ -121,10 +121,21 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return result;
     }
 
+    // [HttpPost("v2")]
+    // [Idempotent]
+    // [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    // public async Task<Result<AddLessonResponse>> AddLesson(
+    //     [FromBody] AddLessonCommand command,
+    //     CancellationToken cancellationToken
+    // )
+    // {
+    //     return await mediator.Send(command, cancellationToken);
+    // }
+
     [HttpPost("v2")]
     [Idempotent]
     [EnableRateLimiting(RateLimitPolicies.UserWrite)]
-    public async Task<Result<AddLessonResponse>> AddLesson(
+    public async Task<Result<AddLessonResponse>> AddLesson2(
         [FromBody] AddLessonCommand command,
         CancellationToken cancellationToken
     )
@@ -251,6 +262,25 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         return await mediator.Send(command, cancellationToken);
     }
 
+    [HttpPost("{id:guid}/materials2")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    public async Task<Result<string>> UploadMaterials2(
+        [FromRoute] Guid id,
+        [FromForm] UploadLessonMaterialsRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        return await mediator.Send(
+            new UploadLessonMaterialsCommand2(
+                id,
+                request.FileName,
+                request.ContentType,
+                request.Size
+            ),
+            cancellationToken
+        );
+    }
+
     [HttpDelete("{id:int}/materials/{materialId:int}")]
     [ExpectedFailures(
         ResultStatus.CriticalError,
@@ -287,9 +317,4 @@ public sealed class LessonsController(IMediator mediator) : ApiController
         var result = await mediator.Send(query, cancellationToken);
         return result;
     }
-}
-
-public sealed record UploadMaterialsRequest
-{
-    public IList<IFormFile> Files { get; init; } = [];
 }

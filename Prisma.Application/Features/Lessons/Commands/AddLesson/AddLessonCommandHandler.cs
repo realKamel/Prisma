@@ -1,10 +1,7 @@
 using Ardalis.Result;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Extenions;
-using Prisma.Application.Features.Lessons.Helpers;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -15,9 +12,8 @@ namespace Prisma.Application.Features.Lessons.Commands.AddLesson;
 
 internal sealed class AddLessonCommandHandler(
     ICurrentUserService currentUserService,
-    IStorageService storageService,
     IUnitOfWork unitOfWork
-) : IRequestHandler<AddLessonCommand, Result<AddLessonResponse>>
+) : ICommandHandler<AddLessonCommand, Result<AddLessonResponse>>
 {
     public async Task<Result<AddLessonResponse>> Handle(
         AddLessonCommand request,
@@ -69,7 +65,7 @@ internal sealed class AddLessonCommandHandler(
 
         if (!lessonResult.IsSuccess)
         {
-            return Result.Invalid(lessonResult.ValidationErrors);
+            return lessonResult.Map();
         }
 
         var lesson = lessonResult.Value;
@@ -96,65 +92,14 @@ internal sealed class AddLessonCommandHandler(
             }
         }
 
-        // 4. Generate Pre-signed Cover Upload URL
-        var coverStorageKey = UrlsHelper.ConstructLessonCoverObjectKey(teacherId, lesson.PublicId);
-        var coverStorageResult = await storageService.GetPreSignedUploadUrlAsync(
-            coverStorageKey,
-            1.DayInSeconds(),
-            cancellationToken: cancellationToken
-        );
-
-        if (!coverStorageResult.IsSuccess)
-        {
-            return coverStorageResult.Map();
-        }
-
-        // 5. Generate Pre-signed Assignment Upload URL (if enabled)
-        string? assignmentStorageUrl = null;
-
-        if (request.AssignmentEnabled)
-        {
-            string? assignmentStorageKey = null;
-            assignmentStorageKey = UrlsHelper.ConstructLessonAssignmentObjectKey(
-                teacherId,
-                lesson.PublicId
-            );
-            var assignmentStorageResult = await storageService.GetPreSignedUploadUrlAsync(
-                assignmentStorageKey,
-                1.DayInSeconds(),
-                cancellationToken: cancellationToken
-            );
-
-            if (!assignmentStorageResult.IsSuccess)
-            {
-                return assignmentStorageResult.Map();
-            }
-
-            assignmentStorageUrl = assignmentStorageResult.Value; // Extract the actual URL string
-
-            var assignment = new Assignment
-            {
-                Title = $"{request.Title} Assignment",
-                ContentURL = assignmentStorageKey, // stores the object storage key reference
-                DueDate =
-                    request.AssignmentDueDate?.ToUniversalTime()
-                    ?? DateTimeOffset.UtcNow.AddDays(7),
-                Grade = request.AssignmentGrade ?? 0,
-            };
-            lesson.AddAssignment(assignment);
-        }
-
         // 6. Persist to the database
         var lessonRepository = unitOfWork.GetOrCreateRepository<Lesson, int>();
+
         lessonRepository.Add(lesson);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 7. Return response with pre-signed upload URLs
-        return new AddLessonResponse(
-            LessonId: lesson.PublicId,
-            CoverUploadUrl: coverStorageResult.Value,
-            AssignmentUploadUrl: assignmentStorageUrl
-        );
+        return new AddLessonResponse(LessonId: lesson.PublicId);
     }
 }

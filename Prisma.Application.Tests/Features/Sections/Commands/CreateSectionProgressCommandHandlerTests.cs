@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Sections.Commands.CreateSectionProgress;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -16,8 +17,11 @@ namespace Prisma.Application.Tests.Features.Sections.Commands;
 public class CreateSectionProgressCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<SectionProgress, int> _progressRepo = Substitute.For<IRepository<SectionProgress, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<SectionProgress, int> _progressRepo = Substitute.For<
+        IRepository<SectionProgress, int>
+    >();
     private readonly CreateSectionProgressCommandHandler _sut;
 
     public CreateSectionProgressCommandHandlerTests()
@@ -48,8 +52,11 @@ public class CreateSectionProgressCommandHandlerTests
         // Arrange
         var studentId = Guid.NewGuid();
         _currentUserService.UserId.Returns(studentId);
-        _progressRepo.AnyAsync(
-                Arg.Any<SectionProgressByStudentAndSectionSpecification>(), Arg.Any<CancellationToken>())
+        _progressRepo
+            .AnyAsync(
+                Arg.Any<SectionProgressByStudentAndSectionSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(true);
 
         var command = new CreateSectionProgressCommand(1);
@@ -68,8 +75,11 @@ public class CreateSectionProgressCommandHandlerTests
         // Arrange
         var studentId = Guid.NewGuid();
         _currentUserService.UserId.Returns(studentId);
-        _progressRepo.AnyAsync(
-                Arg.Any<SectionProgressByStudentAndSectionSpecification>(), Arg.Any<CancellationToken>())
+        _progressRepo
+            .AnyAsync(
+                Arg.Any<SectionProgressByStudentAndSectionSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(false);
 
         var command = new CreateSectionProgressCommand(5);
@@ -78,12 +88,17 @@ public class CreateSectionProgressCommandHandlerTests
         await _sut.Handle(command, CancellationToken.None);
 
         // Assert
-        _progressRepo.Received(1).Add(Arg.Is<SectionProgress>(p =>
-            p.SectionId == 5 &&
-            p.StudentId == studentId &&
-            p.IsCompleted == false &&
-            p.WatchedSeconds == 0 &&
-            p.Percentage == 0));
+        _progressRepo
+            .Received(1)
+            .Add(
+                Arg.Is<SectionProgress>(p =>
+                    p.SectionId == 5
+                    && p.StudentId == studentId
+                    && p.IsCompleted == false
+                    && p.WatchedSeconds == 0
+                    && p.Percentage == 0
+                )
+            );
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }

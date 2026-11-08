@@ -1,8 +1,9 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Features.Lessons.Queries.GetLessonPlayer;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;

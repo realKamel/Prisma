@@ -1,9 +1,10 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Lessons.Commands.ToggleLessonStatusCommand;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -15,15 +16,22 @@ namespace Prisma.Application.Tests.Features.Lessons.Commands;
 public class ToggleLessonStatusCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
     private readonly ToggleLessonStatusCommandHandler _sut;
 
     public ToggleLessonStatusCommandHandlerTests()
     {
         _unitOfWork.GetOrCreateRepository<Lesson, int>().Returns(_lessonRepo);
-        _sut = new ToggleLessonStatusCommandHandler(_unitOfWork, _currentUserService, _identityService);
+        _sut = new ToggleLessonStatusCommandHandler(
+            _unitOfWork,
+            _currentUserService,
+            _identityService
+        );
     }
 
     [Fact]

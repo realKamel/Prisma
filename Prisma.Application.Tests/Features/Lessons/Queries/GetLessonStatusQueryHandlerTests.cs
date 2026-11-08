@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Lessons.Queries.GetLessonStatus;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -14,8 +15,11 @@ namespace Prisma.Application.Tests.Features.Lessons.Queries;
 public class GetLessonStatusQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly GetLessonStatusQueryHandler _sut;
 
     public GetLessonStatusQueryHandlerTests()
@@ -47,7 +51,8 @@ public class GetLessonStatusQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns((LessonStatusProjection?)null);
 
         // Act
@@ -70,10 +75,11 @@ public class GetLessonStatusQueryHandlerTests
         var fakeProjection = new LessonStatusProjection
         {
             PublicId = lessonId,
-            HasEnrollment = false // الطالب لم يشتريه بعد
+            HasEnrollment = false, // الطالب لم يشتريه بعد
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeProjection);
 
         // Act
@@ -98,10 +104,11 @@ public class GetLessonStatusQueryHandlerTests
         {
             PublicId = lessonId,
             HasEnrollment = true,
-            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(-1) // منتهي الصلاحية منذ يوم
+            EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(-1), // منتهي الصلاحية منذ يوم
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeProjection);
 
         // Act
@@ -128,10 +135,11 @@ public class GetLessonStatusQueryHandlerTests
             HasEnrollment = true,
             EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5), // مسجل وصالح
             HasPrerequisite = true,
-            IsPrerequisiteCompleted = false // لم يكتمل بعد!
+            IsPrerequisiteCompleted = false, // لم يكتمل بعد!
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeProjection);
 
         // Act
@@ -158,10 +166,11 @@ public class GetLessonStatusQueryHandlerTests
             HasEnrollment = true,
             EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5), // التسجيل صالح وممتد
             HasPrerequisite = true,
-            IsPrerequisiteCompleted = true // مكتمل بنجاح
+            IsPrerequisiteCompleted = true, // مكتمل بنجاح
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeProjection);
 
         // Act
@@ -187,10 +196,11 @@ public class GetLessonStatusQueryHandlerTests
             PublicId = lessonId,
             HasEnrollment = true,
             EnrollmentExpiresAt = DateTimeOffset.UtcNow.AddDays(5),
-            HasPrerequisite = false // مفيش متطلب سابق أصلاً
+            HasPrerequisite = false, // مفيش متطلب سابق أصلاً
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(Arg.Any<LessonStatusSpecification>(), Arg.Any<CancellationToken>())
             .Returns(fakeProjection);
 
         // Act

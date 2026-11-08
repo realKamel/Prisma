@@ -1,5 +1,5 @@
-
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -13,9 +13,15 @@ public class SaveQuizAnswerCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<AttemptAnswer, int> _answerRepository = Substitute.For<IRepository<AttemptAnswer, int>>();
+    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<
+        IRepository<QuizAttempt, int>
+    >();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
+    private readonly IRepository<AttemptAnswer, int> _answerRepository = Substitute.For<
+        IRepository<AttemptAnswer, int>
+    >();
     private readonly SaveQuizAnswerCommandHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -38,7 +44,8 @@ public class SaveQuizAnswerCommandHandlerTests
         int quizId = 10,
         QuizAttemptStatus status = QuizAttemptStatus.InProgress,
         DateTimeOffset? startedAt = null,
-        List<AttemptAnswer>? answers = null) =>
+        List<AttemptAnswer>? answers = null
+    ) =>
         new()
         {
             Id = id,
@@ -46,7 +53,7 @@ public class SaveQuizAnswerCommandHandlerTests
             StudentId = StudentId,
             Status = status,
             StartedAt = startedAt ?? DateTimeOffset.UtcNow.AddMinutes(-5),
-            Answers = answers ?? new List<AttemptAnswer>()
+            Answers = answers ?? new List<AttemptAnswer>(),
         };
 
     private static Quiz CreateQuiz(int id = 10, int durationMinutes = 30) =>
@@ -54,7 +61,10 @@ public class SaveQuizAnswerCommandHandlerTests
 
     private void SetupAttempt(QuizAttempt? attempt) =>
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<AttemptByIdAndStudentSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<AttemptByIdAndStudentSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(attempt);
 
     private void SetupQuiz(Quiz? quiz) =>
@@ -62,19 +72,25 @@ public class SaveQuizAnswerCommandHandlerTests
             .FirstOrDefaultAsync(Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>())
             .Returns(quiz);
 
-    private static SaveQuizAnswerCommand McqAnswerCommand(int attemptId = 1, int questionId = 1, int choiceId = 100) =>
-        new(attemptId, questionId, choiceId, null, ClientSeq: 1);
+    private static SaveQuizAnswerCommand McqAnswerCommand(
+        int attemptId = 1,
+        int questionId = 1,
+        int choiceId = 100
+    ) => new(attemptId, questionId, choiceId, null, ClientSeq: 1);
 
-    private static SaveQuizAnswerCommand WrittenAnswerCommand(int attemptId = 1, int questionId = 1, string text = "my answer") =>
-        new(attemptId, questionId, null, text, ClientSeq: 1);
-
+    private static SaveQuizAnswerCommand WrittenAnswerCommand(
+        int attemptId = 1,
+        int questionId = 1,
+        string text = "my answer"
+    ) => new(attemptId, questionId, null, text, ClientSeq: 1);
 
     private void SetupExistingAnswer(AttemptAnswer? answer) =>
-    _answerRepository
-        .FirstOrDefaultAsync(
-            Arg.Any<AttemptAnswerByAttemptAndQuestionSpecification>(),
-            Arg.Any<CancellationToken>())
-        .Returns(answer);
+        _answerRepository
+            .FirstOrDefaultAsync(
+                Arg.Any<AttemptAnswerByAttemptAndQuestionSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(answer);
 
     #endregion
 
@@ -93,8 +109,9 @@ public class SaveQuizAnswerCommandHandlerTests
         Assert.False(result.IsSuccess);
         Assert.Equal("المحاولة غير موجودة", result.GetResultMessage());
 
-        await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
+        await _quizRepository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
     }
 
     [Theory]
@@ -112,8 +129,9 @@ public class SaveQuizAnswerCommandHandlerTests
         Assert.False(result.IsSuccess);
         Assert.Equal("لا يمكن تعديل الإجابات بعد التسليم", result.GetResultMessage());
 
-        await _quizRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
+        await _quizRepository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(Arg.Any<QuizByIdSpecification>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -129,7 +147,10 @@ public class SaveQuizAnswerCommandHandlerTests
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.Equal("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات", result.GetResultMessage());
+        Assert.Equal(
+            "انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات",
+            result.GetResultMessage()
+        );
 
         _answerRepository.DidNotReceive().Add(Arg.Any<AttemptAnswer>());
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -139,7 +160,9 @@ public class SaveQuizAnswerCommandHandlerTests
     public async Task Handle_WhenWithinGracePeriodAfterDeadline_StillSavesSuccessfully()
     {
         // Arrange - 30 min quiz started exactly 30 min + 2s ago, within the 5s grace window
-        var attempt = CreateAttempt(startedAt: DateTimeOffset.UtcNow.AddMinutes(-30).AddSeconds(-2));
+        var attempt = CreateAttempt(
+            startedAt: DateTimeOffset.UtcNow.AddMinutes(-30).AddSeconds(-2)
+        );
         SetupAttempt(attempt);
         SetupQuiz(CreateQuiz(durationMinutes: 30));
 
@@ -171,12 +194,17 @@ public class SaveQuizAnswerCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal("تم حفظ الإجابة", result.GetResultMessage());
 
-        _answerRepository.Received(1).Add(Arg.Is<AttemptAnswer>(a =>
-            a.QuizAttemptId == attempt.Id &&
-            a.StudentId == StudentId &&
-            a.QuestionId == 5 &&
-            a.ChoiceId == 100 &&
-            a.TextAnswer == null));
+        _answerRepository
+            .Received(1)
+            .Add(
+                Arg.Is<AttemptAnswer>(a =>
+                    a.QuizAttemptId == attempt.Id
+                    && a.StudentId == StudentId
+                    && a.QuestionId == 5
+                    && a.ChoiceId == 100
+                    && a.TextAnswer == null
+                )
+            );
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -197,10 +225,13 @@ public class SaveQuizAnswerCommandHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        _answerRepository.Received(1).Add(Arg.Is<AttemptAnswer>(a =>
-            a.QuestionId == 5 &&
-            a.ChoiceId == null &&
-            a.TextAnswer == "my written answer"));
+        _answerRepository
+            .Received(1)
+            .Add(
+                Arg.Is<AttemptAnswer>(a =>
+                    a.QuestionId == 5 && a.ChoiceId == null && a.TextAnswer == "my written answer"
+                )
+            );
     }
 
     #endregion
@@ -216,7 +247,7 @@ public class SaveQuizAnswerCommandHandlerTests
         {
             QuizAttemptId = attempt.Id,
             QuestionId = 5,
-            ChoiceId = 100
+            ChoiceId = 100,
         };
 
         SetupAttempt(attempt);
@@ -245,14 +276,20 @@ public class SaveQuizAnswerCommandHandlerTests
         {
             QuizAttemptId = attempt.Id,
             QuestionId = 5,
-            ChoiceId = 100
+            ChoiceId = 100,
         };
 
         SetupAttempt(attempt);
         SetupQuiz(CreateQuiz());
         SetupExistingAnswer(existingAnswer);
 
-        var command = new SaveQuizAnswerCommand(attempt.Id, 5, null, "changed my mind, here's text", ClientSeq: 1);
+        var command = new SaveQuizAnswerCommand(
+            attempt.Id,
+            5,
+            null,
+            "changed my mind, here's text",
+            ClientSeq: 1
+        );
 
         // Act
         await _handler.Handle(command, CancellationToken.None);

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Sections.Commands.CompleteSection;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -16,8 +17,11 @@ namespace Prisma.Application.Tests.Features.Sections.Commands;
 public class CompleteSectionCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<SectionProgress, int> _progressRepo = Substitute.For<IRepository<SectionProgress, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<SectionProgress, int> _progressRepo = Substitute.For<
+        IRepository<SectionProgress, int>
+    >();
     private readonly CompleteSectionCommandHandler _sut;
 
     public CompleteSectionCommandHandlerTests()
@@ -47,8 +51,11 @@ public class CompleteSectionCommandHandlerTests
         // Arrange
         var studentId = Guid.NewGuid();
         _currentUserService.UserId.Returns(studentId);
-        _progressRepo.FirstOrDefaultAsync(
-                Arg.Any<SectionProgressByStudentAndSectionSpecification>(), Arg.Any<CancellationToken>())
+        _progressRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<SectionProgressByStudentAndSectionSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((SectionProgress?)null);
 
         var command = new CompleteSectionCommand(1);
@@ -66,11 +73,19 @@ public class CompleteSectionCommandHandlerTests
     {
         // Arrange
         var studentId = Guid.NewGuid();
-        var progress = new SectionProgress { Id = 1, IsCompleted = false, Percentage = 40 };
+        var progress = new SectionProgress
+        {
+            Id = 1,
+            IsCompleted = false,
+            Percentage = 40,
+        };
 
         _currentUserService.UserId.Returns(studentId);
-        _progressRepo.FirstOrDefaultAsync(
-                Arg.Any<SectionProgressByStudentAndSectionSpecification>(), Arg.Any<CancellationToken>())
+        _progressRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<SectionProgressByStudentAndSectionSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(progress);
 
         var command = new CompleteSectionCommand(1);

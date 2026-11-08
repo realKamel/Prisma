@@ -1,4 +1,5 @@
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.ReportSecurityEvent;
 using Prisma.Domain.Enums;
@@ -29,10 +30,7 @@ public class ReportSecurityEventCommandHandlerTests
     public async Task Handle_WhenCalled_ReturnsSuccess()
     {
         // Arrange
-        var command = new ReportSecurityEventCommand(
-            1,
-            SecurityEventType.TabSwitch
-        );
+        var command = new ReportSecurityEventCommand(1, SecurityEventType.TabSwitch);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -49,7 +47,8 @@ public class ReportSecurityEventCommandHandlerTests
     [InlineData(SecurityEventType.TabSwitch)]
     [InlineData(SecurityEventType.CopyPasteAttempt)]
     public async Task Handle_WhenSecurityEventReported_CallsCounterWithCorrectData(
-        SecurityEventType eventType)
+        SecurityEventType eventType
+    )
     {
         // Arrange
         var attemptId = 1;
@@ -61,29 +60,23 @@ public class ReportSecurityEventCommandHandlerTests
         await _handler.Handle(command, ct);
 
         // Assert
-        await _counter.Received(1).IncrementAsync(
-            attemptId,
-            StudentId,
-            eventType,
-            ct
-        );
+        await _counter.Received(1).IncrementAsync(attemptId, StudentId, eventType, ct);
     }
 
     [Fact]
     public async Task Handle_WhenCounterReturnsFalse_ReturnsSuccess()
     {
         // Arrange
-        _counter.IncrementAsync(
-            Arg.Any<int>(),
-            Arg.Any<Guid>(),
-            Arg.Any<SecurityEventType>(),
-            Arg.Any<CancellationToken>()
-        ).Returns(Task.FromResult(false));
+        _counter
+            .IncrementAsync(
+                Arg.Any<int>(),
+                Arg.Any<Guid>(),
+                Arg.Any<SecurityEventType>(),
+                Arg.Any<CancellationToken>()
+            )
+            .Returns(Task.FromResult(false));
 
-        var command = new ReportSecurityEventCommand(
-            1,
-            SecurityEventType.TabSwitch
-        );
+        var command = new ReportSecurityEventCommand(1, SecurityEventType.TabSwitch);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -44,7 +45,10 @@ public class GetTeacherFinancesQueryHandlerTests
         result.Status.Should().Be(ResultStatus.Unauthorized);
         await _paymentRepo
             .DidNotReceive()
-            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>());
+            .ListAsync(
+                Arg.Any<TeacherFinancesSpecification<Financesinfo>>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Fact]
@@ -68,7 +72,10 @@ public class GetTeacherFinancesQueryHandlerTests
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>())
+            .ListAsync(
+                Arg.Any<TeacherFinancesSpecification<Financesinfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakePayments);
 
         // Act
@@ -107,7 +114,10 @@ public class GetTeacherFinancesQueryHandlerTests
         };
 
         _paymentRepo
-            .ListAsync(Arg.Any<TeacherFinancesSpecification<Financesinfo>>(), Arg.Any<CancellationToken>())
+            .ListAsync(
+                Arg.Any<TeacherFinancesSpecification<Financesinfo>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakePaymentsWithNulls);
 
         // Act

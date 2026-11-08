@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Application.Features.RedeemCodes.Queries.GetCodeLessonOptions;
@@ -13,12 +14,17 @@ namespace Prisma.Application.Tests.Features.RedeemCode;
 public class GetCodeLessonOptionsQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly Guid _teacherId = Guid.NewGuid();
 
-    private readonly IRepository<Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson, int> _repo =
-        Substitute.For<IRepository<Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson, int>>();
+    private readonly IRepository<
+        Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson,
+        int
+    > _repo = Substitute.For<
+        IRepository<Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson, int>
+    >();
 
     private readonly GetCodeLessonOptionsQueryHandler _sut;
 
@@ -31,7 +37,11 @@ public class GetCodeLessonOptionsQueryHandlerTests
         _unitOfWork
             .GetOrCreateRepository<Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson, int>()
             .Returns(_repo);
-        _sut = new GetCodeLessonOptionsQueryHandler(_unitOfWork, _currentUserService, _identityService);
+        _sut = new GetCodeLessonOptionsQueryHandler(
+            _unitOfWork,
+            _currentUserService,
+            _identityService
+        );
     }
 
     [Fact]
@@ -40,15 +50,37 @@ public class GetCodeLessonOptionsQueryHandlerTests
         // Arrange — same lesson appears twice (two academic years) → should dedupe
         var links = new List<CodeLessonOptionDto>
         {
-            new() { Id = 1, AcademicYearId = 1, Name = "الكهرباء الساكنة" },
-            new() { Id = 1, AcademicYearId = 1, Name = "الكهرباء الساكنة" }, // duplicate
-            new() { Id = 2, AcademicYearId = 1, Name = "قوانين نيوتن" },
-            new() { Id = 3, AcademicYearId = 2, Name = "المغناطيسية" },
+            new()
+            {
+                Id = 1,
+                AcademicYearId = 1,
+                Name = "الكهرباء الساكنة",
+            },
+            new()
+            {
+                Id = 1,
+                AcademicYearId = 1,
+                Name = "الكهرباء الساكنة",
+            }, // duplicate
+            new()
+            {
+                Id = 2,
+                AcademicYearId = 1,
+                Name = "قوانين نيوتن",
+            },
+            new()
+            {
+                Id = 3,
+                AcademicYearId = 2,
+                Name = "المغناطيسية",
+            },
         };
 
-        _repo.ListAsync(
+        _repo
+            .ListAsync(
                 Arg.Any<TeacherAcademicYearLessonsSpecification<CodeLessonOptionDto>>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(links);
 
         // Act
@@ -65,9 +97,11 @@ public class GetCodeLessonOptionsQueryHandlerTests
     public async Task Handle_WhenNoLinks_ReturnsEmptyList()
     {
         // Arrange
-        _repo.ListAsync(
+        _repo
+            .ListAsync(
                 Arg.Any<TeacherAcademicYearLessonsSpecification<CodeLessonOptionDto>>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(new List<CodeLessonOptionDto>());
 
         // Act

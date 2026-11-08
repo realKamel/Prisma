@@ -1,7 +1,6 @@
-
-
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -11,20 +10,23 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Tests.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 
-
 public class GetAssignmentSubmissionDetailQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AssignmentSubmission, int> _submissionRepository =
-        Substitute.For<IRepository<AssignmentSubmission, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<AssignmentSubmission, int> _submissionRepository = Substitute.For<
+        IRepository<AssignmentSubmission, int>
+    >();
 
     private readonly Guid _currentUserId = Guid.NewGuid();
     private readonly GetAssignmentSubmissionDetailQueryHandler _handler;
 
     public GetAssignmentSubmissionDetailQueryHandlerTests()
     {
-        _unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>().Returns(_submissionRepository);
+        _unitOfWork
+            .GetOrCreateRepository<AssignmentSubmission, int>()
+            .Returns(_submissionRepository);
         _currentUserService.UserId.Returns(_currentUserId);
 
         _handler = new GetAssignmentSubmissionDetailQueryHandler(_unitOfWork, _currentUserService);
@@ -45,7 +47,8 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         string studentFirstName = "John",
         string studentLastName = "Doe",
         string lessonTitle = "Lesson 1",
-        string? fileUrl = "file.pdf")
+        string? fileUrl = "file.pdf"
+    )
     {
         var lesson = new Lesson { Id = 1, Title = lessonTitle };
         var assignment = new Assignment
@@ -54,9 +57,14 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
             LessonId = lesson.Id,
             Lesson = lesson,
             Grade = maxScore,
-            DueDate = dueDate ?? DateTimeOffset.UtcNow.AddDays(3)
+            DueDate = dueDate ?? DateTimeOffset.UtcNow.AddDays(3),
         };
-        var student = new Student { Id = Guid.NewGuid(), FirstName = studentFirstName, LastName = studentLastName };
+        var student = new Student
+        {
+            Id = Guid.NewGuid(),
+            FirstName = studentFirstName,
+            LastName = studentLastName,
+        };
 
         return new AssignmentSubmission
         {
@@ -71,7 +79,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
             SubmittedAt = submittedAt ?? DateTimeOffset.UtcNow.AddDays(-1),
             IsBeingGraded = isBeingGraded,
             GradingStartedAt = gradingStartedAt,
-            GradingByUserId = gradingByUserId
+            GradingByUserId = gradingByUserId,
         };
     }
 
@@ -82,11 +90,17 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
     {
         // Arrange
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((AssignmentSubmission?)null);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(999), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(999),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -103,14 +117,21 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -128,21 +149,30 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-31),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
 
         submission.IsBeingGraded.Should().BeTrue();
         submission.GradingByUserId.Should().Be(_currentUserId);
-        submission.GradingStartedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+        submission
+            .GradingStartedAt.Should()
+            .BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
@@ -154,11 +184,17 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var submission = CreateSubmission(isBeingGraded: false);
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -186,14 +222,21 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
             studentFirstName: "Alice",
             studentLastName: "Anderson",
             lessonTitle: "Algebra Basics",
-            fileUrl: "https://files.example.com/42.pdf");
+            fileUrl: "https://files.example.com/42.pdf"
+        );
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -221,11 +264,17 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var submission = CreateSubmission(submittedAt: submittedAt, dueDate: dueDate);
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.Value.IsLateSubmission.Should().BeTrue();
@@ -238,11 +287,17 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
         var submission = CreateSubmission(score: null, notes: null);
 
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionDetailSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionDetailSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
         // Act
-        var result = await _handler.Handle(new GetAssignmentSubmissionDetailQuery(submission.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetAssignmentSubmissionDetailQuery(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.Value.CurrentScore.Should().BeNull();

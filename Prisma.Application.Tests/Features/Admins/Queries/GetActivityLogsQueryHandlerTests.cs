@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.ActivityLogs.Queries.GetActivityLogsQuery;
 using Prisma.Domain.Entities.UserAggregate;

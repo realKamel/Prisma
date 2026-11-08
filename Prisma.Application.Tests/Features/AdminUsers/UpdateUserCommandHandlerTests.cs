@@ -2,6 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Commands.UpdateUser;
 using Prisma.Domain.Entities.UserAggregate;

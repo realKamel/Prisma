@@ -1,18 +1,19 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
-using NSubstitute;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Constants;
-using Ardalis.Result;
-using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
-using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
+using FluentAssertions;
+using Microsoft.AspNetCore.Identity;
+using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
+using Prisma.Application.Features.Lessons.Queries.GetLessonMaterialQuery;
+using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Xunit;
 
@@ -21,12 +22,24 @@ namespace Prisma.Application.Tests.Features.Lessons.Queries;
 public class GetLessonMaterialQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
 
     // عمل Mock للـ UserManager يحتاج تمرير IUserStore كمعامل أساسي في الـ Constructor لـ NSubstitute
     private readonly UserManager<User> _userManager = Substitute.For<UserManager<User>>(
-        Substitute.For<IUserStore<User>>(), null, null, null, null, null, null, null, null);
+        Substitute.For<IUserStore<User>>(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    );
 
     private readonly GetLessonMaterialQueryHandler _sut;
 
@@ -109,7 +122,11 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Student }); // صلاحية طالب
 
         // محاكاة عدم وجود الدرس في قاعدة البيانات (FirstOrDefaultAsync بترجع null للـ List نفسها)
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonMaterialsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((List<LessonMaterialProjection>?)null);
 
         // Act
@@ -143,11 +160,15 @@ public class GetLessonMaterialQueryHandlerTests
                 Title = "ملخص القاعدة الأولى.pdf",
                 Size = "2.5 MB",
                 Type = "PDF",
-                CreatedAt = baseDateTime
-            }
+                CreatedAt = baseDateTime,
+            },
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonMaterialsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeMaterials);
 
         // Act
@@ -165,7 +186,9 @@ public class GetLessonMaterialQueryHandlerTests
         firstMaterial.Type.Should().Be("PDF");
 
         // التحقق من صحة صياغة التاريخ وإضافة الـ 3 ساعات (12:00 + 3 ساعات = 15:00) بالتنسيق العربي
-        var expectedDateString = baseDateTime.AddHours(3).ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG"));
+        var expectedDateString = baseDateTime
+            .AddHours(3)
+            .ToString("yyyy-MM-dd HH:mm:ss", new CultureInfo("ar-EG"));
         firstMaterial.Date.Should().Be(expectedDateString);
     }
 
@@ -181,7 +204,11 @@ public class GetLessonMaterialQueryHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
         _userManager.GetRolesAsync(fakeUser).Returns(new List<string> { AppRoles.Teacher });
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonMaterialsSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonMaterialsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(new List<LessonMaterialProjection>());
 
         // Act

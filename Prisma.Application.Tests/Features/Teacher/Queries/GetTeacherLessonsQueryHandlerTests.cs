@@ -1,8 +1,9 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -78,9 +79,7 @@ public class GetTeacherLessonsQueryHandlerTests
         // Arrange
         var userId = Guid.NewGuid();
         _currentUserService.UserId.Returns(userId);
-        _identityService
-            .FindByIdAsync(userId, Arg.Any<CancellationToken>())
-            .Returns((User?)null);
+        _identityService.FindByIdAsync(userId, Arg.Any<CancellationToken>()).Returns((User?)null);
 
         // Act
         var result = await _sut.Handle(CreateQuery(), CancellationToken.None);
@@ -134,14 +133,18 @@ public class GetTeacherLessonsQueryHandlerTests
 
         _lessonRepo
             .ListAsync(
-                Arg.Any<TeacherLessonsWithProjectionSpec<GetTeacherLessonsQueryHandler.TeacherLessonsInfo>>(),
+                Arg.Any<
+                    TeacherLessonsWithProjectionSpec<GetTeacherLessonsQueryHandler.TeacherLessonsInfo>
+                >(),
                 Arg.Any<CancellationToken>()
             )
             .Returns(fakeLessons);
 
         _lessonRepo
             .CountAsync(
-                Arg.Any<TeacherLessonsWithProjectionSpec<GetTeacherLessonsQueryHandler.TeacherLessonsInfo>>(),
+                Arg.Any<
+                    TeacherLessonsWithProjectionSpec<GetTeacherLessonsQueryHandler.TeacherLessonsInfo>
+                >(),
                 Arg.Any<CancellationToken>()
             )
             .Returns(2);

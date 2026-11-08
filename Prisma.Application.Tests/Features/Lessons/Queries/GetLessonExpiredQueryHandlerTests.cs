@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Lessons.Queries.GetLessonExpired;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -14,8 +15,11 @@ namespace Prisma.Application.Tests.Features.Lessons.Queries;
 public class GetLessonExpiredQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<IRepository<Lesson, int>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Lesson, int> _lessonRepo = Substitute.For<
+        IRepository<Lesson, int>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly GetLessonExpiredQueryHandler _sut;
 
     public GetLessonExpiredQueryHandlerTests()
@@ -50,7 +54,11 @@ public class GetLessonExpiredQueryHandlerTests
         var currentUserId = Guid.NewGuid();
         _currentUserService.UserId.Returns(currentUserId);
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonExpiredSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonExpiredSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((LessonExpiredProjection?)null);
 
         // Act
@@ -106,7 +114,11 @@ public class GetLessonExpiredQueryHandlerTests
             },
         };
 
-        _lessonRepo.FirstOrDefaultAsync(Arg.Any<LessonExpiredSpecification>(), Arg.Any<CancellationToken>())
+        _lessonRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<LessonExpiredSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeProjection);
 
         // Act

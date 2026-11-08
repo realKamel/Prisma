@@ -1,4 +1,5 @@
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizResult;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -12,8 +13,12 @@ public class GetQuizResultQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
+    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<
+        IRepository<QuizAttempt, int>
+    >();
     private readonly GetQuizResultQueryHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -38,27 +43,44 @@ public class GetQuizResultQueryHandlerTests
             Type = QuestionType.MCQ,
             Choices = new List<Choice>
             {
-                new() { Id = correctChoiceId, Text = "4", IsCorrect = true },
-                new() { Id = correctChoiceId + 1, Text = "5", IsCorrect = false }
-            }
+                new()
+                {
+                    Id = correctChoiceId,
+                    Text = "4",
+                    IsCorrect = true,
+                },
+                new()
+                {
+                    Id = correctChoiceId + 1,
+                    Text = "5",
+                    IsCorrect = false,
+                },
+            },
         };
 
     private static WrittenQuestion CreateWrittenQuestion(int id) =>
-        new() { Id = id, Title = "Explain X", Type = QuestionType.Written, Answer = "model answer" };
+        new()
+        {
+            Id = id,
+            Title = "Explain X",
+            Type = QuestionType.Written,
+            Answer = "model answer",
+        };
 
     private static Quiz CreateQuiz(
         int id = 1,
         string title = "Quiz",
         decimal totalDegree = 100m,
         DateTimeOffset? dueDate = null,
-        List<QuizQuestion>? questions = null) =>
+        List<QuizQuestion>? questions = null
+    ) =>
         new()
         {
             Id = id,
             Title = title,
             TotalDegree = totalDegree,
             DueDate = dueDate,
-            Questions = questions ?? new List<QuizQuestion>()
+            Questions = questions ?? new List<QuizQuestion>(),
         };
 
     private static QuizAttempt CreateAttempt(
@@ -67,7 +89,8 @@ public class GetQuizResultQueryHandlerTests
         DateTimeOffset? updatedAt = null,
         int tabSwitchCount = 0,
         int copyPasteCount = 0,
-        List<AttemptAnswer>? answers = null) =>
+        List<AttemptAnswer>? answers = null
+    ) =>
         new()
         {
             Id = 1,
@@ -77,17 +100,23 @@ public class GetQuizResultQueryHandlerTests
             UpdatedAt = updatedAt,
             TabSwitchCount = tabSwitchCount,
             CopyPasteAttemptCount = copyPasteCount,
-            Answers = answers ?? new List<AttemptAnswer>()
+            Answers = answers ?? new List<AttemptAnswer>(),
         };
 
     private void SetupQuiz(Quiz? quiz) =>
         _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizWithQuestionsSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<QuizWithQuestionsSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(quiz);
 
     private void SetupAttempt(QuizAttempt? attempt) =>
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentAttemptWithAnswersSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(attempt);
 
     #endregion
@@ -187,12 +216,25 @@ public class GetQuizResultQueryHandlerTests
         var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1));
         SetupQuiz(quiz);
 
-        var attempt = CreateAttempt(QuizAttemptStatus.Submitted, answers:
-[
-    new AttemptAnswer { QuestionId = 1, IsCorrect = true, Score = 5m },   // graded correct
-    new AttemptAnswer { QuestionId = 2, IsCorrect = false, Score = 0m },  // graded incorrect
-    new AttemptAnswer { QuestionId = 3, Score = null }                    // still pending (written, ungraded)
-]);
+        var attempt = CreateAttempt(
+            QuizAttemptStatus.Submitted,
+            answers:
+            [
+                new AttemptAnswer
+                {
+                    QuestionId = 1,
+                    IsCorrect = true,
+                    Score = 5m,
+                }, // graded correct
+                new AttemptAnswer
+                {
+                    QuestionId = 2,
+                    IsCorrect = false,
+                    Score = 0m,
+                }, // graded incorrect
+                new AttemptAnswer { QuestionId = 3, Score = null }, // still pending (written, ungraded)
+            ]
+        );
         SetupAttempt(attempt);
 
         // Act
@@ -231,17 +273,37 @@ public class GetQuizResultQueryHandlerTests
     public async Task Handle_WhenDueDatePassedAndAttemptGraded_ReturnsDoneStatusWithScoreAndReview()
     {
         // Arrange
-        var quiz = CreateQuiz(totalDegree: 5m, dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
-        [
-            new QuizQuestion { QuestionId = 1, Question = CreateMcqQuestion(1, correctChoiceId: 100), Degree = 5m }
-        ]);
+        var quiz = CreateQuiz(
+            totalDegree: 5m,
+            dueDate: DateTimeOffset.UtcNow.AddDays(-1),
+            questions:
+            [
+                new QuizQuestion
+                {
+                    QuestionId = 1,
+                    Question = CreateMcqQuestion(1, correctChoiceId: 100),
+                    Degree = 5m,
+                },
+            ]
+        );
         SetupQuiz(quiz);
 
         var gradedAt = DateTimeOffset.UtcNow.AddHours(-2);
-        var attempt = CreateAttempt(QuizAttemptStatus.Graded, degree: 5m, updatedAt: gradedAt, answers:
-        [
-            new AttemptAnswer { QuestionId = 1, ChoiceId = 100, IsCorrect = true, Score = 5m }
-        ]);
+        var attempt = CreateAttempt(
+            QuizAttemptStatus.Graded,
+            degree: 5m,
+            updatedAt: gradedAt,
+            answers:
+            [
+                new AttemptAnswer
+                {
+                    QuestionId = 1,
+                    ChoiceId = 100,
+                    IsCorrect = true,
+                    Score = 5m,
+                },
+            ]
+        );
         SetupAttempt(attempt);
 
         // Act
@@ -268,16 +330,34 @@ public class GetQuizResultQueryHandlerTests
     {
         // Arrange
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
-        [
-            new QuizQuestion { QuestionId = 1, Question = question, Degree = 5m }
-        ]);
+        var quiz = CreateQuiz(
+            dueDate: DateTimeOffset.UtcNow.AddDays(-1),
+            questions:
+            [
+                new QuizQuestion
+                {
+                    QuestionId = 1,
+                    Question = question,
+                    Degree = 5m,
+                },
+            ]
+        );
         SetupQuiz(quiz);
 
-        var attempt = CreateAttempt(QuizAttemptStatus.Graded, degree: 0m, answers:
-        [
-            new AttemptAnswer { QuestionId = 1, ChoiceId = 101, IsCorrect = false, Score = 0m } // wrong answer
-        ]);
+        var attempt = CreateAttempt(
+            QuizAttemptStatus.Graded,
+            degree: 0m,
+            answers:
+            [
+                new AttemptAnswer
+                {
+                    QuestionId = 1,
+                    ChoiceId = 101,
+                    IsCorrect = false,
+                    Score = 0m,
+                }, // wrong answer
+            ]
+        );
         SetupAttempt(attempt);
 
         // Act
@@ -301,16 +381,33 @@ public class GetQuizResultQueryHandlerTests
     {
         // Arrange
         var question = CreateWrittenQuestion(id: 1);
-        var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
-        [
-            new QuizQuestion { QuestionId = 1, Question = question, Degree = 10m }
-        ]);
+        var quiz = CreateQuiz(
+            dueDate: DateTimeOffset.UtcNow.AddDays(-1),
+            questions:
+            [
+                new QuizQuestion
+                {
+                    QuestionId = 1,
+                    Question = question,
+                    Degree = 10m,
+                },
+            ]
+        );
         SetupQuiz(quiz);
 
-        var attempt = CreateAttempt(QuizAttemptStatus.Graded, degree: 8m, answers:
-        [
-            new AttemptAnswer { QuestionId = 1, TextAnswer = "student's answer", Score = 8m }
-        ]);
+        var attempt = CreateAttempt(
+            QuizAttemptStatus.Graded,
+            degree: 8m,
+            answers:
+            [
+                new AttemptAnswer
+                {
+                    QuestionId = 1,
+                    TextAnswer = "student's answer",
+                    Score = 8m,
+                },
+            ]
+        );
         SetupAttempt(attempt);
 
         // Act
@@ -332,10 +429,18 @@ public class GetQuizResultQueryHandlerTests
     public async Task Handle_ReviewForQuestionWithNoAnswer_HasNullSelectionAndScore()
     {
         // Arrange - student left a question blank entirely
-        var quiz = CreateQuiz(dueDate: DateTimeOffset.UtcNow.AddDays(-1), questions:
-        [
-            new QuizQuestion { QuestionId = 1, Question = CreateMcqQuestion(1, 100), Degree = 5m }
-        ]);
+        var quiz = CreateQuiz(
+            dueDate: DateTimeOffset.UtcNow.AddDays(-1),
+            questions:
+            [
+                new QuizQuestion
+                {
+                    QuestionId = 1,
+                    Question = CreateMcqQuestion(1, 100),
+                    Degree = 5m,
+                },
+            ]
+        );
         SetupQuiz(quiz);
 
         var attempt = CreateAttempt(QuizAttemptStatus.Graded, answers: []); // no answers at all

@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Chats.Commands.CreateDirectConversation;
 using Prisma.Application.Features.Chats.Commands.CreateGroupConversation;
@@ -154,11 +155,7 @@ public class ConversationCommandHandlerTests
             .GetByIdAsync(conversation.Id, Arg.Any<CancellationToken>())
             .Returns(conversation);
         _conversationRepository
-            .GetMessageAsync(
-                conversation.Id,
-                Arg.Any<Guid>(),
-                Arg.Any<CancellationToken>()
-            )
+            .GetMessageAsync(conversation.Id, Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((Message?)null);
 
         var sut = new MarkAsReadCommandHandler(

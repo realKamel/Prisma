@@ -1,8 +1,9 @@
+using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
 using Prisma.Application.Abstractions.Ai;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.RAG.Commands.AskRagQuestion;
 using Prisma.Application.Features.RAG.Dto;
 using Prisma.Domain.Entities.UserAggregate;
@@ -40,21 +41,18 @@ public class AskRagQuestionCommandHandlerTests
     public async Task Handle_ShouldStreamChunksAndSaveSession_WhenSessionIdIsNull()
     {
         // Arrange
-        var command = new AskRagQuestionCommand
-        (
-            SessionId: null,
-            Question: "What is Angular 20?"
-        );
+        var command = new AskRagQuestionCommand(SessionId: null, Question: "What is Angular 20?");
 
         // Create mock streaming chunks that the RAG service will emit
         var mockChunks = new List<RagAnswer>
         {
             new(Text: "Angular ", ThreadState: "state-1", null),
             new(Text: "20 ", ThreadState: "state-2", null),
-            new(Text: "is zoneless.", ThreadState: "state-final", null)
+            new(Text: "is zoneless.", ThreadState: "state-final", null),
         };
 
-        _ragService.AskAsync(command.Question, Arg.Any<string>(), Arg.Any<CancellationToken>())
+        _ragService
+            .AskAsync(command.Question, Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(_ => mockChunks.ToAsyncEnumerable());
 
         // Act
@@ -81,7 +79,8 @@ public class AskRagQuestionCommandHandlerTests
         _sessionRepo.Received(1).Add(Arg.Any<ChatSession>());
 
         // Check that the session was updated with the final dynamic thread state
-        _sessionRepo.Received(1)
+        _sessionRepo
+            .Received(1)
             .Update(Arg.Is<ChatSession>(s => s.SerializedSessionJson == "state-final"));
 
         // Ensure changes were saved to the database twice (once at the start, once at the end)
@@ -98,33 +97,34 @@ public class AskRagQuestionCommandHandlerTests
             SessionId: existingSessionId
         );
 
-        var existingSession = ChatSession
-            .Create(_currentUserService.UserId, "Old Title", "initial-state");
+        var existingSession = ChatSession.Create(
+            _currentUserService.UserId,
+            "Old Title",
+            "initial-state"
+        );
         _sessionRepo
-            .GetByIdAsync(existingSessionId, Arg.Any<CancellationToken>()).Returns(existingSession);
+            .GetByIdAsync(existingSessionId, Arg.Any<CancellationToken>())
+            .Returns(existingSession);
 
         var mockChunks = new List<RagAnswer>
         {
-            new(Text: "Response token", ThreadState: "updated-state", null)
+            new(Text: "Response token", ThreadState: "updated-state", null),
         };
-        _ragService.AskAsync(command.Question, "initial-state",
-                Arg.Any<CancellationToken>())
+        _ragService
+            .AskAsync(command.Question, "initial-state", Arg.Any<CancellationToken>())
             .Returns(mockChunks.ToAsyncEnumerable());
 
         // Act
-        var streamResult = _handler
-            .Handle(command, CancellationToken.None);
+        var streamResult = _handler.Handle(command, CancellationToken.None);
 
         // Force evaluation of the stream to trigger execution code paths
-        await foreach (var _ in streamResult)
-        {
-        }
+        await foreach (var _ in streamResult) { }
 
         // Assert
         // Since the session already existed, it should NOT add a new one, only update metadata
-        _sessionRepo.DidNotReceive()
-            .Add(Arg.Any<ChatSession>());
-        _sessionRepo.Received(1)
+        _sessionRepo.DidNotReceive().Add(Arg.Any<ChatSession>());
+        _sessionRepo
+            .Received(1)
             .Update(Arg.Is<ChatSession>(s => s.SerializedSessionJson == "updated-state"));
 
         // SaveChangesAsync should only fire ONCE (at the very end of the stream)

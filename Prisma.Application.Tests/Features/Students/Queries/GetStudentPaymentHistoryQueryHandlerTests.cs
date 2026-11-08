@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistoryQuery;
@@ -18,8 +19,11 @@ namespace Prisma.Application.Tests.Features.Students.Queries;
 public class GetStudentPaymentHistoryQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<IRepository<Enrollment, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Enrollment, int> _enrollmentRepo = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
     private readonly GetStudentPaymentHistoryQueryHandler _sut;
 
     public GetStudentPaymentHistoryQueryHandlerTests()
@@ -59,12 +63,16 @@ public class GetStudentPaymentHistoryQueryHandlerTests
             LessonPublicId: lessonPublicId ?? Guid.NewGuid()
         );
 
-    private void SetupEnrollments(params GetStudentPaymentHistoryQueryHandler.EnrollmentInfo[] enrollments)
+    private void SetupEnrollments(
+        params GetStudentPaymentHistoryQueryHandler.EnrollmentInfo[] enrollments
+    )
     {
         _currentUserService.UserId.Returns(Guid.NewGuid());
         _enrollmentRepo
             .ListAsync(
-                Arg.Any<EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>>(),
+                Arg.Any<
+                    EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>
+                >(),
                 Arg.Any<CancellationToken>()
             )
             .Returns(enrollments.ToList());
@@ -86,7 +94,9 @@ public class GetStudentPaymentHistoryQueryHandlerTests
         await _enrollmentRepo
             .DidNotReceive()
             .ListAsync(
-                Arg.Any<EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>>(),
+                Arg.Any<
+                    EnrollmentWithProjectionSpec<GetStudentPaymentHistoryQueryHandler.EnrollmentInfo>
+                >(),
                 Arg.Any<CancellationToken>()
             );
     }
@@ -96,7 +106,10 @@ public class GetStudentPaymentHistoryQueryHandlerTests
     {
         // Arrange: not redeem code, no completed payment, not a teacher grant -> should be skipped
         SetupEnrollments(
-            Info(enrollmentMethod: EnrollmentMethod.OnlinePayment, paymentStatus: PaymentStatus.Pending)
+            Info(
+                enrollmentMethod: EnrollmentMethod.OnlinePayment,
+                paymentStatus: PaymentStatus.Pending
+            )
         );
 
         // Act
@@ -165,10 +178,7 @@ public class GetStudentPaymentHistoryQueryHandlerTests
     {
         // Arrange
         SetupEnrollments(
-            Info(
-                enrollmentMethod: EnrollmentMethod.TeacherGrant,
-                createdAt: DateTimeOffset.UtcNow
-            )
+            Info(enrollmentMethod: EnrollmentMethod.TeacherGrant, createdAt: DateTimeOffset.UtcNow)
         );
 
         // Act
@@ -261,7 +271,11 @@ public class GetStudentPaymentHistoryQueryHandlerTests
     public async Task Handle_ComputesAggregateStatsAcrossMultipleEnrollments()
     {
         // Arrange
-        var activeCodeEnrollment = Info(id: 1, enrollmentMethod: EnrollmentMethod.RedeemCode, createdAt: DateTimeOffset.UtcNow);
+        var activeCodeEnrollment = Info(
+            id: 1,
+            enrollmentMethod: EnrollmentMethod.RedeemCode,
+            createdAt: DateTimeOffset.UtcNow
+        );
         var activeOnlineEnrollment = Info(
             id: 2,
             enrollmentMethod: EnrollmentMethod.OnlinePayment,

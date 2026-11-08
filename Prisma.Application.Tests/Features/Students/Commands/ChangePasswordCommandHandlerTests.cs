@@ -1,25 +1,36 @@
-using FluentAssertions;
-using Microsoft.AspNetCore.Identity;
-using NSubstitute;
-using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
-using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
-using Prisma.Domain.Entities.UserAggregate;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
+using FluentAssertions;
+using Microsoft.AspNetCore.Identity;
+using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
+using Prisma.Domain.Entities.UserAggregate;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Students.Commands;
 
 public class ChangePasswordCommandHandlerTests
 {
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
 
     private readonly UserManager<User> _userManager = Substitute.For<UserManager<User>>(
-        Substitute.For<IUserStore<User>>(), null, null, null, null, null, null, null, null);
+        Substitute.For<IUserStore<User>>(),
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    );
 
     private readonly ChangePasswordCommandHandler _sut;
 
@@ -75,13 +86,11 @@ public class ChangePasswordCommandHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
 
         // تجهيز خطأ وهمي من الـ Identity (مثلاً كلمة المرور الحالية غير صحيحة)
-        var identityErrors = new IdentityError[]
-        {
-            new() { Description = "Password mismatch." }
-        };
+        var identityErrors = new IdentityError[] { new() { Description = "Password mismatch." } };
         var identityResult = IdentityResult.Failed(identityErrors);
 
-        _userManager.ChangePasswordAsync(fakeUser, command.CurrentPassword, command.NewPassword)
+        _userManager
+            .ChangePasswordAsync(fakeUser, command.CurrentPassword, command.NewPassword)
             .Returns(identityResult);
 
         // Act
@@ -106,7 +115,8 @@ public class ChangePasswordCommandHandlerTests
         _userManager.FindByIdAsync(currentUserId.ToString()).Returns(fakeUser);
 
         // محاكاة نجاح عملية تغيير كلمة المرور في الـ Identity
-        _userManager.ChangePasswordAsync(fakeUser, command.CurrentPassword, command.NewPassword)
+        _userManager
+            .ChangePasswordAsync(fakeUser, command.CurrentPassword, command.NewPassword)
             .Returns(IdentityResult.Success);
 
         // Act

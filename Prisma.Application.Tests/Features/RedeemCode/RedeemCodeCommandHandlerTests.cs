@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Commands.RedeemCode;
 using Prisma.Application.Features.TeacherStudents;
@@ -152,9 +153,7 @@ public class RedeemCodeCommandHandlerTests
             .Received(1)
             .Add(
                 Arg.Is<Enrollment>(e =>
-                    e.StudentId == _studentId
-                    && e.LessonId == 987
-                    && e.GeneratedCodeId == 10
+                    e.StudentId == _studentId && e.LessonId == 987 && e.GeneratedCodeId == 10
                 )
             );
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());

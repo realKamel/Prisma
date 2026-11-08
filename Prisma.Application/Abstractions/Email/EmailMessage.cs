@@ -1,4 +1,4 @@
-namespace Prisma.Application.Abstractions.Services.Email;
+namespace Prisma.Application.Abstractions.Email;
 
 public sealed record EmailMessage(
     string To,

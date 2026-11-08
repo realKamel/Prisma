@@ -1,4 +1,4 @@
-﻿namespace Prisma.Application.Abstractions.Services;
+﻿namespace Prisma.Application.Abstractions.Email;
 
 public interface IEmailService
 {

@@ -20,7 +20,7 @@ public record GetPullZoneResponse
     public bool Suspended { get; init; }
 
     [JsonPropertyName("Hostnames")]
-    public List<HostnameModel>? Hostnames { get; init; }
+    public IList<HostnameModel>? Hostnames { get; init; }
 
     [JsonPropertyName("StorageZoneId")]
     public long StorageZoneId { get; init; }
@@ -41,13 +41,13 @@ public record GetPullZoneResponse
     public string? MagicContainersEndpointId { get; init; }
 
     [JsonPropertyName("AllowedReferrers")]
-    public List<string>? AllowedReferrers { get; init; }
+    public IList<string>? AllowedReferrers { get; init; }
 
     [JsonPropertyName("BlockedReferrers")]
-    public List<string>? BlockedReferrers { get; init; }
+    public IList<string>? BlockedReferrers { get; init; }
 
     [JsonPropertyName("BlockedIps")]
-    public List<string>? BlockedIps { get; init; }
+    public IList<string>? BlockedIps { get; init; }
 
     [JsonPropertyName("EnableGeoZoneUS")]
     public bool EnableGeoZoneUS { get; init; }
@@ -98,7 +98,7 @@ public record GetPullZoneResponse
     public PullZoneType Type { get; init; }
 
     [JsonPropertyName("AccessControlOriginHeaderExtensions")]
-    public List<string>? AccessControlOriginHeaderExtensions { get; init; }
+    public IList<string>? AccessControlOriginHeaderExtensions { get; init; }
 
     [JsonPropertyName("EnableAccessControlOriginHeader")]
     public bool EnableAccessControlOriginHeader { get; init; }
@@ -107,10 +107,10 @@ public record GetPullZoneResponse
     public bool DisableCookies { get; init; }
 
     [JsonPropertyName("BudgetRedirectedCountries")]
-    public List<string>? BudgetRedirectedCountries { get; init; }
+    public IList<string>? BudgetRedirectedCountries { get; init; }
 
     [JsonPropertyName("BlockedCountries")]
-    public List<string>? BlockedCountries { get; init; }
+    public IList<string>? BlockedCountries { get; init; }
 
     [JsonPropertyName("EnableOriginShield")]
     public bool EnableOriginShield { get; init; }
@@ -161,7 +161,7 @@ public record GetPullZoneResponse
     public bool EnableSmartCache { get; init; }
 
     [JsonPropertyName("EdgeRules")]
-    public List<EdgeRuleV2Model>? EdgeRules { get; init; }
+    public IList<EdgeRuleV2Model>? EdgeRules { get; init; }
 
     [JsonPropertyName("EnableWebPVary")]
     public bool EnableWebPVary { get; init; }
@@ -182,7 +182,7 @@ public record GetPullZoneResponse
     public bool EnableCookieVary { get; init; }
 
     [JsonPropertyName("CookieVaryParameters")]
-    public List<string>? CookieVaryParameters { get; init; }
+    public IList<string>? CookieVaryParameters { get; init; }
 
     [JsonPropertyName("EnableHostnameVary")]
     public bool EnableHostnameVary { get; init; }
@@ -365,7 +365,7 @@ public record GetPullZoneResponse
     public int OriginRetryDelay { get; init; }
 
     [JsonPropertyName("QueryStringVaryParameters")]
-    public List<string>? QueryStringVaryParameters { get; init; }
+    public IList<string>? QueryStringVaryParameters { get; init; }
 
     [JsonPropertyName("OriginShieldEnableConcurrencyLimit")]
     public bool OriginShieldEnableConcurrencyLimit { get; init; }
@@ -386,7 +386,7 @@ public record GetPullZoneResponse
     public int OriginShieldMaxQueuedRequests { get; init; }
 
     [JsonPropertyName("OptimizerClasses")]
-    public List<OptimizerClassModel>? OptimizerClasses { get; init; }
+    public IList<OptimizerClassModel>? OptimizerClasses { get; init; }
 
     [JsonPropertyName("OptimizerForceClasses")]
     public bool OptimizerForceClasses { get; init; }
@@ -443,7 +443,7 @@ public record GetPullZoneResponse
     public bool EnableBunnyImageAi { get; init; }
 
     [JsonPropertyName("BunnyAiImageBlueprints")]
-    public List<BunnyAiImageBlueprintModel>? BunnyAiImageBlueprints { get; init; }
+    public IList<BunnyAiImageBlueprintModel>? BunnyAiImageBlueprints { get; init; }
 
     [JsonPropertyName("PreloadingScreenEnabled")]
     public bool PreloadingScreenEnabled { get; init; }
@@ -479,7 +479,7 @@ public record GetPullZoneResponse
     public int AsiaOceaniaDiscount { get; init; }
 
     [JsonPropertyName("RoutingFilters")]
-    public List<string>? RoutingFilters { get; init; }
+    public IList<string>? RoutingFilters { get; init; }
 
     [JsonPropertyName("BlockNoneReferrer")]
     public bool BlockNoneReferrer { get; init; }
@@ -571,10 +571,10 @@ public record EdgeRuleV2Model
     public string? ActionParameter3 { get; init; }
 
     [JsonPropertyName("Triggers")]
-    public List<Trigger>? Triggers { get; init; }
+    public IList<Trigger>? Triggers { get; init; }
 
     [JsonPropertyName("ExtraActions")]
-    public List<EdgeRuleV2ActionModel>? ExtraActions { get; init; }
+    public IList<EdgeRuleV2ActionModel>? ExtraActions { get; init; }
 
     [JsonPropertyName("TriggerMatchingType")]
     public TriggerMatchingTypes TriggerMatchingType { get; init; }
@@ -598,7 +598,7 @@ public record Trigger
     public TriggerTypes Type { get; init; }
 
     [JsonPropertyName("PatternMatches")]
-    public List<string>? PatternMatches { get; init; }
+    public IList<string>? PatternMatches { get; init; }
 
     [JsonPropertyName("PatternMatchingType")]
     public PatternMatchingTypes PatternMatchingType { get; init; }

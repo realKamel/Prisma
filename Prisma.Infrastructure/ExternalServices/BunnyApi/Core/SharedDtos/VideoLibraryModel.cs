@@ -26,7 +26,7 @@ public record VideoLibraryModel
     public DateTimeOffset DateModified { get; init; }
 
     [JsonPropertyName("ReplicationRegions")]
-    public List<string>? ReplicationRegions { get; init; }
+    public IList<string>? ReplicationRegions { get; init; }
 
     [JsonPropertyName("ApiKey")]
     public string? ApiKey { get; init; }
@@ -86,10 +86,10 @@ public record VideoLibraryModel
     public bool PlayerTokenAuthenticationEnabled { get; init; }
 
     [JsonPropertyName("AllowedReferrers")]
-    public List<string>? AllowedReferrers { get; init; }
+    public IList<string>? AllowedReferrers { get; init; }
 
     [JsonPropertyName("BlockedReferrers")]
-    public List<string>? BlockedReferrers { get; init; }
+    public IList<string>? BlockedReferrers { get; init; }
 
     [JsonPropertyName("BlockNoneReferrer")]
     public bool BlockNoneReferrer { get; init; }
@@ -185,7 +185,7 @@ public record VideoLibraryModel
     public bool EnableTranscribingMomentsGeneration { get; init; }
 
     [JsonPropertyName("TranscribingCaptionLanguages")]
-    public List<string>? TranscribingCaptionLanguages { get; init; }
+    public IList<string>? TranscribingCaptionLanguages { get; init; }
 
     [JsonPropertyName("EnableCaptionsInPlaylist")]
     public bool? EnableCaptionsInPlaylist { get; init; }
@@ -296,10 +296,10 @@ public record VideoGeoBlocking
     public bool Enabled { get; init; }
 
     [JsonPropertyName("AllowedCountries")]
-    public List<string>? AllowedCountries { get; init; }
+    public IList<string>? AllowedCountries { get; init; }
 
     [JsonPropertyName("BlockedCountries")]
-    public List<string>? BlockedCountries { get; init; }
+    public IList<string>? BlockedCountries { get; init; }
 }
 
 /// <summary>

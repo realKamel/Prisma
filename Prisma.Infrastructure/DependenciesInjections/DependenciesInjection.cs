@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prisma.Application.Abstractions.Encryption;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Interfaces;
 using Prisma.Domain.Interfaces;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services;

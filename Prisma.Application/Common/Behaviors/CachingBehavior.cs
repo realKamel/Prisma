@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Caching;
 
 namespace Prisma.Application.Common.Behaviors;
 
@@ -27,7 +27,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
                 Expiration = request.Expiration ?? TimeSpan.FromMinutes(5),
                 LocalCacheExpiration = TimeSpan.FromMinutes(1),
             },
-            tags: [key, .. request.CacheTags],
+            tags: [.. request.CacheTags],
             cancellationToken: cancellationToken
         );
     }

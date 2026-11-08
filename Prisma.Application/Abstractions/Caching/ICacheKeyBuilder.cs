@@ -1,4 +1,4 @@
-namespace Prisma.Application.Common.Interfaces;
+namespace Prisma.Application.Abstractions.Caching;
 
 public interface ICacheKeyBuilder
 {

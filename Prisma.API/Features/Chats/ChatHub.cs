@@ -3,7 +3,7 @@ using System.Security.Claims;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Application.Features.Chats;
 using Prisma.Application.Features.Chats.Commands.MarkAsRead;
 using Prisma.Application.Features.Chats.Commands.SendMessage;

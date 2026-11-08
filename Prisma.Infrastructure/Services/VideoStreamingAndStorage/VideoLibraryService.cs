@@ -1,5 +1,5 @@
 using Ardalis.Result;
-using Prisma.Application.Abstractions.Services.VideoServices;
+using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core.AddVideoLibrary;

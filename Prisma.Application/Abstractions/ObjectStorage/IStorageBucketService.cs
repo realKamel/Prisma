@@ -1,6 +1,6 @@
 using Ardalis.Result;
 
-namespace Prisma.Application.Abstractions.Services.ObjectStorage;
+namespace Prisma.Application.Abstractions.ObjectStorage;
 
 public interface IStorageBucketService
 {

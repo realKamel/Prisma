@@ -1,7 +1,7 @@
 using Ardalis.Result;
 using Prisma.Domain.Entities.LessonAggregate;
 
-namespace Prisma.Application.Abstractions.Services.VideoServices;
+namespace Prisma.Application.Abstractions.VideoServices;
 
 public interface IVideoStreamServices
 {

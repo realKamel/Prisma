@@ -3,7 +3,7 @@ using Amazon.S3;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Infrastructure.Services.ObjectStorageServices;
 using Prisma.Infrastructure.Services.StorageService;
 

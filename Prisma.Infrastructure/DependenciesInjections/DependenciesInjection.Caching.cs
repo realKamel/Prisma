@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prisma.Application.Abstractions.Caching;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Interfaces;
 using Prisma.Infrastructure.Caching;
 using Prisma.Infrastructure.Persistence;
 using StackExchange.Redis;

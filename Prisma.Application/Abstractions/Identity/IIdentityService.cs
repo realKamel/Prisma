@@ -3,7 +3,7 @@ using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
 using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Application.Abstractions.Services;
+namespace Prisma.Application.Abstractions.Identity;
 
 public interface IIdentityService
 {
@@ -47,7 +47,9 @@ public interface IIdentityService
     Task<string> GeneratePasswordResetTokenAsync(User user);
     Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword);
 
-    Task<Result> HasPermissionsAsync(Guid userId,
+    Task<Result> HasPermissionsAsync(
+        Guid userId,
         IReadOnlyList<string>? permissions,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 }

@@ -1,4 +1,4 @@
-namespace Prisma.Application.Abstractions.Services.VideoServices;
+namespace Prisma.Application.Abstractions.VideoServices;
 
 public sealed record VideoLibraryCreateResult(
     long ExternalLibraryId,

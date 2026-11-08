@@ -2,7 +2,7 @@ using Ardalis.Result;
 using ClamClient.Net.Abstractions;
 using ClamClient.Net.Results;
 using Microsoft.Extensions.Logging;
-using Prisma.Application.Abstractions.Services.Security;
+using Prisma.Application.Abstractions.Security;
 
 namespace Prisma.Infrastructure.Services.Security;
 

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Ardalis.Result;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
@@ -39,7 +40,7 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     {
         var query = userManager
             .Users.Include(u => u.Roles)
-            .ThenInclude(x => x.Role)
+                .ThenInclude(x => x.Role)
             .Include(c => c.Claims)
             .AsSplitQuery();
 
@@ -54,7 +55,7 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     {
         var query = userManager
             .Users.Include(u => u.Roles)
-            .ThenInclude(x => x.Role)
+                .ThenInclude(x => x.Role)
             .Include(c => c.Claims)
             .AsSplitQuery();
 
@@ -96,7 +97,7 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
             .Users.AsSplitQuery()
             .Include(u => u.Claims)
             .Include(u => u.Roles)
-            .ThenInclude(x => x.Role)
+                .ThenInclude(x => x.Role)
             .FirstOrDefaultAsync(
                 u =>
                     (normalizedEmail != null && u.NormalizedEmail == normalizedEmail)
@@ -171,7 +172,6 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
         return await userManager.ResetPasswordAsync(user, token, newPassword);
     }
 
-
     /// <summary>
     /// Checks whether a user possesses all specified permissions.
     /// </summary>
@@ -183,8 +183,11 @@ public class IdentityService(UserManager<User> userManager) : IIdentityService
     /// <see cref="Result.NotFound()"/> if the user does not exist;
     /// <see cref="Result.Unauthorized()"/> otherwise.
     /// </returns>
-    public async Task<Result> HasPermissionsAsync(Guid userId, IReadOnlyList<string>? permissions,
-        CancellationToken cancellationToken = default)
+    public async Task<Result> HasPermissionsAsync(
+        Guid userId,
+        IReadOnlyList<string>? permissions,
+        CancellationToken cancellationToken = default
+    )
     {
         if (permissions is null || permissions.Count == 0)
         {

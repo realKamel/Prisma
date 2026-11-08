@@ -1,10 +1,11 @@
+using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Ardalis.Result;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 

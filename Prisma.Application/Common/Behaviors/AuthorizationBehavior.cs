@@ -1,8 +1,9 @@
 using System.Reflection;
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Authorization;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Interfaces;
 
 namespace Prisma.Application.Common.Behaviors;
 

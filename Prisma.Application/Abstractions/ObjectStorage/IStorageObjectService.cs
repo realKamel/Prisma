@@ -1,6 +1,6 @@
 using Ardalis.Result;
 
-namespace Prisma.Application.Abstractions.Services.ObjectStorage;
+namespace Prisma.Application.Abstractions.ObjectStorage;
 
 public interface IStorageObjectService
 {
@@ -23,6 +23,18 @@ public interface IStorageObjectService
     Task<Result> DeleteObjectAsync(
         string bucketName,
         string objectKeys,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<Stream> GetObjectAsync(
+        string bucketName,
+        string objectKey,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<Result<FileObjectMetadata>> GetObjectMetadataAsync(
+        string bucketName,
+        string objectKey,
         CancellationToken cancellationToken = default
     );
 }

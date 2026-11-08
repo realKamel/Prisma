@@ -1,6 +1,6 @@
 using Ardalis.Result;
 
-namespace Prisma.Application.Abstractions.Services.Security;
+namespace Prisma.Application.Abstractions.Security;
 
 public interface IFileScanner
 {

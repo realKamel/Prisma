@@ -53,9 +53,23 @@ public static partial class DependenciesInjection
         services.AddTransient<IEmailSender, ResendEmailSender>();
     }
 
-    private static void AddMuxStreaming(this IServiceCollection services)
+    private static void AddMuxStreaming(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
-        services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
+        // Using IConfiguration (appsettings / environment variables)
+        var isContainer =
+            bool.TryParse(configuration["DOTNET_RUNNING_IN_CONTAINER"], out var value) && value;
+        if (isContainer)
+        {
+            services.AddScoped<IVideoStorageService, MinioVideoStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
+        }
+
         services.AddScoped<IMuxTokenService, MuxTokenService>();
     }
 

@@ -34,7 +34,7 @@ public static partial class DependenciesInjection
 
         services.AddObjectStorageServices(configuration, environment);
 
-        services.AddMuxStreaming();
+        services.AddMuxStreaming(configuration);
 
         // services.AddHostedService<StorageBucketPolicyInitializer>();
 

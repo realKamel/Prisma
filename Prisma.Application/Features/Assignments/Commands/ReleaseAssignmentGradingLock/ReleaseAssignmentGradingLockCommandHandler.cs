@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assignments;
@@ -12,15 +13,19 @@ namespace Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGrad
 
 public class ReleaseAssignmentGradingLockCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
-    : IRequestHandler<ReleaseAssignmentGradingLockCommand, Result>
+    ICurrentUserService currentUser
+) : IRequestHandler<ReleaseAssignmentGradingLockCommand, Result>
 {
     public async Task<Result> Handle(
-        ReleaseAssignmentGradingLockCommand request, CancellationToken ct)
+        ReleaseAssignmentGradingLockCommand request,
+        CancellationToken ct
+    )
     {
         var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
         var submission = await submissionRepo.FirstOrDefaultAsync(
-            new SubmissionByIdSpecification(request.SubmissionId), ct);
+            new SubmissionByIdSpecification(request.SubmissionId),
+            ct
+        );
 
         if (submission is null)
             return Result.Error("التسليم غير موجود");

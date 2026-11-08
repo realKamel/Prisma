@@ -1,36 +1,38 @@
-﻿using MediatR;
+﻿using System.Linq.Expressions;
+using Ardalis.Result;
+using Ardalis.Specification;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Ardalis.Result;
 using Prisma.Application.Features.Teachers.Queries.DTOs;
+using Prisma.Domain.Entities.ChatAggregate;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AuditLogs;
+using Prisma.Domain.Specifications.Chat;
 using Prisma.Domain.Specifications.Enrollments;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.Students;
-using Ardalis.Specification;
-using System.Linq.Expressions;
-using Prisma.Domain.Entities.QuizAggregate;
-using Prisma.Domain.Entities.ChatAggregate;
-using Prisma.Domain.Specifications.Chat;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardData;
 
 public class GetTeacherDashboardQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService)
-    : IRequestHandler<GetTeacherDashboardQuery,
-        Result<GetTeacherDashboardResponse>>
+    ICurrentUserService currentUserService
+) : IRequestHandler<GetTeacherDashboardQuery, Result<GetTeacherDashboardResponse>>
 {
     private const int PeriodDays = 30;
     private const int WindowDays = PeriodDays * 2;
 
     public async Task<Result<GetTeacherDashboardResponse>> Handle(
-        GetTeacherDashboardQuery request, CancellationToken cancellationToken)
+        GetTeacherDashboardQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var now = DateTimeOffset.UtcNow;
         var today = ToDate(now);
@@ -49,23 +51,31 @@ public class GetTeacherDashboardQueryHandler(
         }
 
         var logsSpec = new PagedLogsOrderByCreatedAtSpec<AuditLogDto>(
-            l => l.UserEmail != SystemConstants.SystemEmail
-                 && (l.UserEmail == teacherEmail),
+            l => l.UserEmail != SystemConstants.SystemEmail && (l.UserEmail == teacherEmail),
             l => new AuditLogDto(l.Id, l.UserEmail, l.Action, l.TableName, l.CreatedAt),
             0,
-            10);
+            10
+        );
 
         var activeStudentsCount = await studentRepo.CountAsync(
-            new ActiveStudentSpecification(teacherId), cancellationToken);
+            new ActiveStudentSpecification(teacherId),
+            cancellationToken
+        );
 
         var activeLessonsCount = await lessonRepo.CountAsync(
-            new ActiveLessonsSpecification(teacherId), cancellationToken);
+            new ActiveLessonsSpecification(teacherId),
+            cancellationToken
+        );
 
         var draftLessonsCount = await lessonRepo.CountAsync(
-            new DraftLessonsSpecification(teacherId), cancellationToken);
+            new DraftLessonsSpecification(teacherId),
+            cancellationToken
+        );
 
-        var (assignmentsToGrade, quizzesToGrade, unreadMessages) =
-            await CountPendingWorkAsync(teacherId, cancellationToken);
+        var (assignmentsToGrade, quizzesToGrade, unreadMessages) = await CountPendingWorkAsync(
+            teacherId,
+            cancellationToken
+        );
 
         var logs = (await auditRepo.ListAsync(logsSpec, cancellationToken)).ToArray();
 
@@ -73,15 +83,17 @@ public class GetTeacherDashboardQueryHandler(
 
         var windowEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithProjectionSpec<EnrollmentInfo>(
-                e => e.CreatedAt >= queryFrom
-                     && teacherId == e.Lesson!.TeacherId,
+                e => e.CreatedAt >= queryFrom && teacherId == e.Lesson!.TeacherId,
                 e => new EnrollmentInfo(
                     e.CreatedAt,
                     e.Payment != null ? e.Payment.Money.Amount : 0,
                     e.IsCompleted,
                     e.CompletedAt,
-                    e.Lesson!.Id)),
-            cancellationToken);
+                    e.Lesson!.Id
+                )
+            ),
+            cancellationToken
+        );
 
         // ---- Completions ------------------------------------------------------------------------
         var periodStart = today.AddDays(-(PeriodDays - 1));
@@ -93,26 +105,36 @@ public class GetTeacherDashboardQueryHandler(
             .ToArray();
 
         var completedThisMonth = completionDates.Count(d => d >= periodStart && d <= today);
-        var completedLastMonth = completionDates.Count(d => d >= previousPeriodStart && d < periodStart);
+        var completedLastMonth = completionDates.Count(d =>
+            d >= previousPeriodStart && d < periodStart
+        );
 
         // ---- Overall completion rate: two database counts ----------------------------------------
         var totalEnrollments = await enrollmentRepo.CountAsync(
-            new EnrollmentsOfActiveLessonsSpecification(teacherId), cancellationToken);
+            new EnrollmentsOfActiveLessonsSpecification(teacherId),
+            cancellationToken
+        );
         var completedEnrollments = await enrollmentRepo.CountAsync(
-            new EnrollmentsOfActiveLessonsSpecification(teacherId, completedOnly: true), cancellationToken);
+            new EnrollmentsOfActiveLessonsSpecification(teacherId, completedOnly: true),
+            cancellationToken
+        );
 
-        var overallCompletionRate = totalEnrollments == 0
-            ? 0
-            : Math.Round((decimal)completedEnrollments / totalEnrollments * 100, 0);
+        var overallCompletionRate =
+            totalEnrollments == 0
+                ? 0
+                : Math.Round((decimal)completedEnrollments / totalEnrollments * 100, 0);
 
         // ---- Active lessons nobody enrolled in during the last 30 days ---------------------------
         var lessonsWithoutEnrollments = await lessonRepo.CountAsync(
             new LessonsWithoutRecentEnrollmentsSpecification(teacherId, now.AddDays(-PeriodDays)),
-            cancellationToken);
+            cancellationToken
+        );
 
         // ---- Best selling lessons: the database ranks and counts, only 5 rows come back ---------
         var topSales = await lessonRepo.ListAsync(
-            new TopSellingLessonsSpecification(teacherId, 5), cancellationToken);
+            new TopSellingLessonsSpecification(teacherId, 5),
+            cancellationToken
+        );
 
         var bestSales = topSales
             .Select(x => new BestSales(
@@ -120,7 +142,8 @@ public class GetTeacherDashboardQueryHandler(
                 x.Amount,
                 x.EnrollmentCount,
                 x.Title,
-                Math.Round((decimal)x.CompletedCount / x.EnrollmentCount * 100, 0)))
+                Math.Round((decimal)x.CompletedCount / x.EnrollmentCount * 100, 0)
+            ))
             .ToArray();
 
         var recent = windowEnrollments
@@ -132,13 +155,18 @@ public class GetTeacherDashboardQueryHandler(
         // ---- Titles for the recent sales: one small query, only for those lessons ----------------
         var recentLessonIds = recent.Select(e => e.LessonId).Distinct().ToArray();
 
-        var lessonInfo = recentLessonIds.Length == 0
-            ? new Dictionary<int, LessonDisplayInfo>()
-            : (await lessonRepo.ListAsync(
-                new LessonsByIdsWithProjectionSpec<LessonDisplayInfo>(
-                    recentLessonIds,
-                    l => new LessonDisplayInfo(l.Id, l.Title)),
-                cancellationToken)).ToDictionary(l => l.Id);
+        var lessonInfo =
+            recentLessonIds.Length == 0
+                ? new Dictionary<int, LessonDisplayInfo>()
+                : (
+                    await lessonRepo.ListAsync(
+                        new LessonsByIdsWithProjectionSpec<LessonDisplayInfo>(
+                            recentLessonIds,
+                            l => new LessonDisplayInfo(l.Id, l.Title)
+                        ),
+                        cancellationToken
+                    )
+                ).ToDictionary(l => l.Id);
 
         // ---- Recent sales -----------------------------------------------------------------------
         var recentSales = recent
@@ -146,7 +174,8 @@ public class GetTeacherDashboardQueryHandler(
                 e.LessonId,
                 lessonInfo.GetValueOrDefault(e.LessonId)?.Title,
                 e.PaymentAmount,
-                e.CreatedAt!.Value))
+                e.CreatedAt!.Value
+            ))
             .ToArray();
 
         return new GetTeacherDashboardResponse(
@@ -155,7 +184,8 @@ public class GetTeacherDashboardQueryHandler(
                 activeLessonsCount,
                 completedThisMonth,
                 PercentChange(completedThisMonth, completedLastMonth),
-                overallCompletionRate),
+                overallCompletionRate
+            ),
             bestSales,
             logs,
             recentSales,
@@ -164,19 +194,26 @@ public class GetTeacherDashboardQueryHandler(
                 quizzesToGrade,
                 unreadMessages,
                 lessonsWithoutEnrollments,
-                draftLessonsCount));
+                draftLessonsCount
+            )
+        );
     }
 
     private async Task<(int Assignments, int Quizzes, int Messages)> CountPendingWorkAsync(
-        Guid? teacherId, CancellationToken cancellationToken)
+        Guid? teacherId,
+        CancellationToken cancellationToken
+    )
     {
-        var assignments = await unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>()
+        var assignments = await unitOfWork
+            .GetOrCreateRepository<AssignmentSubmission, int>()
             .CountAsync(new AssignmentsToGradeSpecification(teacherId), cancellationToken);
 
-        var quizzes = await unitOfWork.GetOrCreateRepository<QuizAttempt, int>()
+        var quizzes = await unitOfWork
+            .GetOrCreateRepository<QuizAttempt, int>()
             .CountAsync(new QuizzesToGradeSpecification(teacherId), cancellationToken);
 
-        var messages = await unitOfWork.GetOrCreateRepository<Conversation, Guid>()
+        var messages = await unitOfWork
+            .GetOrCreateRepository<Conversation, Guid>()
             .CountAsync(new UnreadMessagesSpecification(teacherId.Value), cancellationToken);
 
         return (assignments, quizzes, messages);
@@ -203,7 +240,9 @@ internal class QuizzesToGradeSpecification : Specification<QuizAttempt>
 {
     public QuizzesToGradeSpecification(Guid? teacherId)
     {
-        Query.Where(qa => qa.Status == QuizAttemptStatus.Submitted && qa.Quiz.TeacherId == teacherId);
+        Query.Where(qa =>
+            qa.Status == QuizAttemptStatus.Submitted && qa.Quiz.TeacherId == teacherId
+        );
     }
 }
 
@@ -219,7 +258,8 @@ internal sealed class LessonsByIdsWithProjectionSpec<TResult> : Specification<Le
 {
     public LessonsByIdsWithProjectionSpec(
         IReadOnlyCollection<int> ids,
-        Expression<Func<Lesson, TResult>> selector)
+        Expression<Func<Lesson, TResult>> selector
+    )
     {
         Query.Where(l => ids.Contains(l.Id));
         Query.Select(selector);
@@ -239,16 +279,17 @@ internal sealed record LessonSalesInfo(
     string? Title,
     int EnrollmentCount,
     int CompletedCount,
-    decimal Amount);
+    decimal Amount
+);
 
 // Ranks the teacher's active lessons by enrollments entirely in SQL and returns only `take` rows.
 internal sealed class TopSellingLessonsSpecification : Specification<Lesson, LessonSalesInfo>
 {
     public TopSellingLessonsSpecification(Guid? teacherId, int take)
     {
-        Query.Where(l => l.TeacherId == teacherId
-                         && l.Status == LessonStatus.Active
-                         && l.Enrollments.Any());
+        Query.Where(l =>
+            l.TeacherId == teacherId && l.Status == LessonStatus.Active && l.Enrollments.Any()
+        );
 
         Query.OrderByDescending(l => l.Enrollments.Count());
         Query.Take(take);
@@ -258,7 +299,8 @@ internal sealed class TopSellingLessonsSpecification : Specification<Lesson, Les
             l.Title,
             l.Enrollments.Count(),
             l.Enrollments.Count(e => e.IsCompleted),
-            l.Enrollments.Sum(e => e.Payment != null ? e.Payment.Money.Amount : 0)));
+            l.Enrollments.Sum(e => e.Payment != null ? e.Payment.Money.Amount : 0)
+        ));
     }
 }
 
@@ -267,9 +309,11 @@ internal sealed class EnrollmentsOfActiveLessonsSpecification : Specification<En
 {
     public EnrollmentsOfActiveLessonsSpecification(Guid? teacherId, bool completedOnly = false)
     {
-        Query.Where(e => e.Lesson!.TeacherId == teacherId
-                         && e.Lesson!.Status == LessonStatus.Active
-                         && (!completedOnly || e.IsCompleted));
+        Query.Where(e =>
+            e.Lesson!.TeacherId == teacherId
+            && e.Lesson!.Status == LessonStatus.Active
+            && (!completedOnly || e.IsCompleted)
+        );
     }
 }
 
@@ -278,8 +322,10 @@ internal sealed class LessonsWithoutRecentEnrollmentsSpecification : Specificati
 {
     public LessonsWithoutRecentEnrollmentsSpecification(Guid? teacherId, DateTimeOffset since)
     {
-        Query.Where(l => l.TeacherId == teacherId
-                         && l.Status == LessonStatus.Active
-                         && !l.Enrollments.Any(e => e.CreatedAt >= since));
+        Query.Where(l =>
+            l.TeacherId == teacherId
+            && l.Status == LessonStatus.Active
+            && !l.Enrollments.Any(e => e.CreatedAt >= since)
+        );
     }
 }

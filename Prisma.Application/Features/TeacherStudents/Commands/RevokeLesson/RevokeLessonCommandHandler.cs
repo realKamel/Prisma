@@ -1,6 +1,7 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Interfaces;
 
@@ -8,20 +9,26 @@ namespace Prisma.Application.Features.TeacherStudents.Commands.RevokeLesson;
 
 public class RevokeLessonCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService)
-    : IRequestHandler<RevokeLessonCommand, Result>
+    ICurrentUserService currentUserService
+) : IRequestHandler<RevokeLessonCommand, Result>
 {
-    public async Task<Result> Handle(RevokeLessonCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        RevokeLessonCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var enrollmentRepo = unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
         // IgnoreQueryFilters in spec so we can find even previously soft-deleted rows
         var enrollment = await enrollmentRepo.FirstOrDefaultAsync(
             new EnrollmentByStudentAndLessonSpec(request.StudentId, request.LessonId),
-            cancellationToken);
+            cancellationToken
+        );
 
         if (enrollment is null)
-            return Result.NotFound($"Enrollment with id '{request.StudentId}-{request.LessonId}' was not found");
+            return Result.NotFound(
+                $"Enrollment with id '{request.StudentId}-{request.LessonId}' was not found"
+            );
 
         // Soft delete — row stays in DB, access is revoked
         enrollment.IsDeleted = true;

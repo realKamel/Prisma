@@ -1,6 +1,7 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Ardalis.Result;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -11,18 +12,22 @@ public class UpdateStudentCommandHandler(
     IUnitOfWork unitOfWork,
     IIdentityService identityService,
     ICurrentUserService currentUserService,
-    UserManager<User> userManager)
-    : IRequestHandler<UpdateStudentCommand, Result>
+    UserManager<User> userManager
+) : IRequestHandler<UpdateStudentCommand, Result>
 {
     private static readonly Guid TeacherId = Guid.Parse("019ef6f7-b2b7-72e6-8ad7-5bd796c43919");
 
-    public async Task<Result> Handle(UpdateStudentCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        UpdateStudentCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var studentRepo = unitOfWork.GetOrCreateRepository<Student, Guid>();
         var TeacherId = currentUserService.UserId;
         var student = await studentRepo.FirstOrDefaultAsync(
             new StudentByIdForUpdateSpec(request.StudentId, TeacherId.Value),
-            cancellationToken);
+            cancellationToken
+        );
 
         if (student is null)
             return Result.NotFound($"Student with id '{request.StudentId}' was not found");
@@ -45,7 +50,7 @@ public class UpdateStudentCommandHandler(
                 return Result.Error("This email is already in use by another account.");
 
             student.Email = request.Email;
-            student.UserName = request.Email;         // Identity uses UserName for login
+            student.UserName = request.Email; // Identity uses UserName for login
             student.NormalizedEmail = request.Email.ToUpperInvariant();
             student.NormalizedUserName = request.Email.ToUpperInvariant();
         }
@@ -64,8 +69,7 @@ public class UpdateStudentCommandHandler(
 
             var addResult = await userManager.AddPasswordAsync(student, request.NewPassword);
             if (!addResult.Succeeded)
-                return Result.Error(
-                    string.Join(", ", addResult.Errors.Select(e => e.Description)));
+                return Result.Error(string.Join(", ", addResult.Errors.Select(e => e.Description)));
         }
 
         return Result.SuccessWithMessage("Student updated successfully.");

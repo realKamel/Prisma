@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Ardalis.Result;
 using MediatR;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Application.Features.Authentication.Commands.RefreshToken;

@@ -1,6 +1,7 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
@@ -12,8 +13,10 @@ public class GetStudentProfileQueryHandler(
     ICurrentUserService _currentUserService
 ) : IRequestHandler<GetStudentProfileQuery, Result<StudentProfileDto>>
 {
-    public async Task<Result<StudentProfileDto>> Handle(GetStudentProfileQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<StudentProfileDto>> Handle(
+        GetStudentProfileQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
@@ -26,7 +29,6 @@ public class GetStudentProfileQueryHandler(
 
         if (student == null)
             return Result.NotFound($"Student with id '{userId.Value}' was not found");
-
 
         var profileDto = new StudentProfileDto(
             FirstName: student.FirstName ?? string.Empty,

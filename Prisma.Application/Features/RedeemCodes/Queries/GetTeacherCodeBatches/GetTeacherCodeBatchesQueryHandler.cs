@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -12,12 +13,13 @@ namespace Prisma.Application.Features.RedeemCodes.Queries.GetTeacherCodeBatches;
 internal sealed class GetTeacherCodeBatchesQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
-    IIdentityService identityService)
-    : IRequestHandler<GetTeacherCodeBatchesQuery, Result<List<CodeBatchListItemDto>>>
+    IIdentityService identityService
+) : IRequestHandler<GetTeacherCodeBatchesQuery, Result<List<CodeBatchListItemDto>>>
 {
     public async Task<Result<List<CodeBatchListItemDto>>> Handle(
         GetTeacherCodeBatchesQuery request,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var userId = currentUser.UserId;
         if (userId is null)
@@ -34,13 +36,12 @@ internal sealed class GetTeacherCodeBatchesQueryHandler(
             userId = assistant.TeacherId;
         }
 
-
         var repo = unitOfWork.GetOrCreateRepository<RedeemCode, int>();
 
         var batches = await repo.ListAsync(
-            new TeacherCodeBatchesSpecification<CodeBatchinfo>(userId.Value,
-                b => new CodeBatchinfo
-                (
+            new TeacherCodeBatchesSpecification<CodeBatchinfo>(
+                userId.Value,
+                b => new CodeBatchinfo(
                     b.Id,
                     b.AcademicYearId,
                     b.AcademicYear.Title,
@@ -49,19 +50,26 @@ internal sealed class GetTeacherCodeBatchesQueryHandler(
                     b.CreatedAt,
                     b.TotalCodes,
                     b.GeneratedCodes.Count(c => c.RedeemedByStudentId != null)
-                ), request.AcademicYearId, request.LessonId), ct);
+                ),
+                request.AcademicYearId,
+                request.LessonId
+            ),
+            ct
+        );
 
-        var result = batches.Select(b => new CodeBatchListItemDto
-        {
-            Id = b.Id,
-            AcademicYearId = b.AcademicYearId,
-            AcademicYear = b.AcademicYear,
-            LessonId = b.LessonId,
-            Lesson = b.Lesson,
-            CreatedAt = b.CreatedAt,
-            TotalCodes = b.TotalCodes,
-            UsedCodes = b.UsedCodes,
-        }).ToList();
+        var result = batches
+            .Select(b => new CodeBatchListItemDto
+            {
+                Id = b.Id,
+                AcademicYearId = b.AcademicYearId,
+                AcademicYear = b.AcademicYear,
+                LessonId = b.LessonId,
+                Lesson = b.Lesson,
+                CreatedAt = b.CreatedAt,
+                TotalCodes = b.TotalCodes,
+                UsedCodes = b.UsedCodes,
+            })
+            .ToList();
 
         return result;
     }

@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.TeacherStudents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -80,7 +81,11 @@ internal sealed class RedeemCodeCommandHandler(
         var batch = await batchRepo.FirstOrDefaultAsync(
             new CodeBatchWithProjectionSpec<CodeBatchLessonInfo>(
                 generatedCode.BatchId,
-                b => new CodeBatchLessonInfo(b.Lesson.PublicId, b.AcademicYearId, b.Lesson!.TeacherId)
+                b => new CodeBatchLessonInfo(
+                    b.Lesson.PublicId,
+                    b.AcademicYearId,
+                    b.Lesson!.TeacherId
+                )
             ),
             ct
         );
@@ -117,7 +122,13 @@ internal sealed class RedeemCodeCommandHandler(
 
         var lesson = await lessonRepo.FirstOrDefaultAsync(
             new LessonWithProjectionSpec<LessonInfo>(
-                request.LessonId, l => new LessonInfo(l.Id, l.ValidityDuration.Seconds, l.Money.Amount,l.Money.Currency)
+                request.LessonId,
+                l => new LessonInfo(
+                    l.Id,
+                    l.ValidityDuration.Seconds,
+                    l.Money.Amount,
+                    l.Money.Currency
+                )
             ),
             ct
         );
@@ -140,7 +151,7 @@ internal sealed class RedeemCodeCommandHandler(
         {
             enrollment = new Enrollment
             {
-                Payment = new Payment() 
+                Payment = new Payment()
                 {
                     Provider = "Code",
                     ProviderRef = "RedeemCode",
@@ -148,7 +159,7 @@ internal sealed class RedeemCodeCommandHandler(
                     Status = PaymentStatus.Completed,
                     StudentId = studentId,
                     LessonId = lesson.Id,
-                    PaidAt = DateTimeOffset.UtcNow
+                    PaidAt = DateTimeOffset.UtcNow,
                 },
                 Status = EnrollmentStatus.Active,
                 EnrollmentMethod = EnrollmentMethod.RedeemCode,

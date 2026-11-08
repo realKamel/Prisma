@@ -1,9 +1,10 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Ai;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.RAG.Dto;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
@@ -13,11 +14,13 @@ namespace Prisma.Application.Features.RAG.Commands.AskRagQuestion;
 public class AskRagQuestionCommandHandler(
     IRagQuestionAnswering ragService,
     ICurrentUserService currentUserService,
-    IUnitOfWork uow) : IStreamRequestHandler<AskRagQuestionCommand, Result<AskRagQuestionCommandResponse>>
+    IUnitOfWork uow
+) : IStreamRequestHandler<AskRagQuestionCommand, Result<AskRagQuestionCommandResponse>>
 {
     public async IAsyncEnumerable<Result<AskRagQuestionCommandResponse>> Handle(
         AskRagQuestionCommand request,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken
+    )
     {
         var sessionRepo = uow.GetOrCreateRepository<ChatSession, Guid>();
 
@@ -41,7 +44,8 @@ public class AskRagQuestionCommandHandler(
         var answerStream = ragService.AskAsync(
             request.Question,
             session.SerializedSessionJson,
-            cancellationToken);
+            cancellationToken
+        );
 
         var answerText = new StringBuilder();
         var finalThreadState = session.SerializedSessionJson;

@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Interfaces;
@@ -8,15 +9,18 @@ using Prisma.Domain.Specifications.Enrollments;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardGraph;
 
-public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
-    : IRequestHandler<GetTeacherDashboardGraphQuery,
-        Result<GetTeacherDashboardGraphResponse>>
+public class GetTeacherDashboardGraphQueryHandler(
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService
+) : IRequestHandler<GetTeacherDashboardGraphQuery, Result<GetTeacherDashboardGraphResponse>>
 {
     private const int PeriodDays = 30;
     private const int WindowDays = PeriodDays * 2; // 30 days + the 30 before them
 
     public async Task<Result<GetTeacherDashboardGraphResponse>> Handle(
-        GetTeacherDashboardGraphQuery request, CancellationToken cancellationToken)
+        GetTeacherDashboardGraphQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var teacherId = currentUserService.UserId;
 
@@ -30,12 +34,11 @@ public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork, ICurre
 
         var windowEnrollments = await enrollmentRepo.ListAsync(
             new EnrollmentWithProjectionSpec<EnrollmentInfo>(
-                e => e.CreatedAt >= queryFrom
-                     && teacherId == e.Lesson!.TeacherId,
-                e => new EnrollmentInfo(
-                    e.CreatedAt,
-                    e.Payment != null ? e.Payment.Money.Amount : 0)),
-            cancellationToken);
+                e => e.CreatedAt >= queryFrom && teacherId == e.Lesson!.TeacherId,
+                e => new EnrollmentInfo(e.CreatedAt, e.Payment != null ? e.Payment.Money.Amount : 0)
+            ),
+            cancellationToken
+        );
 
         var inWindow = windowEnrollments
             .Where(e => e.CreatedAt.HasValue)
@@ -45,14 +48,22 @@ public class GetTeacherDashboardGraphQueryHandler(IUnitOfWork unitOfWork, ICurre
 
         var perDay = inWindow
             .GroupBy(x => x.Date)
-            .ToDictionary(g => g.Key, g => (Earning: g.Sum(x => x.Info.PaymentAmount), Count: g.Count()));
+            .ToDictionary(
+                g => g.Key,
+                g => (Earning: g.Sum(x => x.Info.PaymentAmount), Count: g.Count())
+            );
 
-        var daily = Enumerable.Range(0, WindowDays)
+        var daily = Enumerable
+            .Range(0, WindowDays)
             .Select(i => windowStart.AddDays(i))
             .Select(d =>
             {
                 perDay.TryGetValue(d, out var v);
-                return new EarningEntry(d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture), v.Earning, v.Count);
+                return new EarningEntry(
+                    d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                    v.Earning,
+                    v.Count
+                );
             })
             .ToArray();
 

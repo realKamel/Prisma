@@ -1,6 +1,6 @@
 using MediatR;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 
 namespace Prisma.Application.Features.Storage.Queries.GetDownloadUrl;
 

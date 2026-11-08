@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -15,11 +16,16 @@ namespace Prisma.Application.Features.Students.Queries.GetStudentPaymentHistoryQ
 internal sealed class GetStudentPaymentHistoryQueryHandler(
     IUnitOfWork _unitOfWork,
     ICurrentUserService _currentUserService
-) : IRequestHandler<GetStudentPaymentHistory.GetStudentPaymentHistoryQuery, Result<StudentPaymentHistoryResponseDto>>
+)
+    : IRequestHandler<
+        GetStudentPaymentHistory.GetStudentPaymentHistoryQuery,
+        Result<StudentPaymentHistoryResponseDto>
+    >
 {
     public async Task<Result<StudentPaymentHistoryResponseDto>> Handle(
         GetStudentPaymentHistory.GetStudentPaymentHistoryQuery request,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
@@ -27,22 +33,28 @@ internal sealed class GetStudentPaymentHistoryQueryHandler(
 
         var enrollmentRepository = _unitOfWork.GetOrCreateRepository<Enrollment, int>();
 
-        var spec = new EnrollmentWithProjectionSpec<EnrollmentInfo>(e=> e.StudentId == userId.Value,
+        var spec = new EnrollmentWithProjectionSpec<EnrollmentInfo>(
+            e => e.StudentId == userId.Value,
             e => new EnrollmentInfo(
                 Id: e.Id,
                 EnrollmentMethod: e.EnrollmentMethod,
                 PaymentStatus: e.Payment != null ? e.Payment.Status : PaymentStatus.Pending,
                 ExpiresAt: e.ExpiresAt,
                 PaymentProvider: e.Payment != null ? e.Payment.Provider : null,
-                PaymentAmount: e.Payment != null ? e.Payment.Money!= null ? e.Payment.Money.Amount : 0 : 0,
+                PaymentAmount: e.Payment != null
+                    ? e.Payment.Money != null
+                        ? e.Payment.Money.Amount
+                        : 0
+                    : 0,
                 PaymentPaidAt: e.Payment != null ? e.Payment.PaidAt : null,
                 PaymentCreatedAt: e.Payment != null ? e.Payment.CreatedAt : null,
                 CreatedAt: e.CreatedAt,
                 PaymentProviderRef: e.Payment != null ? e.Payment.ProviderRef : null,
                 PaymentId: e.PaymentId,
-                LessonTitle: e.Lesson!= null ? e.Lesson.Title : null,
+                LessonTitle: e.Lesson != null ? e.Lesson.Title : null,
                 LessonPublicId: e.Lesson != null ? e.Lesson.PublicId : Guid.Empty
-                ));
+            )
+        );
         var enrollments = await enrollmentRepository.ListAsync(spec, cancellationToken);
 
         var paymentList = new List<StudentPaymentDetailsDto>();
@@ -56,34 +68,41 @@ internal sealed class GetStudentPaymentHistoryQueryHandler(
             if (!isPaidViaCode && !hasCompletedPayment && !isTeacherGrant)
                 continue;
 
-            bool isExpired = enrollment.ExpiresAt.HasValue && enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow;
+            bool isExpired =
+                enrollment.ExpiresAt.HasValue && enrollment.ExpiresAt.Value < DateTimeOffset.UtcNow;
             string statusString = isExpired ? "expired" : "paid";
 
-            string paymentMethod = (isPaidViaCode, enrollment.PaymentProvider?.ToUpperInvariant()) switch
+            string paymentMethod = (
+                isPaidViaCode,
+                enrollment.PaymentProvider?.ToUpperInvariant()
+            ) switch
             {
                 (true, _) => "CODE",
                 (false, "ONLINE") => "ONLINE",
-                _ => "TEACHER_GRANT"
+                _ => "TEACHER_GRANT",
             };
 
-            decimal amountPaid = isPaidViaCode
-                ? 0
-                : enrollment.PaymentAmount ?? 0;
+            decimal amountPaid = isPaidViaCode ? 0 : enrollment.PaymentAmount ?? 0;
 
-            DateTimeOffset paymentDate = enrollment.PaymentPaidAt
-                                         ?? enrollment.PaymentCreatedAt
-                                         ?? enrollment.CreatedAt
-                                         ?? DateTimeOffset.UtcNow;
+            DateTimeOffset paymentDate =
+                enrollment.PaymentPaidAt
+                ?? enrollment.PaymentCreatedAt
+                ?? enrollment.CreatedAt
+                ?? DateTimeOffset.UtcNow;
 
-            paymentList.Add(new StudentPaymentDetailsDto(
-                Id: enrollment.PaymentProviderRef ?? enrollment.PaymentId?.ToString() ?? $"enr-{enrollment.Id}",
-                LessonTitle: enrollment.LessonTitle ?? string.Empty,
-                LessonId: enrollment.LessonPublicId,
-                PaymentDate: paymentDate,
-                Amount: amountPaid,
-                Method: paymentMethod,
-                Status: statusString
-            ));
+            paymentList.Add(
+                new StudentPaymentDetailsDto(
+                    Id: enrollment.PaymentProviderRef
+                        ?? enrollment.PaymentId?.ToString()
+                        ?? $"enr-{enrollment.Id}",
+                    LessonTitle: enrollment.LessonTitle ?? string.Empty,
+                    LessonId: enrollment.LessonPublicId,
+                    PaymentDate: paymentDate,
+                    Amount: amountPaid,
+                    Method: paymentMethod,
+                    Status: statusString
+                )
+            );
         }
 
         decimal totalAmount = paymentList.Sum(p => p.Amount);
@@ -102,6 +121,7 @@ internal sealed class GetStudentPaymentHistoryQueryHandler(
             new StudentPaymentHistoryResponseDto(statsDto, paymentList)
         );
     }
+
     public sealed record EnrollmentInfo(
         int Id,
         EnrollmentMethod EnrollmentMethod,
@@ -115,5 +135,6 @@ internal sealed class GetStudentPaymentHistoryQueryHandler(
         string? PaymentProviderRef,
         int? PaymentId,
         string? LessonTitle,
-        Guid LessonPublicId);
+        Guid LessonPublicId
+    );
 }

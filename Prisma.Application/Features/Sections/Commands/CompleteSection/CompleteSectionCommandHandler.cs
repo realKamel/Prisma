@@ -1,5 +1,6 @@
-using MediatR;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -9,9 +10,13 @@ namespace Prisma.Application.Features.Sections.Commands.CompleteSection;
 
 internal sealed class CompleteSectionCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<CompleteSectionCommand, Result>
+    ICurrentUserService currentUserService
+) : IRequestHandler<CompleteSectionCommand, Result>
 {
-    public async Task<Result> Handle(CompleteSectionCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        CompleteSectionCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var studentId = currentUserService.UserId;
 
@@ -24,7 +29,8 @@ internal sealed class CompleteSectionCommandHandler(
 
         var progress = await progressRepo.FirstOrDefaultAsync(
             new SectionProgressByStudentAndSectionSpecification(studentId.Value, request.SectionId),
-            cancellationToken);
+            cancellationToken
+        );
 
         if (progress is null)
         {

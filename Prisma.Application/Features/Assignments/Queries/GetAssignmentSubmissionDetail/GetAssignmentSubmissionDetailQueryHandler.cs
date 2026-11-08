@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -13,27 +14,34 @@ namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissio
 
 public class GetAssignmentSubmissionDetailQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
-    : IRequestHandler<GetAssignmentSubmissionDetailQuery, Result<AssignmentSubmissionDetailDto>>
+    ICurrentUserService currentUser
+) : IRequestHandler<GetAssignmentSubmissionDetailQuery, Result<AssignmentSubmissionDetailDto>>
 {
-    public async Task<Result<AssignmentSubmissionDetailDto>> Handle(GetAssignmentSubmissionDetailQuery request, CancellationToken ct)
+    public async Task<Result<AssignmentSubmissionDetailDto>> Handle(
+        GetAssignmentSubmissionDetailQuery request,
+        CancellationToken ct
+    )
     {
         var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
         AssignmentSubmission? submission = await submissionRepo.FirstOrDefaultAsync(
-            new SubmissionDetailSpecification(request.SubmissionId), ct);
+            new SubmissionDetailSpecification(request.SubmissionId),
+            ct
+        );
 
         if (submission is null)
             return Result<AssignmentSubmissionDetailDto>.Error("التسليم غير موجود");
 
         // Acquire grading lock
         var now = DateTimeOffset.UtcNow;
-        var lockExpired = submission.GradingStartedAt.HasValue
+        var lockExpired =
+            submission.GradingStartedAt.HasValue
             && now - submission.GradingStartedAt.Value > TimeSpan.FromMinutes(30);
 
         if (submission.IsBeingGraded && !lockExpired)
         {
             return Result<AssignmentSubmissionDetailDto>.Error(
-                "التسليم ده بيتصحح دلوقتي من شخص تاني");
+                "التسليم ده بيتصحح دلوقتي من شخص تاني"
+            );
         }
 
         // Set grading lock
@@ -53,8 +61,7 @@ public class GetAssignmentSubmissionDetailQueryHandler(
             FileUrl = submission.FileUrl,
             MaxScore = submission.Assignment.Grade,
             CurrentScore = submission.Score,
-            CurrentNote = submission.Notes
+            CurrentNote = submission.Notes,
         };
-
     }
 }

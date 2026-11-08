@@ -1,6 +1,6 @@
 using Ardalis.Result;
+using Prisma.Application.Abstractions.Caching;
 using Prisma.Application.Common.DTOs.Auth;
-using Prisma.Application.Common.Interfaces;
 
 namespace Prisma.Application.Features.Authentication.Queries.GetUserInfoFromToken;
 

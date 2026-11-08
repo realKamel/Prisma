@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -13,10 +14,13 @@ namespace Prisma.Application.Features.Quizzes.Queries.GetGradingList;
 internal sealed class GetGradingListQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IIdentityService identityService)
-    : IRequestHandler<GetGradingListQuery, Result<GradingListResponseDto>>
+    IIdentityService identityService
+) : IRequestHandler<GetGradingListQuery, Result<GradingListResponseDto>>
 {
-    public async Task<Result<GradingListResponseDto>> Handle(GetGradingListQuery request, CancellationToken ct)
+    public async Task<Result<GradingListResponseDto>> Handle(
+        GetGradingListQuery request,
+        CancellationToken ct
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -40,7 +44,9 @@ internal sealed class GetGradingListQueryHandler(
 
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
         var attempts = await attemptRepo.ListAsync(
-            new GradingAttemptsSpecification(request.Scope, request.QuizId, teacherId), ct);
+            new GradingAttemptsSpecification(request.Scope, request.QuizId, teacherId),
+            ct
+        );
 
         // Apply search in-memory (student name or quiz title)
         var filtered = attempts.AsEnumerable();
@@ -49,10 +55,15 @@ internal sealed class GetGradingListQueryHandler(
         {
             var search = request.Search.Trim();
             filtered = filtered.Where(a =>
-                $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}"
-                    .Contains(search, StringComparison.OrdinalIgnoreCase)
-                || (a.Quiz.Title ?? string.Empty)
-                .Contains(search, StringComparison.OrdinalIgnoreCase));
+                $"{a.Student.FirstName} {a.Student.SecondName} {a.Student.ThirdName} {a.Student.LastName}".Contains(
+                    search,
+                    StringComparison.OrdinalIgnoreCase
+                )
+                || (a.Quiz.Title ?? string.Empty).Contains(
+                    search,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            );
         }
 
         // Apply status filter
@@ -62,7 +73,7 @@ internal sealed class GetGradingListQueryHandler(
             {
                 "submitted" => filtered.Where(a => a.Status == QuizAttemptStatus.Submitted),
                 "graded" => filtered.Where(a => a.Status == QuizAttemptStatus.Graded),
-                _ => filtered
+                _ => filtered,
             };
         }
 
@@ -80,9 +91,16 @@ internal sealed class GetGradingListQueryHandler(
             {
                 AttemptId = a.Id,
                 StudentId = a.StudentId,
-                StudentName = string.Join(" ",
-                    new[] { a.Student.FirstName, a.Student.SecondName, a.Student.ThirdName, a.Student.LastName }
-                        .Where(s => !string.IsNullOrWhiteSpace(s))),
+                StudentName = string.Join(
+                    " ",
+                    new[]
+                    {
+                        a.Student.FirstName,
+                        a.Student.SecondName,
+                        a.Student.ThirdName,
+                        a.Student.LastName,
+                    }.Where(s => !string.IsNullOrWhiteSpace(s))
+                ),
                 QuizId = a.QuizId,
                 QuizTitle = a.Quiz.Title ?? string.Empty,
                 SubmittedAt = a.SubmittedAt,
@@ -97,12 +115,19 @@ internal sealed class GetGradingListQueryHandler(
                 // Show 0 if no attempt exists
                 TabSwitchCount = a?.TabSwitchCount ?? 0,
                 CopyPasteAttemptCount = a?.CopyPasteAttemptCount ?? 0,
-                HeldForSecurityReview = a?.Status == QuizAttemptStatus.Submitted
-                                        && a.Answers.All(ans => ans.Score != null)
-                                        && (a.TabSwitchCount + a.CopyPasteAttemptCount) > 0
+                HeldForSecurityReview =
+                    a?.Status == QuizAttemptStatus.Submitted
+                    && a.Answers.All(ans => ans.Score != null)
+                    && (a.TabSwitchCount + a.CopyPasteAttemptCount) > 0,
             })
             .ToList();
 
-        return new GradingListResponseDto { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize };
+        return new GradingListResponseDto
+        {
+            Items = items,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize,
+        };
     }
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
@@ -8,9 +9,13 @@ using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Features.Assistants.Commands.UpdateAssistantDetails;
 
-public class UpdateAssistantDetailsCommandHandler(IUnitOfWork uow, IIdentityService identityService) : IRequestHandler<UpdateAssistantDetailsCommand, Result<UpdateAssistantDetailsCommandResponse>>
+public class UpdateAssistantDetailsCommandHandler(IUnitOfWork uow, IIdentityService identityService)
+    : IRequestHandler<UpdateAssistantDetailsCommand, Result<UpdateAssistantDetailsCommandResponse>>
 {
-    public async Task<Result<UpdateAssistantDetailsCommandResponse>> Handle(UpdateAssistantDetailsCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UpdateAssistantDetailsCommandResponse>> Handle(
+        UpdateAssistantDetailsCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var assistantRepository = uow.GetOrCreateRepository<Assistant, Guid>();
 
@@ -38,8 +43,7 @@ public class UpdateAssistantDetailsCommandHandler(IUnitOfWork uow, IIdentityServ
         }
 
         var permissions = request
-            .Policies
-            .Where(p => AppClaims.Policies.All.Contains(p))
+            .Policies.Where(p => AppClaims.Policies.All.Contains(p))
             .Select(px => new Claim(AppClaims.PermissionsClaim, px));
 
         var claimsResult = await identityService.AddClaimsAsync(assistant, permissions);
@@ -51,6 +55,13 @@ public class UpdateAssistantDetailsCommandHandler(IUnitOfWork uow, IIdentityServ
 
         var dbResult = await uow.SaveChangesAsync(cancellationToken);
 
-        return new UpdateAssistantDetailsCommandResponse(assistant.Id, assistant.Email, assistant.FirstName, assistant.SecondName, assistant.PhoneNumber, request.Policies);
+        return new UpdateAssistantDetailsCommandResponse(
+            assistant.Id,
+            assistant.Email,
+            assistant.FirstName,
+            assistant.SecondName,
+            assistant.PhoneNumber,
+            request.Policies
+        );
     }
 }

@@ -1,7 +1,8 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -125,7 +126,7 @@ internal sealed class GetLessonPlayerQueryHandler(
                             : null,
                     DueDate = lesson.Assignment.DueDate,
                     FileName = lesson.Assignment.SubmissionTitle ?? string.Empty,
-                    SubmissionGrade = lesson.Assignment.SubmissionGrade ,
+                    SubmissionGrade = lesson.Assignment.SubmissionGrade,
                     SubmissionNotes = lesson.Assignment.SubmissionNotes ?? string.Empty,
                 },
             Sections = sections,

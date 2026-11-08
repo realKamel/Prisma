@@ -1,6 +1,7 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Interfaces;
@@ -10,12 +11,13 @@ namespace Prisma.Application.Features.RedeemCodes.Queries.GetCodeBatchDetail;
 
 internal sealed class GetCodeBatchDetailQueryHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
-    : IRequestHandler<GetCodeBatchDetailQuery, Result<CodeBatchDetailDto>>
+    ICurrentUserService currentUser
+) : IRequestHandler<GetCodeBatchDetailQuery, Result<CodeBatchDetailDto>>
 {
     public async Task<Result<CodeBatchDetailDto>> Handle(
         GetCodeBatchDetailQuery request,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         if (currentUser.UserId is not { } teacherId)
         {
@@ -43,20 +45,22 @@ internal sealed class GetCodeBatchDetailQueryHandler(
             CreatedAt = batchWithDetails.CreatedAt,
             TotalCodes = batchWithDetails.TotalCodes,
             UsedCodes = batchWithDetails.GeneratedCodes.Count(c => c.RedeemedByStudentId != null),
-            Codes = batchWithDetails.GeneratedCodes
-                .OrderBy(c => c.Id)
+            Codes = batchWithDetails
+                .GeneratedCodes.OrderBy(c => c.Id)
                 .Select(c => new GeneratedCodeDto
                 {
                     Id = c.Id,
                     Code = c.Code,
                     Status = c.RedeemedByStudentId != null ? "used" : "available",
-                    UsedBy = c.RedeemedByStudent != null
-                        ? BuildFullName(
-                            c.RedeemedByStudent.FirstName,
-                            c.RedeemedByStudent.SecondName,
-                            c.RedeemedByStudent.ThirdName,
-                            c.RedeemedByStudent.LastName)
-                        : string.Empty,
+                    UsedBy =
+                        c.RedeemedByStudent != null
+                            ? BuildFullName(
+                                c.RedeemedByStudent.FirstName,
+                                c.RedeemedByStudent.SecondName,
+                                c.RedeemedByStudent.ThirdName,
+                                c.RedeemedByStudent.LastName
+                            )
+                            : string.Empty,
                     UsedAt = c.RedeemedAt,
                 })
                 .ToList(),
@@ -67,7 +71,9 @@ internal sealed class GetCodeBatchDetailQueryHandler(
 
     private static string BuildFullName(string? first, string? second, string? third, string? last)
     {
-        return string.Join(" ", new[] { first, second, third, last }
-            .Where(p => !string.IsNullOrWhiteSpace(p)));
+        return string.Join(
+            " ",
+            new[] { first, second, third, last }.Where(p => !string.IsNullOrWhiteSpace(p))
+        );
     }
 }

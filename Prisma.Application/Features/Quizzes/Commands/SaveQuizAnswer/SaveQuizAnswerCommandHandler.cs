@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -17,9 +18,15 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
     {
         var studentId = currentUser.UserId!.Value;
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-        
-        var attempt = await attemptRepo
-            .FirstOrDefaultAsync(new AttemptWithAnswerForQuestionSpecification(request.AttemptId, studentId, request.QuestionId), ct);
+
+        var attempt = await attemptRepo.FirstOrDefaultAsync(
+            new AttemptWithAnswerForQuestionSpecification(
+                request.AttemptId,
+                studentId,
+                request.QuestionId
+            ),
+            ct
+        );
 
         if (attempt is null)
             return Result.Error("المحاولة غير موجودة");
@@ -27,7 +34,6 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         if (attempt.Status != QuizAttemptStatus.InProgress)
             return Result.Error("لا يمكن تعديل الإجابات بعد التسليم");
 
-        
         var acceptUntil = attempt.Deadline + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
         if (DateTimeOffset.UtcNow > acceptUntil)
             return Result.Error("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
@@ -35,8 +41,12 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         // Whitespace-only text means "cleared"
         var text = string.IsNullOrWhiteSpace(request.TextAnswer) ? null : request.TextAnswer;
 
-        var question = await unitOfWork.GetOrCreateRepository<Question, int>()
-            .FirstOrDefaultAsync(new QuestionInQuizSpecification(attempt.QuizId, request.QuestionId), ct);
+        var question = await unitOfWork
+            .GetOrCreateRepository<Question, int>()
+            .FirstOrDefaultAsync(
+                new QuestionInQuizSpecification(attempt.QuizId, request.QuestionId),
+                ct
+            );
 
         if (question is null)
             return Result.Error("السؤال غير موجود في هذا الاختبار");
@@ -46,7 +56,6 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             if (request.ChoiceId is not null)
                 return Result.Error("هذا السؤال مقالي ولا يقبل اختياراً");
         }
-
         else
         {
             if (text is not null)
@@ -54,28 +63,38 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
 
             if (request.ChoiceId is not null)
             {
-                var choice = await unitOfWork.GetOrCreateRepository<Choice, int>()
-                    .FirstOrDefaultAsync(new ChoiceForQuestionSpecification(request.QuestionId, request.ChoiceId.Value), ct);
+                var choice = await unitOfWork
+                    .GetOrCreateRepository<Choice, int>()
+                    .FirstOrDefaultAsync(
+                        new ChoiceForQuestionSpecification(
+                            request.QuestionId,
+                            request.ChoiceId.Value
+                        ),
+                        ct
+                    );
 
                 if (choice is null)
                     return Result.Error("الاختيار غير موجود في هذا السؤال");
             }
         }
 
-
-        var existing =  attempt.Answers.FirstOrDefault();
+        var existing = attempt.Answers.FirstOrDefault();
 
         if (existing is null)
         {
-           unitOfWork.GetOrCreateRepository<AttemptAnswer, int>().Add(new AttemptAnswer
-           {
-                QuizAttemptId = attempt.Id,
-                StudentId = studentId,
-                QuestionId = request.QuestionId,
-                ChoiceId = request.ChoiceId,
-                TextAnswer = text,
-                ClientSeq = request.ClientSeq
-           });
+            unitOfWork
+                .GetOrCreateRepository<AttemptAnswer, int>()
+                .Add(
+                    new AttemptAnswer
+                    {
+                        QuizAttemptId = attempt.Id,
+                        StudentId = studentId,
+                        QuestionId = request.QuestionId,
+                        ChoiceId = request.ChoiceId,
+                        TextAnswer = text,
+                        ClientSeq = request.ClientSeq,
+                    }
+                );
         }
         else
         {
@@ -105,6 +124,5 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             return Result.Conflict("حدث تعارض أثناء الحفظ، سيتم إعادة المحاولة");
         }
         return Result.SuccessWithMessage("تم حفظ الإجابة");
-
     }
 }

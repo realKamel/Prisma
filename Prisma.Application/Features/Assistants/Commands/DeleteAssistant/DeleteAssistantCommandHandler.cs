@@ -1,13 +1,17 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Application.Features.Assistants.Commands.DeleteAssistant;
 
 public class DeleteAssistantCommandHandler(IIdentityService identityService)
     : IRequestHandler<DeleteAssistantCommand, Result>
 {
-    public async Task<Result> Handle(DeleteAssistantCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(
+        DeleteAssistantCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var user = await identityService.FindByIdAsync(request.AssistantId, cancellationToken);
 

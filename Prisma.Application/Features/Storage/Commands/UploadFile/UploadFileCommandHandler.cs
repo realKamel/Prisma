@@ -1,6 +1,6 @@
 using Ardalis.Result;
 using MediatR;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Application.Features.Storage.Commands.UploadFile;
 

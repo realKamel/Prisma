@@ -1,6 +1,7 @@
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Users.Commands.DeleteUser;
@@ -16,7 +17,6 @@ public class DeleteUserCommandHandler(IIdentityService identityService)
         {
             return Result.NotFound($"User with id '{request.Id}' was not found");
         }
-
 
         var result = await identityService.DeleteAsync(user);
 

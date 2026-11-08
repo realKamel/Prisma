@@ -1,7 +1,8 @@
 using Ardalis.Result;
-using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Messaging;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -17,7 +18,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
     ICurrentUserService currentUserService,
     IIdentityService userManager,
     IStorageService storageService
-) : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
+) : ICommandHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
     public async Task<Result<CreateLessonResponse>> Handle(
         CreateLessonDetailsCommand request,

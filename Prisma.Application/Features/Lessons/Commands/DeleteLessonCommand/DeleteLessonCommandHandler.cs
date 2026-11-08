@@ -1,7 +1,8 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -10,7 +11,7 @@ using Prisma.Domain.Specifications.Lessons;
 
 namespace Prisma.Application.Features.Lessons.Commands.DeleteLessonCommand;
 
-public class DeleteLessonCommandHandler(
+public sealed class DeleteLessonCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IIdentityService identityService,
@@ -32,7 +33,13 @@ public class DeleteLessonCommandHandler(
 
         var user = await identityService.FindByIdAsync(userId.Value, cancellationToken);
 
-        if (user is null || !user.Roles.Any(r => IsInRole(r.Role.Name)))
+        if (
+            user is null
+            || !currentUserService.IsInAnyRole(
+                [AppRoles.Admin, AppRoles.Teacher, AppRoles.Assistant],
+                cancellationToken
+            )
+        )
         {
             return Result.Unauthorized();
         }
@@ -78,23 +85,30 @@ public class DeleteLessonCommandHandler(
             await videoStorageService.DeleteVideoAsync(assetId!, cancellationToken);
         }
 
-        var lessonStub = new Lesson { Id = lessonInfo.Id };
-        lessonRepository.Delete(lessonStub);
+        // var lessonStub = new Lesson { Id = lessonInfo.Id };
+        var lesson = await lessonRepository.GetByIdAsync(lessonInfo.Id, cancellationToken);
+
+        if (lesson is null)
+        {
+            return Result.NoContent();
+        }
+
+        lessonRepository.Delete(lesson);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Result.NoContent();
     }
 
-    private static bool IsInRole(string? role)
-    {
-        if (role is null)
-        {
-            return false;
-        }
-
-        return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
-    }
+    // private static bool IsInRole(string? role)
+    // {
+    //     if (role is null)
+    //     {
+    //         return false;
+    //     }
+    //
+    //     return role == AppRoles.Admin || role == AppRoles.Teacher || role == AppRoles.Assistant;
+    // }
 
     public sealed record LessonDeletionInfo(
         int Id,

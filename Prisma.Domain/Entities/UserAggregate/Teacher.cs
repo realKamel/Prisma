@@ -11,6 +11,8 @@ public class Teacher : User
 {
     public string Subject { get; set; } = string.Empty;
     public string? TeacherAvatarUrl { get; set; }
+    public string? Bio { get; set; } 
+    public bool IsFeatured { get; set; }
 
     //public ICollection<Student> Students { get; set; } = new List<Student>();
     public TeacherStatus Status { get; set; } = TeacherStatus.Active;

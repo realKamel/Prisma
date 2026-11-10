@@ -108,7 +108,7 @@ public sealed class FileObject : BaseEntity<Guid>
     public static Result<FileObject> CreateWithCustomKey(
         Guid assignedId,
         Guid objectStorageId,
-        string bucketName,
+        // string bucketName,
         string objectKey,
         string fileName,
         string contentType,
@@ -122,12 +122,12 @@ public sealed class FileObject : BaseEntity<Guid>
             errors.Add(new ValidationError("Id", "File object ID cannot be empty."));
         }
 
-        if (string.IsNullOrWhiteSpace(bucketName))
-        {
-            errors.Add(
-                new ValidationError("BucketName", "Bucket name cannot be null or whitespace.")
-            );
-        }
+        // if (string.IsNullOrWhiteSpace(bucketName))
+        // {
+        //     errors.Add(
+        //         new ValidationError("BucketName", "Bucket name cannot be null or whitespace.")
+        //     );
+        // }
 
         if (string.IsNullOrWhiteSpace(fileName))
         {

@@ -1,19 +1,20 @@
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Domain.ValueObjects.AssessmentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
-public class AssignmentSubmission : BaseEntity
+public sealed class AssignmentSubmission : BaseEntity
 {
     public Guid StudentId { get; set; }
     public Student Student { get; set; }
     public string? Title { get; set; }
 
-
     public int AssignmentId { get; set; }
     public Assignment Assignment { get; set; }
-    public int? Score {set; get;}
-    public string? Notes {set; get;}  
+    public int? Score { set; get; }
+    public Score? AssignmentScore { get; set; }
+    public string? Notes { set; get; }
     public string? FileUrl { get; set; }
     public DateTimeOffset SubmittedAt { get; set; }
 

@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Prisma.Domain.Common;
+using Prisma.Domain.DomainEvents.ObjectStorage;
 
 namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
 
@@ -46,10 +47,10 @@ public sealed class ObjectStorage : BaseEntity<Guid>
     }
 
     /// <summary>
-    /// Method to attach a new file object to this storage bucket,
+    /// Method to add a new file object to this storage bucket,
     /// enforcing business rules (e.g., storage must be ready).
     /// </summary>
-    public Result<FileObject> AttachFile(
+    public Result<FileObject> AddFile(
         Guid fileId,
         string objectKey,
         string fileName,
@@ -72,7 +73,7 @@ public sealed class ObjectStorage : BaseEntity<Guid>
         var fileObjectResult = FileObject.CreateWithCustomKey(
             fileId,
             this.Id, // ObjectStorageId
-            this.BucketName, // ObjectStorage bucket name
+            // this.BucketName, // ObjectStorage bucket name
             objectKey,
             fileName,
             contentType,
@@ -88,5 +89,31 @@ public sealed class ObjectStorage : BaseEntity<Guid>
         Files.Add(fileObjectResult.Value);
 
         return Result.Success(fileObjectResult.Value);
+    }
+
+    public Result RemoveFile(Guid fileId)
+    {
+        if (Status != StorageStatus.Ready)
+        {
+            return Result.Invalid(
+                new ValidationError(
+                    nameof(Status),
+                    "Cannot remove files from storage that is not in a Ready state."
+                )
+            );
+        }
+
+        var file = Files.FirstOrDefault(x => x.Id == fileId);
+
+        if (file is null)
+        {
+            return Result.Success();
+        }
+
+        Files.Remove(file);
+
+        AddDomainEvent(new FileObjectRemoved(Id, fileId));
+
+        return Result.Success();
     }
 }

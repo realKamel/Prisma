@@ -4,7 +4,8 @@ using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Specifications.Lessons;
 
-public class LessonPlayerWithDetailsSpecification : Specification<Lesson, LessonPlayerProjection>
+public sealed class LessonPlayerWithDetailsSpecification
+    : Specification<Lesson, LessonPlayerProjection>
 {
     public LessonPlayerWithDetailsSpecification(Guid lessonId, Guid studentId)
     {
@@ -86,7 +87,7 @@ public class LessonPlayerWithDetailsSpecification : Specification<Lesson, Lesson
                             SubmissionNotes = lesson
                                 .Assignment.Submissions.Where(sub => sub.StudentId == studentId)
                                 .Select(sub => sub.Notes)
-                                .FirstOrDefault()
+                                .FirstOrDefault(),
                         }
                         : null,
                 IsEnrollmentCompleted = lesson
@@ -147,7 +148,7 @@ public class PlayerAssignmentProjection
 {
     public int Id { get; set; }
     public string? ContentURL { get; set; }
-    public DateTimeOffset DueDate { get; set; }
+    public DateTimeOffset? DueDate { get; set; }
     public string? SubmissionTitle { get; set; }
     public decimal? SubmissionGrade { get; set; }
     public string? SubmissionNotes { get; set; }

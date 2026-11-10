@@ -572,11 +572,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("DueDate")
+                    b.Property<DateTimeOffset?>("DueDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Grade")
-                        .HasColumnType("integer");
+                    b.Property<Guid>("FileObjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -587,11 +587,24 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
+                    b.Property<decimal>("TotalMarks")
+                        .HasPrecision(10, 3)
+                        .HasColumnType("numeric(10,3)");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Expiry", "Prisma.Domain.Entities.LessonAggregate.Assignment.Expiry#TimeDuration", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<long>("Seconds")
+                                .HasColumnType("bigint")
+                                .HasColumnName("Expiry_Seconds");
+                        });
 
                     b.HasKey("Id");
 
@@ -660,6 +673,25 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "AssignmentScore", "Prisma.Domain.Entities.LessonAggregate.AssignmentSubmission.AssignmentScore#Score", b1 =>
+                        {
+                            b1.Property<decimal>("AchievedPoints")
+                                .HasPrecision(10, 3)
+                                .HasColumnType("numeric(10,3)")
+                                .HasColumnName("AssignmentScore_AchievedPoints");
+
+                            b1.Property<decimal>("MaxPoints")
+                                .HasPrecision(10, 3)
+                                .HasColumnType("numeric(10,3)")
+                                .HasColumnName("AssignmentScore_MaxPoints");
+                        });
 
                     b.HasKey("Id");
 

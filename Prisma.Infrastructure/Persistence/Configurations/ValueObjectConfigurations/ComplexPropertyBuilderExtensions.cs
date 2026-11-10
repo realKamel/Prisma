@@ -188,13 +188,13 @@ internal static class ComplexPropertyBuilderExtensions
         builder
             .Property(g => g.AchievedPoints)
             .HasColumnName($"{prefix}_AchievedPoints")
-            .HasPrecision(7, 2)
+            .HasPrecision(10, 3)
             .IsRequired();
 
         builder
             .Property(g => g.MaxPoints)
             .HasColumnName($"{prefix}_MaxPoints")
-            .HasPrecision(7, 2)
+            .HasPrecision(10, 3)
             .IsRequired();
 
         return builder;

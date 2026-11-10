@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Prisma.Domain.Common;
+using Prisma.Domain.DomainEvents.LessonEvents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -194,6 +195,7 @@ public sealed class Lesson : BaseEntity
     public void PublishLesson()
     {
         Status = LessonStatus.Active;
+        AddDomainEvent(new LessonPublishedDomainEvent(Id));
     }
 
     public void AddAssignment(Assignment assignment)
@@ -210,5 +212,48 @@ public sealed class Lesson : BaseEntity
     public void AddSection(Section section)
     {
         Sections.Add(section);
+    }
+
+    public Result AddAssignment(
+        Guid fileObjectId,
+        decimal totalMarks,
+        DateTimeOffset? dueDate,
+        string? title = null
+    )
+    {
+        if (Assignment is not null)
+        {
+            return Result.Invalid(
+                new ValidationError(nameof(Assignment), "This lesson already has an assignment.")
+            );
+        }
+
+        var result = Assignment.Create(fileObjectId, totalMarks, dueDate, title);
+
+        if (!result.IsSuccess)
+        {
+            return result.Map();
+        }
+
+        result.Value.AttachTo(this);
+
+        Assignment = result.Value;
+
+        return Result.Success();
+    }
+
+    public Result RemoveAssignment()
+    {
+        if (AssignmentId is null)
+            return Result.Success();
+
+        var assignmentId = AssignmentId.Value;
+
+        AddDomainEvent(new LessonAssignmentRemoved(assignmentId, Assignment.FileObjectId));
+
+        Assignment = null;
+        AssignmentId = null;
+
+        return Result.Success();
     }
 }

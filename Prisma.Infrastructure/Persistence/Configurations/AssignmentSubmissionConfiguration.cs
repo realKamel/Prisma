@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Infrastructure.Persistence.Configurations.ValueObjectConfigurations;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 
@@ -22,6 +23,12 @@ internal sealed class AssignmentSubmissionConfiguration
             .WithMany(x => x.Submissions)
             .HasForeignKey(x => x.AssignmentId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder
+            .ComplexProperty(x => x.AssignmentScore)
+            .ConfigureScore<AssignmentSubmission>("AssignmentScore");
+
+        builder.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

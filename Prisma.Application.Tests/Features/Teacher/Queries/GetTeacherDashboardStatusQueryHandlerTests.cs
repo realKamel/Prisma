@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Teachers.Queries.DTOs;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherDashboardStatus;

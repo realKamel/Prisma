@@ -4,6 +4,7 @@ using System.Text;
 using Ardalis.Specification;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -13,16 +14,24 @@ using Prisma.Domain.Interfaces;
 
 namespace Prisma.Application.Tests.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
-
 public class GetAssignmentSubmissionsListQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
 
-    private readonly IRepository<Assignment, int> _assignmentRepository = Substitute.For<IRepository<Assignment, int>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<IRepository<Enrollment, int>>();
-    private readonly IRepository<AssignmentSubmission, int> _submissionRepository = Substitute.For<IRepository<AssignmentSubmission, int>>();
-    private readonly IRepository<User, Guid> _userRepository = Substitute.For<IRepository<User, Guid>>();
+    private readonly IRepository<Assignment, int> _assignmentRepository = Substitute.For<
+        IRepository<Assignment, int>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
+    private readonly IRepository<AssignmentSubmission, int> _submissionRepository = Substitute.For<
+        IRepository<AssignmentSubmission, int>
+    >();
+    private readonly IRepository<User, Guid> _userRepository = Substitute.For<
+        IRepository<User, Guid>
+    >();
 
     private readonly GetAssignmentSubmissionsListQueryHandler _handler;
 
@@ -30,7 +39,9 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
     {
         _unitOfWork.GetOrCreateRepository<Assignment, int>().Returns(_assignmentRepository);
         _unitOfWork.GetOrCreateRepository<Enrollment, int>().Returns(_enrollmentRepository);
-        _unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>().Returns(_submissionRepository);
+        _unitOfWork
+            .GetOrCreateRepository<AssignmentSubmission, int>()
+            .Returns(_submissionRepository);
         _unitOfWork.GetOrCreateRepository<User, Guid>().Returns(_userRepository);
 
         _currentUserService.UserId.Returns(Guid.NewGuid());
@@ -41,16 +52,37 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
     // ---------- Helpers ----------
 
     private static GetAssignmentSubmissionsListQuery CreateQuery(
-        string? search = null, int? lessonId = null, string? status = null, int page = 1, int pageSize = 20) =>
-        new(search, lessonId, status, page, pageSize);
+        string? search = null,
+        int? lessonId = null,
+        string? status = null,
+        int page = 1,
+        int pageSize = 20
+    ) => new(search, lessonId, status, page, pageSize);
 
-    private static Lesson CreateLesson(int id, string title = "Lesson") => new() { Id = id, Title = title };
+    private static Lesson CreateLesson(int id, string title = "Lesson") =>
+        new() { Id = id, Title = title };
 
-    private static Assignment CreateAssignment(int id, int lessonId, Lesson lesson, int grade = 100) =>
-        new() { Id = id, LessonId = lessonId, Lesson = lesson, Grade = grade };
+    private static Assignment CreateAssignment(
+        int id,
+        int lessonId,
+        Lesson lesson,
+        int grade = 100
+    ) =>
+        new()
+        {
+            Id = id,
+            LessonId = lessonId,
+            Lesson = lesson,
+            Grade = grade,
+        };
 
     private static Student CreateStudent(string firstName = "John", string lastName = "Doe") =>
-        new() { Id = Guid.NewGuid(), FirstName = firstName, LastName = lastName };
+        new()
+        {
+            Id = Guid.NewGuid(),
+            FirstName = firstName,
+            LastName = lastName,
+        };
 
     private static Enrollment CreateEnrollment(int lessonId, Student student) =>
         new() { LessonId = lessonId, Student = student };
@@ -64,7 +96,8 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         DateTimeOffset? gradingStartedAt = null,
         Guid? gradingByUserId = null,
         DateTimeOffset? submittedAt = null,
-        string? fileUrl = "file.pdf") =>
+        string? fileUrl = "file.pdf"
+    ) =>
         new()
         {
             Id = id,
@@ -75,14 +108,15 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
             GradingStartedAt = gradingStartedAt,
             GradingByUserId = gradingByUserId,
             SubmittedAt = submittedAt ?? DateTimeOffset.UtcNow.AddDays(-1),
-            FileUrl = fileUrl
+            FileUrl = fileUrl,
         };
 
     private void SetupRepositories(
         List<Assignment> assignments,
         List<Enrollment>? enrollments = null,
         List<AssignmentSubmission>? submissions = null,
-        List<User>? gradingUsers = null)
+        List<User>? gradingUsers = null
+    )
     {
         _assignmentRepository
             .ListAsync(Arg.Any<ISpecification<Assignment>>(), Arg.Any<CancellationToken>())
@@ -93,7 +127,10 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
             .Returns(enrollments ?? new List<Enrollment>());
 
         _submissionRepository
-            .ListAsync(Arg.Any<ISpecification<AssignmentSubmission>>(), Arg.Any<CancellationToken>())
+            .ListAsync(
+                Arg.Any<ISpecification<AssignmentSubmission>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submissions ?? new List<AssignmentSubmission>());
 
         _userRepository
@@ -117,10 +154,15 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         result.Value.Items.Should().BeEmpty();
         result.Value.TotalCount.Should().Be(0);
 
-        await _enrollmentRepository.DidNotReceive()
+        await _enrollmentRepository
+            .DidNotReceive()
             .ListAsync(Arg.Any<ISpecification<Enrollment>>(), Arg.Any<CancellationToken>());
-        await _submissionRepository.DidNotReceive()
-            .ListAsync(Arg.Any<ISpecification<AssignmentSubmission>>(), Arg.Any<CancellationToken>());
+        await _submissionRepository
+            .DidNotReceive()
+            .ListAsync(
+                Arg.Any<ISpecification<AssignmentSubmission>>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Fact]
@@ -137,10 +179,14 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
 
         SetupRepositories(
             new List<Assignment> { assignmentA, assignmentB },
-            new List<Enrollment> { enrollmentA });
+            new List<Enrollment> { enrollmentA }
+        );
 
         // Act
-        var result = await _handler.Handle(CreateQuery(lessonId: lessonA.Id), CancellationToken.None);
+        var result = await _handler.Handle(
+            CreateQuery(lessonId: lessonA.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.Value.Items.Should().ContainSingle();
@@ -175,9 +221,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var student = CreateStudent("John", "Doe");
         var enrollment = CreateEnrollment(lesson.Id, student);
 
-        SetupRepositories(
-            new List<Assignment> { assignment },
-            new List<Enrollment> { enrollment });
+        SetupRepositories(new List<Assignment> { assignment }, new List<Enrollment> { enrollment });
 
         // Act
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
@@ -206,7 +250,8 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         SetupRepositories(
             new List<Assignment> { assignment },
             new List<Enrollment> { enrollment },
-            new List<AssignmentSubmission> { submission });
+            new List<AssignmentSubmission> { submission }
+        );
 
         // Act
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
@@ -231,7 +276,8 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         SetupRepositories(
             new List<Assignment> { assignment },
             new List<Enrollment> { enrollment },
-            new List<AssignmentSubmission> { submission });
+            new List<AssignmentSubmission> { submission }
+        );
 
         // Act
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
@@ -252,19 +298,28 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var enrollment = CreateEnrollment(lesson.Id, student);
 
         var graderId = Guid.NewGuid();
-        var grader = new User { Id = graderId, FirstName = "Jane", LastName = "Grader" };
+        var grader = new User
+        {
+            Id = graderId,
+            FirstName = "Jane",
+            LastName = "Grader",
+        };
 
         var submission = CreateSubmission(
-            100, assignment.Id, student.Id,
+            100,
+            assignment.Id,
+            student.Id,
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: graderId);
+            gradingByUserId: graderId
+        );
 
         SetupRepositories(
             new List<Assignment> { assignment },
             new List<Enrollment> { enrollment },
             new List<AssignmentSubmission> { submission },
-            new List<User> { grader });
+            new List<User> { grader }
+        );
 
         // Act
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
@@ -286,21 +341,30 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var enrollment = CreateEnrollment(lesson.Id, student);
 
         var graderId = Guid.NewGuid();
-        var grader = new User { Id = graderId, FirstName = "Jane", LastName = "Grader" };
+        var grader = new User
+        {
+            Id = graderId,
+            FirstName = "Jane",
+            LastName = "Grader",
+        };
 
         // Grading started 31 minutes ago -> lock expired (GradingLockExpiry is 30 min)
         var submission = CreateSubmission(
-            100, assignment.Id, student.Id,
+            100,
+            assignment.Id,
+            student.Id,
             score: null,
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-31),
-            gradingByUserId: graderId);
+            gradingByUserId: graderId
+        );
 
         SetupRepositories(
             new List<Assignment> { assignment },
             new List<Enrollment> { enrollment },
             new List<AssignmentSubmission> { submission },
-            new List<User> { grader });
+            new List<User> { grader }
+        );
 
         // Act
         var result = await _handler.Handle(CreateQuery(), CancellationToken.None);
@@ -312,6 +376,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         item.IsBeingGraded.Should().BeFalse();
         item.GradingByUserName.Should().BeNull();
     }
+
     [Fact]
     public async Task Handle_WhenSearchProvided_FiltersItemsByStudentNameCaseInsensitively()
     {
@@ -325,7 +390,7 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var enrollments = new List<Enrollment>
         {
             CreateEnrollment(lesson.Id, alice),
-            CreateEnrollment(lesson.Id, bob)
+            CreateEnrollment(lesson.Id, bob),
         };
 
         SetupRepositories(new List<Assignment> { assignment }, enrollments);
@@ -351,12 +416,12 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var enrollments = new List<Enrollment>
         {
             CreateEnrollment(lesson.Id, gradedStudent),
-            CreateEnrollment(lesson.Id, notSubmittedStudent)
+            CreateEnrollment(lesson.Id, notSubmittedStudent),
         };
 
         var submissions = new List<AssignmentSubmission>
         {
-            CreateSubmission(100, assignment.Id, gradedStudent.Id, score: 90)
+            CreateSubmission(100, assignment.Id, gradedStudent.Id, score: 90),
         };
 
         SetupRepositories(new List<Assignment> { assignment }, enrollments, submissions);
@@ -383,12 +448,12 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var enrollments = new List<Enrollment>
         {
             CreateEnrollment(lesson.Id, gradedStudent),
-            CreateEnrollment(lesson.Id, notSubmittedStudent)
+            CreateEnrollment(lesson.Id, notSubmittedStudent),
         };
 
         var submissions = new List<AssignmentSubmission>
         {
-            CreateSubmission(100, assignment.Id, gradedStudent.Id, score: 90)
+            CreateSubmission(100, assignment.Id, gradedStudent.Id, score: 90),
         };
 
         SetupRepositories(new List<Assignment> { assignment }, enrollments, submissions);
@@ -407,18 +472,20 @@ public class GetAssignmentSubmissionsListQueryHandlerTests
         var lesson = CreateLesson(1);
         var assignment = CreateAssignment(10, lesson.Id, lesson);
 
-        var students = Enumerable.Range(1, 5)
+        var students = Enumerable
+            .Range(1, 5)
             .Select(i => CreateStudent($"Student{i}", "Test"))
             .ToList();
 
-        var enrollments = students
-            .Select(s => CreateEnrollment(lesson.Id, s))
-            .ToList();
+        var enrollments = students.Select(s => CreateEnrollment(lesson.Id, s)).ToList();
 
         SetupRepositories(new List<Assignment> { assignment }, enrollments);
 
         // Act
-        var result = await _handler.Handle(CreateQuery(page: 2, pageSize: 2), CancellationToken.None);
+        var result = await _handler.Handle(
+            CreateQuery(page: 2, pageSize: 2),
+            CancellationToken.None
+        );
 
         // Assert
         result.Value.TotalCount.Should().Be(5);

@@ -1,8 +1,9 @@
 using System.Linq.Expressions;
+using Ardalis.Result;
 using Ardalis.Specification;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
@@ -15,14 +16,14 @@ public class GetAllSessionsQueryHandler(IUnitOfWork uow, ICurrentUserService cur
     {
         public ChatSessionSpec(Guid? userId, Expression<Func<ChatSession, TResult>> selector)
         {
-            Query.Where(s => s.UserId == userId)
-                .AsNoTracking()
-                .Select(selector);
+            Query.Where(s => s.UserId == userId).AsNoTracking().Select(selector);
         }
     }
 
-    public async Task<Result<List<GetRagSessionQuery>>> Handle(GetAllSessionsQuery request,
-        CancellationToken cancellationToken)
+    public async Task<Result<List<GetRagSessionQuery>>> Handle(
+        GetAllSessionsQuery request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -31,14 +32,15 @@ public class GetAllSessionsQueryHandler(IUnitOfWork uow, ICurrentUserService cur
             userId = Guid.Empty;
         }
 
-
         var repo = uow.GetOrCreateRepository<ChatSession, Guid>();
 
-        var sessions = await repo
-            .ListAsync(new ChatSessionSpec<GetRagSessionQuery>
-                (userId, s =>
-                    new GetRagSessionQuery(s.Id, s.Title)),
-                cancellationToken);
+        var sessions = await repo.ListAsync(
+            new ChatSessionSpec<GetRagSessionQuery>(
+                userId,
+                s => new GetRagSessionQuery(s.Id, s.Title)
+            ),
+            cancellationToken
+        );
 
         return sessions;
     }

@@ -1,10 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 
@@ -16,7 +17,10 @@ public class UpdateStudentProfileCommandHandler(
     UserManager<User> _userManager
 ) : IRequestHandler<UpdateStudentProfileCommand, Result<bool>>
 {
-    public async Task<Result<bool>> Handle(UpdateStudentProfileCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(
+        UpdateStudentProfileCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
@@ -35,7 +39,6 @@ public class UpdateStudentProfileCommandHandler(
         student.PhoneNumber = request.Mobile.Trim();
         student.AcademicYearId = request.Grade;
         student.ParentPhoneNumber = request.ParentMobile.Trim();
-
 
         studentRepository.Update(student);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

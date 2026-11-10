@@ -1,9 +1,10 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Encryption;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.VideoServices;
+using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Interfaces;
 using Prisma.Application.Features.Lessons.Dtos;
 using Prisma.Application.Features.Lessons.Helpers;
 using Prisma.Domain.Entities.LessonAggregate;

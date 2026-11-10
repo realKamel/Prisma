@@ -2,6 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Users.Commands.DeleteUser;
 using Prisma.Domain.Entities.UserAggregate;
@@ -27,8 +28,7 @@ public class DeleteUserCommandHandlerTests
     {
         // Arrange
         var user = new Student { Id = Guid.NewGuid() };
-        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>())
-            .Returns(user);
+        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
         _identityService.DeleteAsync(user).Returns(IdentityResult.Success);
 
         // Act
@@ -43,11 +43,15 @@ public class DeleteUserCommandHandlerTests
     public async Task Handle_WhenUserDoesNotExist_ThrowsNotFoundException()
     {
         // Arrange
-        _identityService.FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+        _identityService
+            .FindByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((User?)null);
 
         // Act
-        var result = await _sut.Handle(new DeleteUserCommand(Guid.NewGuid()), CancellationToken.None);
+        var result = await _sut.Handle(
+            new DeleteUserCommand(Guid.NewGuid()),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -60,9 +64,9 @@ public class DeleteUserCommandHandlerTests
     {
         // Arrange
         var user = new Domain.Entities.UserAggregate.Teacher { Id = Guid.NewGuid() };
-        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>())
-            .Returns(user);
-        _identityService.DeleteAsync(user)
+        _identityService.FindByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
+        _identityService
+            .DeleteAsync(user)
             .Returns(IdentityResult.Failed(new IdentityError { Description = "DB constraint" }));
 
         // Act

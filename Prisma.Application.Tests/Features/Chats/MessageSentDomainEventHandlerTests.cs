@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Application.Features.Chats.Dtos;
 using Prisma.Application.Features.Chats.EventHandlers;
 using Prisma.Domain.DomainEvents.Chat;

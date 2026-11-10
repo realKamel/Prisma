@@ -1,6 +1,6 @@
-
 using Ardalis.Specification;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.TeacherPreferences.Commands.UpdateAccentColor;
 using Prisma.Domain.Enums;
@@ -11,10 +11,12 @@ namespace Prisma.Application.Tests.Features.TeacherPreferences.Commands;
 
 public class UpdateAccentColorCommandHandlerTests
 {
-
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<TeacherPreferencesEntity, Guid> _repository = Substitute.For<IRepository<TeacherPreferencesEntity, Guid>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<TeacherPreferencesEntity, Guid> _repository = Substitute.For<
+        IRepository<TeacherPreferencesEntity, Guid>
+    >();
     private readonly UpdateAccentColorCommandHandler _handler;
 
     private static readonly Guid TeacherId = Guid.NewGuid();
@@ -22,9 +24,7 @@ public class UpdateAccentColorCommandHandlerTests
 
     public UpdateAccentColorCommandHandlerTests()
     {
-        _unitOfWork
-            .GetOrCreateRepository<TeacherPreferencesEntity, Guid>()
-            .Returns(_repository);
+        _unitOfWork.GetOrCreateRepository<TeacherPreferencesEntity, Guid>().Returns(_repository);
 
         _handler = new UpdateAccentColorCommandHandler(_unitOfWork, _currentUserService);
     }
@@ -42,8 +42,12 @@ public class UpdateAccentColorCommandHandlerTests
         Assert.False(result.IsSuccess);
         Assert.Equal("المستخدم غير مصرح له", result.GetResultMessage());
 
-        await _repository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>());
+        await _repository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(
+                Arg.Any<ISpecification<TeacherPreferencesEntity>>(),
+                Arg.Any<CancellationToken>()
+            );
         await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
@@ -54,7 +58,10 @@ public class UpdateAccentColorCommandHandlerTests
         _currentUserService.UserId.Returns(TeacherId);
 
         _repository
-            .FirstOrDefaultAsync(Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<ISpecification<TeacherPreferencesEntity>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((TeacherPreferencesEntity?)null);
 
         // Act
@@ -63,10 +70,13 @@ public class UpdateAccentColorCommandHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        _repository.Received(1).Add(
-            Arg.Is<TeacherPreferencesEntity>(p =>
-                p.Id == TeacherId &&
-                p.AccentColor == ValidCommand.AccentColor));
+        _repository
+            .Received(1)
+            .Add(
+                Arg.Is<TeacherPreferencesEntity>(p =>
+                    p.Id == TeacherId && p.AccentColor == ValidCommand.AccentColor
+                )
+            );
 
         _repository.DidNotReceive().Update(Arg.Any<TeacherPreferencesEntity>());
 
@@ -82,7 +92,10 @@ public class UpdateAccentColorCommandHandlerTests
         var existingPreferences = TeacherPreferencesEntity.CreateDefault(TeacherId);
 
         _repository
-            .FirstOrDefaultAsync(Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<ISpecification<TeacherPreferencesEntity>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(existingPreferences);
 
         // Act
@@ -92,8 +105,11 @@ public class UpdateAccentColorCommandHandlerTests
         Assert.True(result.IsSuccess);
         Assert.Equal(ValidCommand.AccentColor, existingPreferences.AccentColor);
 
-        _repository.Received(1).Update(
-            Arg.Is<TeacherPreferencesEntity>(p => p.AccentColor == ValidCommand.AccentColor));
+        _repository
+            .Received(1)
+            .Update(
+                Arg.Is<TeacherPreferencesEntity>(p => p.AccentColor == ValidCommand.AccentColor)
+            );
 
         _repository.DidNotReceive().Add(Arg.Any<TeacherPreferencesEntity>());
 
@@ -107,7 +123,10 @@ public class UpdateAccentColorCommandHandlerTests
         _currentUserService.UserId.Returns(TeacherId);
 
         _repository
-            .FirstOrDefaultAsync(Arg.Any<ISpecification<TeacherPreferencesEntity>>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<ISpecification<TeacherPreferencesEntity>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((TeacherPreferencesEntity?)null);
 
         // Act
@@ -118,5 +137,4 @@ public class UpdateAccentColorCommandHandlerTests
         Assert.Equal("تم حفظ اللون بنجاح", result.GetResultMessage());
         Assert.Empty(result.Errors);
     }
-
 }

@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStructure;
@@ -29,7 +30,6 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         if (attempt.Status != QuizAttemptStatus.InProgress)
             return Result.Error("لا يمكن تعديل الإجابات بعد التسليم");
 
-        
         var acceptUntil = attempt.Deadline + TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds);
         if (DateTimeOffset.UtcNow > acceptUntil)
             return Result.Error("انتهى وقت الاختبار، لا يمكن حفظ المزيد من الإجابات");
@@ -53,7 +53,6 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             if (request.ChoiceId is not null)
                 return Result.Error("هذا السؤال مقالي ولا يقبل اختياراً");
         }
-
         else
         {
             if (text is not null)
@@ -64,20 +63,23 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
                 return Result.Error("الاختيار غير موجود في هذا السؤال");
         }
 
-
-        var existing =  attempt.Answers.FirstOrDefault();
+        var existing = attempt.Answers.FirstOrDefault();
 
         if (existing is null)
         {
-           unitOfWork.GetOrCreateRepository<AttemptAnswer, int>().Add(new AttemptAnswer
-           {
-                QuizAttemptId = attempt.Id,
-                StudentId = studentId,
-                QuestionId = request.QuestionId,
-                ChoiceId = request.ChoiceId,
-                TextAnswer = text,
-                ClientSeq = request.ClientSeq
-           });
+            unitOfWork
+                .GetOrCreateRepository<AttemptAnswer, int>()
+                .Add(
+                    new AttemptAnswer
+                    {
+                        QuizAttemptId = attempt.Id,
+                        StudentId = studentId,
+                        QuestionId = request.QuestionId,
+                        ChoiceId = request.ChoiceId,
+                        TextAnswer = text,
+                        ClientSeq = request.ClientSeq,
+                    }
+                );
         }
         else
         {
@@ -107,6 +109,5 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             return Result.Conflict("حدث تعارض أثناء الحفظ، سيتم إعادة المحاولة");
         }
         return Result.SuccessWithMessage("تم حفظ الإجابة");
-
     }
 }

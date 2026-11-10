@@ -26,7 +26,7 @@ public class StorageController(IMediator mediator) : ApiController
             new UploadFileCommand(bucketName, objectKey, stream, file.ContentType),
             cancellationToken
         );
-        return Result<string>.Success(result);
+        return result;
     }
 
     [HttpGet("download")]
@@ -39,7 +39,7 @@ public class StorageController(IMediator mediator) : ApiController
         var result = await mediator.Send(
             new GetDownloadUrlQuery(bucketName, objectKey, expiryMinutes)
         );
-        return Result<string>.Success(result);
+        return result;
     }
 
     [HttpDelete("delete")]

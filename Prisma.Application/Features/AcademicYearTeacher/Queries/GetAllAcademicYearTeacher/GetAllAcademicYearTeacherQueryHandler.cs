@@ -1,6 +1,7 @@
 ﻿using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.AcademicYears.Dtos;
@@ -13,12 +14,13 @@ namespace Prisma.Application.Features.AcademicYearTeacher.Queries.GetAllAcademic
 public class GetAllAcademicYearTeacherQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IIdentityService identityService)
-    : IRequestHandler<GetAllAcademicYearTeacherQuery, Result<List<AcademicYearOptionDto>>>
+    IIdentityService identityService
+) : IRequestHandler<GetAllAcademicYearTeacherQuery, Result<List<AcademicYearOptionDto>>>
 {
     public async Task<Result<List<AcademicYearOptionDto>>> Handle(
         GetAllAcademicYearTeacherQuery request,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var userId = currentUserService.UserId;
 
@@ -36,7 +38,7 @@ public class GetAllAcademicYearTeacherQueryHandler(
 
         var roles = await identityService.GetRolesAsync(user);
 
-        Guid teacherId=Guid.Empty;
+        Guid teacherId = Guid.Empty;
 
         if (roles.Contains(AppRoles.Teacher))
         {
@@ -57,9 +59,10 @@ public class GetAllAcademicYearTeacherQueryHandler(
             teacherId = assistant.TeacherId.Value;
         }
 
-
         var repo = unitOfWork.GetOrCreateRepository<
-            Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher, int>();
+            Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher,
+            int
+        >();
 
         var years = await repo.ListAsync(
             new AcademicYearTeacherWithProjection<AcademicYearOptionDto>(
@@ -67,9 +70,11 @@ public class GetAllAcademicYearTeacherQueryHandler(
                 a => new AcademicYearOptionDto
                 {
                     Id = a.AcademicYearId,
-                    Name = a.AcademicYear.Title ?? string.Empty
-                }),
-            ct);
+                    Name = a.AcademicYear.Title ?? string.Empty,
+                }
+            ),
+            ct
+        );
 
         return years.ToList();
     }

@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs;
 using Prisma.Domain.Entities.PaymentAggregate;
@@ -28,15 +29,17 @@ internal sealed class GetTeacherFinancesQueryHandler(
 
         var paymentRepository = unitOfWork.GetOrCreateRepository<Payment, int>();
 
-        var spec = new TeacherFinancesSpecification<Financesinfo>(userId.Value, p => new Financesinfo(
-            Id: p.Id,
-            Amount: p.Money,
-            PaidAt: p.PaidAt,
-            StudentFirstName: p.Student.FirstName,
-            StudentLastName: p.Student.SecondName,
-            LessonTitle: p.Lesson.Title
-        ));
-
+        var spec = new TeacherFinancesSpecification<Financesinfo>(
+            userId.Value,
+            p => new Financesinfo(
+                Id: p.Id,
+                Amount: p.Money,
+                PaidAt: p.PaidAt,
+                StudentFirstName: p.Student.FirstName,
+                StudentLastName: p.Student.SecondName,
+                LessonTitle: p.Lesson.Title
+            )
+        );
 
         var payments = await paymentRepository.ListAsync(spec, cancellationToken);
 

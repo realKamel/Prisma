@@ -1,8 +1,9 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
 using Prisma.Application.Features.Lessons.Queries.GetLessonDetails;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -50,10 +51,7 @@ public class GetLessonDetailsQueryHandlerTests
             TeacherSubject = "اللغة العربية",
             ValidityDuration = TimeDuration.FromSeconds(7 * 24 * 60 * 60).Value,
             ValidityRange = DateRange
-                .Create(
-                    DateTimeOffset.UtcNow,
-                    DateTimeOffset.UtcNow.AddSeconds(7 * 24 * 60 * 60)
-                )
+                .Create(DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddSeconds(7 * 24 * 60 * 60))
                 .Value,
             Outcomes = new List<string>
             {

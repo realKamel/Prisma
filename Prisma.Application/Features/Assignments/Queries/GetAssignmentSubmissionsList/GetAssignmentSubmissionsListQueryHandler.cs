@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -15,15 +16,19 @@ using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
-public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
+public class GetAssignmentSubmissionsListQueryHandler(
+    IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
-    IIdentityService identityService)
-    : IRequestHandler<GetAssignmentSubmissionsListQuery, Result<AssignmentSubmissionsResponseDto>>
+    IIdentityService identityService
+) : IRequestHandler<GetAssignmentSubmissionsListQuery, Result<AssignmentSubmissionsResponseDto>>
 {
     // Grace period for grading lock — if grading started more than 30 min ago, consider it abandoned
     private static readonly TimeSpan GradingLockExpiry = TimeSpan.FromMinutes(30);
 
-    public async Task<Result<AssignmentSubmissionsResponseDto>> Handle(GetAssignmentSubmissionsListQuery request, CancellationToken ct)
+    public async Task<Result<AssignmentSubmissionsResponseDto>> Handle(
+        GetAssignmentSubmissionsListQuery request,
+        CancellationToken ct
+    )
     {
         var userId = currentUser.UserId;
         if (userId is null)
@@ -46,12 +51,12 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
 
         // 1. Fetch all assignments (filtered by lesson if provided)
         var assignments = await assignmentRepo.ListAsync(
-            new AssignmentsWithLessonSpecification(userId.Value), ct);
+            new AssignmentsWithLessonSpecification(userId.Value),
+            ct
+        );
 
         if (request.LessonId.HasValue)
-            assignments = assignments
-                .Where(a => a.LessonId == request.LessonId.Value)
-                .ToList();
+            assignments = assignments.Where(a => a.LessonId == request.LessonId.Value).ToList();
 
         if (!assignments.Any())
             return new AssignmentSubmissionsResponseDto();
@@ -61,11 +66,15 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
 
         // 2. Single query for all enrollments across all relevant lessons
         var enrollments = await enrollmentRepo.ListAsync(
-            new EnrollmentsByLessonIdsSpecification(lessonIds), ct);
+            new EnrollmentsByLessonIdsSpecification(lessonIds),
+            ct
+        );
 
         // 3. Single query for all submissions across all relevant assignments
         var submissions = await submissionRepo.ListAsync(
-            new SubmissionsByAssignmentIdsSpecification(assignmentIds), ct);
+            new SubmissionsByAssignmentIdsSpecification(assignmentIds),
+            ct
+        );
 
         // Collect all GradingByUserIds that are not null
         var gradingUserIds = submissions
@@ -85,17 +94,14 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
             u => $"{u.FirstName} {u.LastName}".Trim()
         );
 
-
         // 4. Build lookups for O(1) access
-        var enrollmentsByLesson = enrollments.GroupBy(e => e.LessonId!.Value)
+        var enrollmentsByLesson = enrollments
+            .GroupBy(e => e.LessonId!.Value)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var submissionsByAssignmentAndStudent = submissions
             .GroupBy(s => s.AssignmentId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.ToDictionary(s => s.StudentId)
-            );
+            .ToDictionary(g => g.Key, g => g.ToDictionary(s => s.StudentId));
 
         var assignmentById = assignments.ToDictionary(a => a.Id);
 
@@ -106,9 +112,13 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
         foreach (var assignment in assignments)
         {
             enrollmentsByLesson.TryGetValue(assignment.LessonId, out var lessonEnrollments);
-            if (lessonEnrollments is null) continue;
+            if (lessonEnrollments is null)
+                continue;
 
-            submissionsByAssignmentAndStudent.TryGetValue(assignment.Id, out var submissionByStudent);
+            submissionsByAssignmentAndStudent.TryGetValue(
+                assignment.Id,
+                out var submissionByStudent
+            );
             submissionByStudent ??= new Dictionary<Guid, AssignmentSubmission>();
 
             foreach (var enrollment in lessonEnrollments)
@@ -132,7 +142,8 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
                     fileUrl = submission.FileUrl;
                     score = submission.Score;
 
-                    var lockExpired = submission.GradingStartedAt.HasValue
+                    var lockExpired =
+                        submission.GradingStartedAt.HasValue
                         && now - submission.GradingStartedAt.Value > GradingLockExpiry;
 
                     if (submission.IsBeingGraded && !lockExpired)
@@ -150,31 +161,37 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
                     }
                 }
 
-                allItems.Add(new AssignmentSubmissionListItemDto
-                {
-                    SubmissionId = submission?.Id ?? 0,
-                    StudentId = student.Id,
-                    StudentName = $"{student.FirstName} {student.LastName}".Trim(),
-                    AssignmentId = assignment.Id,
-                    LessonTitle = assignment.Lesson?.Title ?? string.Empty,
-                    FileUrl = fileUrl,
-                    SubmittedAt = submittedAt,
-                    Score = score,
-                    MaxScore = assignment.Grade,
-                    Status = status,
-                    IsBeingGraded = isBeingGraded,
-                    GradingByUserName = isBeingGraded && submission?.GradingByUserId.HasValue == true
-                    ? gradingUserNamesById.GetValueOrDefault(submission.GradingByUserId.Value)
-                    : null
-                });
+                allItems.Add(
+                    new AssignmentSubmissionListItemDto
+                    {
+                        SubmissionId = submission?.Id ?? 0,
+                        StudentId = student.Id,
+                        StudentName = $"{student.FirstName} {student.LastName}".Trim(),
+                        AssignmentId = assignment.Id,
+                        LessonTitle = assignment.Lesson?.Title ?? string.Empty,
+                        FileUrl = fileUrl,
+                        SubmittedAt = submittedAt,
+                        Score = score,
+                        MaxScore = assignment.Grade,
+                        Status = status,
+                        IsBeingGraded = isBeingGraded,
+                        GradingByUserName =
+                            isBeingGraded && submission?.GradingByUserId.HasValue == true
+                                ? gradingUserNamesById.GetValueOrDefault(
+                                    submission.GradingByUserId.Value
+                                )
+                                : null,
+                    }
+                );
             }
         }
 
         // 6. Apply search filter (by student name)
         if (!string.IsNullOrWhiteSpace(request.Search))
             allItems = allItems
-                .Where(i => i.StudentName
-                    .Contains(request.Search, StringComparison.OrdinalIgnoreCase))
+                .Where(i =>
+                    i.StudentName.Contains(request.Search, StringComparison.OrdinalIgnoreCase)
+                )
                 .ToList();
 
         // 7. Apply status filter
@@ -186,17 +203,14 @@ public class GetAssignmentSubmissionsListQueryHandler(IUnitOfWork unitOfWork,
         // 8. Pagination
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
-        var pagedItems = allItems
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
+        var pagedItems = allItems.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
         return new AssignmentSubmissionsResponseDto
         {
             Items = pagedItems,
             TotalCount = totalCount,
             Page = page,
-            PageSize = pageSize
+            PageSize = pageSize,
         };
     }
 }

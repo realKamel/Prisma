@@ -1,0 +1,11 @@
+namespace Prisma.Application.Abstractions.Identity;
+
+public interface ICurrentUserService
+{
+    Guid? UserId { get; }
+    string? Email { get; }
+    string? Role { get; }
+    bool IsAuthenticated { get; }
+    bool IsInAnyRole(IReadOnlyList<string>? role, CancellationToken cancellationToken = default);
+    bool IsInRole(string role, CancellationToken cancellationToken);
+}

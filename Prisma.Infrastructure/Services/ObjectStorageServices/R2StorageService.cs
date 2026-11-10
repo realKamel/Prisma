@@ -1,8 +1,9 @@
+using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Ardalis.Result;
 using Microsoft.Extensions.Logging;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.ObjectStorageServices;
 
@@ -11,7 +12,7 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
 {
     private const long MaxExpirySeconds = 604_800;
     private const int MaxExpiryMinutes = 10_080;
-
+    private const string MetadataPrefix = "x-amz-meta-";
     public string DefaultBucketName { get; } = "prisma";
 
     public async Task UploadFileAsync(
@@ -99,14 +100,14 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
                 "BucketAlreadyOwnedByYou" => Result.Success(),
 
                 "BucketAlreadyExists" => Result.Conflict(
-                    $"The bucket '{bucketName}' already exists and is owned by another account."
+                    $"The bucket '{bucketName}' already exists and is owned by another account"
                 ),
 
                 "AccessDenied" => Result.Forbidden(
-                    "The storage provider denied permission to create the bucket."
+                    "The storage provider denied permission to create the bucket"
                 ),
 
-                _ => Result.Error("Failed to create the storage bucket."),
+                _ => Result.Error("Failed to create the storage bucket"),
             };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -147,7 +148,7 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
                 "BucketNotEmpty" => Result.Conflict($"Bucket '{bucketName}' is not empty."),
 
                 "AccessDenied" => Result.Forbidden(
-                    "The storage provider denied permission to delete the bucket."
+                    "The storage provider denied permission to delete the bucket"
                 ),
 
                 _ => Result.Error("Failed to delete the storage bucket."),
@@ -169,19 +170,39 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
 
     #region Presigned URLs
 
-    public Task<Result<string>> GetPreSignedUploadUrlAsync(
+    public async Task<Result<string>> GetPreSignedUploadUrlAsync(
         string objectKey,
         long expiresInSeconds,
         string? contentType = null,
         CancellationToken cancellationToken = default
     )
     {
+        return await GetPreSignedUploadUrlAsync(
+            DefaultBucketName,
+            objectKey,
+            expiresInSeconds,
+            contentType,
+            cancellationToken
+        );
+    }
+
+    public async Task<Result<string>> GetPreSignedUploadUrlAsync(
+        string bucket,
+        string objectKey,
+        long expiresInSeconds,
+        string? contentType = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(bucket);
         ArgumentException.ThrowIfNullOrWhiteSpace(objectKey);
 
         var validationResult = ValidateExpiry(expiresInSeconds);
 
         if (!validationResult.IsSuccess)
-            return Task.FromResult(Result<string>.Invalid(validationResult.ValidationErrors));
+        {
+            return validationResult.Map();
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -189,28 +210,45 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = DefaultBucketName,
+                BucketName = bucket,
                 Key = objectKey,
                 Verb = HttpVerb.PUT,
                 Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
             };
 
             if (!string.IsNullOrWhiteSpace(contentType))
+            {
                 request.ContentType = contentType;
+            }
 
-            var url = s3.GetPreSignedURL(request);
+            var url = await s3.GetPreSignedURLAsync(request);
 
-            return Task.FromResult(Result<string>.Success(url));
+            return Result<string>.Success(url);
         }
         catch (Exception ex)
         {
             LogPresignedUrlCreateFailed(logger, ex, objectKey, DefaultBucketName);
 
-            return Task.FromResult(Result<string>.Error("Failed to generate the upload URL."));
+            return Result<string>.Error("Failed to generate the upload URL.");
         }
     }
 
-    public Task<Result<string>> GetPreSignedDownloadUrlAsync(
+    public async Task<Result<string>> GetPreSignedDownloadUrlAsync(
+        string objectKey,
+        long expiresInSeconds,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await GetPreSignedDownloadUrlAsync(
+            DefaultBucketName,
+            objectKey,
+            expiresInSeconds,
+            cancellationToken
+        );
+    }
+
+    public async Task<Result<string>> GetPreSignedDownloadUrlAsync(
+        string bucket,
         string objectKey,
         long expiresInSeconds,
         CancellationToken cancellationToken = default
@@ -221,7 +259,9 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
         var validationResult = ValidateExpiry(expiresInSeconds);
 
         if (!validationResult.IsSuccess)
-            return Task.FromResult(Result<string>.Invalid(validationResult.ValidationErrors));
+        {
+            return validationResult.Map();
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -235,15 +275,15 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
                 Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
             };
 
-            var url = s3.GetPreSignedURL(request);
+            var url = await s3.GetPreSignedURLAsync(request);
 
-            return Task.FromResult(Result<string>.Success(url));
+            return Result<string>.Success(url);
         }
         catch (Exception ex)
         {
             LogPresignedUrlCreateFailed(logger, ex, objectKey, DefaultBucketName);
 
-            return Task.FromResult(Result<string>.Error("Failed to generate the download URL."));
+            return Result<string>.Error("Failed to generate the download URL.");
         }
     }
 
@@ -268,12 +308,12 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
             Expires = DateTime.UtcNow.AddMinutes(expiryMinutes),
         };
 
-        return s3.GetPreSignedURL(request);
+        return await s3.GetPreSignedURLAsync(request);
     }
 
-    public Task<string> GetDownloadUrlAsync(string objectKey, int expiryMinutes = 60)
+    public async Task<string> GetDownloadUrlAsync(string objectKey, int expiryMinutes = 60)
     {
-        return GetDownloadUrlAsync(DefaultBucketName, objectKey, expiryMinutes);
+        return await GetDownloadUrlAsync(DefaultBucketName, objectKey, expiryMinutes);
     }
 
     #endregion
@@ -337,6 +377,106 @@ internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageSe
             LogUnexpectedErrorDeletingObject(logger, ex, objectKey, bucketName);
 
             return Result.Error("An unexpected error occurred while deleting the object.");
+        }
+    }
+
+    public async Task<Stream> GetObjectAsync(
+        string bucketName,
+        string objectKey,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var result = await s3.GetObjectStreamAsync(
+                bucketName,
+                objectKey,
+                new Dictionary<string, object>(),
+                cancellationToken: cancellationToken
+            );
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                LogObjectNotFound(logger, bucketName, objectKey);
+            }
+
+            LogObjectRetrievalFailed(logger, ex, bucketName, objectKey);
+
+            throw;
+        }
+        catch (Exception ex)
+        {
+            LogObjectRetrievalUnexpectedFailure(logger, ex, bucketName, objectKey);
+
+            throw;
+        }
+    }
+
+    public async Task<Result<FileObjectMetadata>> GetObjectMetadataAsync(
+        string bucketName,
+        string objectKey,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            var response = await s3.GetObjectMetadataAsync(
+                bucketName,
+                objectKey,
+                cancellationToken
+            );
+
+            var customMetadata = response
+                .Metadata.Keys.Where(key =>
+                    key.StartsWith(MetadataPrefix, StringComparison.OrdinalIgnoreCase)
+                )
+                .ToDictionary(
+                    key => key[MetadataPrefix.Length..],
+                    key => response.Metadata[key],
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+            return new FileObjectMetadata
+            {
+                SizeInBytes = response.ContentLength,
+                ContentType = response.ContentType ?? string.Empty,
+                ETag = response.ETag ?? string.Empty,
+                LastModified = response.LastModified ?? DateTimeOffset.MinValue,
+                Metadata = customMetadata,
+                VersionId = response.VersionId,
+            };
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (AmazonS3Exception ex)
+        {
+            if (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                LogObjectNotFound(logger, bucketName, objectKey);
+
+                return Result<FileObjectMetadata>.NotFound("The requested file was not found");
+            }
+
+            LogS3MetadataRetrievalFailed(logger, ex, bucketName, objectKey);
+
+            return Result<FileObjectMetadata>.Error("Failed to retrieve file metadata.");
+        }
+        catch (Exception ex)
+        {
+            LogMetadataRetrievalFailed(logger, ex, bucketName, objectKey);
+
+            return Result<FileObjectMetadata>.Error(
+                "An unexpected error occurred while retrieving file metadata."
+            );
         }
     }
 

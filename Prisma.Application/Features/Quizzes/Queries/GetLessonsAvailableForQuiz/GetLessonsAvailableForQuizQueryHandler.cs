@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Specifications;
@@ -10,12 +11,15 @@ using Prisma.Domain.Interfaces;
 namespace Prisma.Application.Features.Quizzes.Queries.GetLessonsAvailableForQuiz;
 
 public class GetLessonsAvailableForQuizQueryHandler(
-    IUnitOfWork unitOfWork, 
-    ICurrentUserService currentUserService, 
-    IIdentityService identityService)
-    : IRequestHandler<GetLessonsAvailableForQuizQuery, Result<List<LessonOptionDto>>>
+    IUnitOfWork unitOfWork,
+    ICurrentUserService currentUserService,
+    IIdentityService identityService
+) : IRequestHandler<GetLessonsAvailableForQuizQuery, Result<List<LessonOptionDto>>>
 {
-    public async Task<Result<List<LessonOptionDto>>> Handle(GetLessonsAvailableForQuizQuery request, CancellationToken ct)
+    public async Task<Result<List<LessonOptionDto>>> Handle(
+        GetLessonsAvailableForQuizQuery request,
+        CancellationToken ct
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -40,7 +44,9 @@ public class GetLessonsAvailableForQuizQueryHandler(
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
         var lessons = await lessonRepo.ListAsync(
-            new LessonsAvailableForQuizSpecification(teacherId), ct);
+            new LessonsAvailableForQuizSpecification(teacherId),
+            ct
+        );
 
         return Result<List<LessonOptionDto>>.Success(lessons);
     }

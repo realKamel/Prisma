@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  wasla.api:
+    build:
+      context: "D:\\ITI\\Material\\Graduation Project\\Prisma"
+      dockerfile: "Prisma.API/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Release/net10.0/Prisma.API.dll"
+    environment:
+      ASPNETCORE_STATICWEBASSETS: "/app/bin/Release/net10.0/Prisma.API.staticwebassets.runtime.CT.json"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "prismaapi:dev"
+    ports: []
+    volumes:
+    - "D:\\ITI\\Material\\Graduation Project\\Prisma\\Prisma.API:/app:rw"
+    - "D:\\ITI\\Material\\Graduation Project\\Prisma:/src:rw"
+    - "C:\\Users\\Abdelrahman\\.nuget\\packages:/home/app/.nuget/packages"
+    working_dir: "/app"

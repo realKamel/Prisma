@@ -29,16 +29,16 @@ public class AddLessonCommandValidator : AbstractValidator<AddLessonCommand>
             .WithMessage("Validity duration must be greater than zero.");
 
         // Conditional validation: Check due date only if AssignmentEnabled is true
-        When(
-            x => x.AssignmentEnabled,
-            () =>
-            {
-                RuleFor(x => x.AssignmentDueDate)
-                    .NotNull()
-                    .WithMessage("Assignment due date is required when assignments are enabled.")
-                    .GreaterThan(DateTimeOffset.UtcNow)
-                    .WithMessage("Assignment due date must be in the future.");
-            }
-        );
+        // When(
+        //     x => x.AssignmentEnabled,
+        //     () =>
+        //     {
+        //         RuleFor(x => x.AssignmentDueDate)
+        //             .NotNull()
+        //             .WithMessage("Assignment due date is required when assignments are enabled.")
+        //             .GreaterThan(DateTimeOffset.UtcNow)
+        //             .WithMessage("Assignment due date must be in the future.");
+        //     }
+        // );
     }
 }

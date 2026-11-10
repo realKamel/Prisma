@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Queries.GetTeacherCodeBatches;
 using Prisma.Domain.Entities.UserAggregate;
@@ -15,8 +16,9 @@ public class GetTeacherCodeBatchesQueryHandlerTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
 
-    private readonly IRepository<RedeemCodeEntity, int> _batchRepo =
-        Substitute.For<IRepository<RedeemCodeEntity, int>>();
+    private readonly IRepository<RedeemCodeEntity, int> _batchRepo = Substitute.For<
+        IRepository<RedeemCodeEntity, int>
+    >();
 
     private readonly GetTeacherCodeBatchesQueryHandler _sut;
 
@@ -54,14 +56,18 @@ public class GetTeacherCodeBatchesQueryHandlerTests
             ),
         };
 
-        _batchRepo.ListAsync(
+        _batchRepo
+            .ListAsync(
                 Arg.Any<TeacherCodeBatchesSpecification<CodeBatchinfo>>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeBatches);
 
         // Act
         var result = await _sut.Handle(
-            new GetTeacherCodeBatchesQuery(null, null), CancellationToken.None);
+            new GetTeacherCodeBatchesQuery(null, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -78,14 +84,18 @@ public class GetTeacherCodeBatchesQueryHandlerTests
     public async Task Handle_WhenNoBatches_ReturnsEmptyList()
     {
         // Arrange
-        _batchRepo.ListAsync(
+        _batchRepo
+            .ListAsync(
                 Arg.Any<TeacherCodeBatchesSpecification<CodeBatchinfo>>(),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(new List<CodeBatchinfo>());
 
         // Act
         var result = await _sut.Handle(
-            new GetTeacherCodeBatchesQuery(null, null), CancellationToken.None);
+            new GetTeacherCodeBatchesQuery(null, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -101,7 +111,9 @@ public class GetTeacherCodeBatchesQueryHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new GetTeacherCodeBatchesQuery(null, null), CancellationToken.None);
+            new GetTeacherCodeBatchesQuery(null, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -118,7 +130,9 @@ public class GetTeacherCodeBatchesQueryHandlerTests
 
         // Act
         var result = await _sut.Handle(
-            new GetTeacherCodeBatchesQuery(null, null), CancellationToken.None);
+            new GetTeacherCodeBatchesQuery(null, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();

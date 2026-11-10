@@ -2,6 +2,7 @@ using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Authentication.Commands.Register;
@@ -10,7 +11,6 @@ using Prisma.Domain.Entities.UserAggregate;
 namespace Prisma.Application.Tests.Features.Authentication.Commands;
 
 public class RegisterCommandHandlerTests
-
 {
     private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
     private readonly RegisterCommandHandler _handler;
@@ -55,20 +55,26 @@ public class RegisterCommandHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        await _identityService.Received(1).FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber);
+        await _identityService
+            .Received(1)
+            .FindByEmailOrPhoneAsync(ValidCommand.Email, ValidCommand.PhoneNumber);
 
-        await _identityService.Received(1).CreateAsync(
-            Arg.Is<Student>(u =>
-                u.Email == ValidCommand.Email &&
-                u.UserName == ValidCommand.Email &&
-                u.FirstName == ValidCommand.FirstName &&
-                u.LastName == ValidCommand.LastName &&
-                u.PhoneNumber == ValidCommand.PhoneNumber),
-            ValidCommand.Password);
+        await _identityService
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<Student>(u =>
+                    u.Email == ValidCommand.Email
+                    && u.UserName == ValidCommand.Email
+                    && u.FirstName == ValidCommand.FirstName
+                    && u.LastName == ValidCommand.LastName
+                    && u.PhoneNumber == ValidCommand.PhoneNumber
+                ),
+                ValidCommand.Password
+            );
 
-        await _identityService.Received(1).AddToRoleAsync(
-            Arg.Is<Student>(u => u.Email == ValidCommand.Email),
-            AppRoles.Student);
+        await _identityService
+            .Received(1)
+            .AddToRoleAsync(Arg.Is<Student>(u => u.Email == ValidCommand.Email), AppRoles.Student);
     }
 
     [Fact]
@@ -96,8 +102,12 @@ public class RegisterCommandHandlerTests
         var identityErrors = new[]
         {
             new IdentityError { Code = "PasswordTooWeak", Description = "Password is too weak." },
-            new IdentityError { Code = "PasswordTooWeak", Description = "Password needs a symbol." },
-            new IdentityError { Code = "DuplicateEmail", Description = "Email is already taken." }
+            new IdentityError
+            {
+                Code = "PasswordTooWeak",
+                Description = "Password needs a symbol.",
+            },
+            new IdentityError { Code = "DuplicateEmail", Description = "Email is already taken." },
         };
 
         _identityService
@@ -123,7 +133,10 @@ public class RegisterCommandHandlerTests
         // Arrange
         var command = ValidCommand with
         {
-            SecondName = "Michael", ThirdName = "James", AcademicYear = 2, ParentPhoneNumber = "09876543210"
+            SecondName = "Michael",
+            ThirdName = "James",
+            AcademicYear = 2,
+            ParentPhoneNumber = "09876543210",
         };
 
         _identityService
@@ -142,17 +155,21 @@ public class RegisterCommandHandlerTests
         await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        await _identityService.Received(1).CreateAsync(
-            Arg.Is<Student>(u =>
-                u.Email == command.Email &&
-                u.UserName == command.Email &&
-                u.FirstName == command.FirstName &&
-                u.SecondName == command.SecondName &&
-                u.ThirdName == command.ThirdName &&
-                u.LastName == command.LastName &&
-                u.PhoneNumber == command.PhoneNumber &&
-                u.AcademicYearId == command.AcademicYear &&
-                u.ParentPhoneNumber == command.ParentPhoneNumber),
-            command.Password);
+        await _identityService
+            .Received(1)
+            .CreateAsync(
+                Arg.Is<Student>(u =>
+                    u.Email == command.Email
+                    && u.UserName == command.Email
+                    && u.FirstName == command.FirstName
+                    && u.SecondName == command.SecondName
+                    && u.ThirdName == command.ThirdName
+                    && u.LastName == command.LastName
+                    && u.PhoneNumber == command.PhoneNumber
+                    && u.AcademicYearId == command.AcademicYear
+                    && u.ParentPhoneNumber == command.ParentPhoneNumber
+                ),
+                command.Password
+            );
     }
 }

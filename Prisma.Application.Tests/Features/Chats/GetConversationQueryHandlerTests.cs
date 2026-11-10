@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Chats.Queries.GetConversation;
 using Prisma.Domain.Entities.ChatAggregate;
@@ -24,10 +25,7 @@ public class GetConversationQueryHandlerTests
             .GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((Conversation?)null);
 
-        var sut = new GetConversationQueryHandler(
-            _currentUserService,
-            _conversationRepository
-        );
+        var sut = new GetConversationQueryHandler(_currentUserService, _conversationRepository);
 
         var result = await sut.Handle(
             new GetConversationQuery(Guid.NewGuid()),
@@ -47,10 +45,7 @@ public class GetConversationQueryHandlerTests
             .GetByIdAsync(conversation.Id, Arg.Any<CancellationToken>())
             .Returns(conversation);
 
-        var sut = new GetConversationQueryHandler(
-            _currentUserService,
-            _conversationRepository
-        );
+        var sut = new GetConversationQueryHandler(_currentUserService, _conversationRepository);
 
         var result = await sut.Handle(
             new GetConversationQuery(conversation.Id),
@@ -72,10 +67,7 @@ public class GetConversationQueryHandlerTests
             .GetByIdAsync(conversation.Id, Arg.Any<CancellationToken>())
             .Returns(conversation);
 
-        var sut = new GetConversationQueryHandler(
-            _currentUserService,
-            _conversationRepository
-        );
+        var sut = new GetConversationQueryHandler(_currentUserService, _conversationRepository);
 
         var result = await sut.Handle(
             new GetConversationQuery(conversation.Id),
@@ -86,7 +78,8 @@ public class GetConversationQueryHandlerTests
         result.Value.Id.Should().Be(conversation.Id);
         result.Value.Type.Should().Be(ConversationType.Direct);
         result.Value.Members.Should().HaveCount(2);
-        result.Value.Members.Select(member => member.UserId)
+        result
+            .Value.Members.Select(member => member.UserId)
             .Should()
             .BeEquivalentTo([userId, otherUserId]);
     }

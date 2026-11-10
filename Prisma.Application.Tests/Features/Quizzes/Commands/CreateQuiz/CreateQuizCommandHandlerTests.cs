@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.CreateQuiz;
 using Prisma.Application.Features.Quizzes.Dtos;
@@ -370,9 +371,7 @@ public class CreateQuizCommandHandlerTests
         capturedLinks.Should().NotBeNull();
         capturedLinks!.Count.Should().Be(2);
 
-        capturedLinks
-            .Should()
-            .AllSatisfy(link => link.QuizId.Should().Be(result.Value!.QuizId));
+        capturedLinks.Should().AllSatisfy(link => link.QuizId.Should().Be(result.Value!.QuizId));
         capturedLinks.Should().Contain(l => l.Degree == 5m);
         capturedLinks.Should().Contain(l => l.Degree == 10m);
 

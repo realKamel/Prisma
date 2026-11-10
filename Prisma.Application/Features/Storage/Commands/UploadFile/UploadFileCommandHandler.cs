@@ -1,13 +1,13 @@
+using Ardalis.Result;
 using MediatR;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Application.Features.Storage.Commands.UploadFile;
 
-public class UploadFileCommandHandler(IStorageService storage)
-    : IRequestHandler<UploadFileCommand, string>
+internal sealed class UploadFileCommandHandler(IStorageService storage)
+    : IRequestHandler<UploadFileCommand, Result>
 {
-    public async Task<string> Handle(UploadFileCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(UploadFileCommand request, CancellationToken cancellationToken)
     {
         await storage.UploadFileAsync(
             request.BucketName,
@@ -16,6 +16,6 @@ public class UploadFileCommandHandler(IStorageService storage)
             request.ContentType,
             cancellationToken
         );
-        return "Uploaded Successfully";
+        return Result.SuccessWithMessage("Uploaded Successfully");
     }
 }

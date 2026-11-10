@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;

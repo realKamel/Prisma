@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Ardalis.Result;
+using MediatR;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assignments;
@@ -12,14 +13,16 @@ namespace Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmis
 
 public class GradeAssignmentSubmissionCommandHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUser)
-    : IRequestHandler<GradeAssignmentSubmissionCommand, Result>
+    ICurrentUserService currentUser
+) : IRequestHandler<GradeAssignmentSubmissionCommand, Result>
 {
     public async Task<Result> Handle(GradeAssignmentSubmissionCommand request, CancellationToken ct)
     {
         var submissionRepo = unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>();
         var submission = await submissionRepo.FirstOrDefaultAsync(
-            new SubmissionWithAssignmentSpecification(request.SubmissionId), ct);
+            new SubmissionWithAssignmentSpecification(request.SubmissionId),
+            ct
+        );
 
         if (submission is null)
             return Result.Error("التسليم غير موجود");
@@ -27,16 +30,20 @@ public class GradeAssignmentSubmissionCommandHandler(
         // Validate score doesn't exceed max
         if (request.Score > submission.Assignment.Grade)
             return Result.Error(
-                $"الدرجة ({request.Score}) أكبر من الدرجة الكاملة ({submission.Assignment.Grade})");
+                $"الدرجة ({request.Score}) أكبر من الدرجة الكاملة ({submission.Assignment.Grade})"
+            );
 
         // Validate grading lock — only the user who opened the modal can grade
         var now = DateTimeOffset.UtcNow;
-        var lockExpired = submission.GradingStartedAt.HasValue
+        var lockExpired =
+            submission.GradingStartedAt.HasValue
             && now - submission.GradingStartedAt.Value > TimeSpan.FromMinutes(30);
 
-        if (submission.IsBeingGraded
+        if (
+            submission.IsBeingGraded
             && !lockExpired
-            && submission.GradingByUserId != currentUser.UserId)
+            && submission.GradingByUserId != currentUser.UserId
+        )
         {
             return Result.Error("التسليم ده بيتصحح دلوقتي من شخص تاني");
         }
@@ -53,6 +60,5 @@ public class GradeAssignmentSubmissionCommandHandler(
         await unitOfWork.SaveChangesAsync(ct);
 
         return Result.SuccessWithMessage("تم حفظ التصحيح بنجاح");
-
     }
 }

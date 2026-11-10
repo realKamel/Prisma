@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Chats.Queries.GetConversationMessages;
 using Prisma.Domain.Entities.ChatAggregate;
@@ -29,11 +30,7 @@ public class GetConversationMessagesQueryHandlerTests
     {
         _currentUserService.UserId.Returns(Guid.NewGuid());
         _conversationRepository
-            .IsMemberAsync(
-                Arg.Any<Guid>(),
-                Arg.Any<Guid>(),
-                Arg.Any<CancellationToken>()
-            )
+            .IsMemberAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(false);
 
         var result = await _sut.Handle(
@@ -61,12 +58,7 @@ public class GetConversationMessagesQueryHandlerTests
             .IsMemberAsync(conversation.Id, userId, Arg.Any<CancellationToken>())
             .Returns(true);
         _conversationRepository
-            .GetMessagesPageAsync(
-                conversation.Id,
-                null,
-                3,
-                Arg.Any<CancellationToken>()
-            )
+            .GetMessagesPageAsync(conversation.Id, null, 3, Arg.Any<CancellationToken>())
             .Returns(new List<Message> { third, second, first });
 
         var result = await _sut.Handle(
@@ -76,7 +68,10 @@ public class GetConversationMessagesQueryHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value.Items.Should().HaveCount(2);
-        result.Value.Items.Select(message => message.Id).Should().ContainInOrder(third.Id, second.Id);
+        result
+            .Value.Items.Select(message => message.Id)
+            .Should()
+            .ContainInOrder(third.Id, second.Id);
         result.Value.HasMore.Should().BeTrue();
         result.Value.NextCursor.Should().Be(second.SentAt);
     }

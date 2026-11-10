@@ -21,13 +21,13 @@ public sealed class PaginatedEnrollmentPerTeacherSpecification : Specification<E
                 && x.Lesson.TeacherId == teacherId
             )
             .Include(x => x.Lesson)
-            .ThenInclude(y => y.Teacher)
+                .ThenInclude(y => y.Teacher)
             .Include(x => x.Lesson)
-            .ThenInclude(x => x.Sections)
-            .ThenInclude(s => s.Progresses)
+                .ThenInclude(x => x.Sections)
+                    .ThenInclude(s => s.Progresses)
             .AsSplitQuery()
-            .Skip(pageSize)
-            .Take((pageNumber - 1) * pageSize)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .AsNoTrackingWithIdentityResolution();
 
         if (keyword is not null)

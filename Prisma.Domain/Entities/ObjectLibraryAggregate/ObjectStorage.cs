@@ -42,6 +42,51 @@ public sealed class ObjectStorage : BaseEntity<Guid>
 
     public static string GenerateBucketName(Guid teacherId)
     {
-        return $"prisma-teacher-{teacherId:N}";
+        return $"wasla-teacher-{teacherId:N}";
+    }
+
+    /// <summary>
+    /// Method to attach a new file object to this storage bucket,
+    /// enforcing business rules (e.g., storage must be ready).
+    /// </summary>
+    public Result<FileObject> AttachFile(
+        Guid fileId,
+        string objectKey,
+        string fileName,
+        string contentType,
+        long size
+    )
+    {
+        // 1. Enforce aggregate invariants / business rules
+        if (Status != StorageStatus.Ready)
+        {
+            return Result.Invalid(
+                new ValidationError(
+                    "StorageStatus",
+                    "Cannot attach files to storage that is not in a Ready state."
+                )
+            );
+        }
+
+        // 2. Create the child entity using its factory method
+        var fileObjectResult = FileObject.CreateWithCustomKey(
+            fileId,
+            this.Id, // ObjectStorageId
+            this.BucketName, // ObjectStorage bucket name
+            objectKey,
+            fileName,
+            contentType,
+            size
+        );
+
+        if (!fileObjectResult.IsSuccess)
+        {
+            return fileObjectResult.Map();
+        }
+
+        // 3. Add to the aggregate collection safely
+        Files.Add(fileObjectResult.Value);
+
+        return Result.Success(fileObjectResult.Value);
     }
 }

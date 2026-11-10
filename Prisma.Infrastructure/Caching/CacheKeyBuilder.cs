@@ -1,5 +1,5 @@
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Caching;
+using Prisma.Application.Abstractions.Identity;
 
 namespace Prisma.Infrastructure.Caching;
 

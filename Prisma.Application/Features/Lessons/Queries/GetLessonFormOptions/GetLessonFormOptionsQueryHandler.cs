@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Lessons.Queries.GetLessonEditorDetails;
 using Prisma.Domain.Entities.LessonAggregate;

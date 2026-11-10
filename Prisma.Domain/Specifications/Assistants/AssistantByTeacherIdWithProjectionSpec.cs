@@ -13,7 +13,7 @@ public sealed class AssistantByTeacherIdWithProjectionSpec<TResult>
         bool asNoTracking = false
     )
     {
-        Query.Where(a => a.Id == teacherId);
+        Query.Where(a => a.TeacherId == teacherId);
 
         if (asNoTracking)
         {

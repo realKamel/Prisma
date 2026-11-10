@@ -2,9 +2,10 @@ using ClamClient.Net.Configuration;
 using ClamClient.Net.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prisma.Application.Abstractions.Email;
+using Prisma.Application.Abstractions.Security;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.Security;
-using Prisma.Application.Abstractions.Services.VideoServices;
+using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Infrastructure.ExternalServices.BunnyApi;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
@@ -52,9 +53,23 @@ public static partial class DependenciesInjection
         services.AddTransient<IEmailSender, ResendEmailSender>();
     }
 
-    private static void AddMuxStreaming(this IServiceCollection services)
+    private static void AddMuxStreaming(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
     {
-        services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
+        // Using IConfiguration (appsettings / environment variables)
+        var isContainer =
+            bool.TryParse(configuration["DOTNET_RUNNING_IN_CONTAINER"], out var value) && value;
+        if (isContainer)
+        {
+            services.AddScoped<IVideoStorageService, MinioVideoStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IVideoStorageService, MuxVideoStorageService>();
+        }
+
         services.AddScoped<IMuxTokenService, MuxTokenService>();
     }
 

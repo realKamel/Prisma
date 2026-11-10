@@ -1,5 +1,5 @@
 using Prisma.API.Features.Chats;
-using Prisma.Application.Abstractions.Services.Chatting;
+using Prisma.Application.Abstractions.Chatting;
 using Prisma.Infrastructure.RealTime;
 
 namespace Prisma.API.Extensions;

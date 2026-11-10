@@ -1,5 +1,5 @@
 ﻿using Ardalis.Result;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Caching;
 
 namespace Prisma.Application.Features.Teachers.Queries.GetTeacherDashboard.GetTeacherDashboardGraph;
 

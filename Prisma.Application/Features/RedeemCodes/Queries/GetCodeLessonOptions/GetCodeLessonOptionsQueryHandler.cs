@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -12,12 +13,13 @@ namespace Prisma.Application.Features.RedeemCodes.Queries.GetCodeLessonOptions;
 public class GetCodeLessonOptionsQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IIdentityService identityService)
-    : IRequestHandler<GetCodeLessonOptionsQuery, Result<List<CodeLessonOptionDto>>>
+    IIdentityService identityService
+) : IRequestHandler<GetCodeLessonOptionsQuery, Result<List<CodeLessonOptionDto>>>
 {
     public async Task<Result<List<CodeLessonOptionDto>>> Handle(
         GetCodeLessonOptionsQuery request,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
         var userId = currentUserService.UserId;
         if (userId is null)
@@ -37,12 +39,17 @@ public class GetCodeLessonOptionsQueryHandler(
         var repo = unitOfWork.GetOrCreateRepository<AcademicYearLesson, int>();
 
         var links = await repo.ListAsync(
-            new TeacherAcademicYearLessonsSpecification<CodeLessonOptionDto>(userId.Value, x => new CodeLessonOptionDto
-            {
-                Id = x.LessonId,
-                Name = x.Lesson.Title ?? string.Empty,
-                AcademicYearId = x.AcademicYearId
-            }), ct);
+            new TeacherAcademicYearLessonsSpecification<CodeLessonOptionDto>(
+                userId.Value,
+                x => new CodeLessonOptionDto
+                {
+                    Id = x.LessonId,
+                    Name = x.Lesson.Title ?? string.Empty,
+                    AcademicYearId = x.AcademicYearId,
+                }
+            ),
+            ct
+        );
 
         // Deduplicate by (LessonId, AcademicYearId) in case of duplicate join rows,
         // then project — one entry per lesson per academic year.
@@ -51,7 +58,9 @@ public class GetCodeLessonOptionsQueryHandler(
             .Select(g => g.First())
             .Select(x => new CodeLessonOptionDto
             {
-                Id = x.Id, Name = x.Name, AcademicYearId = x.AcademicYearId,
+                Id = x.Id,
+                Name = x.Name,
+                AcademicYearId = x.AcademicYearId,
             })
             .ToList();
 

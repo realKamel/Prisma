@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.RedeemCodes.Queries.GetCodeBatchDetail;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -8,7 +9,6 @@ using Prisma.Domain.Entities.PaymentAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.RedeemCodes;
-
 using RedeemCodeEntity = Prisma.Domain.Entities.PaymentAggregate.RedeemCode;
 
 namespace Prisma.Application.Tests.Features.RedeemCodes.Queries;
@@ -17,7 +17,9 @@ public class GetCodeBatchDetailQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<RedeemCodeEntity, int> _batchRepo = Substitute.For<IRepository<RedeemCodeEntity, int>>();
+    private readonly IRepository<RedeemCodeEntity, int> _batchRepo = Substitute.For<
+        IRepository<RedeemCodeEntity, int>
+    >();
     private readonly GetCodeBatchDetailQueryHandler _sut;
 
     private readonly Guid _teacherId = Guid.NewGuid();
@@ -72,9 +74,11 @@ public class GetCodeBatchDetailQueryHandlerTests
             },
         };
 
-        _batchRepo.FirstOrDefaultAsync(
-            Arg.Any<CodeBatchByIdSpecification>(),
-            Arg.Any<CancellationToken>())
+        _batchRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<CodeBatchByIdSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(fakeBatch);
 
         // Act
@@ -99,9 +103,11 @@ public class GetCodeBatchDetailQueryHandlerTests
     public async Task Handle_WhenBatchNotFound_ThrowsNotFoundException()
     {
         // Arrange
-        _batchRepo.FirstOrDefaultAsync(
-            Arg.Any<CodeBatchByIdSpecification>(),
-            Arg.Any<CancellationToken>())
+        _batchRepo
+            .FirstOrDefaultAsync(
+                Arg.Any<CodeBatchByIdSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((RedeemCodeEntity?)null);
 
         // Act

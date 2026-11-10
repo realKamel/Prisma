@@ -1,15 +1,16 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Ardalis.Result;
+using Ardalis.Specification;
 using FluentAssertions;
 using NSubstitute;
-using Ardalis.Specification;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Students.Queries.GetStudentProfileQuery;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Students;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Prisma.Application.Tests.Features.Students.Queries;
@@ -17,8 +18,11 @@ namespace Prisma.Application.Tests.Features.Students.Queries;
 public class GetStudentProfileQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<IRepository<Student, Guid>>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IRepository<Student, Guid> _studentRepo = Substitute.For<
+        IRepository<Student, Guid>
+    >();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
     private readonly GetStudentProfileQueryHandler _sut;
 
     public GetStudentProfileQueryHandlerTests()
@@ -52,7 +56,8 @@ public class GetStudentProfileQueryHandlerTests
         _currentUserService.UserId.Returns(currentUserId);
 
         // محاكاة إرجاع null عند البحث عن الطالب باستخدام الـ Specification
-        _studentRepo.FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
+        _studentRepo
+            .FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
             .Returns((Student)null);
 
         // Act
@@ -81,10 +86,11 @@ public class GetStudentProfileQueryHandlerTests
             PhoneNumber = "01012345678",
             Email = "student@prisma.com",
             AcademicYearId = 3,
-            ParentPhoneNumber = "01112345678"
+            ParentPhoneNumber = "01112345678",
         };
 
-        _studentRepo.FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
+        _studentRepo
+            .FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeStudent);
 
         // Act
@@ -125,10 +131,11 @@ public class GetStudentProfileQueryHandlerTests
             PhoneNumber = null,
             Email = null,
             AcademicYearId = null,
-            ParentPhoneNumber = null
+            ParentPhoneNumber = null,
         };
 
-        _studentRepo.FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
+        _studentRepo
+            .FirstOrDefaultAsync(Arg.Any<StudentWithProfileSpec>(), Arg.Any<CancellationToken>())
             .Returns(fakeStudentWithNulls);
 
         // Act

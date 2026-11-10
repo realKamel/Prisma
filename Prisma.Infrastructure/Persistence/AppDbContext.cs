@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Prisma.Application.Abstractions.Persistence;
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.UserAggregate;
 using SmartEnum.EFCore;
@@ -19,7 +20,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
         IdentityRoleClaim<Guid>,
         IdentityUserToken<Guid>
     >(options),
-        IDataProtectionKeyContext
+        IDataProtectionKeyContext,
+        IReadonlyAppDbContext
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,4 +45,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     }
 
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
+
+    public IQueryable<TEntity> Entity<TEntity, TKey>()
+        where TEntity : BaseEntity<TKey>
+    {
+        return Set<TEntity>().AsNoTracking();
+    }
 }

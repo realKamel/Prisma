@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Prisma.Application.Abstractions.Messaging;
 
 namespace Prisma.Application.Features.Lessons.Commands.CreateLessonDetailsCommand;
 
@@ -20,7 +21,7 @@ public sealed record CreateLessonDetailsCommand(
     IFormFile? ImageFile,
     Guid? TeacherId,
     long ValidityDurationInSeconds
-) : IRequest<Result<CreateLessonResponse>>;
+) : ICommand<Result<CreateLessonResponse>>;
 
 public record ChapterCreateDto(string Name, string? VideoFileName, double VideoDurationSeconds);
 

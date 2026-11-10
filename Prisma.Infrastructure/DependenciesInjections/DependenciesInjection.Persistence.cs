@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Persistence;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Repositories;
@@ -69,6 +71,8 @@ public static partial class DependenciesInjection
         );
 
         services.AddDataProtection().PersistKeysToDbContext<AppDbContext>();
+
+        services.AddScoped<IReadonlyAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 

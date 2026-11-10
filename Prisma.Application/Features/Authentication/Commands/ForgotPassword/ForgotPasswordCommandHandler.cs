@@ -1,16 +1,17 @@
 using System.Security.Cryptography;
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Email;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 
 public class ForgotPasswordCommandHandler(
     UserManager<User> _userManager,
-    IEmailService _emailService)
-    : IRequestHandler<ForgotPasswordCommand, Result>
+    IEmailService _emailService
+) : IRequestHandler<ForgotPasswordCommand, Result>
 {
     public async Task<Result> Handle(ForgotPasswordCommand request, CancellationToken ct)
     {
@@ -30,14 +31,14 @@ public class ForgotPasswordCommandHandler(
     }
 }
 
-public class ConfirmCodeCommandHandler(
-    UserManager<User> _userManager)
+public class ConfirmCodeCommandHandler(UserManager<User> _userManager)
     : IRequestHandler<ConfirmCodeCommand, Result>
 {
     public async Task<Result> Handle(ConfirmCodeCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return Result.Error("Code Invalid");
+        if (user is null)
+            return Result.Error("Code Invalid");
         user.ResetPasswordCodeAttemptCount++;
         await _userManager.UpdateAsync(user);
 
@@ -49,7 +50,10 @@ public class ConfirmCodeCommandHandler(
             return Result.Error("Code Invalid");
         }
 
-        if (user.PasswordResetCodeExpiry is null || DateTimeOffset.UtcNow >= user.PasswordResetCodeExpiry)
+        if (
+            user.PasswordResetCodeExpiry is null
+            || DateTimeOffset.UtcNow >= user.PasswordResetCodeExpiry
+        )
             return Result.Error("Code Invalid");
         if (user.PasswordResetCode is null || user.PasswordResetCode != request.Code)
             return Result.Error("Code Invalid");
@@ -63,16 +67,17 @@ public class ConfirmCodeCommandHandler(
     }
 }
 
-public class ResetPasswordCommandHandler(
-    UserManager<User> _userManager)
+public class ResetPasswordCommandHandler(UserManager<User> _userManager)
     : IRequestHandler<ResetPasswordCommand, Result>
 {
     public async Task<Result> Handle(ResetPasswordCommand request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null) return Result.Error("something went wrong");
+        if (user is null)
+            return Result.Error("something went wrong");
 
-        if (!user.PasswordResetConfirmed) return Result.Error("something went wrong");
+        if (!user.PasswordResetConfirmed)
+            return Result.Error("something went wrong");
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
 

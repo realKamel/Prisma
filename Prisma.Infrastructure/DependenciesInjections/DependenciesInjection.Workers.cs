@@ -34,7 +34,7 @@ public static partial class DependenciesInjection
         // Start background job server (required for processing)
         services.AddHangfireServer(options =>
         {
-            options.ServerName = $"prisma-api-{Environment.MachineName}";
+            options.ServerName = $"wasla-api-{Environment.MachineName}";
             // Process all queues
             options.Queues = [JobQueues.Default, JobQueues.Reporting];
             options.WorkerCount = 2;

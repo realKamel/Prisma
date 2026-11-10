@@ -121,7 +121,7 @@ public sealed class StudentsController(ISender mediator) : ApiController
 
     [HttpGet("teachers")]
     [ExpectedFailures(ResultStatus.CriticalError)]
-    public async Task<Result<PaginatedList<TeacherDto>>> GetTeachers(
+    public async Task<Result<TeacherCatalogResponse>> GetTeachers(
         string? search,
         [FromQuery] PaginationParams pagination,
         CancellationToken cancellationToken

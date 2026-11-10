@@ -1,5 +1,5 @@
 using Ardalis.Result;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Caching;
 using Prisma.Application.Features.AcademicYears.Dtos;
 
 namespace Prisma.Application.Features.AcademicYears.Queries.GetAllAcademicYears;

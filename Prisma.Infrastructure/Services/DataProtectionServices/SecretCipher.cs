@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.DataProtection;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Encryption;
 
 namespace Prisma.Infrastructure.Services.DataProtectionServices;
 

@@ -1,26 +1,33 @@
+using Prisma.Application.Abstractions.Identity;
 
 namespace Prisma.Application.Tests.Features.Quizzes.Queries.GetStudentQuizzesList;
 
+using Ardalis.Result;
 using Ardalis.Specification;
 using NSubstitute;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetStudentQuizzesList;
+using Prisma.Application.Features.Quizzes.Specifications;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
-using Prisma.Application.Features.Quizzes.Specifications;
 
 public class GetStudentQuizzesListQueryHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<IRepository<Student, Guid>>();
-    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<IRepository<Enrollment, int>>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
+    private readonly IRepository<Student, Guid> _studentRepository = Substitute.For<
+        IRepository<Student, Guid>
+    >();
+    private readonly IRepository<Enrollment, int> _enrollmentRepository = Substitute.For<
+        IRepository<Enrollment, int>
+    >();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
     private readonly GetStudentQuizzesListQueryHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -36,7 +43,10 @@ public class GetStudentQuizzesListQueryHandlerTests
 
         // default: student has an academic year, no enrolled lessons unless overridden
         _studentRepository
-            .FirstOrDefaultAsync(Arg.Any<ISpecification<Student, int?>>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<ISpecification<Student, int?>>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((int?)1);
 
         _enrollmentRepository
@@ -49,26 +59,28 @@ public class GetStudentQuizzesListQueryHandlerTests
     #region Helpers
 
     private static AttemptProjection CreateAttempt(
-    QuizAttemptStatus status,
-    decimal degree = 0m,
-    DateTimeOffset? submittedAt = null) =>
-    new()
-    {
-        Id = 1,
-        Status = status,
-        Degree = degree,
-        SubmittedAt = submittedAt ?? Now.AddMinutes(-5)
-    };
+        QuizAttemptStatus status,
+        decimal degree = 0m,
+        DateTimeOffset? submittedAt = null
+    ) =>
+        new()
+        {
+            Id = 1,
+            Status = status,
+            Degree = degree,
+            SubmittedAt = submittedAt ?? Now.AddMinutes(-5),
+        };
 
     private static StudentQuizzesListProjection CreateQuiz(
-    int id = 1,
-    string title = "Quiz",
-    decimal totalDegree = 100m,
-    DateTimeOffset? availableFrom = null,
-    DateTimeOffset? dueDate = null,
-    int durationMinutes = 30,
-    int questionsCount = 5,
-    AttemptProjection? attempt = null)
+        int id = 1,
+        string title = "Quiz",
+        decimal totalDegree = 100m,
+        DateTimeOffset? availableFrom = null,
+        DateTimeOffset? dueDate = null,
+        int durationMinutes = 30,
+        int questionsCount = 5,
+        AttemptProjection? attempt = null
+    )
     {
         return new StudentQuizzesListProjection
         {
@@ -79,19 +91,18 @@ public class GetStudentQuizzesListQueryHandlerTests
             DueDate = dueDate,
             DurationMinutes = durationMinutes,
             QuestionsCount = questionsCount,
-            Attempt = attempt
+            Attempt = attempt,
         };
     }
 
     private void SetupQuizzes(params StudentQuizzesListProjection[] quizzes) =>
-    _quizRepository
-        .ListAsync(
-            Arg.Any<StudentQuizzesSpecification>(),
-            Arg.Any<CancellationToken>())
-        .Returns(quizzes.ToList());
+        _quizRepository
+            .ListAsync(Arg.Any<StudentQuizzesSpecification>(), Arg.Any<CancellationToken>())
+            .Returns(quizzes.ToList());
 
-    private static StudentQuizListItemDto GetSingleItem(Result<StudentQuizzesListResponseDto> result) =>
-        Assert.Single(result.Value!.Items);
+    private static StudentQuizListItemDto GetSingleItem(
+        Result<StudentQuizzesListResponseDto> result
+    ) => Assert.Single(result.Value!.Items);
 
     #endregion
 
@@ -105,7 +116,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -121,7 +135,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -136,7 +153,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -151,7 +171,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -166,12 +189,19 @@ public class GetStudentQuizzesListQueryHandlerTests
     public async Task Handle_WhenGradedAndDueDatePassed_ReturnsDoneStatusWithScore()
     {
         // Arrange
-        var attempt = CreateAttempt(QuizAttemptStatus.Graded, degree: 85m, submittedAt: Now.AddDays(-2));
+        var attempt = CreateAttempt(
+            QuizAttemptStatus.Graded,
+            degree: 85m,
+            submittedAt: Now.AddDays(-2)
+        );
         var quiz = CreateQuiz(totalDegree: 100m, dueDate: Now.AddDays(-1), attempt: attempt);
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -189,7 +219,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -206,7 +239,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -222,7 +258,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -239,7 +278,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);
@@ -254,21 +296,36 @@ public class GetStudentQuizzesListQueryHandlerTests
     public async Task Handle_ComputesAverageAndBestScoreFromDoneItemsOnly()
     {
         // Arrange
-        var doneQuiz1 = CreateQuiz(id: 1, totalDegree: 100m, dueDate: Now.AddDays(-1),
-            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 80m)); // 80%
+        var doneQuiz1 = CreateQuiz(
+            id: 1,
+            totalDegree: 100m,
+            dueDate: Now.AddDays(-1),
+            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 80m)
+        ); // 80%
 
-        var doneQuiz2 = CreateQuiz(id: 2, totalDegree: 50m, dueDate: Now.AddDays(-1),
-            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 40m)); // 80%
+        var doneQuiz2 = CreateQuiz(
+            id: 2,
+            totalDegree: 50m,
+            dueDate: Now.AddDays(-1),
+            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 40m)
+        ); // 80%
 
-        var doneQuiz3 = CreateQuiz(id: 3, totalDegree: 100m, dueDate: Now.AddDays(-1),
-            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 100m)); // 100%
+        var doneQuiz3 = CreateQuiz(
+            id: 3,
+            totalDegree: 100m,
+            dueDate: Now.AddDays(-1),
+            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 100m)
+        ); // 100%
 
         var pendingQuiz = CreateQuiz(id: 4, attempt: CreateAttempt(QuizAttemptStatus.InProgress));
 
         SetupQuizzes(doneQuiz1, doneQuiz2, doneQuiz3, pendingQuiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var stats = result.Value!.Stats;
@@ -287,7 +344,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var stats = result.Value!.Stats;
@@ -299,12 +359,18 @@ public class GetStudentQuizzesListQueryHandlerTests
     public async Task Handle_WhenDoneItemHasZeroTotalDegree_ExcludesItFromScoreCalculation()
     {
         // Arrange - avoid division by zero; this quiz shouldn't count toward stats
-        var quiz = CreateQuiz(totalDegree: 0m, dueDate: Now.AddDays(-1),
-            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 0m));
+        var quiz = CreateQuiz(
+            totalDegree: 0m,
+            dueDate: Now.AddDays(-1),
+            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 0m)
+        );
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var stats = result.Value!.Stats;
@@ -316,14 +382,21 @@ public class GetStudentQuizzesListQueryHandlerTests
     public async Task Handle_StatsReflectFullListRegardlessOfFilter()
     {
         // Arrange
-        var doneQuiz = CreateQuiz(id: 1, totalDegree: 100m, dueDate: Now.AddDays(-1),
-            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 90m));
+        var doneQuiz = CreateQuiz(
+            id: 1,
+            totalDegree: 100m,
+            dueDate: Now.AddDays(-1),
+            attempt: CreateAttempt(QuizAttemptStatus.Graded, degree: 90m)
+        );
         var newQuiz = CreateQuiz(id: 2, availableFrom: null, dueDate: null);
 
         SetupQuizzes(doneQuiz, newQuiz);
 
         // Act - filter to only "done"
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery("done"), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery("done"),
+            CancellationToken.None
+        );
 
         // Assert
         Assert.Equal(2, result.Value!.Stats.Total); // stats computed on full unfiltered set
@@ -344,7 +417,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz1, quiz2);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         Assert.Equal(2, result.Value!.Items.Count);
@@ -359,7 +435,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(quiz1, quiz2);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery("all"), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery("all"),
+            CancellationToken.None
+        );
 
         // Assert
         Assert.Equal(2, result.Value!.Items.Count);
@@ -374,7 +453,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(newQuiz, pendingQuiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery("new"), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery("new"),
+            CancellationToken.None
+        );
 
         // Assert
         var item = Assert.Single(result.Value!.Items);
@@ -389,7 +471,10 @@ public class GetStudentQuizzesListQueryHandlerTests
         SetupQuizzes(newQuiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery("done"), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery("done"),
+            CancellationToken.None
+        );
 
         // Assert
         Assert.Empty(result.Value!.Items);
@@ -411,12 +496,16 @@ public class GetStudentQuizzesListQueryHandlerTests
             durationMinutes: 45,
             questionsCount: 8,
             availableFrom: null,
-            dueDate: null);
+            dueDate: null
+        );
 
         SetupQuizzes(quiz);
 
         // Act
-        var result = await _handler.Handle(new GetStudentQuizzesListQuery(null), CancellationToken.None);
+        var result = await _handler.Handle(
+            new GetStudentQuizzesListQuery(null),
+            CancellationToken.None
+        );
 
         // Assert
         var item = GetSingleItem(result);

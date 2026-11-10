@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Chats.Dtos;
 using Prisma.Domain.Repositories;
@@ -45,8 +46,7 @@ internal sealed class GetConversationMessagesQueryHandler(
 
         var hasMore = page.Count > request.PageSize;
 
-        var items = page
-            .Take(request.PageSize)
+        var items = page.Take(request.PageSize)
             .Select(message => new ChatMessageDto(
                 message.Id,
                 message.ConversationId,

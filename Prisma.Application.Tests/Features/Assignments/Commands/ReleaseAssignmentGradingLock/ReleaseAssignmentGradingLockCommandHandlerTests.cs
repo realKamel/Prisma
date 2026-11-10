@@ -1,7 +1,6 @@
-
-
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -10,20 +9,23 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Tests.Features.Assignments.Commands.ReleaseAssignmentGradingLock;
 
-
 public class ReleaseAssignmentGradingLockCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AssignmentSubmission, int> _submissionRepository =
-        Substitute.For<IRepository<AssignmentSubmission, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<AssignmentSubmission, int> _submissionRepository = Substitute.For<
+        IRepository<AssignmentSubmission, int>
+    >();
 
     private readonly Guid _currentUserId = Guid.NewGuid();
     private readonly ReleaseAssignmentGradingLockCommandHandler _handler;
 
     public ReleaseAssignmentGradingLockCommandHandlerTests()
     {
-        _unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>().Returns(_submissionRepository);
+        _unitOfWork
+            .GetOrCreateRepository<AssignmentSubmission, int>()
+            .Returns(_submissionRepository);
         _currentUserService.UserId.Returns(_currentUserId);
 
         _handler = new ReleaseAssignmentGradingLockCommandHandler(_unitOfWork, _currentUserService);
@@ -35,7 +37,8 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
         int id = 1,
         bool isBeingGraded = false,
         DateTimeOffset? gradingStartedAt = null,
-        Guid? gradingByUserId = null) =>
+        Guid? gradingByUserId = null
+    ) =>
         new()
         {
             Id = id,
@@ -43,12 +46,15 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
             IsBeingGraded = isBeingGraded,
             GradingStartedAt = gradingStartedAt,
             GradingByUserId = gradingByUserId,
-            SubmittedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            SubmittedAt = DateTimeOffset.UtcNow.AddDays(-1),
         };
 
     private void SetupSubmission(AssignmentSubmission? submission) =>
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionByIdSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionByIdSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
     // ---------- Tests ----------
@@ -61,7 +67,9 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new ReleaseAssignmentGradingLockCommand(999), CancellationToken.None);
+            new ReleaseAssignmentGradingLockCommand(999),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -79,7 +87,9 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
+            new ReleaseAssignmentGradingLockCommand(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -96,12 +106,15 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
+            new ReleaseAssignmentGradingLockCommand(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -120,12 +133,15 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: _currentUserId);
+            gradingByUserId: _currentUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
+            new ReleaseAssignmentGradingLockCommand(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -148,12 +164,15 @@ public class ReleaseAssignmentGradingLockCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-40),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new ReleaseAssignmentGradingLockCommand(submission.Id), CancellationToken.None);
+            new ReleaseAssignmentGradingLockCommand(submission.Id),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();

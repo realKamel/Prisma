@@ -1,9 +1,10 @@
+using Ardalis.Result;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
+using Prisma.Application.Abstractions.Email;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Domain.Entities.UserAggregate;
 
@@ -21,7 +22,17 @@ public class EmailVerificationTests
     {
         // Setup UserManager mock using the standard Identity test helper pattern
         var store = Substitute.For<IUserStore<User>>();
-        _userManager = Substitute.For<UserManager<User>>(store, null!, null!, null!, null!, null!, null!, null!, null!);
+        _userManager = Substitute.For<UserManager<User>>(
+            store,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!,
+            null!
+        );
 
         _emailService = Substitute.For<IEmailService>();
         _config = Substitute.For<IConfiguration>();
@@ -90,11 +101,17 @@ public class EmailVerificationTests
         result.IsSuccess.Should().BeTrue();
         result.GetResultMessage().Should().Be("Verification email sent successfully.");
 
-        await _emailService.Received(1).SendAsync(
-            command.Email,
-            "Email Verification",
-            Arg.Is<string>(body => body.Contains($"confirm-email?email={command.Email}&token={expectedEscapedToken}"))
-        );
+        await _emailService
+            .Received(1)
+            .SendAsync(
+                command.Email,
+                "Email Verification",
+                Arg.Is<string>(body =>
+                    body.Contains(
+                        $"confirm-email?email={command.Email}&token={expectedEscapedToken}"
+                    )
+                )
+            );
     }
 
     #endregion
@@ -142,7 +159,8 @@ public class EmailVerificationTests
         var user = new User { Email = command.Email, EmailConfirmed = false };
 
         _userManager.FindByEmailAsync(command.Email).Returns(user);
-        _userManager.ConfirmEmailAsync(user, command.Token)
+        _userManager
+            .ConfirmEmailAsync(user, command.Token)
             .Returns(IdentityResult.Failed(new IdentityError { Description = "Invalid token." }));
 
         // Act

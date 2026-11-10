@@ -1,6 +1,7 @@
 // التأكد من وجود الـ Enum هنا
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;

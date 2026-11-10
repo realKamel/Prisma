@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using MediatR;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.TeacherStudents.Dtos;
 using Prisma.Domain.Entities.UserAggregate;
@@ -60,7 +61,12 @@ public class GetAllStudentsQueryHandler(
                             e.Lesson != null ? e.Lesson.Title : null
                         ))
                         .ToList(),
-                    s.QuizAttempts.Select(q => new QuizAttemptInfo(q.Degree, q.Quiz.TotalDegree, q.CreatedAt)).ToList()
+                    s.QuizAttempts.Select(q => new QuizAttemptInfo(
+                            q.Degree,
+                            q.Quiz.TotalDegree,
+                            q.CreatedAt
+                        ))
+                        .ToList()
                 )
             ),
             cancellationToken
@@ -69,9 +75,10 @@ public class GetAllStudentsQueryHandler(
         var result = new List<StudentListItemDto>();
         foreach (var student in students)
         {
-            var avgQuiz = student.QuizAttempts.Count != 0
-                ? (int)student.QuizAttempts.Average(q => (q.Degree / q.TotalDegree) * 100)
-                : 0;
+            var avgQuiz =
+                student.QuizAttempts.Count != 0
+                    ? (int)student.QuizAttempts.Average(q => (q.Degree / q.TotalDegree) * 100)
+                    : 0;
 
             var active = student.Enrollments.Any(e =>
                 e.Status == Domain.Enums.EnrollmentStatus.Active

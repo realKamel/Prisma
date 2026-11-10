@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Queries.GetUserById;
@@ -40,9 +41,7 @@ public class GetUserByIdQueryHandlerTests
 
         student.TeacherStudents.Add(new TeacherStudent { TeacherId = teacherId });
 
-        _identityService
-            .FindByIdAsync(student.Id, Arg.Any<CancellationToken>())
-            .Returns(student);
+        _identityService.FindByIdAsync(student.Id, Arg.Any<CancellationToken>()).Returns(student);
 
         // Act
         var result = await _sut.Handle(new GetUserByIdQuery(student.Id), CancellationToken.None);
@@ -82,6 +81,7 @@ public class GetUserByIdQueryHandlerTests
         result.Value.TeacherIds.Should().ContainSingle().Which.Should().Be(teacherId.ToString());
         result.Value.GradeId.Should().BeNull();
     }
+
     [Fact]
     public async Task Handle_WhenUserNotFound_ThrowsNotFoundException()
     {
@@ -91,7 +91,10 @@ public class GetUserByIdQueryHandlerTests
             .Returns((User?)null);
 
         // Act
-        var result = await _sut.Handle(new GetUserByIdQuery(Guid.NewGuid()), CancellationToken.None);
+        var result = await _sut.Handle(
+            new GetUserByIdQuery(Guid.NewGuid()),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();

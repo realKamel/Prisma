@@ -130,4 +130,63 @@ internal sealed partial class R2StorageService
         string objectKey,
         Exception exception
     );
+
+    [LoggerMessage(
+        EventId = 4015,
+        Level = LogLevel.Warning,
+        Message = "S3 object not found. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectNotFound(
+        ILogger logger,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4013,
+        Level = LogLevel.Error,
+        Message = "S3 metadata retrieval failed. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogS3MetadataRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4014,
+        Level = LogLevel.Error,
+        Message = "Unexpected error retrieving file metadata. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogMetadataRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4016,
+        Level = LogLevel.Error,
+        Message = "S3 object retrieval failed. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectRetrievalFailed(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
+
+    [LoggerMessage(
+        EventId = 4017,
+        Level = LogLevel.Error,
+        Message = "Unexpected error retrieving object. Bucket: {BucketName}, ObjectKey: {ObjectKey}"
+    )]
+    private static partial void LogObjectRetrievalUnexpectedFailure(
+        ILogger logger,
+        Exception exception,
+        string bucketName,
+        string objectKey
+    );
 }

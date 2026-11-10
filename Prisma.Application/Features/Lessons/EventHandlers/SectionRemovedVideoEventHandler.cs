@@ -1,6 +1,6 @@
 using Ardalis.Result;
-using Prisma.Application.Abstractions.Services.VideoServices;
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Encryption;
+using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Domain.DomainEvents.LessonEvents;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;

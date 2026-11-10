@@ -1,10 +1,13 @@
 using Ardalis.Result;
+using Prisma.Application.Abstractions.Authorization;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Common.Interfaces;
 
 namespace Prisma.Application.Features.Lessons.Commands.RemoveSection;
 
-public record RemoveSectionCommand(Guid LessonId, Guid SectionId) : IAuthorizableRequest<Result>
+public sealed record RemoveSectionCommand(Guid LessonId, Guid SectionId)
+    : ICommand<Result>,
+        IAuthorizableRequest
 {
     public IReadOnlyList<string> RequiredRoles { get; } =
     [AppRoles.Admin, AppRoles.Teacher, AppRoles.Assistant];

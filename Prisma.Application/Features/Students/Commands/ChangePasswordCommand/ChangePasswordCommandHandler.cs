@@ -1,7 +1,8 @@
+using Ardalis.Result;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
-using Ardalis.Result;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
@@ -11,7 +12,10 @@ public class ChangePasswordCommandHandler(
     ICurrentUserService _currentUserService
 ) : IRequestHandler<ChangePasswordCommand, Result<bool>>
 {
-    public async Task<Result<bool>> Handle(ChangePasswordCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(
+        ChangePasswordCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var userId = _currentUserService.UserId;
         if (userId == null)
@@ -21,7 +25,11 @@ public class ChangePasswordCommandHandler(
         if (user == null)
             return Result.NotFound($"User with id '{userId.Value}' was not found");
 
-        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        var result = await _userManager.ChangePasswordAsync(
+            user,
+            request.CurrentPassword,
+            request.NewPassword
+        );
 
         if (!result.Succeeded)
         {

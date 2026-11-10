@@ -17,16 +17,22 @@ public static class UrlsHelper
         );
     }
 
-    public static string ConstructLessonAssignmentObjectKey(Guid workspaceId, Guid lessonId)
+    public static string ConstructLessonAssignmentObjectKey(Guid lessonId, Guid objectKey)
     {
-        // return $"{workspaceId}/lessons/{lessonId}/assignments/{Guid.CreateVersion7()}";
+        // return $"lessons/{lessonId}/assignments/{Guid.CreateVersion7()}";
 
         return ConstructObjectKey(
-            workspaceId.ToString(),
             "lessons",
             lessonId.ToString(),
             "assignments",
-            Guid.CreateVersion7().ToString()
+            objectKey.ToString()
         );
+    }
+
+    public static string ConstructLessonMaterialsObjectKey(Guid lessonId, Guid objectId)
+    {
+        // return $"lessons/{lessonId}/Materials/{Guid.CreateVersion7()}";
+
+        return ConstructObjectKey("lessons", lessonId.ToString(), "materials", objectId.ToString());
     }
 }

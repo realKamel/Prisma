@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assistants.Queries.GetAssistantLessons;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -168,8 +169,6 @@ public class GetAssistantLessonsQueryHandlerTests
                 Arg.Any<LessonWithProjectionSpec<AssistantLessonDto>>(),
                 Arg.Any<CancellationToken>()
             );
-        await _assistantRepo
-            .Received(1)
-            .GetByIdAsync(AssistantId, Arg.Any<CancellationToken>());
+        await _assistantRepo.Received(1).GetByIdAsync(AssistantId, Arg.Any<CancellationToken>());
     }
 }

@@ -1,11 +1,10 @@
 using Ardalis.Result;
-using MediatR;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Application.Abstractions.Services.ObjectStorage;
+using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Messaging;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.ValueObjects.ContentDomain;
@@ -17,7 +16,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
     ICurrentUserService currentUserService,
     IIdentityService userManager,
     IStorageService storageService
-) : IRequestHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
+) : ICommandHandler<CreateLessonDetailsCommand, Result<CreateLessonResponse>>
 {
     public async Task<Result<CreateLessonResponse>> Handle(
         CreateLessonDetailsCommand request,
@@ -87,19 +86,37 @@ internal sealed class CreateLessonDetailsCommandHandler(
             teacherId = request.TeacherId;
         }
 
-        var lesson = new Lesson
-        {
-            Title = request.Title,
-            Description = request.Description,
-            Price = request.Price,
-            Money = Money.Create(request.Price, request.Currency),
-            PrerequisiteId = request.PrerequisiteLessonId,
-            Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
-            Outcomes = request.Outcomes,
-            TeacherId = teacherId,
-            ValidityDuration = TimeDuration.Create(request.ValidityDurationInSeconds),
-        };
+        // var lesson = new Lesson
+        // {
+        //     Title = request.Title,
+        //     Description = request.Description,
+        //     Price = request.Price,
+        //     Money = Money.Create(request.Price, request.Currency),
+        //     PrerequisiteId = request.PrerequisiteLessonId,
+        //     Status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted,
+        //     Outcomes = request.Outcomes,
+        //     TeacherId = teacherId,
+        //     ValidityDuration = TimeDuration.Create(request.ValidityDurationInSeconds),
+        // };
+        // var status = request.IsPublished ? LessonStatus.Active : LessonStatus.Drafted;
 
+        var lessonResult = Lesson.Create(
+            title: request.Title,
+            description: request.Description,
+            prerequisiteId: request.PrerequisiteLessonId,
+            isPublished: request.IsPublished,
+            outcomes: request.Outcomes.ToList(),
+            teacherId: teacherId.Value,
+            price: request.Price,
+            currency: request.Currency,
+            durationInSeconds: request.ValidityDurationInSeconds
+        );
+        if (!lessonResult.IsSuccess)
+        {
+            lessonResult.Map();
+        }
+
+        var lesson = lessonResult.Value;
         if (request.ImageFile != null && request.ImageFile.Length > 0)
         {
             var storageKey =

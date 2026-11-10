@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -17,8 +18,12 @@ public class GetQuizForTakingQueryHandlerTests
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ICurrentUserService _currentUser = Substitute.For<ICurrentUserService>();
     private readonly ISender _sender = Substitute.For<ISender>();
-    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<IRepository<Quiz, int>>();
-    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<IRepository<QuizAttempt, int>>();
+    private readonly IRepository<Quiz, int> _quizRepository = Substitute.For<
+        IRepository<Quiz, int>
+    >();
+    private readonly IRepository<QuizAttempt, int> _attemptRepository = Substitute.For<
+        IRepository<QuizAttempt, int>
+    >();
     private readonly GetQuizForTakingQueryHandler _handler;
 
     private static readonly Guid StudentId = Guid.NewGuid();
@@ -32,10 +37,11 @@ public class GetQuizForTakingQueryHandlerTests
         _unitOfWork.GetOrCreateRepository<QuizAttempt, int>().Returns(_attemptRepository);
 
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentAttemptWithAnswersSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns((QuizAttempt?)null);
-
-        
 
         _handler = new GetQuizForTakingQueryHandler(_sender);
     }
@@ -50,16 +56,26 @@ public class GetQuizForTakingQueryHandlerTests
             Type = QuestionType.MCQ,
             Choices = new List<Choice>
             {
-                new() { Id = correctChoiceId, Text = "4", IsCorrect = true },
-                new() { Id = correctChoiceId + 1, Text = "5", IsCorrect = false }
-            }
+                new()
+                {
+                    Id = correctChoiceId,
+                    Text = "4",
+                    IsCorrect = true,
+                },
+                new()
+                {
+                    Id = correctChoiceId + 1,
+                    Text = "5",
+                    IsCorrect = false,
+                },
+            },
         };
 
     private static Lesson CreateLesson(
         string firstName = "Ahmed",
         string lastName = "Mostafa",
         string subject = "Math"
-        )
+    )
     {
         return new Lesson
         {
@@ -70,20 +86,21 @@ public class GetQuizForTakingQueryHandlerTests
                 Id = Guid.NewGuid(),
                 FirstName = firstName,
                 LastName = lastName,
-                Subject = subject
-            }
+                Subject = subject,
+            },
         };
     }
 
     private static Quiz CreateQuiz(
-    int id = 1,
-    int durationMinutes = 30,
-    DateTimeOffset? availableFrom = null,
-    DateTimeOffset? dueDate = null,
-    QuizScope scope = QuizScope.ComprehensiveExam,
-    int? lessonId = null,
-    Lesson? lesson = null,
-    List<QuizQuestion>? questions = null)
+        int id = 1,
+        int durationMinutes = 30,
+        DateTimeOffset? availableFrom = null,
+        DateTimeOffset? dueDate = null,
+        QuizScope scope = QuizScope.ComprehensiveExam,
+        int? lessonId = null,
+        Lesson? lesson = null,
+        List<QuizQuestion>? questions = null
+    )
     {
         return new Quiz
         {
@@ -94,19 +111,25 @@ public class GetQuizForTakingQueryHandlerTests
             DueDate = dueDate,
             Scope = scope,
             LessonId = lessonId,
-            Lesson = lesson ?? CreateLesson(), 
-            Questions = questions ?? new List<QuizQuestion>()
+            Lesson = lesson ?? CreateLesson(),
+            Questions = questions ?? new List<QuizQuestion>(),
         };
     }
 
     private void SetupQuiz(Quiz? quiz) =>
         _quizRepository
-            .FirstOrDefaultAsync(Arg.Any<QuizStructureSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<QuizStructureSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(quiz);
 
     private void SetupExistingAttempt(QuizAttempt? attempt) =>
         _attemptRepository
-            .FirstOrDefaultAsync(Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentAttemptWithAnswersSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(attempt);
 
     #endregion
@@ -141,8 +164,12 @@ public class GetQuizForTakingQueryHandlerTests
         Assert.False(result.IsSuccess);
         Assert.Equal("الاختبار غير متاح حاليًا", result.GetResultMessage());
 
-        await _attemptRepository.DidNotReceive().FirstOrDefaultAsync(
-            Arg.Any<StudentAttemptWithAnswersSpecification>(), Arg.Any<CancellationToken>());
+        await _attemptRepository
+            .DidNotReceive()
+            .FirstOrDefaultAsync(
+                Arg.Any<StudentAttemptWithAnswersSpecification>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     #endregion
@@ -181,14 +208,23 @@ public class GetQuizForTakingQueryHandlerTests
         // Assert
         Assert.True(result.IsSuccess);
 
-        _attemptRepository.Received(1).Add(Arg.Is<QuizAttempt>(a =>
-            a.QuizId == quiz.Id &&
-            a.StudentId == StudentId &&
-            a.Status == QuizAttemptStatus.InProgress));
+        _attemptRepository
+            .Received(1)
+            .Add(
+                Arg.Is<QuizAttempt>(a =>
+                    a.QuizId == quiz.Id
+                    && a.StudentId == StudentId
+                    && a.Status == QuizAttemptStatus.InProgress
+                )
+            );
 
         await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
 
-        Assert.Equal(TimeSpan.FromMinutes(30).TotalSeconds, result.Value!.RemainingSeconds, tolerance: 1);
+        Assert.Equal(
+            TimeSpan.FromMinutes(30).TotalSeconds,
+            result.Value!.RemainingSeconds,
+            tolerance: 1
+        );
     }
 
     #endregion
@@ -206,7 +242,7 @@ public class GetQuizForTakingQueryHandlerTests
             QuizId = quiz.Id,
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow.AddMinutes(-10), // 20 min remaining
-            Status = QuizAttemptStatus.InProgress
+            Status = QuizAttemptStatus.InProgress,
         };
 
         SetupQuiz(quiz);
@@ -241,7 +277,7 @@ public class GetQuizForTakingQueryHandlerTests
             QuizId = quiz.Id,
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow.AddHours(-1),
-            Status = status
+            Status = status,
         };
 
         SetupQuiz(quiz);
@@ -263,7 +299,11 @@ public class GetQuizForTakingQueryHandlerTests
     public async Task Handle_WhenInProgressAttemptTimeExpired_FinalizesAttemptAndReturnsExpiredMessage()
     {
         // Arrange: 30-minute quiz, started 45 minutes ago => already expired
-        var quiz = CreateQuiz(durationMinutes: 30, scope: QuizScope.ComprehensiveExam, dueDate: null);
+        var quiz = CreateQuiz(
+            durationMinutes: 30,
+            scope: QuizScope.ComprehensiveExam,
+            dueDate: null
+        );
         var expiredAttempt = new QuizAttempt
         {
             Id = 1,
@@ -272,7 +312,7 @@ public class GetQuizForTakingQueryHandlerTests
             StartedAt = DateTimeOffset.UtcNow.AddMinutes(-45),
             Status = QuizAttemptStatus.InProgress,
             TabSwitchCount = 0,
-            CopyPasteAttemptCount = 0
+            CopyPasteAttemptCount = 0,
         };
 
         SetupQuiz(quiz);
@@ -307,7 +347,7 @@ public class GetQuizForTakingQueryHandlerTests
             QuizId = quiz.Id,
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow.AddMinutes(-45),
-            Status = QuizAttemptStatus.InProgress
+            Status = QuizAttemptStatus.InProgress,
         };
 
         SetupQuiz(quiz);
@@ -331,10 +371,17 @@ public class GetQuizForTakingQueryHandlerTests
     {
         // Arrange
         var question = CreateMcqQuestion(id: 1, correctChoiceId: 100);
-        var quiz = CreateQuiz(questions: new List<QuizQuestion>
-        {
-            new() { QuestionId = question.Id, Question = question, Degree = 5m }
-        });
+        var quiz = CreateQuiz(
+            questions: new List<QuizQuestion>
+            {
+                new()
+                {
+                    QuestionId = question.Id,
+                    Question = question,
+                    Degree = 5m,
+                },
+            }
+        );
 
         var attempt = new QuizAttempt
         {
@@ -343,7 +390,10 @@ public class GetQuizForTakingQueryHandlerTests
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow,
             Status = QuizAttemptStatus.InProgress,
-            Answers = new List<AttemptAnswer> { new() { QuestionId = question.Id, ChoiceId = 100 } }
+            Answers = new List<AttemptAnswer>
+            {
+                new() { QuestionId = question.Id, ChoiceId = 100 },
+            },
         };
 
         SetupQuiz(quiz);
@@ -363,11 +413,23 @@ public class GetQuizForTakingQueryHandlerTests
     public async Task Handle_MapsWrittenQuestionWithNullChoicesAndSavedText()
     {
         // Arrange
-        var question = new WrittenQuestion { Id = 2, Title = "Explain X", Type = QuestionType.Written };
-        var quiz = CreateQuiz(questions: new List<QuizQuestion>
+        var question = new WrittenQuestion
         {
-            new() { QuestionId = question.Id, Question = question, Degree = 10m }
-        });
+            Id = 2,
+            Title = "Explain X",
+            Type = QuestionType.Written,
+        };
+        var quiz = CreateQuiz(
+            questions: new List<QuizQuestion>
+            {
+                new()
+                {
+                    QuestionId = question.Id,
+                    Question = question,
+                    Degree = 10m,
+                },
+            }
+        );
 
         var attempt = new QuizAttempt
         {
@@ -376,7 +438,10 @@ public class GetQuizForTakingQueryHandlerTests
             StudentId = StudentId,
             StartedAt = DateTimeOffset.UtcNow,
             Status = QuizAttemptStatus.InProgress,
-            Answers = new List<AttemptAnswer> { new() { QuestionId = question.Id, TextAnswer = "my draft answer" } }
+            Answers = new List<AttemptAnswer>
+            {
+                new() { QuestionId = question.Id, TextAnswer = "my draft answer" },
+            },
         };
 
         SetupQuiz(quiz);
@@ -402,13 +467,10 @@ public class GetQuizForTakingQueryHandlerTests
             Id = Guid.NewGuid(),
             FirstName = "Mona",
             LastName = "Kamal",
-            Subject = "Physics"
+            Subject = "Physics",
         };
 
-
-        var quiz = CreateQuiz(
-            lesson: CreateLesson("Mona", "Kamal", "Physics"),
-            dueDate: null);
+        var quiz = CreateQuiz(lesson: CreateLesson("Mona", "Kamal", "Physics"), dueDate: null);
 
         SetupQuiz(quiz);
         SetupExistingAttempt(null);

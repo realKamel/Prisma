@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NSubstitute;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -8,20 +9,23 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Tests.Features.Assignments.Commands.GradeAssignmentSubmission;
 
-
 public class GradeAssignmentSubmissionCommandHandlerTests
 {
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
-    private readonly IRepository<AssignmentSubmission, int> _submissionRepository =
-        Substitute.For<IRepository<AssignmentSubmission, int>>();
+    private readonly ICurrentUserService _currentUserService =
+        Substitute.For<ICurrentUserService>();
+    private readonly IRepository<AssignmentSubmission, int> _submissionRepository = Substitute.For<
+        IRepository<AssignmentSubmission, int>
+    >();
 
     private readonly Guid _currentUserId = Guid.NewGuid();
     private readonly GradeAssignmentSubmissionCommandHandler _handler;
 
     public GradeAssignmentSubmissionCommandHandlerTests()
     {
-        _unitOfWork.GetOrCreateRepository<AssignmentSubmission, int>().Returns(_submissionRepository);
+        _unitOfWork
+            .GetOrCreateRepository<AssignmentSubmission, int>()
+            .Returns(_submissionRepository);
         _currentUserService.UserId.Returns(_currentUserId);
 
         _handler = new GradeAssignmentSubmissionCommandHandler(_unitOfWork, _currentUserService);
@@ -36,7 +40,8 @@ public class GradeAssignmentSubmissionCommandHandlerTests
         string? notes = null,
         bool isBeingGraded = false,
         DateTimeOffset? gradingStartedAt = null,
-        Guid? gradingByUserId = null)
+        Guid? gradingByUserId = null
+    )
     {
         var assignment = new Assignment { Id = 10, Grade = maxScore };
 
@@ -50,13 +55,16 @@ public class GradeAssignmentSubmissionCommandHandlerTests
             IsBeingGraded = isBeingGraded,
             GradingStartedAt = gradingStartedAt,
             GradingByUserId = gradingByUserId,
-            SubmittedAt = DateTimeOffset.UtcNow.AddDays(-1)
+            SubmittedAt = DateTimeOffset.UtcNow.AddDays(-1),
         };
     }
 
     private void SetupSubmission(AssignmentSubmission? submission) =>
         _submissionRepository
-            .FirstOrDefaultAsync(Arg.Any<SubmissionWithAssignmentSpecification>(), Arg.Any<CancellationToken>())
+            .FirstOrDefaultAsync(
+                Arg.Any<SubmissionWithAssignmentSpecification>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(submission);
 
     // ---------- Tests ----------
@@ -69,7 +77,9 @@ public class GradeAssignmentSubmissionCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(999, 50, "Good"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(999, 50, "Good"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -87,7 +97,9 @@ public class GradeAssignmentSubmissionCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 75, "Too high"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 75, "Too high"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -104,12 +116,15 @@ public class GradeAssignmentSubmissionCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 50, "Good"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 50, "Good"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -126,12 +141,15 @@ public class GradeAssignmentSubmissionCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-5),
-            gradingByUserId: _currentUserId);
+            gradingByUserId: _currentUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 90, "Great job"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 90, "Great job"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -154,12 +172,15 @@ public class GradeAssignmentSubmissionCommandHandlerTests
         var submission = CreateSubmission(
             isBeingGraded: true,
             gradingStartedAt: DateTimeOffset.UtcNow.AddMinutes(-31),
-            gradingByUserId: otherUserId);
+            gradingByUserId: otherUserId
+        );
         SetupSubmission(submission);
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 60, null), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 60, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -179,7 +200,9 @@ public class GradeAssignmentSubmissionCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 40, "Note"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 40, "Note"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -198,7 +221,9 @@ public class GradeAssignmentSubmissionCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 100, "Perfect"), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 100, "Perfect"),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -214,7 +239,9 @@ public class GradeAssignmentSubmissionCommandHandlerTests
 
         // Act
         var result = await _handler.Handle(
-            new GradeAssignmentSubmissionCommand(submission.Id, 50, null), CancellationToken.None);
+            new GradeAssignmentSubmissionCommand(submission.Id, 50, null),
+            CancellationToken.None
+        );
 
         // Assert
         result.IsSuccess.Should().BeTrue();

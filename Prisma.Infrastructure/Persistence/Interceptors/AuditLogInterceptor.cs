@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 

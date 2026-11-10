@@ -5,23 +5,24 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Domain.Entities.QuizAggregate;
+using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetQuizStructure;
 
 public class GetQuizStructureQueryHandler(IUnitOfWork unitOfWork)
-    : IRequestHandler<GetQuizStructureQuery, Result<QuizStructureDto>>
+    : IRequestHandler<GetQuizStructureQuery, QuizStructureDto>
 {
-    public async Task<Result<QuizStructureDto>> Handle(GetQuizStructureQuery request, CancellationToken ct)
+    public async Task<QuizStructureDto> Handle(GetQuizStructureQuery request, CancellationToken ct)
     {
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
-        var quiz = await quizRepo.FirstOrDefaultAsync(new QuizStructureSpecification(request.QuizId), ct);
 
-        if (quiz is null)
-            return Result<QuizStructureDto>.Error("الاختبار غير موجود");
+        // Throwing (instead of returning an error Result) keeps failures out of the cache
+        var quiz = await quizRepo.FirstOrDefaultAsync(new QuizStructureSpecification(request.QuizId), ct)
+                   ?? throw new NotFoundException(nameof(Quiz), request.QuizId);
 
-        var dto = new QuizStructureDto
+        return new QuizStructureDto
         {
             QuizId = quiz.Id,
             Title = quiz.Title ?? string.Empty,
@@ -55,6 +56,5 @@ public class GetQuizStructureQueryHandler(IUnitOfWork unitOfWork)
             }).ToList()
         };
 
-        return Result<QuizStructureDto>.Success(dto);
     }
 }

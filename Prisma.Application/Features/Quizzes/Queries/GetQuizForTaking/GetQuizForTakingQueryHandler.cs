@@ -1,15 +1,9 @@
 using Ardalis.Result;
 using MediatR;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Commands.StartOrGetQuizAttempt;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 using Prisma.Application.Features.Quizzes.Queries.GetQuizStructure;
-using Prisma.Domain.Entities.QuizAggregate;
-using Prisma.Domain.Entities.UserAggregate;
-using Prisma.Domain.Enums;
-using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Queries.GetQuizForTaking;
 
@@ -23,11 +17,8 @@ public class GetQuizForTakingQueryHandler(ISender sender)
         if (!attemptResult.IsSuccess)
             return Result<QuizTakingDto>.Error(string.Join(" | ", attemptResult.Errors));
 
-        var structureResult = await sender.Send(new GetQuizStructureQuery(request.QuizId), ct);
-        if (!structureResult.IsSuccess)
-            return Result<QuizTakingDto>.Error(string.Join(" | ", structureResult.Errors));
-
-        var structure = structureResult.Value;
+        // Cached: only the first student per quiz pays for the DB query
+        var structure = await sender.Send(new GetQuizStructureQuery(request.QuizId), ct);
         var attempt = attemptResult.Value;
 
         var dto = new QuizTakingDto

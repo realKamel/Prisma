@@ -158,7 +158,7 @@ public static partial class WebAppHelper
         jobService.AddOrUpdateRecurring<QuizAttemptFinalizationJob>(
             JobQueues.QuizAttemptFinalization,
             x => x.FinalizeExpiredAttempts(CancellationToken.None),
-            Cron.Minutely()
+            Cron.MinuteInterval(5) // Every 5 minutes
         );
     }
 

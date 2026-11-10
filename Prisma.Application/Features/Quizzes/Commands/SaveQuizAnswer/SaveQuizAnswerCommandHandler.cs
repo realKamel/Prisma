@@ -2,6 +2,7 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
+using Prisma.Application.Features.Quizzes.Queries.GetQuizStructure;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Exceptions;
@@ -10,14 +11,15 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Commands.SaveQuizAnswer;
 
-public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser)
+public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUser, ISender sender)
     : IRequestHandler<SaveQuizAnswerCommand, Result>
 {
     public async Task<Result> Handle(SaveQuizAnswerCommand request, CancellationToken ct)
     {
         var studentId = currentUser.UserId!.Value;
         var attemptRepo = unitOfWork.GetOrCreateRepository<QuizAttempt, int>();
-        
+
+        // The only read from the DB: per-student data, never cached
         var attempt = await attemptRepo
             .FirstOrDefaultAsync(new AttemptWithAnswerForQuestionSpecification(request.AttemptId, studentId, request.QuestionId), ct);
 
@@ -35,8 +37,13 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
         // Whitespace-only text means "cleared"
         var text = string.IsNullOrWhiteSpace(request.TextAnswer) ? null : request.TextAnswer;
 
-        var question = await unitOfWork.GetOrCreateRepository<Question, int>()
-            .FirstOrDefaultAsync(new QuestionInQuizSpecification(attempt.QuizId, request.QuestionId), ct);
+
+        // Identical for every student: served from the cache after the first request per quiz.
+        // Read-only here: the cached object is shared, never modify it.
+        var structure = await sender.Send(new GetQuizStructureQuery(attempt.QuizId), ct);
+
+
+        var question = structure.Questions.FirstOrDefault(q => q.QuestionId == request.QuestionId);
 
         if (question is null)
             return Result.Error("السؤال غير موجود في هذا الاختبار");
@@ -52,14 +59,9 @@ public class SaveQuizAnswerCommandHandler(IUnitOfWork unitOfWork, ICurrentUserSe
             if (text is not null)
                 return Result.Error("هذا السؤال لا يقبل إجابة نصية");
 
-            if (request.ChoiceId is not null)
-            {
-                var choice = await unitOfWork.GetOrCreateRepository<Choice, int>()
-                    .FirstOrDefaultAsync(new ChoiceForQuestionSpecification(request.QuestionId, request.ChoiceId.Value), ct);
-
-                if (choice is null)
-                    return Result.Error("الاختيار غير موجود في هذا السؤال");
-            }
+            if (request.ChoiceId is not null &&
+                question.Choices?.Any(c => c.ChoiceId == request.ChoiceId.Value) != true)
+                return Result.Error("الاختيار غير موجود في هذا السؤال");
         }
 
 

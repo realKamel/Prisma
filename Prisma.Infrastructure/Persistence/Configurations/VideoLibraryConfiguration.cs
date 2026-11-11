@@ -10,7 +10,8 @@ internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<Video
     {
         builder.HasKey(x => x.Id);
 
-        builder.HasIndex(x => x.ProviderLibraryId).IsUnique().HasFilter("\"IsDeleted\" = false");
+        // builder.HasIndex(x => x.ProviderLibraryId).IsUnique().HasFilter("\"IsDeleted\" = false");
+        builder.HasIndex(x => x.ProviderLibraryId).HasFilter("\"IsDeleted\" = false");
 
         builder
             .HasMany(x => x.Videos)

@@ -9,7 +9,7 @@ using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
-internal sealed partial class S3StorageService(
+public sealed partial class S3StorageService(
     IAmazonS3 s3,
     IOptions<ObjectStorageOptions> objectStorageOptions,
     ILogger<S3StorageService> logger,

@@ -7,8 +7,6 @@ public sealed class LessonWithMaterialsForUpdateSpecification : Specification<Le
 {
     public LessonWithMaterialsForUpdateSpecification(int lessonId)
     {
-        Query
-            .Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
-            .Include(l => l.LessonMaterials);
+        Query.Where(lesson => lesson.Id == lessonId).Include(l => l.LessonMaterials);
     }
 }

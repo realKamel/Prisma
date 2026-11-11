@@ -857,23 +857,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("DownloadUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("FileObjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<int>("LessonId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Size")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("Type")
                         .HasColumnType("integer");
@@ -885,6 +876,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FileObjectId");
 
                     b.HasIndex("LessonId");
 
@@ -2415,7 +2408,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProviderLibraryId")
-                        .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
                     b.HasIndex("TeacherId")
@@ -2871,11 +2863,19 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
                 {
+                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "FileObject")
+                        .WithMany()
+                        .HasForeignKey("FileObjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
                         .WithMany("LessonMaterials")
                         .HasForeignKey("LessonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("FileObject");
 
                     b.Navigation("Lesson");
                 });

@@ -3,7 +3,7 @@ using Prisma.Application.Abstractions.Encryption;
 
 namespace Prisma.Infrastructure.Services.DataProtectionServices;
 
-internal sealed class SecretCipher(IDataProtectionProvider provider) : ISecretCipher
+public sealed class SecretCipher(IDataProtectionProvider provider) : ISecretCipher
 {
     private readonly IDataProtector _protector = provider.CreateProtector(
         "SecretProtector.SecretProtector.v1"

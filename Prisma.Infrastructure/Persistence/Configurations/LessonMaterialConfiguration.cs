@@ -8,6 +8,8 @@ internal sealed class LessonMaterialConfiguration : IEntityTypeConfiguration<Les
 {
     public void Configure(EntityTypeBuilder<LessonMaterial> builder)
     {
+        builder.HasKey(x => x.Id);
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

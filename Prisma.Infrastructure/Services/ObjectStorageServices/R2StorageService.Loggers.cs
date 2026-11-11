@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Prisma.Infrastructure.Services.ObjectStorageServices;
 
-internal sealed partial class R2StorageService
+public sealed partial class R2StorageService
 {
     [LoggerMessage(
         EventId = 4001,

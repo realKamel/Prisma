@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using Ardalis.Result.AspNetCore;
 using Hangfire;
 using HealthChecks.UI.Client;
+using JasperFx.CodeGeneration.Model;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
@@ -14,7 +15,6 @@ using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
-using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Common;
 using Prisma.Infrastructure.BackgroundJobs.Jobs;
 using Prisma.Infrastructure.DependenciesInjections;
@@ -263,7 +263,8 @@ public static partial class WebAppHelper
 
             // Enable EF Core transactional outbox & inbox middleware automatically
             options.UseEntityFrameworkCoreTransactions();
-
+            //TODO:this must be fixed
+            options.ServiceLocationPolicy = ServiceLocationPolicy.AllowedButWarn;
             // Automatically scrape and publish domain events from DbContext entities upon SaveChangesAsync
             options.PublishDomainEventsFromEntityFrameworkCore<IDomainEventEnumerable>(e =>
                 e.DomainEvents
@@ -290,7 +291,7 @@ public static partial class WebAppHelper
                 .Policies.OnException<HttpRequestException>()
                 .RetryWithCooldown(
                     TimeSpan.FromSeconds(3),
-                    TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds),
+                    TimeSpan.FromSeconds(10),
                     TimeSpan.FromSeconds(30)
                 );
         });

@@ -19,7 +19,7 @@ public static partial class DependenciesInjection
     )
     {
         services.AddPersistenceConfig(configuration, environment);
-
+        services.AddHttpClient();
         services.AddInfrastructureHealthChecks(configuration);
 
         services.AddIdentityWithConfig(environment, configuration);

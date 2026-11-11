@@ -53,8 +53,8 @@ public sealed class LessonPlayerWithDetailsSpecification
                 Materials = lesson
                     .LessonMaterials.Select(m => new PlayerMaterialProjection
                     {
-                        Title = m.Title,
-                        DownloadUrl = m.DownloadUrl,
+                        Title = m.FileObject.FileName,
+                        // DownloadUrl = m.DownloadUrl,
                         Type = (int)m.Type,
                     })
                     .ToList(),

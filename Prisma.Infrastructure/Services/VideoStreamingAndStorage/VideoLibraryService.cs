@@ -8,7 +8,7 @@ using EncodingTier = Prisma.Domain.Entities.UserAggregate.EncodingTier;
 
 namespace Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 
-internal sealed class VideoLibraryService(IBunnyCoreVideoLibraryApi api) : IVideoLibraryService
+public sealed class VideoLibraryService(IBunnyCoreVideoLibraryApi api) : IVideoLibraryService
 {
     public async Task<Result<VideoLibraryCreateResult>> CreateLibrary(
         string name,

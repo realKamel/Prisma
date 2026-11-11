@@ -7,7 +7,7 @@ using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.ObjectStorageServices;
 
-internal sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageService> logger)
+public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageService> logger)
     : IStorageService
 {
     private const long MaxExpirySeconds = 604_800;

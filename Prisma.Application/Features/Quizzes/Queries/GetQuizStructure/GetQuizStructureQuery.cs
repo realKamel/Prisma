@@ -1,5 +1,5 @@
 ﻿
-using Prisma.Application.Common.Interfaces;
+using Prisma.Application.Abstractions.Caching;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
 

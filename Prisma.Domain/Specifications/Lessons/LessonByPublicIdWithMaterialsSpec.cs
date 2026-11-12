@@ -1,4 +1,4 @@
-﻿using Ardalis.Specification;
+using Ardalis.Specification;
 using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Domain.Specifications.Lessons;

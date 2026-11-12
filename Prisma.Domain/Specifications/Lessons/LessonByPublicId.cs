@@ -7,7 +7,11 @@ public sealed class LessonByPublicId : Specification<Lesson>
 {
     public LessonByPublicId(Guid lessonId, bool asNoTracking = false)
     {
-        Query.Where(l => l.PublicId == lessonId).Include(l => l.Assignment);
+        Query
+            .Where(l => l.PublicId == lessonId)
+            .Include(x => x.Sections)
+            .Include(l => l.Assignment)
+            .AsSplitQuery();
 
         if (asNoTracking)
         {

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Polly;
 using Prisma.Domain.Common;
 using Prisma.Domain.Exceptions;
 using Prisma.Domain.Interfaces;

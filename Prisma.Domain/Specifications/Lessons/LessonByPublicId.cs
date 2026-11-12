@@ -5,11 +5,11 @@ namespace Prisma.Domain.Specifications.Lessons;
 
 public sealed class LessonByPublicId : Specification<Lesson>
 {
-    public LessonByPublicId(Guid lessonId, bool tracking = false)
+    public LessonByPublicId(Guid lessonId, bool asNoTracking = false)
     {
-        Query.Where(l => l.PublicId == lessonId);
+        Query.Where(l => l.PublicId == lessonId).Include(l => l.Assignment);
 
-        if (!tracking)
+        if (asNoTracking)
         {
             Query.AsNoTracking();
         }

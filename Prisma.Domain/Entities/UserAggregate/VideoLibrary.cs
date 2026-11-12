@@ -8,6 +8,7 @@ public sealed class VideoLibrary : BaseEntity
 {
     private VideoLibrary() { }
 
+    //TODO: should have UniqueIdx ?
     public long ProviderLibraryId { get; private set; }
     public long TrafficUsage { get; private set; }
     public long StorageUsage { get; private set; }

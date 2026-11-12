@@ -1,14 +1,14 @@
 using Ardalis.Specification;
 using Prisma.Domain.Entities.ObjectLibraryAggregate;
-using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Specifications.ObjectStorageSpec;
 
-public class ObjectStorageByTeacherId : Specification<ObjectStorage>
+public sealed class ObjectStorageByTeacherId : Specification<ObjectStorage>
 {
     public ObjectStorageByTeacherId(Guid teacherId, bool asNoTracking = false)
     {
-        Query.Where(x => x.TeacherId == teacherId);
+        Query.Where(x => x.TeacherId == teacherId).Include(x => x.Files);
+
         if (asNoTracking)
         {
             Query.AsNoTracking();

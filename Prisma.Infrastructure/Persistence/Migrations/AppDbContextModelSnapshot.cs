@@ -2568,6 +2568,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     b.HasBaseType("Prisma.Domain.Entities.UserAggregate.User");
 
+                    b.Property<string>("Bio")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 

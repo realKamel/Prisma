@@ -3,9 +3,9 @@ using MediatR;
 using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
-
+ 
 public record GetTeacherCatalogQuery(string? Search, PaginationParams Pagination)
-    : IRequest<Result<PaginatedList<TeacherDto>>>;
+    : IRequest<Result<TeacherCatalogResponse>>;
 
 public record TeacherDto(
     string Id,
@@ -19,3 +19,21 @@ public record TeacherDto(
 );
 
 public record AcademicYearDto(string Id, string Name);
+
+
+public record TeacherCatalogResponse : PaginatedList<TeacherDto>
+{
+    public TeacherCatalogResponse(
+        IReadOnlyCollection<TeacherDto> items,
+        int count,
+        int pageNumber,
+        int pageSize,
+        AcademicYearDto? studentCurrentYear
+    )
+        : base(items, count, pageNumber, pageSize)
+    {
+        StudentCurrentYear = studentCurrentYear;
+    }
+
+    public AcademicYearDto? StudentCurrentYear { get; }
+}

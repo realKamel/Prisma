@@ -11,7 +11,6 @@ using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.ValueObjects.ContentDomain;
-using Prisma.Domain.ValueObjects.EnrollmentDomain;
 
 namespace Prisma.Application.Features.Lessons.Commands.UpdateLessonCommand;
 
@@ -149,7 +148,7 @@ internal sealed class UpdateLessonDetailsCommandHandler(
                         DueDate =
                             request.AssignmentDueDate?.ToUniversalTime()
                             ?? DateTimeOffset.UtcNow.AddDays(7),
-                        Grade = 10,
+                        TotalMarks = 10,
                     };
                 }
                 else

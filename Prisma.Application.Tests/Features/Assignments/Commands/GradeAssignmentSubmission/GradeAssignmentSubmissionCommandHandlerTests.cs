@@ -43,7 +43,7 @@ public class GradeAssignmentSubmissionCommandHandlerTests
         Guid? gradingByUserId = null
     )
     {
-        var assignment = new Assignment { Id = 10, Grade = maxScore };
+        var assignment = new Assignment { Id = 10, TotalMarks = maxScore };
 
         return new AssignmentSubmission
         {

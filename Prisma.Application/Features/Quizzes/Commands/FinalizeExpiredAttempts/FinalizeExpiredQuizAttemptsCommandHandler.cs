@@ -1,5 +1,4 @@
-﻿
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Domain.Entities.QuizAggregate;
@@ -10,10 +9,10 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Commands.FinalizeExpiredAttempts;
 
-public class FinalizeExpiredQuizAttemptsCommandHandler(
+public sealed class FinalizeExpiredQuizAttemptsCommandHandler(
     IUnitOfWork unitOfWork,
-    ILogger<FinalizeExpiredQuizAttemptsCommandHandler> logger)
-    : IRequestHandler<FinalizeExpiredQuizAttemptsCommand>
+    ILogger<FinalizeExpiredQuizAttemptsCommandHandler> logger
+) : IRequestHandler<FinalizeExpiredQuizAttemptsCommand>
 {
     private const int BatchSize = 100;
 
@@ -26,9 +25,16 @@ public class FinalizeExpiredQuizAttemptsCommandHandler(
         while (!ct.IsCancellationRequested)
         {
             var batch = await attemptRepo.ListAsync(
-                new ExpiredInProgressAttemptsSpecification(lastId, BatchSize, TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds)), ct);
+                new ExpiredInProgressAttemptsSpecification(
+                    lastId,
+                    BatchSize,
+                    TimeSpan.FromSeconds(QuizConstants.GracePeriodSeconds)
+                ),
+                ct
+            );
 
-            if (batch.Count == 0) break;
+            if (batch.Count == 0)
+                break;
             lastId = batch.Max(a => a.Id);
 
             try
@@ -39,17 +45,23 @@ public class FinalizeExpiredQuizAttemptsCommandHandler(
             {
                 // طالب سلّم في نفس اللحظة. الـ batch هيتعاد في الدورة الجاية
                 // والـ attempt اللي اتسلّم مش هيرجع لأنه مبقاش InProgress
-                logger.LogInformation("Concurrency conflict while finalizing batch ending at attempt {LastId}; will retry next run", lastId);
-                unitOfWork.ClearChangeTracker();
+                logger.LogInformation(
+                    "Concurrency conflict while finalizing batch ending at attempt {LastId}; will retry next run",
+                    lastId
+                );
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // الـ batch ده هيتعاد في الدورة الجاية، وبنكمل على اللي بعده
-                logger.LogError(ex, "Failed to finalize expired attempts batch ending at attempt {LastId}", lastId);
-                unitOfWork.ClearChangeTracker();
+                logger.LogError(
+                    ex,
+                    "Failed to finalize expired attempts batch ending at attempt {LastId}",
+                    lastId
+                );
             }
 
-            if (batch.Count < BatchSize) break;
+            if (batch.Count < BatchSize)
+                break;
         }
 
         if (finalized > 0)
@@ -61,8 +73,9 @@ public class FinalizeExpiredQuizAttemptsCommandHandler(
         // Query واحدة لكل الـ quizzes في الـ batch
         var quizIds = batch.Select(a => a.QuizId).Distinct().ToList();
         var quizRepo = unitOfWork.GetOrCreateRepository<Quiz, int>();
-        var quizzes = (await quizRepo.ListAsync(new QuizzesForFinalizationSpecification(quizIds), ct))
-            .ToDictionary(q => q.Id);
+        var quizzes = (
+            await quizRepo.ListAsync(new QuizzesForFinalizationSpecification(quizIds), ct)
+        ).ToDictionary(q => q.Id);
 
         var lessonCompletions = new List<(Guid StudentId, int LessonId)>();
         var count = 0;
@@ -71,11 +84,19 @@ public class FinalizeExpiredQuizAttemptsCommandHandler(
         {
             if (!quizzes.TryGetValue(attempt.QuizId, out var quiz))
             {
-                logger.LogWarning("Quiz {QuizId} not found for expired attempt {AttemptId}", attempt.QuizId, attempt.Id);
+                logger.LogWarning(
+                    "Quiz {QuizId} not found for expired attempt {AttemptId}",
+                    attempt.QuizId,
+                    attempt.Id
+                );
                 continue;
             }
 
-            var fullyGraded = QuizFinalizer.ApplyFinalization(attempt, quiz, submittedAt: attempt.Deadline);
+            var fullyGraded = QuizFinalizer.ApplyFinalization(
+                attempt,
+                quiz,
+                submittedAt: attempt.Deadline
+            );
 
             if (fullyGraded && quiz.Scope == QuizScope.LessonQuiz && quiz.LessonId.HasValue)
                 lessonCompletions.Add((attempt.StudentId, quiz.LessonId.Value));
@@ -84,7 +105,7 @@ public class FinalizeExpiredQuizAttemptsCommandHandler(
         }
 
         await QuizFinalizer.CompleteLessonsInBulk(lessonCompletions, unitOfWork, ct);
-        await unitOfWork.SaveChangesAsync(ct); 
+        await unitOfWork.SaveChangesAsync(ct);
         return count;
     }
 }

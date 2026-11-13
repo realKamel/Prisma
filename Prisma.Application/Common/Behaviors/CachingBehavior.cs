@@ -17,7 +17,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
     )
     {
         var key = request.BuildCacheKey(builder);
-
+        //TODO: should we cache non successful results
         return await hybridCache.GetOrCreateAsync(
             key: key,
             state: next,

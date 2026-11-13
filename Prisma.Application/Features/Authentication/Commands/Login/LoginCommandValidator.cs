@@ -13,25 +13,28 @@ public sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
             .WithErrorCode(DomainErrors.AuthenticationErrors.MustProvideEmailOrPhone)
             .WithMessage("Either Email or Phone must be provided.");
 
-        When(x => !string.IsNullOrWhiteSpace(x.Email), () =>
-        {
-            RuleFor(x => x.Email)
-                .Email();
-        });
+        When(
+            x => !string.IsNullOrWhiteSpace(x.Email),
+            () =>
+            {
+                RuleFor(x => x.Email).MustBeValidEmail();
+            }
+        );
 
-        When(x => !string.IsNullOrWhiteSpace(x.Phone), () =>
-        {
-            RuleFor(x => x.Phone)
-                .EgyptianPhoneNumber();
-        });
+        When(
+            x => !string.IsNullOrWhiteSpace(x.Phone),
+            () =>
+            {
+                RuleFor(x => x.Phone).MustBeValidPhoneNumber();
+            }
+        );
 
-        RuleFor(x => x.Password)
-            .StrongPassword();
+        RuleFor(x => x.Password).MustBeStrongPassword();
     }
 
     private static bool HaveEmailOrPhone(LoginCommand command)
     {
         return !string.IsNullOrWhiteSpace(command.Email)
-               || !string.IsNullOrWhiteSpace(command.Phone);
+            || !string.IsNullOrWhiteSpace(command.Phone);
     }
 }

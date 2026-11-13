@@ -1,5 +1,4 @@
 using FluentValidation;
-using Prisma.Application.Common.Validators;
 using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
@@ -8,26 +7,19 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 {
     public RegisterCommandValidator()
     {
-        RuleFor(e => e.FirstName)
-            .SetValidator(new PersonNameValidator());
+        RuleFor(e => e.FirstName).MustBeValidPersonName();
 
-        RuleFor(e => e.SecondName)
-            .SetValidator(new PersonNameValidator());
+        RuleFor(e => e.SecondName).MustBeValidPersonName();
 
-        RuleFor(e => e.ThirdName)
-            .SetValidator(new PersonNameValidator());
+        RuleFor(e => e.ThirdName).MustBeValidPersonName();
 
-        RuleFor(e => e.LastName)
-            .SetValidator(new PersonNameValidator());
+        RuleFor(e => e.LastName).MustBeValidPersonName();
 
-        RuleFor(x => x.Email)
-            .Email();
+        RuleFor(x => x.Email).MustBeValidEmail();
 
-        RuleFor(x => x.PhoneNumber)
-            .EgyptianPhoneNumber();
+        RuleFor(x => x.PhoneNumber).MustBeValidPhoneNumber();
 
-        RuleFor(x => x.Password)
-            .StrongPassword();
+        RuleFor(x => x.Password).MustBeStrongPassword();
 
         RuleFor(x => x.ConfirmPassword)
             .NotEmpty()
@@ -35,7 +27,6 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
             .Must((model, confirm) => confirm == model.ConfirmPassword)
             .WithMessage("Passwords do not match.");
 
-        RuleFor(x => x.ParentPhoneNumber)
-            .EgyptianPhoneNumber();
+        RuleFor(x => x.ParentPhoneNumber).MustBeValidPhoneNumber();
     }
 }

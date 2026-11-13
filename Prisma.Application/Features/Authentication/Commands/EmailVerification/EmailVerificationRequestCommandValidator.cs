@@ -1,23 +1,21 @@
 ﻿using FluentValidation;
-using Prisma.Application.Common.Validators;
 using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Authentication.Commands.EmailVerification;
 
-public class EmailVerificationRequestCommandValidator : AbstractValidator<EmailVerificationRequestCommand>
+public sealed class EmailVerificationRequestCommandValidator
+    : AbstractValidator<EmailVerificationRequestCommand>
 {
     public EmailVerificationRequestCommandValidator()
     {
-        RuleFor(x => x.Email)
-            .Email();
+        RuleFor(x => x.Email).MustBeValidEmail();
     }
 }
 
-public class ConfirmEmailCommandValidation : AbstractValidator<ConfirmEmailCommand>
+public sealed class ConfirmEmailCommandValidation : AbstractValidator<ConfirmEmailCommand>
 {
     public ConfirmEmailCommandValidation()
     {
-        RuleFor(x => x.Email)
-            .Email();
+        RuleFor(x => x.Email).MustBeValidEmail();
     }
 }

@@ -5,8 +5,10 @@ namespace Prisma.Application.Common.Validators.ValidationExtensions;
 
 public static class EmailValidatorExtension
 {
-    public static IRuleBuilderOptions<T, string> Email<T>(this IRuleBuilder<T, string?> ruleBuilder,
-        int maxLength = 256)
+    public static IRuleBuilderOptions<T, string> MustBeValidEmail<T>(
+        this IRuleBuilder<T, string?> ruleBuilder,
+        int maxLength = 256
+    )
     {
         return ruleBuilder
             .NotEmpty()

@@ -59,7 +59,7 @@ public static partial class PhoneValidatorExtensions
                     return false;
                 }
             })
-            .WithMessage("'{PropertyName}' is not a valid phone number.");
+            .WithMessage("Phone number is not valid");
     }
 
     [GeneratedRegex(@"^(\+20|0)1[0125]\d{8}$")]

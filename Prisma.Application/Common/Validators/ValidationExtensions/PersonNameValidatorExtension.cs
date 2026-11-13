@@ -5,7 +5,7 @@ namespace Prisma.Application.Common.Validators.ValidationExtensions;
 
 public static partial class PersonNameValidatorExtension
 {
-    public static IRuleBuilderOptions<T, string?> PersonName<T>(
+    public static IRuleBuilderOptions<T, string?> MustBeValidPersonName<T>(
         this IRuleBuilder<T, string?> ruleBuilder
     )
     {

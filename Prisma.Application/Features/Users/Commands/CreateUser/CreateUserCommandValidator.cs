@@ -4,18 +4,18 @@ using Prisma.Application.Common.Validators.ValidationExtensions;
 
 namespace Prisma.Application.Features.Users.Commands.CreateUser;
 
-public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
+public sealed class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
 {
     public CreateUserCommandValidator()
     {
-        RuleFor(x => x.FirstName).PersonName();
-        RuleFor(x => x.SecondName).PersonName();
-        RuleFor(x => x.ThirdName).PersonName();
-        RuleFor(x => x.LastName).PersonName();
+        RuleFor(x => x.FirstName).MustBeValidPersonName();
+        RuleFor(x => x.SecondName).MustBeValidPersonName();
+        RuleFor(x => x.ThirdName).MustBeValidPersonName();
+        RuleFor(x => x.LastName).MustBeValidPersonName();
 
         RuleFor(x => x.Mobile).MustBeValidPhoneNumber();
-        RuleFor(x => x.Email).Email();
-        RuleFor(x => x.Password).StrongPassword();
+        RuleFor(x => x.Email).MustBeValidEmail();
+        RuleFor(x => x.Password).MustBeStrongPassword();
 
         RuleFor(x => x.Role)
             .Must(r => AppRoles.RolesSet.Contains(r))
@@ -29,7 +29,7 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
                 RuleFor(x => x.TeacherId)
                     .NotNull()
                     .WithMessage("Teacher is required for students.");
-                RuleFor(x => x.ParentMobile).NotEmpty().EgyptianPhoneNumber();
+                RuleFor(x => x.ParentMobile).NotEmpty().MustBeValidPhoneNumber();
                 RuleFor(x => x)
                     .Must(x => x.Mobile != x.ParentMobile)
                     .WithMessage("Student phone and parent phone cannot be the same.");

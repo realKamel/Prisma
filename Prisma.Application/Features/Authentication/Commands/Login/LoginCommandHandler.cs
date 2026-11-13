@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Ardalis.Result;
-using MediatR;
 using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs.Auth;
 using Prisma.Domain.Entities.UserAggregate;
@@ -9,11 +9,11 @@ using Prisma.Domain.Enums;
 
 namespace Prisma.Application.Features.Authentication.Commands.Login;
 
-public class LoginCommandHandler(
+public sealed class LoginCommandHandler(
     IIdentityService identityService,
     IJwtTokenService jwtTokenService,
     ITokenService tokenService
-) : IRequestHandler<LoginCommand, Result<LoginResponse>>
+) : ICommandHandler<LoginCommand, Result<LoginResponse>>
 {
     public async Task<Result<LoginResponse>> Handle(
         LoginCommand request,

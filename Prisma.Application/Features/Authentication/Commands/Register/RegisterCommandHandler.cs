@@ -1,14 +1,13 @@
 using Ardalis.Result;
-using MediatR;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
 internal sealed class RegisterCommandHandler(IIdentityService identityService)
-    : IRequestHandler<RegisterCommand, Result>
+    : ICommandHandler<RegisterCommand, Result>
 {
     public async Task<Result> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
@@ -20,7 +19,7 @@ internal sealed class RegisterCommandHandler(IIdentityService identityService)
 
         if (existingUser is not null)
         {
-            return Result.Invalid();
+            return Result.Conflict();
         }
 
         var user = new Student()

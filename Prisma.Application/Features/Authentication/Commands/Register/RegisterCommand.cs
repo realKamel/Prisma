@@ -1,5 +1,5 @@
-using MediatR;
 using Ardalis.Result;
+using Prisma.Application.Abstractions.Messaging;
 
 namespace Prisma.Application.Features.Authentication.Commands.Register;
 
@@ -13,4 +13,5 @@ public record RegisterCommand(
     string Password,
     string ConfirmPassword,
     int? AcademicYear,
-    string ParentPhoneNumber) : IRequest<Result>;
+    string ParentPhoneNumber
+) : ICommand<Result>;

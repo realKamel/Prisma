@@ -105,7 +105,7 @@ public class DataSeeder(
                         var admin = new User
                         {
                             FirstName = "Admin",
-                            SecondName = "Prisma",
+                            SecondName = "Wasla",
                             UserName = identityOptions.Value.AdminEmail,
                             Email = identityOptions.Value.AdminEmail,
                             PhoneNumber = identityOptions.Value.AdminPhone,

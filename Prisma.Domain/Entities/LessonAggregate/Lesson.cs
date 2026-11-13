@@ -256,4 +256,27 @@ public sealed class Lesson : BaseEntity
 
         return Result.Success();
     }
+
+    public Result AddMaterial(Guid fileObjectId, LessonMaterialType type)
+    {
+        // if (Assignment is not null)
+        // {
+        //     return Result.Invalid(
+        //         new ValidationError(nameof(Assignment), "This lesson already has an assignment.")
+        //     );
+        // }
+
+        var result = LessonMaterial.Create(fileObjectId, type);
+
+        if (!result.IsSuccess)
+        {
+            return result.Map();
+        }
+
+        result.Value.AttachTo(this);
+
+        LessonMaterials.Add(result.Value);
+
+        return Result.Success();
+    }
 }

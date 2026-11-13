@@ -56,7 +56,7 @@ public class GetAssignmentSubmissionDetailQueryHandlerTests
             Id = 10,
             LessonId = lesson.Id,
             Lesson = lesson,
-            Grade = maxScore,
+            TotalMarks = maxScore,
             DueDate = dueDate ?? DateTimeOffset.UtcNow.AddDays(3),
         };
         var student = new Student

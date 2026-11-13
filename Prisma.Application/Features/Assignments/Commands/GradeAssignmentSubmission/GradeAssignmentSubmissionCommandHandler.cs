@@ -11,7 +11,7 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Features.Assignments.Commands.GradeAssignmentSubmission;
 
-public class GradeAssignmentSubmissionCommandHandler(
+public sealed class GradeAssignmentSubmissionCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser
 ) : IRequestHandler<GradeAssignmentSubmissionCommand, Result>
@@ -28,9 +28,9 @@ public class GradeAssignmentSubmissionCommandHandler(
             return Result.Error("التسليم غير موجود");
 
         // Validate score doesn't exceed max
-        if (request.Score > submission.Assignment.Grade)
+        if (request.Score > submission.Assignment.TotalMarks)
             return Result.Error(
-                $"الدرجة ({request.Score}) أكبر من الدرجة الكاملة ({submission.Assignment.Grade})"
+                $"الدرجة ({request.Score}) أكبر من الدرجة الكاملة ({submission.Assignment.TotalMarks})"
             );
 
         // Validate grading lock — only the user who opened the modal can grade

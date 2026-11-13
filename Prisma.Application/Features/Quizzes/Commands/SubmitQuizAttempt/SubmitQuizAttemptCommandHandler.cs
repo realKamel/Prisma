@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Quizzes.Common;
 using Prisma.Application.Features.Quizzes.Dtos;
@@ -12,14 +13,14 @@ using Prisma.Domain.Specifications.Quizzes;
 
 namespace Prisma.Application.Features.Quizzes.Commands.SubmitQuizAttempt;
 
-public class SubmitQuizAttemptCommandHandler(
+public sealed class SubmitQuizAttemptCommandHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser
-) : IRequestHandler<SubmitQuizAttemptCommand, Result<SubmitQuizResultDto>>
+) : ICommandHandler<SubmitQuizAttemptCommand, Result<SubmitQuizResultDto>>
 {
     public async Task<Result<SubmitQuizResultDto>> Handle(
         SubmitQuizAttemptCommand request,
-        CancellationToken ct
+        CancellationToken cancellationToken
     )
     {
         var studentId = currentUser.UserId!.Value;
@@ -28,7 +29,7 @@ public class SubmitQuizAttemptCommandHandler(
             .GetOrCreateRepository<QuizAttempt, int>()
             .FirstOrDefaultAsync(
                 new AttemptForFinalizationSpecification(request.AttemptId, studentId),
-                ct
+                cancellationToken
             );
 
         if (attempt is null)
@@ -36,7 +37,10 @@ public class SubmitQuizAttemptCommandHandler(
 
         var quiz = await unitOfWork
             .GetOrCreateRepository<Quiz, int>()
-            .FirstOrDefaultAsync(new QuizWithQuestionsSpecification(attempt.QuizId), ct);
+            .FirstOrDefaultAsync(
+                new QuizWithQuestionsSpecification(attempt.QuizId),
+                cancellationToken
+            );
 
         if (quiz is null)
             return Result<SubmitQuizResultDto>.Error("الاختبار غير موجود");
@@ -52,12 +56,12 @@ public class SubmitQuizAttemptCommandHandler(
 
         // A late submit never changes answers: only what was already saved gets graded
         if (!isLate && request.Answers is { Count: > 0 })
-            await ApplyAnswersAsync(attempt, quiz, studentId, request.Answers, ct);
+            await ApplyAnswersAsync(attempt, quiz, studentId, request.Answers, cancellationToken);
 
         try
         {
             // Answers + status + score must be committed by the same SaveChanges
-            await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, ct);
+            await QuizFinalizer.FinalizeAttempt(attempt, quiz, unitOfWork, cancellationToken);
         }
         catch (Exception ex)
             when (ex is UniqueConstraintViolationException or ConcurrencyConflictException)
@@ -74,8 +78,8 @@ public class SubmitQuizAttemptCommandHandler(
         QuizAttempt attempt,
         Quiz quiz,
         Guid studentId,
-        List<SubmitAnswerDto> answers,
-        CancellationToken ct
+        IList<SubmitAnswerDto> answers,
+        CancellationToken cancellationToken
     )
     {
         // Questions linked to this quiz (Quiz.Questions are QuestionLessonQuiz links)
@@ -93,7 +97,7 @@ public class SubmitQuizAttemptCommandHandler(
         {
             var choices = await unitOfWork
                 .GetOrCreateRepository<Choice, int>()
-                .ListAsync(new ChoicesByIdsSpecification(choiceIds), ct);
+                .ListAsync(new ChoicesByIdsSpecification(choiceIds), cancellationToken);
             validChoices = choices.Select(c => (c.QuestionId, c.Id)).ToHashSet();
         }
 

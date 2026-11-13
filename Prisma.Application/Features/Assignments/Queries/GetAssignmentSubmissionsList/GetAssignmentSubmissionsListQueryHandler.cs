@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -16,7 +12,7 @@ using Prisma.Domain.Specifications.Users;
 
 namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionsList;
 
-public class GetAssignmentSubmissionsListQueryHandler(
+public sealed class GetAssignmentSubmissionsListQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser,
     IIdentityService identityService
@@ -172,7 +168,7 @@ public class GetAssignmentSubmissionsListQueryHandler(
                         FileUrl = fileUrl,
                         SubmittedAt = submittedAt,
                         Score = score,
-                        MaxScore = assignment.Grade,
+                        MaxScore = assignment.TotalMarks,
                         Status = status,
                         IsBeingGraded = isBeingGraded,
                         GradingByUserName =

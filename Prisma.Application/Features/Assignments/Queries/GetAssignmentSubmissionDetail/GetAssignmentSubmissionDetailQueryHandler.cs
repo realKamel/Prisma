@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Features.Assignments.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Interfaces;
@@ -12,7 +8,7 @@ using Prisma.Domain.Specifications.Assignments;
 
 namespace Prisma.Application.Features.Assignments.Queries.GetAssignmentSubmissionDetail;
 
-public class GetAssignmentSubmissionDetailQueryHandler(
+public sealed class GetAssignmentSubmissionDetailQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUser
 ) : IRequestHandler<GetAssignmentSubmissionDetailQuery, Result<AssignmentSubmissionDetailDto>>
@@ -29,7 +25,7 @@ public class GetAssignmentSubmissionDetailQueryHandler(
         );
 
         if (submission is null)
-            return Result<AssignmentSubmissionDetailDto>.Error("التسليم غير موجود");
+            return Result<AssignmentSubmissionDetailDto>.NotFound("التسليم غير موجود");
 
         // Acquire grading lock
         var now = DateTimeOffset.UtcNow;
@@ -59,7 +55,7 @@ public class GetAssignmentSubmissionDetailQueryHandler(
             DueDate = submission.Assignment.DueDate,
             IsLateSubmission = submission.SubmittedAt > submission.Assignment.DueDate,
             FileUrl = submission.FileUrl,
-            MaxScore = submission.Assignment.Grade,
+            MaxScore = submission.Assignment.TotalMarks,
             CurrentScore = submission.Score,
             CurrentNote = submission.Notes,
         };

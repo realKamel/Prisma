@@ -7,22 +7,28 @@ public class LessonMaterialsSpecification : Specification<Lesson, List<LessonMat
 {
     public LessonMaterialsSpecification(int lessonId)
     {
-        Query.Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
-            .Select(lesson => lesson.LessonMaterials.Select(m => new LessonMaterialProjection
-        {
-            Id = m.Id,
-            Title = m.Title,
-            Size = m.Size,
-            Type = m.Type.ToString(),
-            CreatedAt = m.CreatedAt
-        }).ToList());
+        Query
+            .Where(lesson => lesson.Id == lessonId && !lesson.IsDeleted)
+            .Select(lesson =>
+                lesson
+                    .LessonMaterials.Select(m => new LessonMaterialProjection
+                    {
+                        Id = m.Id,
+                        Title = m.FileObject.FileName,
+                        Size = m.FileObject.Size,
+                        Type = m.Type.ToString(),
+                        CreatedAt = m.CreatedAt,
+                    })
+                    .ToList()
+            );
     }
 }
-public class LessonMaterialProjection
+
+public sealed record LessonMaterialProjection
 {
-    public int Id { get; set; }
-    public string? Title { get; set; }
-    public string Size { get; set; }
-    public string Type { get; set; } = string.Empty;
-    public DateTimeOffset? CreatedAt { get; set; }
+    public int Id { get; init; }
+    public string? Title { get; init; }
+    public long Size { get; init; }
+    public string Type { get; init; } = string.Empty;
+    public DateTimeOffset? CreatedAt { get; init; }
 }

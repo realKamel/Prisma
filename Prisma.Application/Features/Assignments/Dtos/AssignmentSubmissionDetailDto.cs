@@ -1,18 +1,18 @@
 ﻿namespace Prisma.Application.Features.Assignments.Dtos;
 
-public class AssignmentSubmissionDetailDto
+public sealed record AssignmentSubmissionDetailDto
 {
     // Display info
-    public int SubmissionId { get; set; }
-    public string StudentName { get; set; } = string.Empty;
-    public string LessonTitle { get; set; } = string.Empty;
-    public DateTimeOffset SubmittedAt { get; set; }
-    public DateTimeOffset DueDate { get; set; }
-    public bool IsLateSubmission { get; set; }
-    public string? FileUrl { get; set; }
-    public int MaxScore { get; set; }
+    public int SubmissionId { get; init; }
+    public string StudentName { get; init; } = string.Empty;
+    public string LessonTitle { get; init; } = string.Empty;
+    public DateTimeOffset SubmittedAt { get; init; }
+    public DateTimeOffset? DueDate { get; init; }
+    public bool IsLateSubmission { get; init; }
+    public string? FileUrl { get; init; }
+    public decimal MaxScore { get; init; }
 
     // Previous grading (null if not graded yet)
-    public int? CurrentScore { get; set; }
-    public string? CurrentNote { get; set; }
+    public int? CurrentScore { get; init; }
+    public string? CurrentNote { get; init; }
 }

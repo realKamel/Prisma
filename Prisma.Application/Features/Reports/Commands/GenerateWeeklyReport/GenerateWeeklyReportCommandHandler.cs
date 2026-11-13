@@ -15,10 +15,13 @@ namespace Prisma.Application.Features.Reports.Commands.GenerateWeeklyReport;
 internal class GenerateWeeklyReportCommandHandler(
     IUnitOfWork uow,
     IReportGenerator reportGenerator,
-    ILogger<GenerateWeeklyReportCommandHandler> logger)
-    : IRequestHandler<GenerateWeeklyReportCommand>
+    ILogger<GenerateWeeklyReportCommandHandler> logger
+) : IRequestHandler<GenerateWeeklyReportCommand>
 {
-    public async Task Handle(GenerateWeeklyReportCommand request, CancellationToken cancellationToken)
+    public async Task Handle(
+        GenerateWeeklyReportCommand request,
+        CancellationToken cancellationToken
+    )
     {
         var enrollmentRepo = uow.GetOrCreateRepository<Enrollment, int>();
         var studentRepo = uow.GetOrCreateRepository<Student, Guid>();
@@ -41,26 +44,30 @@ internal class GenerateWeeklyReportCommandHandler(
                     // for this week (covers retries after partial batch failure).
                     var alreadyReported = await studentRepo.AnyAsync(
                         new StudentHasReportSinceSpec(studentId, weekStart),
-                        cancellationToken);
+                        cancellationToken
+                    );
 
                     if (alreadyReported)
                     {
                         logger.LogInformation(
                             "Skipping weekly report for student {StudentId}, already generated this week",
-                            studentId);
+                            studentId
+                        );
                         continue;
                     }
 
                     var student = await studentRepo.FirstOrDefaultAsync(
                         new StudentWithReportsSpec(studentId),
                         // include Reports nav if needed
-                        cancellationToken);
+                        cancellationToken
+                    );
 
                     if (student is null)
                     {
                         logger.LogWarning(
                             "Active student {StudentId} not found during weekly report generation",
-                            studentId);
+                            studentId
+                        );
                         continue;
                     }
 
@@ -69,31 +76,48 @@ internal class GenerateWeeklyReportCommandHandler(
                     var enrollments = await enrollmentRepo.ListAsync(
                         new EnrollmentAndLessonAndLessonProgressesOrderByCreatedAtDesc<EnrollmentReportDto>(
                             e => e.StudentId == studentId && e.CreatedAt > weekStart,
-                            e => new EnrollmentReportDto(e.Id, e.IsCompleted,
-                                new LessonReportDto(e.Lesson.Title ?? "", e.Lesson.Assignment.Grade))),
-                        cancellationToken);
+                            e => new EnrollmentReportDto(
+                                e.Id,
+                                e.IsCompleted,
+                                new LessonReportDto(
+                                    e.Lesson.Title ?? "",
+                                    e.Lesson.Assignment.TotalMarks
+                                )
+                            )
+                        ),
+                        cancellationToken
+                    );
 
                     var attempts = await attemptsRepo.ListAsync(
-                        new StudentAttemptsSpec<AttemptReportDto>(studentId,
-                            x => new AttemptReportDto(x.Quiz.Title ?? x.QuizId.ToString(), x.Degree)),
-                        cancellationToken);
+                        new StudentAttemptsSpec<AttemptReportDto>(
+                            studentId,
+                            x => new AttemptReportDto(x.Quiz.Title ?? x.QuizId.ToString(), x.Degree)
+                        ),
+                        cancellationToken
+                    );
 
                     var report = await reportGenerator.GenerateReportAsync(
                         new StudentData(studentId, studentNames, enrollments, attempts),
-                        cancellationToken);
+                        cancellationToken
+                    );
 
-                    student.Reports.Add(new Report
-                    {
-                        StudentId = studentId,
-                        Content = report,
-                        Date = now,
-                    });
+                    student.Reports.Add(
+                        new Report
+                        {
+                            StudentId = studentId,
+                            Content = report,
+                            Date = now,
+                        }
+                    );
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     // one student's AI/DB fail can kill the whole run.
-                    logger.LogError(ex,
-                        "Failed to generate weekly report for student {StudentId}", studentId);
+                    logger.LogError(
+                        ex,
+                        "Failed to generate weekly report for student {StudentId}",
+                        studentId
+                    );
                 }
             }
 

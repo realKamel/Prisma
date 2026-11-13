@@ -13,7 +13,7 @@ public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageServ
     private const long MaxExpirySeconds = 604_800;
     private const int MaxExpiryMinutes = 10_080;
     private const string MetadataPrefix = "x-amz-meta-";
-    public string DefaultBucketName { get; } = "prisma";
+    public string DefaultBucketName { get; } = "wasla";
 
     public async Task UploadFileAsync(
         string bucketName,

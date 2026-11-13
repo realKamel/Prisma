@@ -49,7 +49,7 @@ public record AssignmentDto
 {
     public int Id { get; init; }
     public string? ContentURL { get; init; }
-    public DateTimeOffset DueDate { get; init; }
+    public DateTimeOffset? DueDate { get; init; }
     public string FileName { get; init; } = string.Empty;
     public decimal? SubmissionGrade { get; init; }
     public string? SubmissionNotes { get; init; }

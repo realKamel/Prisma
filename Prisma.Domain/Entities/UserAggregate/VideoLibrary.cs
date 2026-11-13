@@ -71,6 +71,6 @@ public sealed class VideoLibrary : BaseEntity
 
     public static string GenerateLibraryName(Guid teacherId)
     {
-        return $"prisma-teacher-{teacherId:N}";
+        return $"wasla-teacher-{teacherId:N}";
     }
 }

@@ -1,5 +1,4 @@
 using Ardalis.Result;
-using MediatR;
 using Microsoft.AspNetCore.Http;
 using Prisma.Application.Abstractions.Messaging;
 
@@ -25,4 +24,4 @@ public sealed record CreateLessonDetailsCommand(
 
 public record ChapterCreateDto(string Name, string? VideoFileName, double VideoDurationSeconds);
 
-public record CreateLessonResponse(int lessonId, List<int> sectionIds);
+public record CreateLessonResponse(int LessonId, IList<int> SectionIds);

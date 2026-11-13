@@ -176,7 +176,7 @@ internal sealed class CreateLessonDetailsCommandHandler(
                 DueDate =
                     request.AssignmentDueDate?.ToUniversalTime()
                     ?? DateTimeOffset.UtcNow.AddDays(7),
-                Grade = 10,
+                TotalMarks = 10,
             };
         }
 

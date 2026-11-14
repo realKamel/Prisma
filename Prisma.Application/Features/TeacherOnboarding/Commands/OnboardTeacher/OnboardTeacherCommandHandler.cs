@@ -1,14 +1,13 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.AcademicYearsSpecs;
 
-namespace Prisma.Application.Features.TeacherOnboarding.Commands;
+namespace Prisma.Application.Features.TeacherOnboarding.Commands.OnboardTeacher;
 
 internal sealed class OnboardTeacherCommandHandler(
     IUnitOfWork unitOfWork,
@@ -72,7 +71,7 @@ internal sealed class OnboardTeacherCommandHandler(
 
         foreach (var ay in academicYears)
         {
-            ay.RegisterTeacherInAcademicYear(teacher.Id);
+            ay.RegisterTeacher(teacher.Id);
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

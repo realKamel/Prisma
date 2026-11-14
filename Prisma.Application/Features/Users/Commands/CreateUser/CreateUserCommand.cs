@@ -1,5 +1,5 @@
 using Ardalis.Result;
-using MediatR;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Features.Users.Dtos;
 
 namespace Prisma.Application.Features.Users.Commands.CreateUser;
@@ -18,4 +18,4 @@ public record CreateUserCommand(
     string? ParentMobile,
     string? Subject
 // Student only
-) : IRequest<Result<UserEditDto>>;
+) : ICommand<Result<UserEditDto>>;

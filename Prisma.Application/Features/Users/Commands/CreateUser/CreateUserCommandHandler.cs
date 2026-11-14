@@ -1,7 +1,6 @@
 using Ardalis.Result;
-using MediatR;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Dtos;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -12,7 +11,7 @@ using Prisma.Domain.Interfaces;
 namespace Prisma.Application.Features.Users.Commands.CreateUser;
 
 internal sealed class CreateUserCommandHandler(IIdentityService identityService, IUnitOfWork uow)
-    : IRequestHandler<CreateUserCommand, Result<UserEditDto>>
+    : ICommandHandler<CreateUserCommand, Result<UserEditDto>>
 {
     public async Task<Result<UserEditDto>> Handle(
         CreateUserCommand request,
@@ -68,7 +67,7 @@ internal sealed class CreateUserCommandHandler(IIdentityService identityService,
             var objectStorageRepo = uow.GetOrCreateRepository<ObjectStorage, Guid>();
             foreach (var ay in academicYears)
             {
-                ay.RegisterTeacherInAcademicYear(user.Id);
+                ay.RegisterTeacher(user.Id);
             }
 
             var videoLibraryResult = VideoLibrary.Create(user.Id);

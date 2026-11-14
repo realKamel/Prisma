@@ -3,7 +3,7 @@ using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Domain.Specifications.AcademicYearsSpecs;
 
-public class FilteredAcademicYear : Specification<AcademicYear>
+public sealed class FilteredAcademicYear : Specification<AcademicYear>
 {
     public FilteredAcademicYear(IList<Guid> idsList)
     {

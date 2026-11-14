@@ -1,9 +1,9 @@
 using Ardalis.Specification;
-using Prisma.Domain.Entities.LessonAggregate;
 
 namespace Prisma.Domain.Specifications.RedeemCodes;
 
-public class TeacherAcademicYearExistsSpecification : Specification<Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher>
+public sealed class TeacherAcademicYearExistsSpecification
+    : Specification<Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher>
 {
     public TeacherAcademicYearExistsSpecification(Guid teacherId, int academicYearId)
     {

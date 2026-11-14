@@ -24,6 +24,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Features\AcademicYears\Commands\" />
     <Folder Include="Features\ActivityLogs\" />
     <Folder Include="Features\Notifications\" />
   </ItemGroup>

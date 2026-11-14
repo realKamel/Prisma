@@ -3,11 +3,18 @@ using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
 
-public class AcademicYearTeacher : BaseEntity
+public sealed class AcademicYearTeacher : BaseEntity
 {
-    public AcademicYear AcademicYear { get; set; }
-    public int AcademicYearId { get; set; }
+    private AcademicYearTeacher() { }
 
-    public Teacher Teacher { get; set; }
-    public Guid TeacherId { get; set; }
+    internal AcademicYearTeacher(Guid teacherId)
+    {
+        TeacherId = teacherId;
+    }
+
+    public int AcademicYearId { get; private set; }
+    public AcademicYear AcademicYear { get; private set; } = null!;
+
+    public Guid TeacherId { get; private set; }
+    public Teacher Teacher { get; private set; } = null!;
 }

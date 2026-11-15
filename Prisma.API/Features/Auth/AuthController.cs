@@ -9,6 +9,7 @@ using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.API.Features.Auth.Requests;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs.Auth;
+using Prisma.Application.Features.Authentication.Commands.ChangePassword;
 using Prisma.Application.Features.Authentication.Commands.EmailVerification;
 using Prisma.Application.Features.Authentication.Commands.ForgotPassword;
 using Prisma.Application.Features.Authentication.Commands.Logout;
@@ -125,7 +126,17 @@ public class AuthController(IMediator mediator, IWebHostEnvironment environment)
 
         return result;
     }
-
+    [HttpPost("change-password")]
+    [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [ExpectedFailures(ResultStatus.Invalid, ResultStatus.Unauthorized)]
+    public async Task<Result<bool>> ChangePassword(
+        [FromBody] ChangePasswordCommand command,
+        CancellationToken ct
+    )
+    {
+        return await mediator.Send(command, ct);
+    }
     [HttpPost("email-verify")]
     public async Task<Result> EmailVerify([FromBody] EmailVerificationRequestCommand command)
     {

@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Identity;
+using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -12,9 +13,26 @@ namespace Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
 internal class GetTeacherCatalogQueryHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
-    IIdentityService identityService
+    IIdentityService identityService,
+    IStorageService storageService
 ) : IRequestHandler<GetTeacherCatalogQuery, Result<TeacherCatalogResponse>>
 {
+    private const int AvatarLinkLifetimeInMinutes = 24 * 60;
+
+    // What the query reads per teacher. The picture comes as bucket + object key; the download
+    // link is built below, the same way as on the teacher's own profile page.
+    private sealed record TeacherRow(
+        string Id,
+        string FirstName,
+        string SecondName,
+        string Subject,
+        int LessonsCount,
+        bool IsFeatured,
+        string? BucketName,
+        string? ObjectKey,
+        List<AcademicYearDto> AcademicYears
+    );
+
     public async Task<Result<TeacherCatalogResponse>> Handle(
         GetTeacherCatalogQuery request,
         CancellationToken cancellationToken
@@ -29,17 +47,20 @@ internal class GetTeacherCatalogQueryHandler(
             cancellationToken
         );
 
-        var teachers = await repo.ListAsync(
-            new PagedTeacherWithDetailsSpec<TeacherDto>(
+        var rows = await repo.ListAsync(
+            new PagedTeacherWithDetailsSpec<TeacherRow>(
                 request.Search,
-                x => new TeacherDto(
+                x => new TeacherRow(
                     x.Id.ToString(),
                     x.FirstName,
                     x.SecondName,
                     x.Subject,
                     x.Lessons.Count,
                     x.IsFeatured,
-                    x.TeacherAvatarUrl,
+                    x.ProfileImageFile == null
+                        ? null
+                        : x.ProfileImageFile.ObjectStorage.BucketName,
+                    x.ProfileImageFile == null ? null : x.ProfileImageFile.ObjectKey,
                     x.AcademicYears.Select(y => new AcademicYearDto(
                             y.AcademicYear.PublicId.ToString(),
                             y.AcademicYear.Title
@@ -51,6 +72,32 @@ internal class GetTeacherCatalogQueryHandler(
             ),
             cancellationToken
         );
+
+        var teachers = new List<TeacherDto>(rows.Count);
+        foreach (var row in rows)
+        {
+            var avatarUrl =
+                row.BucketName is null || row.ObjectKey is null
+                    ? null
+                    : await storageService.GetDownloadUrlAsync(
+                        row.BucketName,
+                        row.ObjectKey,
+                        AvatarLinkLifetimeInMinutes
+                    );
+
+            teachers.Add(
+                new TeacherDto(
+                    row.Id,
+                    row.FirstName,
+                    row.SecondName,
+                    row.Subject,
+                    row.LessonsCount,
+                    row.IsFeatured,
+                    avatarUrl,
+                    row.AcademicYears
+                )
+            );
+        }
 
         return new TeacherCatalogResponse(
             teachers,

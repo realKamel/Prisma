@@ -21,6 +21,10 @@ using Prisma.Application.Features.Teachers.Queries.GetTeacherFinancesQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherLessonsQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeachersQuery;
 using Prisma.Application.Features.Teachers.Queries.GetTeacherStatsQuery;
+using Prisma.Application.Features.Teachers.Commands.RequestProfilePictureUpload;
+using Prisma.Application.Features.Teachers.Commands.UpdateMyProfile;
+using Prisma.Application.Features.Teachers.Profile;
+using Prisma.Application.Features.Teachers.Queries.GetMyProfile;
 
 namespace Prisma.API.Features.Teacher;
 
@@ -143,5 +147,36 @@ public sealed class TeachersController(ISender mediator) : ApiController
     )
     {
         return await mediator.Send(new GetPublicTeacherProfileQuery(id), cancellationToken);
+    }
+    [HttpGet("me/profile")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Unauthorized, ResultStatus.NotFound)]
+    [Authorize(Roles = AppRoles.Teacher)]
+    public async Task<Result<MyProfileResponse>> GetMyProfile(CancellationToken ct)
+    {
+        return await mediator.Send(new GetMyProfileQuery(), ct);
+    }
+
+    [HttpPut("me/profile")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [ExpectedFailures(ResultStatus.Invalid, ResultStatus.Unauthorized, ResultStatus.NotFound)]
+    [Authorize(Roles = AppRoles.Teacher)]
+    public async Task<Result<bool>> UpdateMyProfile(
+        [FromBody] UpdateMyProfileCommand command,
+        CancellationToken ct
+    )
+    {
+        return await mediator.Send(command, ct);
+    }
+
+    [HttpPost("me/profile/picture/upload-url")]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [ExpectedFailures(ResultStatus.Invalid, ResultStatus.Unauthorized, ResultStatus.NotFound)]
+    [Authorize(Roles = AppRoles.Teacher)]
+    public async Task<Result<RequestProfilePictureUploadResponse>> RequestProfilePictureUpload(
+        [FromBody] RequestProfilePictureUploadCommand command,
+        CancellationToken ct
+    )
+    {
+        return await mediator.Send(command, ct);
     }
 }

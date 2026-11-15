@@ -9,7 +9,7 @@ using Prisma.Application.Abstractions.ObjectStorage;
 
 namespace Prisma.Infrastructure.Services.StorageService;
 
-public sealed partial class S3StorageService(
+internal sealed partial class S3StorageService(
     IAmazonS3 s3,
     IOptions<ObjectStorageOptions> objectStorageOptions,
     ILogger<S3StorageService> logger,
@@ -172,7 +172,7 @@ public sealed partial class S3StorageService(
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = DefaultBucketName,
+                BucketName = bucket,
                 Key = objectKey,
                 Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
                 Verb = HttpVerb.PUT,
@@ -188,7 +188,7 @@ public sealed partial class S3StorageService(
         }
         catch (Exception ex)
         {
-            LogPresignedUrlCreateFailed(logger, objectKey, DefaultBucketName, ex);
+            LogPresignedUrlCreateFailed(logger, objectKey, bucket, ex);
             return Result.Error("Error happened while create upload link");
         }
     }
@@ -218,7 +218,7 @@ public sealed partial class S3StorageService(
         {
             var request = new GetPreSignedUrlRequest
             {
-                BucketName = DefaultBucketName,
+                BucketName = bucket,
                 Key = objectKey,
                 Expires = DateTime.UtcNow.AddSeconds(expiresInSeconds),
                 Verb = HttpVerb.GET,
@@ -234,7 +234,7 @@ public sealed partial class S3StorageService(
         }
         catch (Exception ex)
         {
-            LogPresignedUrlCreateFailed(logger, objectKey, DefaultBucketName, ex);
+            LogPresignedUrlCreateFailed(logger, objectKey, bucket, ex);
             return Result.Error("Error happened while create download link");
         }
     }
@@ -319,8 +319,8 @@ public sealed partial class S3StorageService(
     }
 
     public async Task<Result> DeleteObjectAsync(
-        string objectKeys,
         string bucketName,
+        string objectKeys,
         CancellationToken cancellationToken = default
     )
     {

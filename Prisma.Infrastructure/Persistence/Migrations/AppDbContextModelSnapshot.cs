@@ -1158,7 +1158,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("ContentHash")
@@ -2568,11 +2567,23 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                 {
                     b.HasBaseType("Prisma.Domain.Entities.UserAggregate.User");
 
+                    b.Property<DateTimeOffset?>("AnnouncementEndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AnnouncementText")
+                        .HasColumnType("text");
+
                     b.Property<string>("Bio")
                         .HasColumnType("text");
 
+                    b.Property<int>("Color")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsFeatured")
                         .HasColumnType("boolean");
+
+                    b.Property<Guid?>("ProfileImageFileId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -2586,6 +2597,35 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("TeacherAvatarUrl")
                         .HasColumnType("text");
+
+                    b.Property<int?>("YearsOfExperience")
+                        .HasColumnType("integer");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Links", "Prisma.Domain.Entities.UserAggregate.Teacher.Links#ContactLinks", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<string>("Facebook")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Instagram")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Telegram")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Tiktok")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Website")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Whatsapp")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Youtube")
+                                .HasColumnType("text");
+                        });
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "TeacherLandingSettings", "Prisma.Domain.Entities.UserAggregate.Teacher.TeacherLandingSettings#TeacherLandingSettings", b1 =>
                         {
@@ -2685,6 +2725,28 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                                 .ToJson("TeacherLandingSettings")
                                 .HasColumnType("jsonb");
                         });
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Visibility", "Prisma.Domain.Entities.UserAggregate.Teacher.Visibility#ProfileVisibility", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<bool>("ShowContactLinks")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("ShowLessonsCount")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("ShowPopularLessons")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("ShowStudentsCount")
+                                .HasColumnType("boolean");
+
+                            b1.Property<bool>("ShowYearsOfExperience")
+                                .HasColumnType("boolean");
+                        });
+
+                    b.HasIndex("ProfileImageFileId");
 
                     b.HasDiscriminator().HasValue("Teacher");
                 });
@@ -3191,6 +3253,15 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("AcademicYear");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Teacher", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "ProfileImageFile")
+                        .WithMany()
+                        .HasForeignKey("ProfileImageFileId");
+
+                    b.Navigation("ProfileImageFile");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.ChatAggregate.Conversation", b =>

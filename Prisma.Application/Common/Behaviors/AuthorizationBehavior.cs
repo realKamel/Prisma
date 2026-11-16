@@ -22,7 +22,7 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(
         ArgumentNullException.ThrowIfNull(next);
 
         bool requiresAuthorization =
-            request.RequiredRoles.Count > 0 || request.RequiredPermissions.Count > 0;
+            request.RequiredRoles?.Count > 0 || request.RequiredPermissions?.Count > 0;
 
         if (requiresAuthorization && !currentUser.UserId.HasValue)
         {
@@ -32,10 +32,8 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(
             );
         }
 
-        if (
-            request.RequiredRoles.Count > 0
-            && !currentUser.IsInAnyRole(request.RequiredRoles, cancellationToken)
-        )
+        if (request.RequiredPermissions?.Count > 0
+            && !currentUser.IsInAnyRole(request.RequiredRoles, cancellationToken))
         {
             return CreateFailure(
                 nameof(Result.Forbidden),
@@ -43,7 +41,7 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(
             );
         }
 
-        if (request.RequiredPermissions.Count > 0)
+        if (request.RequiredPermissions?.Count > 0)
         {
             var hasPermissions = await identityService.HasPermissionsAsync(
                 currentUser.UserId!.Value,

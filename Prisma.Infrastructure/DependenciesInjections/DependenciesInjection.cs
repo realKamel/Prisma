@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Prisma.Application.Abstractions.Encryption;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Interfaces;
+using Prisma.Infrastructure.Encryption;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Services;
 using Prisma.Infrastructure.Services.DataProtectionServices;
@@ -51,6 +52,7 @@ public static partial class DependenciesInjection
         services.AddBunnyServices(configuration);
         services.AddSignalRWithConfiguration(configuration);
         services.AddFileScannerService(configuration);
+        services.AddSingleton<IWebhookSignatureVerifier, BunnyWebhookSignatureVerifier>();
     }
 
     private static void AddInfrastructureHealthChecks(

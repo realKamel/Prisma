@@ -1,6 +1,6 @@
-# Prisma
+# Wasla
 
-Prisma is an AI-enabled educational management backend built with .NET 10 and ASP.NET Core. It provides APIs for authentication, users, lessons, assessments, assignments, payments, storage, and AI-assisted learning workflows.
+Wasla is the backend for an AI-enabled educational management platform built with .NET 10 and ASP.NET Core. Internally, the solution is organized around the `Prisma.*` projects, but the product itself is the Wasla platform for managing users, lessons, assessments, assignments, payments, storage, and AI-assisted learning workflows.
 
 ## Features
 
@@ -120,16 +120,18 @@ Requests flow through thin controllers that dispatch MediatR commands and querie
 ## Solution Structure
 
 ```text
-Prisma/
+Wasla/
 ├── Prisma.API/                 # Web API and HTTP presentation layer
 ├── Prisma.Application/         # Use cases and application contracts
 ├── Prisma.Domain/              # Core domain model
 ├── Prisma.Infrastructure/     # Persistence and external integrations
 ├── Prisma.Application.Tests/   # Unit tests
 ├── Prisma.Integration.Tests/   # Integration tests
+├── Wasla.sln                  # Solution entry point
 ├── docker-compose.yml          # Production-like local services
 ├── docker-compose.override.yml # Development ports and MinIO
-└── postman/                    # API collections and environments
+├── postman/                    # API collections and environments
+└── README.md                  # Project overview and setup
 ```
 
 ## Prerequisites

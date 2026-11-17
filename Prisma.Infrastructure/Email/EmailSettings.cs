@@ -1,4 +1,4 @@
-﻿namespace Prisma.Infrastructure.Services.EmailService;
+﻿namespace Prisma.Infrastructure.Email;
 
 public class EmailSettings
 {

@@ -6,16 +6,16 @@ using Prisma.Application.Abstractions.Email;
 using Prisma.Application.Abstractions.Security;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Abstractions.VideoServices;
+using Prisma.Infrastructure.Email;
 using Prisma.Infrastructure.ExternalServices.BunnyApi;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Core;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
-using Prisma.Infrastructure.ExternalServices.EmailService;
-using Prisma.Infrastructure.Services.EmailService;
 using Prisma.Infrastructure.Services.Security;
 using Prisma.Infrastructure.Services.StorageService;
 using Prisma.Infrastructure.Services.VideoStreamingAndStorage;
 using Refit;
 using Resend;
+using ResendEmailSender = Prisma.Infrastructure.Email.ResendEmailSender;
 
 namespace Prisma.Infrastructure.DependenciesInjections;
 

@@ -1,4 +1,4 @@
-namespace Prisma.Infrastructure.ExternalServices.EmailService;
+namespace Prisma.Infrastructure.Email;
 
 public sealed class ResendOptions
 {

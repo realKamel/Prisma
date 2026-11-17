@@ -3,10 +3,8 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using Prisma.Application.Abstractions.Email;
-using Prisma.Application.Abstractions.Services;
-using Prisma.Domain.Interfaces;
 
-namespace Prisma.Infrastructure.Services.EmailService;
+namespace Prisma.Infrastructure.Email;
 
 public class EmailService : IEmailService
 {

@@ -1,12 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Email;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Exceptions;
 using Resend;
 using EmailMessage = Prisma.Application.Abstractions.Email.EmailMessage;
 
-namespace Prisma.Infrastructure.ExternalServices.EmailService;
+namespace Prisma.Infrastructure.Email;
 
 internal sealed partial class ResendEmailSender(
     ILogger<ResendEmailSender> logger,

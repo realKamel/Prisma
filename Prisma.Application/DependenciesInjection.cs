@@ -49,6 +49,12 @@ public static class DependenciesInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services
+            .AddOptions<ApplicationUrlsOptions>()
+            .Bind(configuration.GetSection(ApplicationUrlsOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         //specific service
         services.AddScoped<ILibraryQueryService, LibraryQueryService>();
     }

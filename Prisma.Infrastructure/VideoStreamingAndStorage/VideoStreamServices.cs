@@ -1,12 +1,11 @@
 using Ardalis.Result;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream.CreateVideo;
 using Prisma.Infrastructure.ExternalServices.BunnyApi.Stream.SharedDtos;
 
-namespace Prisma.Infrastructure.Services.VideoStreamingAndStorage;
+namespace Prisma.Infrastructure.VideoStreamingAndStorage;
 
 public class VideoStreamServices(IBunnyStreamVideosApi streamVideosApi) : IVideoStreamServices
 {

@@ -39,8 +39,6 @@ public static class DependenciesInjection
         // 5. UNIT OF WORK (Innermost) - Wraps handler execution and commits changes when appropriate.
         //services.AddTransient(typeof(IPipelineBehavior<,>), typeof(DbTransactionBehavior<,>));
 
-        services.Configure<FeatureOptions>(configuration.GetSection(AppFeatureKeys.SectionKey));
-
         services.AddFeatureManagement();
 
         services

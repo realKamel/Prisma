@@ -3,7 +3,6 @@ using Ardalis.Result;
 using MediatR;
 using Prisma.Application.Abstractions.Authorization;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
 
 namespace Prisma.Application.Common.Behaviors;
 
@@ -28,12 +27,14 @@ internal sealed class AuthorizationBehavior<TRequest, TResponse>(
         {
             return CreateFailure(
                 nameof(Result.Unauthorized),
-                "Must Be Logged in Frist, Login and Try Again."
+                "Must Be Logged in First, Login and Try Again."
             );
         }
 
-        if (request.RequiredPermissions?.Count > 0
-            && !currentUser.IsInAnyRole(request.RequiredRoles, cancellationToken))
+        if (
+            request.RequiredPermissions?.Count > 0
+            && !currentUser.IsInAnyRole(request.RequiredRoles, cancellationToken)
+        )
         {
             return CreateFailure(
                 nameof(Result.Forbidden),

@@ -2,9 +2,11 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Ardalis.Result.AspNetCore;
+using DashboardWolverine;
 using Hangfire;
 using HealthChecks.UI.Client;
 using JasperFx.CodeGeneration.Model;
+using JasperFx.Core;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
@@ -126,6 +128,7 @@ public static partial class WebAppHelper
         );
         services.AddKeyedSingleton<IConnectionMultiplexer>("messaging", multiplexer);
         services.AddSingleton<ITusStore>(_ => new TusDiskStore("/uploads"));
+        services.AddWolverineMonitoringDashboard(configuration);
     }
 
     private static void AddLocalizationServices(this IServiceCollection services)
@@ -295,5 +298,33 @@ public static partial class WebAppHelper
                     TimeSpan.FromSeconds(30)
                 );
         });
+    }
+
+    internal static void AddWolverineMonitoringDashboard(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var connectionStrings = configuration
+            .GetSection(ConnectionStringsOptions.SectionName)
+            .Get<ConnectionStringsOptions>();
+
+        ArgumentNullException.ThrowIfNull(connectionStrings);
+
+        services.AddMonitoringDashboard(options =>
+        {
+            options.WolverineConnectionString = connectionStrings.DefaultSqlConnection;
+            options.RoutePrefix = "/wolverine-ui";
+            options.EnableAutoRefresh = true;
+            options.Schema = "wolverine";
+            options.AutoRefreshIntervalSeconds = 30;
+            options.Username = "admin";
+            options.Password = "admin123";
+        });
+    }
+
+    internal static void MapWolverineMonitoringDashboardEndpoint(this WebApplication webApplication)
+    {
+        webApplication.UseMonitoringDashboard();
     }
 }

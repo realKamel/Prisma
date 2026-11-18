@@ -50,8 +50,13 @@
     <PackageReference Include="SharpAbp.Abp.OpenTelemetry.Exporter.Prometheus.AspNetCore" />
     <PackageReference Include="SignalR.OpenApi.SwaggerUi" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" />
     <PackageReference Include="tusdotnet" />
+    <PackageReference Include="WolverineFx.Dashboard" />
+    <PackageReference Include="WolverineFx.HealthChecks" />
+    <PackageReference Include="WolverineFx.Http" />
   </ItemGroup>
 
   <ItemGroup>

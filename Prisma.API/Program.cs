@@ -109,6 +109,8 @@ public class Program
 
             app.MapTusEndpoints();
 
+            app.MapWolverineMonitoringDashboardEndpoint();
+
             app.MapControllers();
 
             app.MapChatHub();

@@ -17,7 +17,7 @@ public sealed class IdempotentFilter(
 {
     private const string HeaderName = "X-Idempotency-Key";
 
-    private readonly IFusionCache _cache = cacheProvider.GetCache("prisma_cache");
+    private readonly IFusionCache _cache = cacheProvider.GetCache("wasla_cache");
 
     public async Task OnActionExecutionAsync(
         ActionExecutingContext context,

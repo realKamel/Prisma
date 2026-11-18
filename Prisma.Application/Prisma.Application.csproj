@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Serilog" />
+    <PackageReference Include="WolverineFx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,5 +28,6 @@
     <Folder Include="Features\AcademicYears\Commands\" />
     <Folder Include="Features\ActivityLogs\" />
     <Folder Include="Features\Notifications\" />
+    <Folder Include="IntegrationEvents\" />
   </ItemGroup>
 </Project>

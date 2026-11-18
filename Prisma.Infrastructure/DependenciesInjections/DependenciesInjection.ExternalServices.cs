@@ -94,7 +94,7 @@ public static partial class DependenciesInjection
         );
 
         services
-            .AddRefitClient<IBunnyCoreVideoLibraryApi>()
+            .AddRefitGeneratedClient<IBunnyCoreVideoLibraryApi>()
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = new Uri(bunnyOptions.CoreBaseUrl);
@@ -103,7 +103,7 @@ public static partial class DependenciesInjection
             .AddStandardResilienceHandler();
 
         services
-            .AddRefitClient<IBunnyStreamVideosApi>()
+            .AddRefitGeneratedClient<IBunnyStreamVideosApi>()
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = new Uri(bunnyOptions.StreamBaseUrl);
@@ -112,7 +112,7 @@ public static partial class DependenciesInjection
             .AddStandardResilienceHandler();
 
         services
-            .AddRefitClient<IBunnyCorePullZoneApi>()
+            .AddRefitGeneratedClient<IBunnyCorePullZoneApi>()
             .ConfigureHttpClient(c =>
             {
                 c.BaseAddress = new Uri(bunnyOptions.CoreBaseUrl);

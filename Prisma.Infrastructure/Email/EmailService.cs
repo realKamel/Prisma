@@ -1,4 +1,5 @@
-﻿using MailKit.Net.Smtp;
+﻿using MailKit;
+using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
@@ -17,7 +18,7 @@ public class EmailService : IEmailService
 
     public async Task SendAsync(string to, string subject, string body)
     {
-        var message = new MimeMessage();
+        using var message = new MimeMessage();
         message.From.Add(MailboxAddress.Parse(_settings.Username));
         message.To.Add(MailboxAddress.Parse(to));
         message.Subject = subject;
@@ -26,7 +27,7 @@ public class EmailService : IEmailService
         using var smtp = new SmtpClient();
         await smtp.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
         await smtp.AuthenticateAsync(_settings.Username, _settings.Password);
-        await smtp.SendAsync(message);
+        await smtp.SendAsync(new SendRequest(message));
         await smtp.DisconnectAsync(true);
     }
 }

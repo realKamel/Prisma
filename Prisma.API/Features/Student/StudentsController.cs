@@ -16,6 +16,7 @@ using Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
 using Prisma.Application.Features.Students.Queries.GetStudentPerformanceStatus;
 using Prisma.Application.Features.Students.Queries.GetStudentProfileQuery;
+using Prisma.Application.Features.Students.Queries.GetStudentStatsHistoryQuery;
 using Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
 
 namespace Prisma.API.Features.Student;
@@ -71,6 +72,13 @@ public sealed class StudentsController(ISender mediator) : ApiController
     )
     {
         var result = await mediator.Send(new GetStudentDashboardQuery(), cancellationToken);
+        return result;
+    }
+    [HttpGet("dashboard/stats-history")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.NotFound)]
+    public async Task<Result<StatsHistoryDto>> GetStatsHistory(CancellationToken ct)
+    {
+        var result = await mediator.Send(new GetStudentStatsHistoryQuery(), ct);
         return result;
     }
 

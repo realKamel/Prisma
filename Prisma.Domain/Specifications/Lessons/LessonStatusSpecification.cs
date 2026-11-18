@@ -19,12 +19,14 @@ public class LessonStatusSpecification : Specification<Lesson, LessonStatusProje
                     .Select(e => e.ExpiresAt)
                     .FirstOrDefault(),
                 HasPrerequisite = lesson.Prerequisite != null,
+                HasPrerequisiteEnrollment =
+                    lesson.Prerequisite != null
+                    && lesson.Prerequisite.Enrollments.Any(e => e.StudentId == studentId),
                 IsPrerequisiteCompleted =
                     lesson.Prerequisite != null
-                    && lesson
-                        .Prerequisite.Enrollments.Where(e => e.StudentId == studentId)
-                        .Select(e => (bool?)e.IsCompleted)
-                        .FirstOrDefault() == true,
+                    && lesson.Prerequisite.Enrollments.Any(e =>
+                        e.StudentId == studentId && e.IsCompleted
+                    ),
             });
     }
 }
@@ -35,5 +37,6 @@ public class LessonStatusProjection
     public DateTimeOffset? EnrollmentExpiresAt { get; set; }
     public bool HasEnrollment { get; set; }
     public bool HasPrerequisite { get; set; }
+    public bool HasPrerequisiteEnrollment { get; set; }
     public bool IsPrerequisiteCompleted { get; set; }
 }

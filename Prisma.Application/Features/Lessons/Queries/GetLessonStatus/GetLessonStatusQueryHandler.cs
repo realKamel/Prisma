@@ -50,7 +50,14 @@ internal sealed class GetLessonStatusQueryHandler(
             );
         }
 
-        if (lesson is { HasPrerequisite: true, IsPrerequisiteCompleted: false })
+        if (
+            lesson is
+            {
+                HasPrerequisite: true,
+                HasPrerequisiteEnrollment: true,
+                IsPrerequisiteCompleted: false
+            }
+        )
         {
             return Result<LessonStatusResponse>.Success(
                 new LessonStatusResponse(Status: EnrollmentStatus.Locked)

@@ -13,9 +13,14 @@ internal sealed class VideoConfiguration : IEntityTypeConfiguration<Video>
 
         builder.HasIndex(x => x.ProviderVideoId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
+        builder.HasIndex(x => new { x.ProviderVideoLibraryId, x.ProviderVideoId }).IsUnique();
+
         builder.ComplexProperty(x => x.TimeDuration).ConfigureTimeDuration<Video>("TimeDuration");
 
-        builder.Property(x => x.ProcessingStatus).HasConversion<string>().HasMaxLength(50);
+        builder
+            .Property(v => v.Status)
+            .HasConversion(status => status.Value, value => VideoStatus.FromValue(value))
+            .IsRequired();
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

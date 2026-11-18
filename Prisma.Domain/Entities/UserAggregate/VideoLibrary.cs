@@ -9,7 +9,7 @@ public sealed class VideoLibrary : BaseEntity
     private VideoLibrary() { }
 
     //TODO: should have UniqueIdx ?
-    public long ProviderLibraryId { get; private set; }
+    public long? ProviderLibraryId { get; private set; }
     public long TrafficUsage { get; private set; }
     public long StorageUsage { get; private set; }
     public string? LibraryApiKey { get; private set; }
@@ -17,7 +17,7 @@ public sealed class VideoLibrary : BaseEntity
 
     // public string? TokenAuthKey { get; private set; }
     // public string? CdnHostname { get; private set; }
-    public Uri? WebhookUrl { get; private set; }
+    // public Uri? WebhookUrl { get; private set; }
 
     // public long? PullZoneId { get; private set; }
 
@@ -25,7 +25,7 @@ public sealed class VideoLibrary : BaseEntity
     // public Teacher Teacher { get; private set; }
     public Guid TeacherId { get; private set; }
 
-    public ProvisioningStatus ProvisioningStatus { get; set; }
+    public VideoLibraryStatus Status { get; set; } = VideoLibraryStatus.Pending;
 
     public EncodingTier EncodingTier { get; set; }
 
@@ -36,7 +36,7 @@ public sealed class VideoLibrary : BaseEntity
     {
         var library = new VideoLibrary
         {
-            ProvisioningStatus = ProvisioningStatus.Pending,
+            Status = VideoLibraryStatus.Pending,
             TeacherId = teacherId,
         };
         return Result.Success(library);
@@ -47,30 +47,76 @@ public sealed class VideoLibrary : BaseEntity
         TeacherId = teacherId;
     }
 
-    public void MarkLibraryAsActive(
+    public void ConfigureProviderCredentials(
         long providerId,
-        string? libraryApiKey,
-        string readOnlyApiKey,
-        string webhookUrl
+        string libraryApiKey,
+        string readOnlyApiKey
     )
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(providerId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(libraryApiKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(readOnlyApiKey);
+
+        if (ProviderLibraryId.HasValue)
+        {
+            throw new InvalidOperationException("Provider library is already configured.");
+        }
+
         ProviderLibraryId = providerId;
         LibraryApiKey = libraryApiKey;
         ReadOnlyApiKey = readOnlyApiKey;
-        // TokenAuthKey = tokenAuthKey;
-        // CdnHostname = cdnHostname;
-        WebhookUrl = new Uri(webhookUrl);
-        // PullZoneId = pullZoneId;
-        ProvisioningStatus = ProvisioningStatus.Active;
+    }
+
+    public void MarkAsActive()
+    {
+        EnsureProviderCredentialsConfigured();
+
+        ChangeStatus(VideoLibraryStatus.Active);
     }
 
     public void MarkAsFailed()
     {
-        ProvisioningStatus = ProvisioningStatus.Failed;
+        ChangeStatus(VideoLibraryStatus.Failed);
+    }
+
+    public void MarkAsDeleted()
+    {
+        ChangeStatus(VideoLibraryStatus.Deleted);
+    }
+
+    public void RetryProvisioning()
+    {
+        ChangeStatus(VideoLibraryStatus.Pending);
+    }
+
+    private void ChangeStatus(VideoLibraryStatus newStatus)
+    {
+        if (!Status.CanTransitionTo(newStatus))
+        {
+            throw new InvalidOperationException(
+                $"Cannot transition library from {Status} to {newStatus}."
+            );
+        }
+
+        Status = newStatus;
     }
 
     public static string GenerateLibraryName(Guid teacherId)
     {
         return $"wasla-teacher-{teacherId:N}";
+    }
+
+    private void EnsureProviderCredentialsConfigured()
+    {
+        if (
+            ProviderLibraryId is null
+            || string.IsNullOrWhiteSpace(LibraryApiKey)
+            || string.IsNullOrWhiteSpace(ReadOnlyApiKey)
+        )
+        {
+            throw new InvalidOperationException(
+                "Provider credentials must be configured before activation."
+            );
+        }
     }
 }

@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Prisma.Domain.Common;
+using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;
@@ -21,6 +22,7 @@ public sealed class Assignment : BaseEntity
 
     public TimeDuration Expiry { get; private set; } = TimeDuration.Zero;
 
+    public FileObject FileObject { get; set; }
     public Guid FileObjectId { get; private set; }
 
     public Assignment() { } // ef core

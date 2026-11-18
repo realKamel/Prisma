@@ -11,7 +11,10 @@ internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<Video
         builder.HasKey(x => x.Id);
 
         // builder.HasIndex(x => x.ProviderLibraryId).IsUnique().HasFilter("\"IsDeleted\" = false");
-        builder.HasIndex(x => x.ProviderLibraryId).HasFilter("\"IsDeleted\" = false");
+        builder
+            .HasIndex(x => x.ProviderLibraryId)
+            .IsUnique()
+            .HasFilter("\"IsDeleted\" = false AND \"ProviderLibraryId\" IS NOT NULL");
 
         builder
             .HasMany(x => x.Videos)
@@ -26,7 +29,9 @@ internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<Video
 
         builder.HasIndex(x => x.TeacherId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
-        builder.Property(x => x.ProvisioningStatus).HasConversion<string>().HasMaxLength(50);
+        builder
+            .Property(x => x.Status)
+            .HasConversion(status => status.Value, value => VideoLibraryStatus.FromValue(value));
 
         builder.HasQueryFilter(x => !x.IsDeleted);
     }

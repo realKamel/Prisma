@@ -51,19 +51,19 @@ public class VideoStreamServices(IBunnyStreamVideosApi streamVideosApi) : IVideo
         return response.ToResult();
     }
 
-    private static VideoProcessingStatus MatchStatus(VideoModelStatus status)
+    private static VideoStatus MatchStatus(VideoModelStatus status)
     {
         return status switch
         {
-            VideoModelStatus.Created => VideoProcessingStatus.Created,
-            VideoModelStatus.Uploaded => VideoProcessingStatus.Uploaded,
-            VideoModelStatus.Processing => VideoProcessingStatus.Processing,
-            VideoModelStatus.Transcoding => VideoProcessingStatus.Transcoding,
-            VideoModelStatus.Finished => VideoProcessingStatus.Finished,
-            VideoModelStatus.Error => VideoProcessingStatus.Error,
-            VideoModelStatus.UploadFailed => VideoProcessingStatus.UploadFailed,
-            VideoModelStatus.JitSegmenting => VideoProcessingStatus.JitSegmenting,
-            VideoModelStatus.JitPlaylistsCreated => VideoProcessingStatus.JitPlaylistsCreated,
+            VideoModelStatus.Created => VideoStatus.Created,
+            VideoModelStatus.Uploaded => VideoStatus.Uploaded,
+            VideoModelStatus.Processing => VideoStatus.Processing,
+            VideoModelStatus.Transcoding => VideoStatus.Transcoding,
+            VideoModelStatus.Finished => VideoStatus.Finished,
+            VideoModelStatus.Error => VideoStatus.Error,
+            VideoModelStatus.UploadFailed => VideoStatus.UploadFailed,
+            VideoModelStatus.JitSegmenting => VideoStatus.JitSegmenting,
+            VideoModelStatus.JitPlaylistsCreated => VideoStatus.JitPlaylistsCreated,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(status),
                 status,

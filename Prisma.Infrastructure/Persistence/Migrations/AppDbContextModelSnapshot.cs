@@ -608,6 +608,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("FileObjectId");
+
                     b.HasIndex("LessonId")
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
@@ -1099,11 +1101,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ProcessingStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<Guid>("ProviderVideoId")
                         .HasColumnType("uuid");
 
@@ -1111,6 +1108,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<int?>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
                         .HasColumnType("integer");
 
                     b.Property<long>("StorageSizeBytes")
@@ -1151,6 +1151,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.HasIndex("VideoLibraryId");
+
+                    b.HasIndex("ProviderVideoLibraryId", "ProviderVideoId")
+                        .IsUnique();
 
                     b.ToTable("Video");
                 });
@@ -2375,16 +2378,14 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("LibraryApiKey")
                         .HasColumnType("text");
 
-                    b.Property<long>("ProviderLibraryId")
+                    b.Property<long?>("ProviderLibraryId")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("ProvisioningStatus")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("ReadOnlyApiKey")
                         .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<long>("StorageUsage")
                         .HasColumnType("bigint");
@@ -2401,13 +2402,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("WebhookUrl")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProviderLibraryId")
-                        .HasFilter("\"IsDeleted\" = false");
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false AND \"ProviderLibraryId\" IS NOT NULL");
 
                     b.HasIndex("TeacherId")
                         .IsUnique()
@@ -2886,11 +2885,19 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
                 {
+                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "FileObject")
+                        .WithMany()
+                        .HasForeignKey("FileObjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Lesson")
                         .WithOne("Assignment")
                         .HasForeignKey("Prisma.Domain.Entities.LessonAggregate.Assignment", "LessonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("FileObject");
 
                     b.Navigation("Lesson");
                 });

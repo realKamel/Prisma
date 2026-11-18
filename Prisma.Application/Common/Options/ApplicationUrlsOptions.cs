@@ -12,11 +12,15 @@ public sealed class ApplicationUrlsOptions
     [Required, Url]
     public required string FrontendUrl { get; set; }
 
-    /// <summary>Composes an absolute backend URL from a relative path.</summary>
-    public Uri Backend(string path) => Combine(BackendUrl, path);
+    /// <summary>
+    /// Composes an absolute backend URL from path fragments.
+    /// Fragments are concatenated with '/'; each is trimmed of leading/trailing slashes.
+    /// Fragments must be trusted path data — '?', '#' and '%' are not escaped.
+    /// </summary>
+    public Uri Backend(params string[] fragments) => Combine(BackendUrl, Join(fragments));
 
-    /// <summary>Composes an absolute frontend URL from a relative path.</summary>
-    public Uri Frontend(string path) => Combine(FrontendUrl, path);
+    /// <summary>Composes an absolute frontend URL from path fragments. See <see cref="Backend(string[])"/>.</summary>
+    public Uri Frontend(params string[] fragments) => Combine(FrontendUrl, Join(fragments));
 
     private static Uri Combine(string baseUrl, string path)
     {
@@ -49,5 +53,30 @@ public sealed class ApplicationUrlsOptions
         // - If you must return string, use .AbsoluteUri, NOT .ToString():
         // ToString() may un-escape characters for display and produce an invalid wire URL.
         return result;
+    }
+
+    private static string Join(string[] fragments)
+    {
+        ArgumentNullException.ThrowIfNull(fragments);
+        if (fragments.Length == 0)
+        {
+            throw new ArgumentException("At least one fragment is required.", nameof(fragments));
+        }
+
+        var parts = new string[fragments.Length];
+        for (var i = 0; i < fragments.Length; i++)
+        {
+            var fragment =
+                fragments[i]
+                ?? throw new ArgumentException(
+                    $"Fragment at index {i} is null.",
+                    nameof(fragments)
+                );
+
+            parts[i] = fragment.Trim('/');
+        }
+
+        // drop empties so "a", "", "b" doesn't become "a//b"
+        return string.Join('/', parts.Where(p => p.Length != 0));
     }
 }

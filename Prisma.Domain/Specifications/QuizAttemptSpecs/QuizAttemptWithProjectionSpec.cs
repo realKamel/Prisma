@@ -27,7 +27,6 @@ public class QuizAttemptWithProjectionSpec<TResult> : Specification<QuizAttempt,
         Query
             .Where(a => a.StudentId == studentId && a.Status == QuizAttemptStatus.Graded)
             .OrderByDescending(a => a.Degree)
-            .Take(1)
             .AsNoTracking()
             .Select(projection);
     }

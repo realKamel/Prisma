@@ -1,4 +1,5 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.DomainEvents.StreakEvents;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.ValueObjects.AssessmentDomain;
 
@@ -22,4 +23,19 @@ public sealed class AssignmentSubmission : BaseEntity
     public bool IsBeingGraded { get; set; }
     public DateTimeOffset? GradingStartedAt { get; set; }
     public Guid? GradingByUserId { get; set; }
+
+    public static AssignmentSubmission Create(
+    Guid studentId, int assignmentId, string fileKey, string title, DateTimeOffset submittedAt)
+    {
+        var submission = new AssignmentSubmission
+        {
+            StudentId = studentId,
+            AssignmentId = assignmentId,
+            FileUrl = fileKey,
+            Title = title,
+            SubmittedAt = submittedAt,
+        };
+        submission.AddDomainEvent(new AssignmentSubmittedEvent(studentId));
+        return submission;
+    }
 }

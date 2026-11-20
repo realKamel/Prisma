@@ -26,7 +26,17 @@ public class QuizAttemptWithProjectionSpec<TResult> : Specification<QuizAttempt,
     {
         Query
             .Where(a => a.StudentId == studentId && a.Status == QuizAttemptStatus.Graded)
-            .OrderByDescending(a => a.Degree)
+            .AsNoTracking()
+            .Select(projection);
+    }
+    public QuizAttemptWithProjectionSpec(
+        Guid studentId,
+        Expression<Func<QuizAttempt, object?>> ordering,
+        Expression<Func<QuizAttempt, TResult>> projection)
+    {
+        Query
+            .Where(a => a.StudentId == studentId && a.Status == QuizAttemptStatus.Graded)
+            .OrderByDescending(ordering)
             .AsNoTracking()
             .Select(projection);
     }

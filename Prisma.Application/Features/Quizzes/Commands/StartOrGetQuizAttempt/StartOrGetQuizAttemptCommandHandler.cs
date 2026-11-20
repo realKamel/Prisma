@@ -79,19 +79,13 @@ public class StartOrGetQuizAttemptCommandHandler(
         {
             if (timing.DueDate.HasValue && timing.DueDate < now)
                 return Result<AttemptStateDto>.Error("انتهى موعد هذا الاختبار");
+            attempt = QuizAttempt.Start(timing.Id, studentId, now, timing.TimeInMinutes);
+            
+            attemptRepo.Add(attempt);   
 
-            attempt = new QuizAttempt
-            {
-                QuizId = timing.Id,
-                StudentId = studentId,
-                StartedAt = now,
-                Deadline = now + timing.TimeInMinutes,
-                Status = QuizAttemptStatus.InProgress,
-            };
-            attemptRepo.Add(attempt);
             await unitOfWork.SaveChangesAsync(ct);
         }
-
+        
         var dto = new AttemptStateDto
         {
             AttemptId = attempt.Id,

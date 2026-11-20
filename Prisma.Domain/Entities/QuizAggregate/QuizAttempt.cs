@@ -1,4 +1,5 @@
 using Prisma.Domain.Common;
+using Prisma.Domain.DomainEvents.StreakEvents;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 
@@ -28,4 +29,17 @@ public class QuizAttempt : BaseEntity
     public int CopyPasteAttemptCount { get; set; }
     public uint Version { get; set; }
 
+    public static QuizAttempt Start(int quizId, Guid studentId, DateTimeOffset now, TimeSpan duration)
+    {
+        var attempt = new QuizAttempt
+        {
+            QuizId = quizId,
+            StudentId = studentId,
+            StartedAt = now,
+            Deadline = now + duration,
+            Status = QuizAttemptStatus.InProgress,
+        };
+        attempt.AddDomainEvent(new QuizAttemptStartedEvent(studentId));
+        return attempt;
+    }
 }

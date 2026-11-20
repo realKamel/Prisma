@@ -4,6 +4,8 @@ using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.DTOs;
+using Prisma.Application.Common.Time;
+using Prisma.Application.Features.Students.Common;
 using Prisma.Domain.Entities.EnrollmentAggregate;
 using Prisma.Domain.Entities.QuizAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -43,7 +45,7 @@ internal sealed class GetStudentDashboardQueryHandler(
         var basicInfo = await studentRepo.FirstOrDefaultAsync(
             new StudentWithProjectionSpec<StudentBasicInfo>(
                 userId,
-                s => new StudentBasicInfo(s.FirstName, s.AcademicYear!.Title, s.StreakDays)
+                s => new StudentBasicInfo(s.FirstName, s.AcademicYear!.Title)
             ),
             cancellationToken
         );
@@ -75,15 +77,15 @@ internal sealed class GetStudentDashboardQueryHandler(
             cancellationToken
         );
 
-        var score = await quizAttemptRepo.FirstOrDefaultAsync(
-            new QuizAttemptWithProjectionSpec<TopQuizInfo>(
+        var topScore = await quizAttemptRepo.FirstOrDefaultAsync(
+            new QuizAttemptWithProjectionSpec<decimal?>(
                 userId,
-                a => new TopQuizInfo(a.Degree, a.Quiz.TotalDegree)
+                a=> (a.Degree / a.Quiz.TotalDegree) * 100,
+                a => (a.Degree / a.Quiz.TotalDegree) * 100
             ),
             cancellationToken
         );
 
-        var topScore = score is not null ? (score.StudentScore / score.TopScore) * 100 : null;
         if (basicInfo is null)
             return Result.Error("Something went wrong");
 
@@ -92,8 +94,9 @@ internal sealed class GetStudentDashboardQueryHandler(
             FirstName = basicInfo.FirstName ?? string.Empty,
             GradeLabel = basicInfo.AcademicYearTitle ?? string.Empty,
         };
-
-        var streakDto = new StreakDto { Count = basicInfo.StreakDays };
+        var today = CairoDate.Today();
+        var count = ((Student)user).LastStreakDate >= today.AddDays(-1) ? ((Student)user).StreakDays : 0;
+        var streakDto = new StreakDto { Count = count };
 
         int completedLessonsCount = enrollments.Count(e => e.IsCompleted);
 
@@ -224,8 +227,7 @@ internal sealed class GetStudentDashboardQueryHandler(
 
     public sealed record StudentBasicInfo(
         string? FirstName,
-        string? AcademicYearTitle,
-        int StreakDays
+        string? AcademicYearTitle
     );
 
     public sealed record SectionProgressInfo(TimeDuration? Duration, bool IsCompletedByStudent);

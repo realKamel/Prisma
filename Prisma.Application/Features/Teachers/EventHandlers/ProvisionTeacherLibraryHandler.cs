@@ -1,5 +1,6 @@
 using Prisma.Application.Abstractions.Encryption;
 using Prisma.Application.Abstractions.VideoServices;
+using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.DomainEvents;
 using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
@@ -37,15 +38,16 @@ public static class ProvisionTeacherLibraryHandler
             );
         }
 
-        if (library.ProvisioningStatus == ProvisioningStatus.Active)
+        if (library.Status.IsReady)
         {
             return;
         }
 
         var result = await videoLibraryService.CreateLibrary(
-            ObjectStorage.GenerateBucketName(teacherId: message.TeacherId),
-            cancellationToken,
-            EncodingTier.Free
+            VideoLibrary.GenerateLibraryName(teacherId: message.TeacherId),
+            EncodingTier.Free,
+            enabledResolutions: "480p,720p,1080p",
+            cancellationToken: cancellationToken
         );
 
         if (!result.IsSuccess)
@@ -62,11 +64,26 @@ public static class ProvisionTeacherLibraryHandler
         var encryptedApiKey = secretCipher.Encrypt(libraryConfig.ApiKey);
         var encryptedReadonlyApiKey = secretCipher.Encrypt(libraryConfig.ReadOnlyApiKey);
 
-        library.MarkLibraryAsActive(
+        var configureWebhookResult = await videoLibraryService.ConfigureWebhookAsync(
+            libraryConfig.ExternalLibraryId,
+            cancellationToken
+        );
+
+        if (!configureWebhookResult.IsSuccess)
+        {
+            library.MarkAsFailed();
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            throw new InvalidOperationException(
+                $"Failed to configure Webhook url for video library of teacher {message.TeacherId}."
+            );
+        }
+
+        library.ConfigureProviderCredentials(
             providerId: libraryConfig.ExternalLibraryId,
             libraryApiKey: encryptedApiKey,
-            readOnlyApiKey: encryptedReadonlyApiKey,
-            webhookUrl: libraryConfig.WebhookUrl
+            readOnlyApiKey: encryptedReadonlyApiKey
+        // webhookUrl: libraryConfig.WebhookUrl
         );
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

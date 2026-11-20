@@ -1,4 +1,5 @@
 using Prisma.Application.Features.Lessons.Dtos;
+using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.Assistants;

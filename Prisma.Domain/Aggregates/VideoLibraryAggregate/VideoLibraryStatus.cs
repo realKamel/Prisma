@@ -1,6 +1,6 @@
 using Ardalis.SmartEnum;
 
-namespace Prisma.Domain.Entities.UserAggregate;
+namespace Prisma.Domain.Aggregates.VideoLibraryAggregate;
 
 public sealed class VideoLibraryStatus : SmartEnum<VideoLibraryStatus>
 {

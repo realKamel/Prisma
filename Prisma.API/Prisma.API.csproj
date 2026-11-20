@@ -57,6 +57,7 @@
     <PackageReference Include="WolverineFx.Dashboard" />
     <PackageReference Include="WolverineFx.HealthChecks" />
     <PackageReference Include="WolverineFx.Http" />
+    <PackageReference Include="WolverineFx.Http.AspVersioning" />
   </ItemGroup>
 
   <ItemGroup>

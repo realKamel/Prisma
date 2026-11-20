@@ -31,6 +31,7 @@ using tusdotnet.Stores;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.ErrorHandling;
+using Wolverine.Http;
 using Wolverine.Postgresql;
 using Wolverine.Redis;
 
@@ -129,6 +130,7 @@ public static partial class WebAppHelper
         services.AddKeyedSingleton<IConnectionMultiplexer>("messaging", multiplexer);
         services.AddSingleton<ITusStore>(_ => new TusDiskStore("/uploads"));
         services.AddWolverineMonitoringDashboard(configuration);
+        services.AddWolverineHttp();
     }
 
     private static void AddLocalizationServices(this IServiceCollection services)

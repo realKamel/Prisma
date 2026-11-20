@@ -3,6 +3,7 @@ using Prisma.Infrastructure.DependenciesInjections;
 using Serilog;
 using Serilog.Exceptions;
 using Serilog.Exceptions.Core;
+using Wolverine.Http;
 
 namespace Prisma.API;
 
@@ -112,6 +113,8 @@ public class Program
             app.MapWolverineMonitoringDashboardEndpoint();
 
             app.MapControllers();
+
+            app.MapWolverineEndpoints();
 
             app.MapChatHub();
 

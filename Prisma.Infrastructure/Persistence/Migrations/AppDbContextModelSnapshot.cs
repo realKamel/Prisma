@@ -19,7 +19,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63)
                 .HasAnnotation("WolverineEnabled", "true");
 
@@ -131,6 +131,72 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Aggregates.VideoLibraryAggregate.VideoLibrary", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("EncodingTier")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LibraryApiKey")
+                        .HasColumnType("text");
+
+                    b.Property<long?>("ProviderLibraryId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ReadOnlyApiKey")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("StorageUsage")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TrafficUsage")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProviderLibraryId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false AND \"ProviderLibraryId\" IS NOT NULL");
+
+                    b.HasIndex("TeacherId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("VideoLibrary");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.ChatAggregate.Conversation", b =>
@@ -1100,6 +1166,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastProviderSyncAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("ProviderVideoId")
                         .HasColumnType("uuid");
@@ -2349,72 +2418,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRole", (string)null);
                 });
 
-            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.VideoLibrary", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("EncodingTier")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LibraryApiKey")
-                        .HasColumnType("text");
-
-                    b.Property<long?>("ProviderLibraryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("ReadOnlyApiKey")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("StorageUsage")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("TeacherId")
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("TrafficUsage")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProviderLibraryId")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false AND \"ProviderLibraryId\" IS NOT NULL");
-
-                    b.HasIndex("TeacherId")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    b.ToTable("VideoLibrary");
-                });
-
             modelBuilder.Entity("Wolverine.EntityFrameworkCore.Internals.IncomingMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3002,7 +3005,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .WithOne("Video")
                         .HasForeignKey("Prisma.Domain.Entities.LessonAggregate.Video", "SectionId");
 
-                    b.HasOne("Prisma.Domain.Entities.UserAggregate.VideoLibrary", "VideoLibrary")
+                    b.HasOne("Prisma.Domain.Aggregates.VideoLibraryAggregate.VideoLibrary", "VideoLibrary")
                         .WithMany("Videos")
                         .HasForeignKey("VideoLibraryId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -3271,6 +3274,11 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("ProfileImageFile");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Aggregates.VideoLibraryAggregate.VideoLibrary", b =>
+                {
+                    b.Navigation("Videos");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.ChatAggregate.Conversation", b =>
                 {
                     b.Navigation("Members");
@@ -3366,11 +3374,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Claims");
 
                     b.Navigation("Roles");
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.VideoLibrary", b =>
-                {
-                    b.Navigation("Videos");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.MCQQuestion", b =>

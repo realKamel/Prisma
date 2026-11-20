@@ -1,8 +1,9 @@
 using Ardalis.Result;
 using Prisma.Domain.Common;
 using Prisma.Domain.Entities.LessonAggregate;
+using Prisma.Domain.Entities.UserAggregate;
 
-namespace Prisma.Domain.Entities.UserAggregate;
+namespace Prisma.Domain.Aggregates.VideoLibraryAggregate;
 
 public sealed class VideoLibrary : BaseEntity
 {

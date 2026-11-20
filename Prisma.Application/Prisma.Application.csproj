@@ -28,6 +28,7 @@
     <Folder Include="Features\AcademicYears\Commands\" />
     <Folder Include="Features\ActivityLogs\" />
     <Folder Include="Features\Notifications\" />
+    <Folder Include="Features\VideoManagement\" />
     <Folder Include="IntegrationEvents\" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,8 @@ using Prisma.Application.Abstractions.Encryption;
 
 namespace Prisma.Infrastructure.Encryption;
 
-public sealed class BunnyWebhookSignatureVerifier : IWebhookSignatureVerifier
+public sealed class BunnyWebhookSignatureVerifier(ISecretCipher secretCipher)
+    : IWebhookSignatureVerifier
 {
     private const string SupportedVersion = "v1";
     private const string SupportedAlgorithm = "hmac-sha256";
@@ -13,18 +14,18 @@ public sealed class BunnyWebhookSignatureVerifier : IWebhookSignatureVerifier
     private const int Sha256HexLength = 64;
     private const int MaxStackKeyBytes = 256;
 
-    public bool Verify(
+    private static bool IsValid(
         ReadOnlyMemory<byte> rawBody,
         string signature,
         string version,
         string algorithm,
-        string readOnlyApiKey
+        string encryptedReadOnlyApiKey
     )
     {
         if (
             rawBody.IsEmpty
             || string.IsNullOrWhiteSpace(signature)
-            || string.IsNullOrWhiteSpace(readOnlyApiKey)
+            || string.IsNullOrWhiteSpace(encryptedReadOnlyApiKey)
         )
         {
             return false;
@@ -43,6 +44,20 @@ public sealed class BunnyWebhookSignatureVerifier : IWebhookSignatureVerifier
             return false;
         }
 
+        return true;
+    }
+
+    public bool Verify(
+        ReadOnlyMemory<byte> rawBody,
+        string signature,
+        string version,
+        string algorithm,
+        string encryptedReadOnlyApiKey
+    )
+    {
+        if (!IsValid(rawBody, signature, version, algorithm, encryptedReadOnlyApiKey))
+            return false;
+
         Span<byte> receivedHash = stackalloc byte[Sha256ByteLength];
 
         var status = Convert.FromHexString(
@@ -60,6 +75,8 @@ public sealed class BunnyWebhookSignatureVerifier : IWebhookSignatureVerifier
         {
             return false;
         }
+
+        var readOnlyApiKey = secretCipher.Decrypt(encryptedReadOnlyApiKey);
 
         // The body is already raw bytes, we hash it directly.
         // Only the key needs encoding.

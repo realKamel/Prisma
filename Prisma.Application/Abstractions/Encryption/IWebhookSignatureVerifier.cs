@@ -7,6 +7,6 @@ public interface IWebhookSignatureVerifier
         string signature,
         string version,
         string algorithm,
-        string readOnlyApiKey
+        string encryptedReadOnlyApiKey
     );
 }

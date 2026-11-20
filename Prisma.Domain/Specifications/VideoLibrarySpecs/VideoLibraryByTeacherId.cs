@@ -1,4 +1,5 @@
 using Ardalis.Specification;
+using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 
 namespace Prisma.Domain.Specifications.VideoLibrarySpecs;

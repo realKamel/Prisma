@@ -1,7 +1,7 @@
 using Ardalis.Result;
+using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.Common;
 using Prisma.Domain.DomainEvents.Videos;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Errors;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
@@ -27,6 +27,12 @@ public sealed class Video : BaseEntity
     public TimeDuration TimeDuration { get; private set; } = TimeDuration.Zero;
 
     public VideoStatus Status { get; private set; } = VideoStatus.Created;
+
+    /// <summary>
+    /// Timestamp of the most recent provider event this aggregate has applied (or knowingly
+    /// ignored). Provider deliveries are unordered, so anything older is stale and dropped.
+    /// </summary>
+    public DateTimeOffset? LastProviderSyncAt { get; private set; }
 
     public Uri? ThumbnailUrl { get; private set; }
 
@@ -115,25 +121,50 @@ public sealed class Video : BaseEntity
         VideoLibraryId = videoLibraryId;
     }
 
-    public Result MarkProcessingStarted(long? storageSizeBytes = null, Uri? thumbnailUrl = null)
+    public Result MarkProcessingStarted(
+        DateTimeOffset occurredAt,
+        long? storageSizeBytes = null,
+        Uri? thumbnailUrl = null
+    )
     {
         return TransitionTo(
             VideoStatus.Processing,
+            occurredAt,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl
         );
     }
 
-    public Result MarkTranscoding(long? storageSizeBytes = null, Uri? thumbnailUrl = null)
+    public Result MarkUploaded(
+        DateTimeOffset occurredAt,
+        long? storageSizeBytes = null,
+        Uri? thumbnailUrl = null
+    )
+    {
+        return TransitionTo(
+            VideoStatus.Uploaded,
+            occurredAt,
+            storageSizeBytes: storageSizeBytes,
+            thumbnailUrl: thumbnailUrl
+        );
+    }
+
+    public Result MarkTranscoding(
+        DateTimeOffset occurredAt,
+        long? storageSizeBytes = null,
+        Uri? thumbnailUrl = null
+    )
     {
         return TransitionTo(
             VideoStatus.Transcoding,
+            occurredAt,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl
         );
     }
 
     public Result MarkFinished(
+        DateTimeOffset occurredAt,
         long? durationInSeconds = null,
         long? storageSizeBytes = null,
         Uri? thumbnailUrl = null
@@ -141,22 +172,29 @@ public sealed class Video : BaseEntity
     {
         return TransitionTo(
             VideoStatus.Finished,
+            occurredAt,
             durationInSeconds: durationInSeconds,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl
         );
     }
 
-    public Result MarkJitSegmenting(long? storageSizeBytes = null, Uri? thumbnailUrl = null)
+    public Result MarkJitSegmenting(
+        DateTimeOffset occurredAt,
+        long? storageSizeBytes = null,
+        Uri? thumbnailUrl = null
+    )
     {
         return TransitionTo(
             VideoStatus.JitSegmenting,
+            occurredAt,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl
         );
     }
 
     public Result MarkJitPlaylistsCreated(
+        DateTimeOffset occurredAt,
         long? durationInSeconds = null,
         long? storageSizeBytes = null,
         Uri? thumbnailUrl = null
@@ -164,6 +202,7 @@ public sealed class Video : BaseEntity
     {
         return TransitionTo(
             VideoStatus.JitPlaylistsCreated,
+            occurredAt,
             durationInSeconds: durationInSeconds,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl
@@ -172,6 +211,7 @@ public sealed class Video : BaseEntity
 
     public Result MarkFailed(
         bool isUploadFailure,
+        DateTimeOffset occurredAt,
         string? reason = null,
         long? storageSizeBytes = null,
         Uri? thumbnailUrl = null
@@ -181,14 +221,46 @@ public sealed class Video : BaseEntity
 
         return TransitionTo(
             failureStatus,
+            occurredAt,
             storageSizeBytes: storageSizeBytes,
             thumbnailUrl: thumbnailUrl,
             failureReason: reason
         );
     }
 
+    public Result MarkDeleted(DateTimeOffset occurredAt)
+    {
+        var result = TransitionTo(VideoStatus.Deleted, occurredAt);
+
+        if (!result.IsSuccess || Status != VideoStatus.Deleted)
+        {
+            // Stale or rejected: the local row keeps its current lifecycle.
+            return result;
+        }
+
+        // The provider is the source of truth: a deleted video leaves the platform.
+        IsDeleted = true;
+        DeletedAt ??= occurredAt;
+
+        return result;
+    }
+
+    /// <summary>
+    /// Records a provider event that intentionally does not change the processing status
+    /// (captions, smart generation, upload handshakes). Advancing the watermark stops a
+    /// later, older event from overwriting newer state.
+    /// </summary>
+    public void AcknowledgeProviderEvent(DateTimeOffset occurredAt)
+    {
+        if (LastProviderSyncAt is null || occurredAt > LastProviderSyncAt)
+        {
+            LastProviderSyncAt = occurredAt;
+        }
+    }
+
     private Result TransitionTo(
         VideoStatus nextStatus,
+        DateTimeOffset occurredAt,
         long? durationInSeconds = null,
         long? storageSizeBytes = null,
         Uri? thumbnailUrl = null,
@@ -197,22 +269,22 @@ public sealed class Video : BaseEntity
     {
         ArgumentNullException.ThrowIfNull(nextStatus);
 
+        // Out-of-order delivery: never let an older event win over a newer one.
+        if (LastProviderSyncAt is { } lastSync && occurredAt < lastSync)
+        {
+            return Result.Success();
+        }
+
         // Idempotent duplicate webhook for current status
         if (Status == nextStatus)
         {
+            AcknowledgeProviderEvent(occurredAt);
             ApplyMetadata(durationInSeconds, storageSizeBytes, thumbnailUrl);
             return Result.Success();
         }
 
         if (!Status.CanTransitionTo(nextStatus))
         {
-            // Ignore stale/out-of-order states after reaching a terminal state
-            if (Status.IsTerminal)
-            {
-                ApplyMetadata(durationInSeconds, storageSizeBytes, thumbnailUrl);
-                return Result.Success();
-            }
-
             return Result.Invalid(
                 new ValidationError
                 {
@@ -225,6 +297,7 @@ public sealed class Video : BaseEntity
 
         var wasReadyForPlayback = Status.IsReadyForPlayback;
         Status = nextStatus;
+        AcknowledgeProviderEvent(occurredAt);
         ApplyMetadata(durationInSeconds, storageSizeBytes, thumbnailUrl);
 
         if (nextStatus.IsFailure)

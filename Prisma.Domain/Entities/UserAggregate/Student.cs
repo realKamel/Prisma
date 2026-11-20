@@ -13,6 +13,9 @@ public class Student : User
     // private Student() : base() { }
 
     public int StreakDays { get; private set; }
+    public DateOnly? LastStreakDate { get; private set; }
+    public DateOnly? LastPracticedDate { get; private set; }
+
     public string ParentPhoneNumber { get; set; }
 
     public int? AcademicYearId { get; set; }
@@ -104,19 +107,24 @@ public class Student : User
 
         return Result.Success(student);
     }
+    public bool RegisterActivity(DateOnly day)
+    {
+        if (LastStreakDate >= day) return false; 
+
+        StreakDays = LastStreakDate == day.AddDays(-1) ? StreakDays + 1 : 1;
+        LastStreakDate = day;
+        return true;
+    }
+    public bool RegisterPractice(DateOnly today)
+    {
+        if (LastPracticedDate == today) return false;
+
+        LastPracticedDate = today;
+        return true;
+    }
 
     public void UpdateAcademicYear(int academicYearId)
     {
         AcademicYearId = academicYearId;
-    }
-
-    public void IncrementStreak()
-    {
-        StreakDays++;
-    }
-
-    public void ResetStreak()
-    {
-        StreakDays = 0;
     }
 }

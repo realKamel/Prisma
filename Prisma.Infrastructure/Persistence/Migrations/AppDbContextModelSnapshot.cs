@@ -2550,6 +2550,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<int?>("AcademicYearId")
                         .HasColumnType("integer");
 
+                    b.Property<DateOnly?>("LastPracticedDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("LastStreakDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("ParentPhoneNumber")
                         .IsRequired()
                         .HasColumnType("text");

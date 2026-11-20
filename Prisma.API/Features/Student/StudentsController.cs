@@ -9,8 +9,14 @@ using Prisma.API.Common.RateLimitConfigurations;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.DTOs;
 using Prisma.Application.Features.Students.Commands.ChangePasswordCommand;
+using Prisma.Application.Features.Students.Commands.FinishPractice;
+using Prisma.Application.Features.Students.Commands.HandleStreaks;
+using Prisma.Application.Features.Students.Commands.SubmitPracticeAnswer;
 using Prisma.Application.Features.Students.Commands.UpdateStudentProfileCommand;
+using Prisma.Application.Features.Students.Common;
 using Prisma.Application.Features.Students.Queries.GetPaginatedLessonsCatalog;
+using Prisma.Application.Features.Students.Queries.GetPracticeRound;
+using Prisma.Application.Features.Students.Queries.GetStreakTasks;
 using Prisma.Application.Features.Students.Queries.GetStudentDashboardQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentHistoryQuery;
 using Prisma.Application.Features.Students.Queries.GetStudentPaymentHistory;
@@ -125,6 +131,51 @@ public sealed class StudentsController(ISender mediator) : ApiController
     {
         var result = await mediator.Send(new GetStudentPaymentHistoryQuery(), cancellationToken);
         return result;
+    }
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpPost("streak")]
+    [ExpectedFailures(ResultStatus.Unauthorized, ResultStatus.NotFound)]
+    public async Task<Result> HandlerStreak(CancellationToken ct)
+    {
+        var result = await mediator.Send(new HandlerStreaksCommand(), ct);
+        return result;
+    }
+
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpGet("streak-tasks")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.NotFound)]
+    public async Task<Result<StreakTasksDto>> GetStreakTasks(CancellationToken ct)
+    {
+        var res = await mediator.Send(new GetStreakTasksQuery(), ct);
+        return res;
+    }
+
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpGet("practice")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error)]
+    public async Task<Result<PracticeRoundDto>> GetPractice(CancellationToken ct) 
+    {
+        var res = await mediator.Send(new GetPracticeRoundQuery(), ct);
+        return res;
+    }
+    [Authorize(Roles = AppRoles.Student)]
+    [HttpPost("practice/finish")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error)]
+    public async Task<Result<FinishPracticeResultDto>> FinishPractice(CancellationToken ct) 
+    {
+        var res = await mediator.Send(new FinishPracticeCommand(), ct);
+        return res;
+    }
+
+    [Authorize(Roles = AppRoles.Student)]
+    [EnableRateLimiting(RateLimitPolicies.UserWrite)]
+    [HttpPost("practice/answer")]
+    [ExpectedFailures(ResultStatus.CriticalError, ResultStatus.Error, ResultStatus.NotFound)]
+    public async Task<Result<PracticeAnswerResultDto>> AnswerPractice(
+        [FromBody] SubmitPracticeAnswerCommand command, CancellationToken ct)
+    {
+        var res = await mediator.Send(command, ct);
+        return res;
     }
 
     [HttpGet("teachers")]

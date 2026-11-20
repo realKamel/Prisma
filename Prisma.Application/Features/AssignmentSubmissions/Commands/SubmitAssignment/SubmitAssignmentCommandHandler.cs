@@ -67,15 +67,13 @@ internal sealed class SubmitAssignmentCommandHandler(
             contentType: request.File.ContentType,
             cancellationToken: cancellationToken
         );
-
-        var submission = new AssignmentSubmission
-        {
-            StudentId = studentId.Value,
-            AssignmentId = assignment.Id,
-            FileUrl = objectKey,
-            Title = request.File.FileName,
-            SubmittedAt = DateTimeOffset.UtcNow,
-        };
+        var submission = AssignmentSubmission.Create(
+            studentId: studentId.Value,
+            assignmentId: assignment.Id,
+            fileKey: objectKey,
+            title: request.File.FileName,
+            submittedAt: DateTimeOffset.UtcNow
+        );
 
         assignment.Submissions.Add(submission);
 

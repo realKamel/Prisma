@@ -1,3 +1,4 @@
+using System.Globalization;
 using Ardalis.Result;
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.VideoServices;
@@ -116,7 +117,10 @@ public sealed class VideoLibraryService(
         // validate the composed URL, not the raw path fragment.
         // Backend(path) returns Uri already (see ApplicationUrlsOptions)
         // the factory throws if the composition is invalid. We only need to assert the scheme.
-        var url = appUrls.Value.Backend(bunnyOptions.Value.LibraryStreamWebhookPath);
+        var url = appUrls.Value.Backend(
+            bunnyOptions.Value.LibraryStreamWebhookPath,
+            providerLibraryId.ToString("G", CultureInfo.InvariantCulture)
+        );
 
         // http/Https both parse as valid absolute URIs. A webhook must be https.
         if (url.Scheme != Uri.UriSchemeHttps)

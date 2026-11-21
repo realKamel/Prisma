@@ -91,7 +91,7 @@ public sealed class ObjectStorage : BaseEntity<Guid>
         return Result.Success(fileObjectResult.Value);
     }
 
-    public Result RemoveFile(Guid fileId)
+    public Result<string> RemoveFile(Guid fileId)
     {
         if (Status != StorageStatus.Ready)
         {

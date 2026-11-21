@@ -50,7 +50,7 @@ public static partial class DependenciesInjection
         });
 
         services
-            .AddFusionCache("prisma_cache")
+            .AddFusionCache("wasla_cache")
             .WithDefaultEntryOptions(options =>
             {
                 // General Cache Duration

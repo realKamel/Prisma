@@ -10,5 +10,9 @@ internal sealed class ObjectStorageConfiguration : IEntityTypeConfiguration<Obje
     {
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.TeacherId).IsUnique().HasFilter("\"IsDeleted\" = false");
+
+        builder.Property<uint>("xmin").IsRowVersion();
+
+        builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

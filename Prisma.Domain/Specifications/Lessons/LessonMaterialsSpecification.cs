@@ -16,7 +16,7 @@ public class LessonMaterialsSpecification : Specification<Lesson, List<LessonMat
                         Id = m.Id,
                         Title = m.FileObject.FileName,
                         Size = m.FileObject.Size,
-                        Type = m.Type.ToString(),
+                        Type = m.FileObject.ContentType.ToString(),
                         CreatedAt = m.CreatedAt,
                     })
                     .ToList()

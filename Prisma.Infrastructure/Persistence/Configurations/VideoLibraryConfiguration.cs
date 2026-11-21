@@ -34,6 +34,8 @@ internal sealed class VideoLibraryConfiguration : IEntityTypeConfiguration<Video
             .Property(x => x.Status)
             .HasConversion(status => status.Value, value => VideoLibraryStatus.FromValue(value));
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

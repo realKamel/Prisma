@@ -14,6 +14,6 @@ internal sealed class FileObjectConfiguration : IEntityTypeConfiguration<FileObj
             .Property(x => x.FileStatus)
             .HasConversion(status => status.Value, value => FileStatus.FromValue(value));
 
-        builder.Property<uint>("xmin").HasColumnName("xmin").IsRowVersion();
+        builder.Property<uint>("xmin").IsRowVersion();
     }
 }

@@ -9,7 +9,7 @@ public sealed class LessonMaterial : BaseEntity
 {
     // public string Title { get; set; } = string.Empty;
     // public string Size { get; set; } = string.Empty;
-    public LessonMaterialType Type { get; set; }
+    // public LessonMaterialType Type { get; set; }
 
     // public string DownloadUrl { get; set; } = string.Empty;
     public FileObject FileObject { get; set; }
@@ -17,7 +17,7 @@ public sealed class LessonMaterial : BaseEntity
     public int LessonId { get; set; }
     public Lesson Lesson { get; set; }
 
-    public static Result<LessonMaterial> Create(Guid fileObjectId, LessonMaterialType type)
+    public static Result<LessonMaterial> Create(Guid fileObjectId)
     {
         if (fileObjectId == Guid.Empty)
         {
@@ -26,7 +26,7 @@ public sealed class LessonMaterial : BaseEntity
             );
         }
 
-        return new LessonMaterial() { FileObjectId = fileObjectId, Type = type };
+        return new LessonMaterial() { FileObjectId = fileObjectId };
     }
 
     internal void AttachTo(Lesson lesson)

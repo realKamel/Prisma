@@ -10,6 +10,8 @@ internal sealed class LessonMaterialConfiguration : IEntityTypeConfiguration<Les
     {
         builder.HasKey(x => x.Id);
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

@@ -9,4 +9,9 @@ public sealed class LessonWithMaterialsForUpdateSpecification : Specification<Le
     {
         Query.Where(lesson => lesson.Id == lessonId).Include(l => l.LessonMaterials);
     }
+
+    public LessonWithMaterialsForUpdateSpecification(Guid lessonId)
+    {
+        Query.Where(lesson => lesson.PublicId == lessonId).Include(l => l.LessonMaterials);
+    }
 }

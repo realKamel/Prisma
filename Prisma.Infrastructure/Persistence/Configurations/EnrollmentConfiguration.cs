@@ -32,6 +32,8 @@ internal sealed class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollm
 
         builder.HasIndex(x => x.PublicId).IsUnique().HasFilter("\"IsDeleted\" = false");
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.HasQueryFilter(x => !x.IsDeleted);
     }
 }

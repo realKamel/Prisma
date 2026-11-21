@@ -77,13 +77,7 @@ internal sealed class GetLessonPlayerQueryHandler(
                         m.DownloadUrl != null
                             ? await storageService.GetDownloadUrlAsync(m.DownloadUrl)
                             : string.Empty,
-                    Type = m.Type switch
-                    {
-                        0 => "pdf",
-                        1 => "video",
-                        2 => "audio",
-                        _ => "unknown",
-                    },
+                    Type = m.Type,
                 }
             );
         }

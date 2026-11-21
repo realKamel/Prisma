@@ -55,7 +55,7 @@ public sealed class LessonPlayerWithDetailsSpecification
                     {
                         Title = m.FileObject.FileName,
                         // DownloadUrl = m.DownloadUrl,
-                        Type = (int)m.Type,
+                        Type = m.FileObject.ContentType,
                     })
                     .ToList(),
                 Quiz =
@@ -132,7 +132,7 @@ public class PlayerMaterialProjection
 {
     public string? Title { get; set; }
     public string? DownloadUrl { get; set; }
-    public int Type { get; set; }
+    public string Type { get; set; }
 }
 
 public class PlayerQuizProjection

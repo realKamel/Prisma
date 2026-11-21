@@ -318,7 +318,7 @@ internal sealed partial class S3StorageService(
         await DeleteFileAsync(DefaultBucketName, objectKey, cancellationToken);
     }
 
-    public async Task<Result> DeleteObjectAsync(
+    public async Task DeleteObjectAsync(
         string bucketName,
         string objectKeys,
         CancellationToken cancellationToken = default
@@ -331,13 +331,11 @@ internal sealed partial class S3StorageService(
                 objectKey: objectKeys,
                 cancellationToken: cancellationToken
             );
-
-            return Result.Success();
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
-            return Result.Error("Error Deleting Object");
+            throw;
         }
     }
 

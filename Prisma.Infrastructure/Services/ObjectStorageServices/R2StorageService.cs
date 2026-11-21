@@ -334,7 +334,7 @@ public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageServ
         return DeleteFileAsync(DefaultBucketName, objectKey, cancellationToken);
     }
 
-    public async Task<Result> DeleteObjectAsync(
+    public async Task DeleteObjectAsync(
         string bucketName,
         string objectKey,
         CancellationToken cancellationToken = default
@@ -350,23 +350,11 @@ public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageServ
             await s3.DeleteObjectAsync(request, cancellationToken);
 
             LogFileDeleted(logger, objectKey, bucketName);
-
-            return Result.Success();
         }
         catch (AmazonS3Exception ex)
         {
             LogFileDeleteFailed(logger, ex, objectKey, bucketName, ex.ErrorCode);
-
-            return ex.ErrorCode switch
-            {
-                "NoSuchBucket" => Result.NotFound($"Bucket '{bucketName}' does not exist."),
-
-                "AccessDenied" => Result.Forbidden(
-                    "The storage provider denied permission to delete the object."
-                ),
-
-                _ => Result.Error("Failed to delete the storage object."),
-            };
+            throw;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -375,8 +363,7 @@ public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageServ
         catch (Exception ex)
         {
             LogUnexpectedErrorDeletingObject(logger, ex, objectKey, bucketName);
-
-            return Result.Error("An unexpected error occurred while deleting the object.");
+            throw;
         }
     }
 
@@ -480,20 +467,13 @@ public sealed partial class R2StorageService(IAmazonS3 s3, ILogger<R2StorageServ
         }
     }
 
-    private async Task DeleteObjectOrThrowAsync(
+    private Task DeleteObjectOrThrowAsync(
         string bucketName,
         string objectKey,
         CancellationToken cancellationToken
     )
     {
-        var result = await DeleteObjectAsync(bucketName, objectKey, cancellationToken);
-
-        if (!result.IsSuccess)
-        {
-            throw new InvalidOperationException(
-                $"Failed to delete object '{objectKey}' from bucket '{bucketName}'."
-            );
-        }
+        return DeleteObjectAsync(bucketName, objectKey, cancellationToken);
     }
 
     #endregion

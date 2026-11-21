@@ -20,7 +20,7 @@ public interface IStorageObjectService
     //     CancellationToken cancellationToken = default
     // );
 
-    Task<Result> DeleteObjectAsync(
+    Task DeleteObjectAsync(
         string bucketName,
         string objectKeys,
         CancellationToken cancellationToken = default

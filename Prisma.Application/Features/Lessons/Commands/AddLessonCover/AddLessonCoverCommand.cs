@@ -6,9 +6,11 @@ using Prisma.Application.Common.DTOs;
 
 namespace Prisma.Application.Features.Lessons.Commands.AddLessonCover;
 
-public sealed record AddLessonCoverCommand(Guid PublicLessonId, FileDto FileDto, Stream Content)
-    : ICommand<Result>,
-        IAuthorizableRequest
+public sealed record AddLessonCoverCommand(
+    Guid PublicLessonId,
+    FileMetadataDto FileDto,
+    Stream Content
+) : ICommand<Result>, IAuthorizableRequest
 {
     public IReadOnlyList<string> RequiredRoles { get; } = [AppRoles.Teacher, AppRoles.Assistant];
 

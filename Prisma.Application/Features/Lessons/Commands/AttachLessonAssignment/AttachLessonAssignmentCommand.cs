@@ -10,7 +10,7 @@ public sealed record AttachLessonAssignmentCommand(
     Guid LessonId,
     decimal TotalMarks,
     DateTimeOffset? AssignmentDueDate,
-    FileDto File
+    FileMetadataDto File
 ) : ICommand<Result<AttachLessonAssignmentResponse>>, IAuthorizableRequest
 {
     public IReadOnlyList<string> RequiredRoles { get; } =

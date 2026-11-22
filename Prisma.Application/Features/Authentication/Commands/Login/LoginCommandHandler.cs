@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Ardalis.Result;
+using Prisma.Application.Abstractions.Authorization;
 using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Abstractions.Services;

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Prisma.Application.Abstractions.Authorization;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Infrastructure.Auth;
 using StackExchange.Redis;

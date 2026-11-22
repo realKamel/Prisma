@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Prisma.Application.Abstractions.Authorization;
 using Prisma.Application.Abstractions.Caching;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Infrastructure.Caching;

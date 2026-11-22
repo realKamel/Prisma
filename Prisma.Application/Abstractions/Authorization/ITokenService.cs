@@ -1,4 +1,4 @@
-namespace Prisma.Application.Abstractions.Services;
+namespace Prisma.Application.Abstractions.Authorization;
 
 public interface ITokenService
 {

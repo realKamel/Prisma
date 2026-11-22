@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Prisma.Application.Abstractions.Authorization;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 

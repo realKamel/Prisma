@@ -5,8 +5,8 @@ using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Features.Students.Queries.GetTeacherCatalog;
 using Prisma.Application.Features.Teachers.Profile;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Enums;
 using Prisma.Domain.Interfaces;
@@ -29,7 +29,12 @@ internal sealed class GetPublicTeacherProfileQueryHandler(
     private const int PictureLinkLifetimeInMinutes = 24 * 60;
     private const long MaxPictureSizeBytes = 10L * 1024 * 1024;
 
-    private static readonly string[] AllowedPictureTypes = ["image/png", "image/webp", "image/jpeg"];
+    private static readonly string[] AllowedPictureTypes =
+    [
+        "image/png",
+        "image/webp",
+        "image/jpeg",
+    ];
 
     public async Task<Result<PublicTeacherProfileResponse>> Handle(
         GetPublicTeacherProfileQuery request,
@@ -291,12 +296,12 @@ internal sealed class GetPublicTeacherProfileQueryHandler(
                 t.IsFeatured,
                 t.Links,
                 t.Visibility,
-                t.AcademicYears
-                    .Select(ay => new AcademicYearDto(ay.Id.ToString(), ay.AcademicYear.Title))
+                t.AcademicYears.Select(ay => new AcademicYearDto(
+                        ay.Id.ToString(),
+                        ay.AcademicYear.Title
+                    ))
                     .ToList(),
-                t.ProfileImageFile == null
-                    ? null
-                    : t.ProfileImageFile.ObjectStorage.BucketName,
+                t.ProfileImageFile == null ? null : t.ProfileImageFile.ObjectStorage.BucketName,
                 t.ProfileImageFile == null ? null : t.ProfileImageFile.ObjectKey,
                 t.AnnouncementText,
                 t.AnnouncementEndsAt

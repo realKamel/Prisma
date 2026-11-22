@@ -2,7 +2,6 @@ using Prisma.Application.Abstractions.Encryption;
 using Prisma.Application.Abstractions.VideoServices;
 using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.DomainEvents;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.VideoLibrarySpecs;

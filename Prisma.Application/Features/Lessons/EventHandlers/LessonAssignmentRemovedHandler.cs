@@ -1,5 +1,5 @@
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.DomainEvents.LessonEvents;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.ObjectStorageSpec;
 

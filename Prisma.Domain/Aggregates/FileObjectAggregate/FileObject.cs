@@ -1,8 +1,9 @@
 using Ardalis.Result;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.Common;
 using Prisma.Domain.DomainEvents.ObjectStorage;
 
-namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
+namespace Prisma.Domain.Aggregates.FileObjectAggregate;
 
 public sealed class FileObject : BaseEntity<Guid>
 {

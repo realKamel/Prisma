@@ -1,6 +1,6 @@
 using Ardalis.SmartEnum;
 
-namespace Prisma.Domain.Entities.ObjectLibraryAggregate;
+namespace Prisma.Domain.Aggregates.FileObjectAggregate;
 
 public sealed class FileStatus : SmartEnum<FileStatus>
 {

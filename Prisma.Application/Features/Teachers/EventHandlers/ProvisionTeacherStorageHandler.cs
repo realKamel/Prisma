@@ -1,7 +1,7 @@
 using Prisma.Application.Abstractions.ObjectStorage;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.DomainEvents;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Specifications.ObjectStorageSpec;

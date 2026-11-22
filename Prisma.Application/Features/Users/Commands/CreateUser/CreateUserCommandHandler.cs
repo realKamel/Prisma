@@ -3,9 +3,9 @@ using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Dtos;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.Aggregates.VideoLibraryAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
 

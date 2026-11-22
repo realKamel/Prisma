@@ -1,5 +1,5 @@
 using Ardalis.Specification;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 
 namespace Prisma.Domain.Specifications.ObjectStorageSpec;
 

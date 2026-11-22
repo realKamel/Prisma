@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 
 namespace Prisma.Infrastructure.Persistence.Configurations;
 

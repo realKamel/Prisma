@@ -1,6 +1,7 @@
 using Ardalis.Result;
+using Prisma.Domain.Aggregates.FileObjectAggregate;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.Common;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
 using Prisma.Domain.ValueObjects.ContentDomain;
 
 namespace Prisma.Domain.Entities.LessonAggregate;

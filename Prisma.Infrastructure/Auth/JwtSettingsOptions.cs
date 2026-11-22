@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Prisma.Infrastructure.Services.Auth;
+namespace Prisma.Infrastructure.Auth;
 
 public sealed class JwtSettingsOptions
 {

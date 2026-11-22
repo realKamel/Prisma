@@ -8,8 +8,10 @@ public interface IJwtTokenService
         Guid userId,
         string email,
         ICollection<string> roles,
-        ICollection<Claim>? permissions = default
+        ICollection<Claim>? permissions = default,
+        Guid? workspaceId = null
     );
+
     string GenerateRefreshToken();
     ClaimsPrincipal? GetPrincipalFromExpiredToken(string? token);
 }

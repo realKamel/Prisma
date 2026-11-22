@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Prisma.Application.Abstractions.Identity;
 
-namespace Prisma.Infrastructure.Services.Auth;
+namespace Prisma.Infrastructure.Auth;
 
 internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccessor)
     : ICurrentUserService
@@ -44,5 +44,15 @@ internal sealed class CurrentUserService(IHttpContextAccessor httpContextAccesso
     public bool IsInRole(string role, CancellationToken cancellationToken)
     {
         return User?.IsInRole(role) ?? false;
+    }
+
+    public Guid? WorkspaceId
+    {
+        get
+        {
+            var value = httpContextAccessor.HttpContext?.User.FindFirst("workspace_id")?.Value;
+
+            return Guid.TryParse(value, out var id) ? id : null;
+        }
     }
 }

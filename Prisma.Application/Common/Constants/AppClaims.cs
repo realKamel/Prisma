@@ -5,6 +5,7 @@ namespace Prisma.Application.Common.Constants;
 public static class AppClaims
 {
     public const string PermissionsClaim = "permissions";
+    public const string WorkspaceId = "workspace_id";
 
     public static class Permissions
     {
@@ -15,35 +16,39 @@ public static class AppClaims
 
         public const string ManageResources = "resource:manage"; // Uploading PDFs, links, files
 
-        //Question Bank & Assessments 
+        //Question Bank & Assessments
         public const string ManageQuestionBank = "questions:manage"; // Reusing questions across exams
         public const string CreateAssessment = "assessment:create";
         public const string UpdateAssessment = "assessment:update";
         public const string DeleteAssessment = "assessment:delete";
 
-        // Grading & Evaluation 
+        // Grading & Evaluation
         public const string GradeAssessment = "grading:assessment";
         public const string GradeExam = "grading:exam";
         public const string OverrideGrade = "grading:override"; // Overwrite existing grades
         public const string PublishGrades = "grading:publish"; // Make grades visible to students
         public const string ViewGradeBook = "gradebook:view"; // See the entire class grade matrix
 
-        //Enrollment Management 
+        //Enrollment Management
         public const string EnrollStudent = "student:enroll";
         public const string UnenrollStudent = "student:unenroll";
         public const string ViewStudentProfile = "student:view_profile";
 
-        //  Analytics & Reporting 
+        //  Analytics & Reporting
         public const string ViewSystemAnalytics = "analytics:system"; // System-wide metrics
         public const string ViewLessonAnalytics = "analytics:lesson";
 
-        public static IReadOnlySet<string> All { get; } = typeof(Permissions)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(f => f.IsLiteral && !f.IsInitOnly)
-            .Select(f => (string)f.GetRawConstantValue()!)
-            .ToHashSet();
+        public static IReadOnlySet<string> All { get; } =
+            typeof(Permissions)
+                .GetFields(
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy
+                )
+                .Where(f => f.IsLiteral && !f.IsInitOnly)
+                .Select(f => (string)f.GetRawConstantValue()!)
+                .ToHashSet();
 
         public static bool IsValid(string permission) => All.Contains(permission);
+
         public static bool AreValid(IEnumerable<string> permissions) => permissions.All(IsValid);
     }
 
@@ -98,13 +103,17 @@ public static class AppClaims
                 ],
             };
 
-        public static IReadOnlySet<string> All { get; } = typeof(Policies)
-            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-            .Where(f => f.IsLiteral && !f.IsInitOnly)
-            .Select(f => (string)f.GetRawConstantValue()!)
-            .ToHashSet();
+        public static IReadOnlySet<string> All { get; } =
+            typeof(Policies)
+                .GetFields(
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy
+                )
+                .Where(f => f.IsLiteral && !f.IsInitOnly)
+                .Select(f => (string)f.GetRawConstantValue()!)
+                .ToHashSet();
 
         public static bool IsValid(string permission) => All.Contains(permission);
+
         public static bool AreValid(IEnumerable<string> permissions) => permissions.All(IsValid);
     }
 }

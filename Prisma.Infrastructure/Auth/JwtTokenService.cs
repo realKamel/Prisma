@@ -5,8 +5,9 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Common.Constants;
 
-namespace Prisma.Infrastructure.Services.Auth;
+namespace Prisma.Infrastructure.Auth;
 
 internal sealed class JwtTokenService : IJwtTokenService
 {
@@ -25,7 +26,8 @@ internal sealed class JwtTokenService : IJwtTokenService
         Guid userId,
         string email,
         ICollection<string>? roles,
-        ICollection<Claim>? permissions = default
+        ICollection<Claim>? permissions = default,
+        Guid? workspaceId = null
     )
     {
         var userClaims = new List<Claim>
@@ -43,6 +45,11 @@ internal sealed class JwtTokenService : IJwtTokenService
         if (roles is not null && roles.Count > 0)
         {
             userClaims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        }
+
+        if (workspaceId.HasValue)
+        {
+            userClaims.Add(new Claim(AppClaims.WorkspaceId, workspaceId.Value.ToString()));
         }
 
         var token = new JwtSecurityToken(

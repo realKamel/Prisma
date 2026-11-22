@@ -8,4 +8,5 @@ public interface ICurrentUserService
     bool IsAuthenticated { get; }
     bool IsInAnyRole(IReadOnlyList<string>? role, CancellationToken cancellationToken = default);
     bool IsInRole(string role, CancellationToken cancellationToken);
+    Guid? WorkspaceId { get; }
 }

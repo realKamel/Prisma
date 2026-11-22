@@ -29,12 +29,18 @@ public static class UrlsHelper
         );
     }
 
-    public static string ConstructLessonMaterialsObjectKey(Guid lessonId, Guid objectId)
+    public static string ConstructLessonMaterialsObjectKey(Guid lessonPublicId, Guid objectId)
     {
         // return $"lessons/{lessonId}/Materials/{Guid.CreateVersion7()}";
 
-        return ConstructObjectKey("lessons", lessonId.ToString(), "materials", objectId.ToString());
+        return ConstructObjectKey(
+            "lessons",
+            lessonPublicId.ToString(),
+            "materials",
+            objectId.ToString()
+        );
     }
+
     // The bucket is already per-teacher, so the key only needs the file id.
     // If public read is limited to a key prefix, start the key with that prefix.
     public static string ConstructTeacherProfilePictureObjectKey(Guid fileId)

@@ -4,16 +4,14 @@ namespace Prisma.Domain.Entities.UserAggregate;
 
 public sealed class ChatSession : IEntity<Guid>
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public Guid? UserId { get; private set; }
     public string Title { get; set; }
     public string SerializedSessionJson { get; private set; } = default!;
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
-    private ChatSession()
-    {
-    }
+    private ChatSession() { }
 
     public static ChatSession Create(Guid? userId, string title, string serializedSessionJson)
     {
@@ -24,7 +22,7 @@ public sealed class ChatSession : IEntity<Guid>
             Title = title,
             SerializedSessionJson = serializedSessionJson,
             CreatedAtUtc = DateTimeOffset.UtcNow,
-            UpdatedAtUtc = DateTimeOffset.UtcNow
+            UpdatedAtUtc = DateTimeOffset.UtcNow,
         };
     }
 

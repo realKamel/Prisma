@@ -15,6 +15,7 @@ public sealed class UnitOfWork(IDbContextOutbox<AppDbContext> outbox) : IUnitOfW
 
     public IRepository<TEntity, TKey> GetOrCreateRepository<TEntity, TKey>()
         where TEntity : class, IEntity<TKey>
+        where TKey : struct
     {
         if (_repositories.TryGetValue(typeof(TEntity), out var repository))
         {

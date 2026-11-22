@@ -8,6 +8,7 @@ public class Repository<TEntity, TKey>(AppDbContext dbContext)
     : RepositoryBase<TEntity>(dbContext),
         IRepository<TEntity, TKey>
     where TEntity : class, IEntity<TKey>
+    where TKey : struct
 {
     public TEntity Add(TEntity entity)
     {

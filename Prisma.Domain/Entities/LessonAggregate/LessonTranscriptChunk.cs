@@ -4,7 +4,7 @@ namespace Prisma.Domain.Entities.LessonAggregate;
 
 public sealed class LessonTranscriptChunk : IEntity<Guid>, IAuditable
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public int LessonId { get; private set; }
     public Lesson Lesson { get; private set; } = null!;
     public string Content { get; private set; } = string.Empty;

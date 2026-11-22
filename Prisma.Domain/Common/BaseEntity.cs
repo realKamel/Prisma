@@ -1,12 +1,13 @@
 ﻿namespace Prisma.Domain.Common;
 
-public class BaseEntity<TKey>
+public abstract class BaseEntity<TKey>
     : IEntity<TKey>,
         IAuditable,
         IDomainEventEnumerable,
         IEquatable<BaseEntity<TKey>>
+    where TKey : struct
 {
-    public TKey Id { get; set; }
+    public TKey Id { get; init; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
@@ -70,9 +71,8 @@ public class BaseEntity<TKey>
 
     public override int GetHashCode()
     {
-        // EqualityComparer to safely handle potential null IDs (e.g., if TKey is a string)
-        return EqualityComparer<TKey>.Default.GetHashCode(Id!);
+        return EqualityComparer<TKey>.Default.GetHashCode(Id);
     }
 }
 
-public class BaseEntity : BaseEntity<int> { }
+public class BaseEntity : BaseEntity<int>;

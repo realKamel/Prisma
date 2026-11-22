@@ -6,7 +6,9 @@ namespace Prisma.Domain.Entities.UserAggregate;
 public class Role : IdentityRole<Guid>, IEntity<Guid>, IAuditable
 {
     public Role() { }
-    public Role(string roleName) : base(roleName) { }
+
+    public Role(string roleName)
+        : base(roleName) { }
 
     public string? Description { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
@@ -18,4 +20,5 @@ public class Role : IdentityRole<Guid>, IEntity<Guid>, IAuditable
     public bool IsDeleted { get; set; }
 
     public ICollection<UserRole> Users { get; set; } = [];
+    public new Guid Id { get; init; }
 }

@@ -48,6 +48,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public IQueryable<TEntity> Entity<TEntity, TKey>()
         where TEntity : BaseEntity<TKey>
+        where TKey : struct
     {
         return Set<TEntity>().AsNoTracking();
     }

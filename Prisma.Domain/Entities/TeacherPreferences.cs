@@ -6,7 +6,7 @@ namespace Prisma.Domain.Entities;
 
 public class TeacherPreferences : IAuditable, IEntity<Guid>
 {
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     public Teacher Teacher { get; set; } = null!;
 
     public AccentColor AccentColor { get; private set; } = AccentColor.Purple;

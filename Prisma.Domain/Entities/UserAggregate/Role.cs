@@ -20,5 +20,9 @@ public class Role : IdentityRole<Guid>, IEntity<Guid>, IAuditable
     public bool IsDeleted { get; set; }
 
     public ICollection<UserRole> Users { get; set; } = [];
-    public new Guid Id { get; init; }
+    public new Guid Id
+    {
+        get => base.Id;
+        init => base.Id = value;
+    }
 }

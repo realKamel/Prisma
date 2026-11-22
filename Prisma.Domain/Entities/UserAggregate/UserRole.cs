@@ -6,7 +6,9 @@ namespace Prisma.Domain.Entities.UserAggregate;
 public sealed class UserRole : IdentityUserRole<Guid>, IAuditable
 {
     public Role Role { get; set; }
+    public override Guid RoleId { get; set; }
     public User User { get; set; }
+    public override Guid UserId { get; set; }
     public DateTimeOffset? CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }

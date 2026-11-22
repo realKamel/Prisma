@@ -115,5 +115,9 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable, IDomainEventE
 
     public void ClearDomainEvents() => _domainEvents.Clear();
 
-    public new Guid Id { get; init; }
+    public new Guid Id
+    {
+        get => base.Id;
+        init => base.Id = value;
+    }
 }

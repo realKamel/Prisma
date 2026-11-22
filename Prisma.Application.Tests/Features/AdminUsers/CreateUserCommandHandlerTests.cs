@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using NSubstitute;
 using Prisma.Application.Abstractions.Identity;
-using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Application.Features.Users.Commands.CreateUser;
 using Prisma.Domain.Entities.LessonAggregate;
@@ -22,6 +21,22 @@ public class CreateUserCommandHandlerTests
     public CreateUserCommandHandlerTests()
     {
         _sut = new CreateUserCommandHandler(_identityService, _unitOfWork);
+    }
+
+    [Fact]
+    public void User_Id_MatchesIdentityBaseId_WhenCreated()
+    {
+        var user = Student.Create("محمد", "علي", "m@test.com", "01012345678").Value;
+
+        ((IdentityUser<Guid>)user).Id.Should().Be(user.Id);
+    }
+
+    [Fact]
+    public void Role_Id_MatchesIdentityBaseId_WhenCreated()
+    {
+        var role = new Role(AppRoles.Teacher);
+
+        ((IdentityRole<Guid>)role).Id.Should().Be(role.Id);
     }
 
     [Fact]

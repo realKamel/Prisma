@@ -26,7 +26,7 @@ public sealed class VideoLibrary : BaseEntity
     // public Teacher Teacher { get; private set; }
     public Guid TeacherId { get; private set; }
 
-    public VideoLibraryStatus Status { get; set; } = VideoLibraryStatus.Pending;
+    public VideoLibraryStatus Status { get; private set; } = VideoLibraryStatus.Pending;
 
     public EncodingTier EncodingTier { get; set; }
 

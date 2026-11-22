@@ -42,48 +42,46 @@ public static class ProvisionTeacherLibraryHandler
             return;
         }
 
-        var result = await videoLibraryService.CreateLibrary(
-            VideoLibrary.GenerateLibraryName(teacherId: message.TeacherId),
-            EncodingTier.Free,
-            enabledResolutions: "480p,720p,1080p",
-            cancellationToken: cancellationToken
-        );
-
-        if (!result.IsSuccess)
+        if (library.ProviderLibraryId is null)
         {
-            library.MarkAsFailed();
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-
-            throw new InvalidOperationException(
-                $"Failed to provision video library for teacher {message.TeacherId}."
+            var result = await videoLibraryService.CreateLibrary(
+                VideoLibrary.GenerateLibraryName(message.TeacherId),
+                EncodingTier.Free,
+                enabledResolutions: "480p,720p,1080p",
+                cancellationToken: cancellationToken
             );
+
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create video library for teacher {message.TeacherId}."
+                );
+            }
+
+            var config = result.Value;
+
+            library.ConfigureProviderCredentials(
+                config.ExternalLibraryId,
+                secretCipher.Encrypt(config.ApiKey),
+                secretCipher.Encrypt(config.ReadOnlyApiKey)
+            );
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        var libraryConfig = result.Value;
-        var encryptedApiKey = secretCipher.Encrypt(libraryConfig.ApiKey);
-        var encryptedReadonlyApiKey = secretCipher.Encrypt(libraryConfig.ReadOnlyApiKey);
-
-        var configureWebhookResult = await videoLibraryService.ConfigureWebhookAsync(
-            libraryConfig.ExternalLibraryId,
+        var webhookResult = await videoLibraryService.ConfigureWebhookAsync(
+            library.ProviderLibraryId!.Value,
             cancellationToken
         );
 
-        if (!configureWebhookResult.IsSuccess)
+        if (!webhookResult.IsSuccess)
         {
-            library.MarkAsFailed();
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-
             throw new InvalidOperationException(
-                $"Failed to configure Webhook url for video library of teacher {message.TeacherId}."
+                $"Failed to configure webhook for teacher {message.TeacherId}."
             );
         }
 
-        library.ConfigureProviderCredentials(
-            providerId: libraryConfig.ExternalLibraryId,
-            libraryApiKey: encryptedApiKey,
-            readOnlyApiKey: encryptedReadonlyApiKey
-        // webhookUrl: libraryConfig.WebhookUrl
-        );
+        library.MarkAsActive();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

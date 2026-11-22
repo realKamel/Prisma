@@ -42,7 +42,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DataProtectionKeys", (string)null);
+                    b.ToTable("DataProtectionKeys");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -133,6 +133,136 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("FileStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ObjectKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ObjectStorageId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ScanAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ScanFailureReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ScanStartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ScannedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ObjectStorageId");
+
+                    b.ToTable("FileObject");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Aggregates.ObjectLibraryAggregate.ObjectStorage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BucketName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Provider")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeacherId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("ObjectStorage");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Aggregates.VideoLibraryAggregate.VideoLibrary", b =>
                 {
                     b.Property<int>("Id")
@@ -202,7 +332,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("VideoLibrary", (string)null);
+                    b.ToTable("VideoLibrary");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.ChatAggregate.Conversation", b =>
@@ -441,7 +571,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollment", (string)null);
+                    b.ToTable("Enrollment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.EnrollmentAggregate.Report", b =>
@@ -487,7 +617,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Report", (string)null);
+                    b.ToTable("Report");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYear", b =>
@@ -532,7 +662,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYear", (string)null);
+                    b.ToTable("AcademicYear");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearLesson", b =>
@@ -578,7 +708,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYearLesson", (string)null);
+                    b.ToTable("AcademicYearLesson");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AcademicYearTeacher", b =>
@@ -624,7 +754,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AcademicYearTeacher", (string)null);
+                    b.ToTable("AcademicYearTeacher");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
@@ -692,7 +822,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Assignment", (string)null);
+                    b.ToTable("Assignment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.AssignmentSubmission", b =>
@@ -779,7 +909,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AssignmentSubmission", (string)null);
+                    b.ToTable("AssignmentSubmission");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
@@ -807,6 +937,9 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("ImageFileObjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("ImageThumbnailUrl")
                         .HasColumnType("text");
@@ -912,6 +1045,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ImageFileObjectId");
+
                     b.HasIndex("PrerequisiteId");
 
                     b.HasIndex("PublicId")
@@ -920,7 +1055,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Lesson", (string)null);
+                    b.ToTable("Lesson");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
@@ -970,7 +1105,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonMaterial", (string)null);
+                    b.ToTable("LessonMaterial");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonTranscriptChunk", b =>
@@ -1025,7 +1160,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("LessonTranscriptChunk", (string)null);
+                    b.ToTable("LessonTranscriptChunk");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
@@ -1109,7 +1244,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("Section", (string)null);
+                    b.ToTable("Section");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.SectionProgress", b =>
@@ -1162,7 +1297,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("SectionProgress", (string)null);
+                    b.ToTable("SectionProgress");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Video", b =>
@@ -1245,137 +1380,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("ProviderVideoLibraryId", "ProviderVideoId")
                         .IsUnique();
 
-                    b.ToTable("Video", (string)null);
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ContentHash")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("FileStatus")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("ObjectKey")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("ObjectStorageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("ScanAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ScanFailureReason")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("ScanStartedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("ScannedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("Size")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ObjectStorageId");
-
-                    b.ToTable("FileObject", (string)null);
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("BucketName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Provider")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("TeacherId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TeacherId")
-                        .IsUnique()
-                        .HasFilter("\"IsDeleted\" = false");
-
-                    b.ToTable("ObjectStorage", (string)null);
+                    b.ToTable("Video");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>
@@ -1428,7 +1433,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.HasIndex("BatchId", "Code")
                         .IsUnique();
 
-                    b.ToTable("GeneratedCode", (string)null);
+                    b.ToTable("GeneratedCode");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.Payment", b =>
@@ -1503,7 +1508,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Payment", (string)null);
+                    b.ToTable("Payment");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.RedeemCode", b =>
@@ -1559,7 +1564,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("RedeemCode", (string)null);
+                    b.ToTable("RedeemCode");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.AttemptAnswer", b =>
@@ -1636,7 +1641,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("AttemptAnswer", (string)null);
+                    b.ToTable("AttemptAnswer");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.Choice", b =>
@@ -1681,7 +1686,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choice", (string)null);
+                    b.ToTable("Choice");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.ExtractionJob", b =>
@@ -1789,7 +1794,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Question", (string)null);
+                    b.ToTable("Question");
 
                     b.HasDiscriminator<string>("QuestionType").HasValue("Question");
 
@@ -1868,7 +1873,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("Quiz", (string)null);
+                    b.ToTable("Quiz");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizAttempt", b =>
@@ -1953,7 +1958,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Status", "Deadline");
 
-                    b.ToTable("QuizAttempt", (string)null);
+                    b.ToTable("QuizAttempt");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.QuizAggregate.QuizQuestion", b =>
@@ -2003,7 +2008,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("QuizQuestion", (string)null);
+                    b.ToTable("QuizQuestion");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.TeacherPreferences", b =>
@@ -2039,7 +2044,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TeacherPreferences", (string)null);
+                    b.ToTable("TeacherPreferences");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.AuditLog", b =>
@@ -2095,7 +2100,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AuditLog", (string)null);
+                    b.ToTable("AuditLog");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.ChatSession", b =>
@@ -2126,7 +2131,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ChatSession", (string)null);
+                    b.ToTable("ChatSession");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Role", b =>
@@ -2232,7 +2237,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsUnique()
                         .HasFilter("\"IsDeleted\" = false");
 
-                    b.ToTable("TeacherStudent", (string)null);
+                    b.ToTable("TeacherStudent");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.User", b =>
@@ -2822,6 +2827,17 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", b =>
+                {
+                    b.HasOne("Prisma.Domain.Aggregates.ObjectLibraryAggregate.ObjectStorage", "ObjectStorage")
+                        .WithMany("Files")
+                        .HasForeignKey("ObjectStorageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ObjectStorage");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.ChatAggregate.ConversationMember", b =>
                 {
                     b.HasOne("Prisma.Domain.Entities.ChatAggregate.Conversation", null)
@@ -2921,7 +2937,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Assignment", b =>
                 {
-                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "FileObject")
+                    b.HasOne("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", "FileObject")
                         .WithMany()
                         .HasForeignKey("FileObjectId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -2959,6 +2975,10 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
+                    b.HasOne("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", "ImageFileObject")
+                        .WithMany()
+                        .HasForeignKey("ImageFileObjectId");
+
                     b.HasOne("Prisma.Domain.Entities.LessonAggregate.Lesson", "Prerequisite")
                         .WithMany()
                         .HasForeignKey("PrerequisiteId");
@@ -2967,6 +2987,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                         .WithMany("Lessons")
                         .HasForeignKey("TeacherId");
 
+                    b.Navigation("ImageFileObject");
+
                     b.Navigation("Prerequisite");
 
                     b.Navigation("Teacher");
@@ -2974,7 +2996,7 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.LessonMaterial", b =>
                 {
-                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "FileObject")
+                    b.HasOne("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", "FileObject")
                         .WithMany()
                         .HasForeignKey("FileObjectId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -3047,17 +3069,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Section");
 
                     b.Navigation("VideoLibrary");
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", b =>
-                {
-                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", "ObjectStorage")
-                        .WithMany("Files")
-                        .HasForeignKey("ObjectStorageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ObjectStorage");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>
@@ -3300,11 +3311,16 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.UserAggregate.Teacher", b =>
                 {
-                    b.HasOne("Prisma.Domain.Entities.ObjectLibraryAggregate.FileObject", "ProfileImageFile")
+                    b.HasOne("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", "ProfileImageFile")
                         .WithMany()
                         .HasForeignKey("ProfileImageFileId");
 
                     b.Navigation("ProfileImageFile");
+                });
+
+            modelBuilder.Entity("Prisma.Domain.Aggregates.ObjectLibraryAggregate.ObjectStorage", b =>
+                {
+                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Aggregates.VideoLibraryAggregate.VideoLibrary", b =>
@@ -3361,11 +3377,6 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Progresses");
 
                     b.Navigation("Video");
-                });
-
-            modelBuilder.Entity("Prisma.Domain.Entities.ObjectLibraryAggregate.ObjectStorage", b =>
-                {
-                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("Prisma.Domain.Entities.PaymentAggregate.GeneratedCode", b =>

@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Prisma.Domain.Aggregates.FileObjectAggregate;
 using Prisma.Domain.Common;
 using Prisma.Domain.DomainEvents.LessonEvents;
 using Prisma.Domain.Entities.EnrollmentAggregate;
@@ -20,6 +21,9 @@ public sealed class Lesson : BaseEntity
     public Money Money { get; set; } = Money.Zero();
     public TimeDuration TimeDuration { get; set; } = TimeDuration.Zero;
     public string? ImageThumbnailUrl { get; set; }
+
+    public FileObject? ImageFileObject { get; set; }
+    public Guid? ImageFileObjectId { get; set; }
 
     public string? VideoUrl { get; set; }
 
@@ -214,7 +218,7 @@ public sealed class Lesson : BaseEntity
         Sections.Add(section);
     }
 
-    public Result AddAssignment(
+    public Result<Assignment> AddAssignment(
         Guid fileObjectId,
         decimal totalMarks,
         DateTimeOffset? dueDate,
@@ -239,13 +243,13 @@ public sealed class Lesson : BaseEntity
 
         Assignment = result.Value;
 
-        return Result.Success();
+        return Result.Success(result.Value);
     }
 
-    public Result RemoveAssignment()
+    public void RemoveAssignment()
     {
         if (AssignmentId is null)
-            return Result.Success();
+            return;
 
         var assignmentId = AssignmentId.Value;
 
@@ -253,8 +257,6 @@ public sealed class Lesson : BaseEntity
 
         Assignment = null;
         AssignmentId = null;
-
-        return Result.Success();
     }
 
     public Result<LessonMaterial> AddMaterial(Guid fileObjectId)
@@ -285,5 +287,10 @@ public sealed class Lesson : BaseEntity
         LessonMaterials.Remove(materialToDelete);
 
         return Result.Success();
+    }
+
+    public void SetCover(Guid fileObjectId)
+    {
+        ImageFileObjectId = fileObjectId;
     }
 }

@@ -13,4 +13,8 @@
   <ItemGroup>
     <Folder Include="ReadModels\Lessons\" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Common\Entity.cs" />
+  </ItemGroup>
 </Project>

@@ -91,7 +91,7 @@ public sealed class ObjectStorage : BaseEntity<Guid>
         return Result.Success(fileObjectResult.Value);
     }
 
-    public Result<string> RemoveFile(Guid fileId)
+    public Result<string?> RemoveFile(Guid fileId)
     {
         if (Status != StorageStatus.Ready)
         {
@@ -106,14 +106,17 @@ public sealed class ObjectStorage : BaseEntity<Guid>
         var file = Files.FirstOrDefault(x => x.Id == fileId);
 
         if (file is null)
-        {
-            return Result.Success();
-        }
+            return Result.Success<string?>(null);
 
         Files.Remove(file);
 
         AddDomainEvent(new FileObjectRemoved(Id, fileId));
 
-        return Result.Success();
+        return Result.Success<string?>(file.ObjectKey);
+    }
+
+    public FileObject? FindFile(Guid objectFileId)
+    {
+        return Files.FirstOrDefault(x => x.Id == objectFileId);
     }
 }

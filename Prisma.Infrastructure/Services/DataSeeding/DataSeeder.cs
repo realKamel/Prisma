@@ -9,8 +9,8 @@ using Newtonsoft.Json;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Entities.LessonAggregate;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Infrastructure.Auth;
 using Prisma.Infrastructure.Persistence;
-using Prisma.Infrastructure.Services.Auth;
 
 namespace Prisma.Infrastructure.Services.DataSeeding;
 

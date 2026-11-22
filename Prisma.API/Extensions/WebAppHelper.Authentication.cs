@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Prisma.Application.Common.Constants;
-using Prisma.Infrastructure.Services.Auth;
+using Prisma.Infrastructure.Auth;
 
 namespace Prisma.API.Extensions;
 
@@ -35,7 +35,10 @@ public static partial class WebAppHelper
 
                         if (
                             !string.IsNullOrEmpty(accessToken)
-                            && context.HttpContext.Request.Path.StartsWithSegments("/api/hubs")
+                            && context.HttpContext.Request.Path.StartsWithSegments(
+                                "/api/hubs",
+                                StringComparison.InvariantCulture
+                            )
                         )
                         {
                             context.Token = accessToken;

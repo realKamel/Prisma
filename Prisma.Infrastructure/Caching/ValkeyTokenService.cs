@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Prisma.Application.Abstractions.Services;
-using Prisma.Infrastructure.Services.Auth;
+using Prisma.Infrastructure.Auth;
 using StackExchange.Redis;
 
 namespace Prisma.Infrastructure.Caching;

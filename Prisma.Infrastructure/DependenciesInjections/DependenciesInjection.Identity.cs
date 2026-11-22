@@ -5,9 +5,9 @@ using Microsoft.Extensions.Hosting;
 using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Entities.UserAggregate;
+using Prisma.Infrastructure.Auth;
 using Prisma.Infrastructure.Identity;
 using Prisma.Infrastructure.Persistence;
-using Prisma.Infrastructure.Services.Auth;
 
 namespace Prisma.Infrastructure.DependenciesInjections;
 
@@ -50,7 +50,7 @@ public static partial class DependenciesInjection
                     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 }
             })
-            .AddRoles<Domain.Entities.UserAggregate.Role>()
+            .AddRoles<Role>()
             .AddDefaultTokenProviders()
             .AddEntityFrameworkStores<AppDbContext>();
 

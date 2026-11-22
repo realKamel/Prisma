@@ -8,11 +8,11 @@ using Prisma.Application.Abstractions.Persistence;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Domain.Interfaces;
 using Prisma.Domain.Repositories;
+using Prisma.Infrastructure.Auth;
 using Prisma.Infrastructure.Persistence;
 using Prisma.Infrastructure.Persistence.Interceptors;
 using Prisma.Infrastructure.Persistence.Repositories;
 using Prisma.Infrastructure.Services.AttemptSecurityCounter;
-using Prisma.Infrastructure.Services.Auth;
 using Prisma.Infrastructure.Services.DataSeeding;
 using Wolverine.EntityFrameworkCore;
 

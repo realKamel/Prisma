@@ -16,6 +16,7 @@ using Prisma.API.Localization;
 using Prisma.API.Middlewares;
 using Prisma.Application;
 using Prisma.Application.Abstractions.BackgroundJobs;
+using Prisma.Application.Abstractions.Localization;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 using Prisma.Domain.Common;
@@ -301,12 +302,14 @@ public static partial class WebAppHelper
                     TimeSpan.FromSeconds(10),
                     TimeSpan.FromSeconds(30)
                 );
-            options.Policies.OnException<ConcurrencyConflictException>()
+            options
+                .Policies.OnException<ConcurrencyConflictException>()
                 .Or<DbUpdateConcurrencyException>()
                 .RetryWithCooldown(
                     TimeSpan.FromMilliseconds(200),
                     TimeSpan.FromSeconds(1),
-                    TimeSpan.FromSeconds(5));
+                    TimeSpan.FromSeconds(5)
+                );
         });
     }
 

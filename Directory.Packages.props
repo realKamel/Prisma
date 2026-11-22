@@ -6,6 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="Ardalis.SmartEnum" Version="8.2.0" />
     <PackageVersion Include="Ardalis.SmartEnum.EFCore" Version="8.2.0" />
+    <PackageVersion Include="Ardalis.SmartEnum.JsonNet" Version="8.1.0" />
     <PackageVersion Include="Ardalis.SmartEnum.SystemTextJson" Version="8.1.0" />
     <PackageVersion Include="AWSSDK.S3" Version="4.1.1" />
     <PackageVersion Include="Ardalis.Result" Version="10.1.0" />

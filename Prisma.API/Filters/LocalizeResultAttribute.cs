@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Prisma.Application.Abstractions.Localization;
 using Prisma.Application.Abstractions.Services;
 using Prisma.Application.Common.Constants;
 

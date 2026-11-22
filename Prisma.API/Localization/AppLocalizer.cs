@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Localization;
-using Prisma.Application.Abstractions.Services;
+using Prisma.Application.Abstractions.Localization;
 
 namespace Prisma.API.Localization;
 

@@ -17,6 +17,11 @@ public static class UrlsHelper
         );
     }
 
+    public static string ConstructLessonCoverFileObjectKey(Guid lessonId, Guid objectKey)
+    {
+        return ConstructObjectKey("lessons", lessonId.ToString(), objectKey.ToString());
+    }
+
     public static string ConstructLessonAssignmentObjectKey(Guid lessonId, Guid objectKey)
     {
         // return $"lessons/{lessonId}/assignments/{Guid.CreateVersion7()}";

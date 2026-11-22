@@ -20,35 +20,22 @@ internal sealed class AddLessonCommandHandler(
         CancellationToken cancellationToken
     )
     {
-        var userId = currentUserService.UserId!.Value;
-        Guid teacherId = Guid.Empty;
-
-        // 1. Resolve Teacher ID based on Role
-        if (currentUserService.Role == AppRoles.Teacher)
+        if (!currentUserService.IsAuthenticated)
         {
-            teacherId = userId;
+            return Result.Unauthorized();
         }
-        else if (currentUserService.Role == AppRoles.Assistant)
-        {
-            var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
-            var teacherAssignmentId = await assistantRepo.FirstOrDefaultAsync(
-                new AssistantByIdWithProjectionSpec<Guid?>(userId, x => x.TeacherId),
-                cancellationToken
-            );
 
-            if (teacherAssignmentId is null || teacherAssignmentId == Guid.Empty)
-            {
-                return Result.Error("This assistant is not assigned to a teacher.");
-            }
-
-            teacherId = teacherAssignmentId.Value;
-        }
-        else if (currentUserService.Role == AppRoles.Admin)
+        if (!currentUserService.WorkspaceId.HasValue)
         {
             // If Admin creates it, ensure your command supports passing a TeacherId,
             // or handle it according to your admin business logic.
-            return Result.Error("Admin lesson creation flow needs explicit teacher assignment.");
+            return Result.Error("Lesson creation flow needs explicit teacher assignment");
         }
+
+        var workspaceId = currentUserService.WorkspaceId;
+
+        if (workspaceId is null)
+            return Result.Forbidden();
 
         // 2. Create the Lesson Domain Entity
         var lessonResult = Lesson.Create(
@@ -57,7 +44,7 @@ internal sealed class AddLessonCommandHandler(
             request.PrerequisiteLessonId,
             false,
             [.. request.Outcomes],
-            teacherId,
+            workspaceId.Value,
             request.Price,
             request.Currency,
             request.ValidityDurationInSeconds

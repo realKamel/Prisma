@@ -27,8 +27,12 @@
   <ItemGroup>
     <Folder Include="Features\AcademicYears\Commands\" />
     <Folder Include="Features\ActivityLogs\" />
+    <Folder Include="Features\FileObjectStorage\Specifications\" />
     <Folder Include="Features\Notifications\" />
     <Folder Include="Features\VideoManagement\" />
     <Folder Include="IntegrationEvents\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Features\FileObjectStorage\Specifications\FileObjectAndLibraryObjectSpec.cs" />
   </ItemGroup>
 </Project>

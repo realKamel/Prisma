@@ -2,15 +2,11 @@ using Ardalis.Result;
 using Prisma.Application.Abstractions.Identity;
 using Prisma.Application.Abstractions.Messaging;
 using Prisma.Application.Abstractions.ObjectStorage;
-using Prisma.Application.Abstractions.Security;
-using Prisma.Application.Common.Constants;
 using Prisma.Application.Common.Extenions;
 using Prisma.Application.Features.Lessons.Helpers;
+using Prisma.Domain.Aggregates.ObjectLibraryAggregate;
 using Prisma.Domain.Entities.LessonAggregate;
-using Prisma.Domain.Entities.ObjectLibraryAggregate;
-using Prisma.Domain.Entities.UserAggregate;
 using Prisma.Domain.Interfaces;
-using Prisma.Domain.Specifications.Assistants;
 using Prisma.Domain.Specifications.Lessons;
 using Prisma.Domain.Specifications.ObjectStorageSpec;
 
@@ -19,8 +15,7 @@ namespace Prisma.Application.Features.Lessons.Commands.AttachLessonAssignment;
 internal sealed class AttachLessonAssignmentCommandHandler(
     ICurrentUserService currentUserService,
     IStorageService storageService,
-    IUnitOfWork unitOfWork,
-    IFileScanner fileScanner
+    IUnitOfWork unitOfWork
 ) : ICommandHandler<AttachLessonAssignmentCommand, Result<AttachLessonAssignmentResponse>>
 {
     public async Task<Result<AttachLessonAssignmentResponse>> Handle(
@@ -33,36 +28,14 @@ internal sealed class AttachLessonAssignmentCommandHandler(
             return Result.Unauthorized();
         }
 
-        var userId = currentUserService.UserId.Value;
-
-        Guid teacherId = Guid.Empty;
-
-        // 1. Resolve Teacher ID based on Role
-        if (currentUserService.Role == AppRoles.Teacher)
-        {
-            teacherId = userId;
-        }
-        else if (currentUserService.Role == AppRoles.Assistant)
-        {
-            var assistantRepo = unitOfWork.GetOrCreateRepository<Assistant, Guid>();
-            var teacherAssignmentId = await assistantRepo.FirstOrDefaultAsync(
-                new AssistantByIdWithProjectionSpec<Guid?>(userId, x => x.TeacherId),
-                cancellationToken
-            );
-
-            if (teacherAssignmentId is null || teacherAssignmentId == Guid.Empty)
-            {
-                return Result.Error("This assistant is not assigned to a teacher.");
-            }
-
-            teacherId = teacherAssignmentId.Value;
-        }
-        else if (currentUserService.Role == AppRoles.Admin)
+        if (!currentUserService.WorkspaceId.HasValue)
         {
             // If Admin creates it, ensure your command supports passing a TeacherId,
             // or handle it according to your admin business logic.
-            return Result.Error("Admin lesson creation flow needs explicit teacher assignment.");
+            return Result.Error("Lesson creation flow needs explicit teacher assignment.");
         }
+
+        Guid teacherId = currentUserService.WorkspaceId.Value;
 
         var lessonRepo = unitOfWork.GetOrCreateRepository<Lesson, int>();
 
@@ -96,7 +69,7 @@ internal sealed class AttachLessonAssignmentCommandHandler(
             objectKey: objKey,
             request.File.FileName,
             request.File.ContentType,
-            request.File.Length
+            request.File.Size
         );
 
         if (!attachingResult.IsSuccess)
@@ -120,8 +93,6 @@ internal sealed class AttachLessonAssignmentCommandHandler(
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // storageService.UploadFileAsync(objectStorage.BucketName,);
-
         var linkResult = await storageService.GetPreSignedUploadUrlAsync(
             bucket: objectStorage.BucketName,
             objectKey: objKey,
@@ -134,20 +105,6 @@ internal sealed class AttachLessonAssignmentCommandHandler(
         {
             return linkResult.Map();
         }
-
-        var objId = lesson.Assignment.FileObject.ObjectKey;
-
-        var rep = await objectStorageRepository.FirstOrDefaultAsync(
-            new ObjectStorageByFileObjectIdSpec(lesson.Assignment.FileObjectId),
-            cancellationToken
-        );
-
-        var link = await storageService.GetPreSignedDownloadUrlAsync(
-            objectStorage.BucketName,
-            objKey,
-            1.DayInSeconds(),
-            cancellationToken
-        );
 
         return new AttachLessonAssignmentResponse(linkResult.Value);
     }

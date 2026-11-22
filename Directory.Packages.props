@@ -108,6 +108,7 @@
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
     <PackageVersion Include="Refit" Version="17.0.0" />
     <PackageVersion Include="Refit.HttpClientFactory" Version="17.0.0" />
+    <PackageVersion Include="Refit.HttpClientFactory.Reflection" Version="17.0.0" />
     <PackageVersion Include="Refit.Reflection" Version="17.0.0" />
     <PackageVersion Include="Resend" Version="0.26.0" />
     <PackageVersion Include="Resend.FluentEmail" Version="0.26.0" />

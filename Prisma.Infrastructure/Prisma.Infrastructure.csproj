@@ -60,6 +60,7 @@
     <PackageReference Include="Pgvector.EntityFrameworkCore" />
     <PackageReference Include="Refit" />
     <PackageReference Include="Refit.HttpClientFactory" />
+    <PackageReference Include="Refit.HttpClientFactory.Reflection" />
     <PackageReference Include="Refit.Reflection" />
     <PackageReference Include="Resend" />
     <PackageReference Include="Resend.FluentEmail" />

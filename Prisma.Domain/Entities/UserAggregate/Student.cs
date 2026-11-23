@@ -22,6 +22,7 @@ public class Student : User
     public AcademicYear? AcademicYear { get; set; }
 
     public ICollection<Enrollment> Enrollments { get; private set; } = new List<Enrollment>();
+    public ICollection<Bookmark> Bookmarks { get; private set; } = new List<Bookmark>();
     public ICollection<SectionProgress> SectionProgresses { get; private set; } =
         new List<SectionProgress>();
 

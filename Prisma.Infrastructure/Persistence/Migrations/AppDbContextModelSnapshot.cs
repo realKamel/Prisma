@@ -912,6 +912,66 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.ToTable("AssignmentSubmission");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Bookmark", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("PositionSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("SectionId");
+
+                    b.HasIndex("StudentId", "SectionId", "PositionSeconds")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("Bookmark");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
                     b.Property<int>("Id")
@@ -2973,6 +3033,25 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Bookmark", b =>
+                {
+                    b.HasOne("Prisma.Domain.Entities.LessonAggregate.Section", "Section")
+                        .WithMany("Bookmarks")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prisma.Domain.Entities.UserAggregate.Student", "Student")
+                        .WithMany("Bookmarks")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Section");
+
+                    b.Navigation("Student");
+                });
+
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Lesson", b =>
                 {
                     b.HasOne("Prisma.Domain.Aggregates.FileObjectAggregate.FileObject", "ImageFileObject")
@@ -3374,6 +3453,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Prisma.Domain.Entities.LessonAggregate.Section", b =>
                 {
+                    b.Navigation("Bookmarks");
+
                     b.Navigation("Progresses");
 
                     b.Navigation("Video");
@@ -3430,6 +3511,8 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Navigation("AssignmentSubmissions");
 
                     b.Navigation("AttemptAnswers");
+
+                    b.Navigation("Bookmarks");
 
                     b.Navigation("Enrollments");
 

@@ -20,7 +20,7 @@ public sealed class Section : BaseEntity
     public int SortOrder { get; set; }
 
     public ICollection<SectionProgress> Progresses { get; set; } = [];
-
+    public ICollection<Bookmark> Bookmarks { get; set; } = [];
     public TimeSpan? Duration => TimeDuration?.Value;
     public TimeDuration? TimeDuration { get; set; }
 

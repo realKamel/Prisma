@@ -361,8 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/.idea/.idea.Prisma/.idea
-/.idea/.idea.Wasla/.idea
+/.idea/.idea.Wasla/
 /.vscode
 /.env
 /Prisma.API/wwwroot

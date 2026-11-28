@@ -25,7 +25,7 @@ public class Student : User
     public ICollection<Bookmark> Bookmarks { get; private set; } = new List<Bookmark>();
     public ICollection<SectionProgress> SectionProgresses { get; private set; } =
         new List<SectionProgress>();
-
+    protected override IReadOnlySet<string> AllowedTours => TourKeys.ForStudent.All;
     public ICollection<AssignmentSubmission> AssignmentSubmissions { get; private set; } =
         new List<AssignmentSubmission>();
 

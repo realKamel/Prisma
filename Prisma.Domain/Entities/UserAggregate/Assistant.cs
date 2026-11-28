@@ -8,7 +8,7 @@ public class Assistant : User
     // private Assistant() : base() { }
     public Guid? TeacherId { get; set; }
     public Teacher? Teacher { get; set; }
-
+    protected override IReadOnlySet<string> AllowedTours => TourKeys.ForAssistant.All;
     /// <summary>
     /// Factory method to create a validated Assistant instance.
     /// </summary>

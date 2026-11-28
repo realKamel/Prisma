@@ -34,5 +34,8 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasFilter("\"IsDeleted\" = false");
 
         builder.HasIndex(x => x.PhoneNumber).IsUnique().HasFilter("\"IsDeleted\" = false");
+
+        builder.Property(x => x.SeenTours).HasDefaultValueSql("'{}'");
+        
     }
 }

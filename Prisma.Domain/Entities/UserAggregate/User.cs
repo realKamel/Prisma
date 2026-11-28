@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Prisma.Domain.Common;
 using Prisma.Domain.ValueObjects;
 using Prisma.Domain.ValueObjects.UserDomain;
+using System.Collections.Frozen;
 
 namespace Prisma.Domain.Entities.UserAggregate;
 
@@ -108,6 +109,31 @@ public class User : IdentityUser<Guid>, IEntity<Guid>, IAuditable, IDomainEventE
 
     public IReadOnlyCollection<BaseDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
+    /// <summary>Keys of the onboarding tours this user has finished or skipped.</summary>
+    public ICollection<string> SeenTours { get; private set; } = new List<string>();
+
+    /// <summary>The tours this kind of user can take. Each user type overrides it.</summary>
+    protected virtual IReadOnlySet<string> AllowedTours => FrozenSet<string>.Empty;
+
+    /// <summary>
+    /// Records that a tour was finished or skipped. Safe to call repeatedly.
+    /// Returns true when the key was new, so the caller can skip saving otherwise.
+    /// </summary>
+    public Result<bool> MarkTourSeen(string? tourKey)
+    {
+        var key = tourKey?.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrEmpty(key) || !AllowedTours.Contains(key))
+        {
+            return Result<bool>.Invalid(new ValidationError(nameof(tourKey), "Unknown tour."));
+        }
+
+        if (SeenTours.Contains(key))
+            return Result.Success(false);
+
+        SeenTours.Add(key);
+        return Result.Success(true);
+    }
     protected void AddDomainEvent(BaseDomainEvent domainEvent)
     {
         _domainEvents.Add(domainEvent);

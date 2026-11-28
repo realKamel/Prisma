@@ -2395,6 +2395,12 @@ namespace Prisma.Infrastructure.Persistence.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
+                    b.PrimitiveCollection<string[]>("SeenTours")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text[]")
+                        .HasDefaultValueSql("'{}'");
+
                     b.Property<string>("ThirdName")
                         .HasColumnType("text");
 

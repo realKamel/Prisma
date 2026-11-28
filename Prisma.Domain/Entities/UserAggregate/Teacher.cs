@@ -40,6 +40,7 @@ public class Teacher : User
     public ICollection<Assistant> Assistants { get; set; } = [];
     public TeacherLandingSettings? TeacherLandingSettings { get; set; }
     public TeacherPreferences Preferences { get; set; } = null!;
+    protected override IReadOnlySet<string> AllowedTours => TourKeys.ForTeacher.All;
 
     // public VideoLibrary? VideoLibrary { get; private set; }
     // public int? VideoLibraryId { get; private set; }
